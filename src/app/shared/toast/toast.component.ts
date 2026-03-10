@@ -30,13 +30,15 @@ export class ToastComponent implements OnInit, OnDestroy {
   }
 
   toastClass(variant: ToastMessage['variant']): string {
+    // Usamos colores concretos (no variables CSS) para garantizar contraste
+    // independientemente del tema. shadow-xl + border visible para separar del fondo.
     const base =
-      'flex items-start gap-3 rounded-lg border p-4 shadow-lg ' +
+      'flex items-start gap-3 rounded-lg border p-4 shadow-xl ' +
       'animate-in slide-in-from-right-full duration-300';
     const variants: Record<ToastMessage['variant'], string> = {
-      default:     `${base} border-border bg-card text-card-foreground`,
-      success:     `${base} border-accent/40 bg-accent/10 text-accent-foreground`,
-      destructive: `${base} border-destructive/40 bg-destructive/10 text-destructive`,
+      default: `${base} border-gray-200 bg-white text-gray-900`,
+      success: `${base} border-green-200 bg-green-50 text-green-900`,
+      destructive: `${base} border-red-200   bg-red-50   text-red-900`,
     };
     return variants[variant];
   }
