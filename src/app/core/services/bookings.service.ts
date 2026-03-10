@@ -6,6 +6,7 @@ import {
   BookingResponse,
   CreateBookingDto,
   UpdateBookingStatusDto,
+  UpdateBookingDto,
 } from '../models/booking.model';
 import { environment } from '../../../environments/environment';
 
@@ -34,6 +35,13 @@ export class BookingsService {
     id: string,
     dto: UpdateBookingStatusDto,
   ): Observable<BookingResponse> {
+    return this.http.patch<BookingResponse>(`${this.url}/${id}`, dto);
+  }
+
+  /**
+   * PATCH /bookings/:id — actualiza pago, items y/o estado de una reserva.
+   */
+  update(id: string, dto: UpdateBookingDto): Observable<BookingResponse> {
     return this.http.patch<BookingResponse>(`${this.url}/${id}`, dto);
   }
 
