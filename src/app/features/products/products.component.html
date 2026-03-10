@@ -316,7 +316,7 @@
         />
       </div>
 
-      <!-- Categoría: native select con estilos Tailwind -->
+      <!-- Categoría -->
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none" for="prod-categoria">
           Categoría
@@ -332,8 +332,22 @@
                  disabled:cursor-not-allowed disabled:opacity-50"
         >
           <option value="" disabled>Seleccione una categoría</option>
-          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+          <option value="__nueva__">+ Nueva categoría...</option>
         </select>
+
+        <!-- Input para nueva categoría -->
+        <input
+          *ngIf="isNewCategory && !viewMode"
+          type="text"
+          placeholder="Ej: Equipamiento"
+          [(ngModel)]="newCategoryName"
+          class="flex h-10 w-full rounded-md border border-primary bg-background
+                 px-3 py-2 text-sm ring-offset-background
+                 placeholder:text-muted-foreground
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:ring-offset-2"
+        />
       </div>
 
       <!-- Costo + Precio Venta (grid 2 cols) -->

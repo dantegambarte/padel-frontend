@@ -34,9 +34,18 @@ export class ProductsComponent implements OnInit {
   editingProductId: string | null = null;
   form: ProductForm = this.emptyForm();
 
-  readonly categories = [
-    'Accesorios', 'Bebidas', 'Snacks', 'Indumentaria', 'Equipamiento',
-  ];
+  newCategoryName = '';
+
+  get categories(): { id: string; name: string }[] {
+    const seen = new Set<string>();
+    return this.products
+      .map(p => p.category)
+      .filter((c): c is { id: string; name: string } => !!c && !seen.has(c.id) && seen.add(c.id) !== undefined);
+  }
+
+  get isNewCategory(): boolean {
+    return this.form.category === '__nueva__';
+  }
 
   constructor(
     private productsService: ProductsService,
@@ -96,6 +105,7 @@ export class ProductsComponent implements OnInit {
   openCreate(): void {
     this.dialogMode = 'create';
     this.editingProductId = null;
+    this.newCategoryName = '';
     this.form = this.emptyForm();
     this.isDialogOpen = true;
   }
@@ -103,12 +113,13 @@ export class ProductsComponent implements OnInit {
   openEdit(product: Product): void {
     this.dialogMode = 'edit';
     this.editingProductId = product.id;
+    this.newCategoryName = '';
     this.form = {
-      name:      product.name,
-      category:  typeof product.category === 'object' && product.category !== null ? product.category.id : (product.category || ''),
-      costPrice: product.costPrice?.toString() ?? '',
-      salePrice: product.salePrice.toString(),
-      stock:     product.stock.toString(),
+      name:       product.name,
+      category:   product.category?.id ?? '',
+      costPrice:  product.costPrice?.toString() ?? '',
+      salePrice:  product.salePrice.toString(),
+      stock:      product.stock.toString(),
       isFeatured: product.isFeatured,
     };
     this.isDialogOpen = true;
@@ -117,12 +128,13 @@ export class ProductsComponent implements OnInit {
   openView(product: Product): void {
     this.dialogMode = 'view';
     this.editingProductId = product.id;
+    this.newCategoryName = '';
     this.form = {
-      name:      product.name,
-      category:  typeof product.category === 'object' && product.category !== null ? product.category.id : (product.category || ''),
-      costPrice: product.costPrice?.toString() ?? '',
-      salePrice: product.salePrice.toString(),
-      stock:     product.stock.toString(),
+      name:       product.name,
+      category:   product.category?.id ?? '',
+      costPrice:  product.costPrice?.toString() ?? '',
+      salePrice:  product.salePrice.toString(),
+      stock:      product.stock.toString(),
       isFeatured: product.isFeatured,
     };
     this.isDialogOpen = true;
@@ -130,6 +142,7 @@ export class ProductsComponent implements OnInit {
 
   closeDialog(): void {
     this.isDialogOpen = false;
+    this.newCategoryName = '';
   }
 
   @HostListener('document:keydown.escape')
@@ -138,7 +151,9 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct(): void {
-    if (!this.form.name || !this.form.category || !this.form.costPrice ||
+    const categoryValue = this.isNewCategory ? this.newCategoryName.trim() : this.form.category;
+
+    if (!this.form.name || !categoryValue || !this.form.costPrice ||
         !this.form.salePrice || !this.form.stock) {
       this.toast.error('Error', 'Por favor complete todos los campos');
       return;
@@ -146,7 +161,7 @@ export class ProductsComponent implements OnInit {
 
     const dto: CreateProductDto = {
       name:       this.form.name,
-      category:   this.form.category,
+      category:   categoryValue,
       costPrice:  parseFloat(this.form.costPrice),
       salePrice:  parseFloat(this.form.salePrice),
       stock:      parseInt(this.form.stock, 10),
