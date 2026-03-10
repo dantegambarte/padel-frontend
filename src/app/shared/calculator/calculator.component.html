@@ -1,0 +1,236 @@
+<!-- z-[9999] garantiza que flote por encima de cualquier modal de la app (z-50, z-[70], etc.) -->
+<ng-container *ngIf="visible">
+  <!-- Backdrop — z-[99998] garantiza estar sobre cualquier modal de la app -->
+  <div
+    class="fixed inset-0 z-[99998] bg-black/30 backdrop-blur-[2px]"
+    (click)="close()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Panel calculadora — z-[99999] sobre el backdrop -->
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-label="Calculadora"
+    class="fixed left-1/2 top-1/2 z-[99999] -translate-x-1/2 -translate-y-1/2 w-72 select-none rounded-2xl bg-zinc-900 shadow-2xl ring-1 ring-white/10 overflow-hidden"
+  >
+    <!-- ── Header con título y cerrar ── -->
+    <div class="flex items-center justify-between px-4 pt-3 pb-1">
+      <span class="text-xs font-medium text-zinc-500 tracking-widest uppercase"
+        >Calculadora</span
+      >
+      <button
+        type="button"
+        (click)="close()"
+        class="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-zinc-400 hover:bg-zinc-600 hover:text-white transition-colors"
+        aria-label="Cerrar calculadora"
+      >
+        <svg
+          class="h-3 w-3"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Pantalla ── -->
+    <div class="px-4 pb-3 pt-1 text-right">
+      <!-- Operación en curso -->
+      <p class="h-5 text-sm text-zinc-500 font-mono">
+        <span *ngIf="operand1 && activeOperator"
+          >{{ operand1 }} {{ activeOperator }}</span
+        >
+        &nbsp;
+      </p>
+      <!-- Número principal -->
+      <p
+        class="text-4xl font-light tracking-tight text-white font-mono truncate"
+        [class.text-2xl]="formattedDisplay.length > 10"
+        [class.text-red-400]="display === 'Error'"
+      >
+        {{ formattedDisplay }}
+      </p>
+    </div>
+
+    <!-- ── Teclado ── -->
+    <div class="grid grid-cols-4 gap-px bg-zinc-700 border-t border-zinc-700">
+      <!-- Fila 1: C  +/-  %  ÷ -->
+      <button
+        type="button"
+        (click)="clear()"
+        class="calc-btn bg-zinc-500 text-white hover:bg-zinc-400"
+      >
+        C
+      </button>
+      <button
+        type="button"
+        (click)="toggleSign()"
+        class="calc-btn bg-zinc-500 text-white hover:bg-zinc-400"
+      >
+        +/−
+      </button>
+      <button
+        type="button"
+        (click)="percent()"
+        class="calc-btn bg-zinc-500 text-white hover:bg-zinc-400"
+      >
+        %
+      </button>
+      <button
+        type="button"
+        (click)="setOperator('÷')"
+        [class.ring-2]="activeOperator === '÷'"
+        class="calc-btn bg-amber-500 text-white hover:bg-amber-400 ring-amber-300"
+      >
+        ÷
+      </button>
+
+      <!-- Fila 2: 7  8  9  × -->
+      <button
+        type="button"
+        (click)="appendDigit('7')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        7
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('8')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        8
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('9')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        9
+      </button>
+      <button
+        type="button"
+        (click)="setOperator('×')"
+        [class.ring-2]="activeOperator === '×'"
+        class="calc-btn bg-amber-500 text-white hover:bg-amber-400 ring-amber-300"
+      >
+        ×
+      </button>
+
+      <!-- Fila 3: 4  5  6  − -->
+      <button
+        type="button"
+        (click)="appendDigit('4')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        4
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('5')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        5
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('6')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        6
+      </button>
+      <button
+        type="button"
+        (click)="setOperator('−')"
+        [class.ring-2]="activeOperator === '−'"
+        class="calc-btn bg-amber-500 text-white hover:bg-amber-400 ring-amber-300"
+      >
+        −
+      </button>
+
+      <!-- Fila 4: 1  2  3  + -->
+      <button
+        type="button"
+        (click)="appendDigit('1')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        1
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('2')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        2
+      </button>
+      <button
+        type="button"
+        (click)="appendDigit('3')"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        3
+      </button>
+      <button
+        type="button"
+        (click)="setOperator('+')"
+        [class.ring-2]="activeOperator === '+'"
+        class="calc-btn bg-amber-500 text-white hover:bg-amber-400 ring-amber-300"
+      >
+        +
+      </button>
+
+      <!-- Fila 5: 0 (doble ancho)  .  = -->
+      <button
+        type="button"
+        (click)="appendDigit('0')"
+        class="calc-btn col-span-2 bg-zinc-800 text-white hover:bg-zinc-700 justify-start pl-6"
+      >
+        0
+      </button>
+      <button
+        type="button"
+        (click)="appendDot()"
+        class="calc-btn bg-zinc-800 text-white hover:bg-zinc-700"
+      >
+        ,
+      </button>
+      <button
+        type="button"
+        (click)="calculate()"
+        class="calc-btn bg-amber-500 text-white hover:bg-amber-400"
+      >
+        =
+      </button>
+    </div>
+
+    <!-- ── Fila extra: Backspace ── -->
+    <div class="bg-zinc-900 px-4 py-2.5">
+      <button
+        type="button"
+        (click)="backspace()"
+        class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-800 py-2 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors"
+      >
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+          <line x1="18" y1="9" x2="12" y2="15" />
+          <line x1="12" y1="9" x2="18" y2="15" />
+        </svg>
+        Borrar
+      </button>
+    </div>
+  </div>
+</ng-container>
