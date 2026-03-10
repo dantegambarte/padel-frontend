@@ -1,43 +1,54 @@
 <!-- Toolbar — Mobile First responsive -->
 <header class="sticky top-0 z-40 border-b border-border bg-card shadow-sm">
   <div class="flex h-16 items-center gap-4 px-4 md:px-6">
-
     <!-- Hamburger button — visible on mobile only -->
     <button
       type="button"
-      class="lg:hidden p-2 rounded-md text-card-foreground hover:bg-muted transition-colors
-             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="lg:hidden p-2 rounded-md text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       (click)="toggleMenu.emit()"
       aria-label="Open menu"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
       </svg>
     </button>
 
     <!-- Page title -->
-    <h2 class="text-lg md:text-xl font-semibold text-card-foreground">{{ title }}</h2>
+    <h2 class="text-lg md:text-xl font-semibold text-card-foreground">
+      {{ title }}
+    </h2>
 
     <div class="ml-auto flex items-center gap-3">
-
       <!-- Search — hidden en mobile, visible en md+ -->
       <div class="relative hidden md:block">
         <!-- Search icon -->
         <svg
           class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.3-4.3"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
         <input
           type="search"
           placeholder="Buscar..."
-          class="flex h-9 w-64 rounded-md border border-input bg-background pl-9 pr-3 py-1
-                 text-sm ring-offset-background placeholder:text-muted-foreground
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                 focus-visible:ring-offset-2"
+          class="flex h-9 w-64 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
       </div>
 
@@ -46,19 +57,25 @@
         <button
           type="button"
           (click)="toggleNotif()"
-          class="relative inline-flex items-center justify-center rounded-md
-                 h-9 w-9 text-card-foreground hover:bg-muted transition-colors
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="relative inline-flex items-center justify-center rounded-md h-9 w-9 text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <!-- Bell icon -->
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          <svg
+            class="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
           </svg>
           <!-- Badge contador -->
-          <span class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center
-                       rounded-full bg-destructive text-destructive-foreground text-xs font-medium">
+          <span
+            class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-medium"
+          >
             3
           </span>
         </button>
@@ -67,47 +84,152 @@
         <div
           *ngIf="isNotifOpen"
           (click)="$event.stopPropagation()"
-          class="absolute right-0 top-full mt-1 w-80 z-50
-                 rounded-md border border-border bg-popover text-popover-foreground shadow-md
-                 animate-in fade-in-0 zoom-in-95"
+          class="absolute right-0 top-full mt-1 w-80 z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
         >
-            <div class="p-2">
-              <p class="px-2 py-1.5 text-sm font-semibold">Notificaciones</p>
-              <hr class="my-1 border-border">
+          <div class="p-2">
+            <p class="px-2 py-1.5 text-sm font-semibold">Notificaciones</p>
+            <hr class="my-1 border-border" />
 
-              <!-- Notif 1 -->
-              <div class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer">
-                <p class="text-sm font-medium">Stock bajo: Pelotas</p>
-                <p class="text-xs text-muted-foreground">Quedan solo 5 unidades en inventario</p>
-              </div>
-              <!-- Notif 2 -->
-              <div class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer">
-                <p class="text-sm font-medium">Nuevo turno reservado</p>
-                <p class="text-xs text-muted-foreground">Cancha 2 - 18:00hs</p>
-              </div>
-              <!-- Notif 3 -->
-              <div class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer">
-                <p class="text-sm font-medium">Recordatorio de cierre</p>
-                <p class="text-xs text-muted-foreground">No olvides cerrar la caja del día</p>
-              </div>
-
+            <!-- Notif 1 -->
+            <div
+              class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer"
+            >
+              <p class="text-sm font-medium">Stock bajo: Pelotas</p>
+              <p class="text-xs text-muted-foreground">
+                Quedan solo 5 unidades en inventario
+              </p>
+            </div>
+            <!-- Notif 2 -->
+            <div
+              class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer"
+            >
+              <p class="text-sm font-medium">Nuevo turno reservado</p>
+              <p class="text-xs text-muted-foreground">Cancha 2 - 18:00hs</p>
+            </div>
+            <!-- Notif 3 -->
+            <div
+              class="flex flex-col items-start gap-1 rounded-sm p-3 hover:bg-accent/10 cursor-pointer"
+            >
+              <p class="text-sm font-medium">Recordatorio de cierre</p>
+              <p class="text-xs text-muted-foreground">
+                No olvides cerrar la caja del día
+              </p>
             </div>
           </div>
+        </div>
       </div>
 
+      <!-- Calculadora -->
+      <button
+        type="button"
+        (click)="calcService.toggle()"
+        title="Calculadora (Alt+C)"
+        class="relative inline-flex items-center justify-center rounded-md h-9 w-9 text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Abrir calculadora"
+      >
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="4" y="2" width="16" height="20" rx="2" />
+          <line x1="8" y1="6" x2="16" y2="6" />
+          <line
+            x1="8"
+            y1="10"
+            x2="8"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="10"
+            x2="12"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="10"
+            x2="16"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="8"
+            y1="14"
+            x2="8"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="14"
+            x2="12"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="14"
+            x2="16"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="8"
+            y1="18"
+            x2="8"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="18"
+            x2="12"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="18"
+            x2="16"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
       <!-- User avatar pill -->
-      <div class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5">
+      <div
+        class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5"
+      >
         <!-- Avatar con iniciales -->
-        <div class="flex h-7 w-7 items-center justify-center rounded-full
-                    bg-primary text-primary-foreground text-xs font-semibold">
+        <div
+          class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+        >
           {{ userInitials }}
         </div>
         <!-- Nombre — oculto en tablets, visible en lg+ -->
         <div class="hidden lg:block">
-          <p class="text-sm font-medium text-card-foreground">{{ currentUser?.fullName }}</p>
+          <p class="text-sm font-medium text-card-foreground">
+            {{ currentUser?.fullName }}
+          </p>
         </div>
       </div>
-
     </div>
   </div>
 </header>

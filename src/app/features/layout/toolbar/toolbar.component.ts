@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { User } from '../../../core/models/user.model';
+import { CalculatorService } from '../../../core/services/calculator.service';
 
 @Component({
   selector: 'app-toolbar',
@@ -12,6 +13,8 @@ export class ToolbarComponent {
   @Output() toggleMenu = new EventEmitter<void>();
 
   isNotifOpen = false;
+
+  constructor(public calcService: CalculatorService) {}
 
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
