@@ -101,18 +101,39 @@
 
               <!-- Actions -->
               <td class="px-4 py-3 text-right">
-                <button
-                  *ngIf="canToggle(user)"
-                  (click)="toggleStatus(user)"
-                  [disabled]="togglingId === user.id"
-                  class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5
-                         text-xs font-medium text-foreground shadow-sm transition-colors
-                         hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
-                  <ng-container *ngIf="togglingId === user.id">Guardando…</ng-container>
-                  <ng-container *ngIf="togglingId !== user.id">
-                    {{ user.isActive ? 'Desactivar' : 'Activar' }}
-                  </ng-container>
-                </button>
+                <div class="inline-flex items-center gap-2">
+                  <!-- Edit -->
+                  <button
+                    (click)="openEditModal(user)"
+                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5
+                           text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted">
+                    Editar
+                  </button>
+                  <!-- Toggle status -->
+                  <button
+                    *ngIf="canToggle(user)"
+                    (click)="toggleStatus(user)"
+                    [disabled]="togglingId === user.id"
+                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5
+                           text-xs font-medium text-foreground shadow-sm transition-colors
+                           hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
+                    <ng-container *ngIf="togglingId === user.id">Guardando…</ng-container>
+                    <ng-container *ngIf="togglingId !== user.id">
+                      {{ user.isActive ? 'Desactivar' : 'Activar' }}
+                    </ng-container>
+                  </button>
+                  <!-- Delete -->
+                  <button
+                    *ngIf="canToggle(user)"
+                    (click)="deleteUser(user)"
+                    [disabled]="deletingId === user.id"
+                    class="inline-flex items-center rounded-md border border-destructive/30 bg-background px-3 py-1.5
+                           text-xs font-medium text-destructive shadow-sm transition-colors
+                           hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50">
+                    <ng-container *ngIf="deletingId === user.id">Eliminando…</ng-container>
+                    <ng-container *ngIf="deletingId !== user.id">Eliminar</ng-container>
+                  </button>
+                </div>
               </td>
 
             </tr>
@@ -139,7 +160,121 @@
     Nuevo Usuario
   </button>
 
-  <!-- ── Modal — Crear Empleado ─────────────────────────────────────────── -->
+  <!-- ── Modal — Editar Usuario ───────────────────────────────────────── -->
+  <ng-container *ngIf="isEditOpen && editingUser">
+
+    <!-- Backdrop -->
+    <div
+      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+      (click)="closeEditModal()">
+    </div>
+
+    <!-- Panel -->
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        class="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
+        (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="border-b border-border p-6">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+              <svg class="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-card-foreground">Editar Usuario</h3>
+              <p class="text-sm text-muted-foreground">{{ editingUser.username }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="space-y-4 p-6">
+
+          <!-- Error banner -->
+          <div
+            *ngIf="editFormError"
+            class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {{ editFormError }}
+          </div>
+
+          <!-- Full name -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="edit-fullname">
+              Nombre Completo
+            </label>
+            <input
+              id="edit-fullname"
+              type="text"
+              [(ngModel)]="editForm.fullName"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+          </div>
+
+          <!-- New password (optional) -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="edit-password">
+              Nueva Contraseña <span class="text-muted-foreground font-normal">(opcional)</span>
+            </label>
+            <input
+              id="edit-password"
+              type="password"
+              [(ngModel)]="editForm.password"
+              placeholder="Dejar vacío para no cambiar"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+          </div>
+
+          <!-- Role -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="edit-role">
+              Rol
+            </label>
+            <select
+              id="edit-role"
+              [(ngModel)]="editForm.role"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+              <option *ngFor="let opt of ROLE_OPTIONS" [value]="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 border-t border-border px-6 py-4">
+          <button
+            type="button"
+            (click)="closeEditModal()"
+            [disabled]="isEditSubmitting"
+            class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium
+                   text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="submitEdit()"
+            [disabled]="isEditSubmitting"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground
+                   shadow-sm transition-colors hover:bg-primary/90
+                   disabled:cursor-not-allowed disabled:opacity-50">
+            <ng-container *ngIf="isEditSubmitting">Guardando…</ng-container>
+            <ng-container *ngIf="!isEditSubmitting">Guardar Cambios</ng-container>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ── Modal — Crear Usuario ─────────────────────────────────────────── -->
   <ng-container *ngIf="isDialogOpen">
 
     <!-- Backdrop -->
@@ -167,8 +302,8 @@
               </svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-card-foreground">Crear Nuevo Empleado</h3>
-              <p class="text-sm text-muted-foreground">Registra un nuevo empleado en el sistema</p>
+              <h3 class="text-lg font-semibold text-card-foreground">Crear Nuevo Usuario</h3>
+              <p class="text-sm text-muted-foreground">Registrá un empleado o administrador en el sistema</p>
             </div>
           </div>
         </div>
@@ -242,6 +377,25 @@
                      placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
           </div>
 
+          <!-- Rol -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="dlg-role">
+              Rol
+            </label>
+            <select
+              id="dlg-role"
+              [(ngModel)]="form.role"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+              <option *ngFor="let opt of ROLE_OPTIONS" [value]="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+            <p class="text-xs text-muted-foreground">
+              Los Administradores tienen acceso total al sistema.
+            </p>
+          </div>
+
         </div>
 
         <!-- Footer -->
@@ -262,7 +416,7 @@
                    shadow-sm transition-colors hover:bg-primary/90
                    disabled:cursor-not-allowed disabled:opacity-50">
             <ng-container *ngIf="isSubmitting">Creando…</ng-container>
-            <ng-container *ngIf="!isSubmitting">Crear Empleado</ng-container>
+            <ng-container *ngIf="!isSubmitting">Crear Usuario</ng-container>
           </button>
         </div>
 
