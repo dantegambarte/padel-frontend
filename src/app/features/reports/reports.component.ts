@@ -14,7 +14,7 @@ import {
 import { ToastService } from '../../core/services/toast.service';
 
 interface Period {
-  id:    string;
+  id: string;
   label: string;
 }
 
@@ -23,26 +23,25 @@ interface Period {
   templateUrl: './reports.component.html',
 })
 export class ReportsComponent implements OnInit {
-
   readonly periods: Period[] = [
-    { id: 'semana',    label: 'Esta Semana' },
-    { id: 'mes',       label: 'Este Mes'    },
-    { id: 'trimestre', label: 'Trimestre'   },
-    { id: 'semestre',  label: 'Semestre'    },
-    { id: 'anual',     label: 'Anual'       },
+    { id: 'semana', label: 'Esta Semana' },
+    { id: 'mes', label: 'Este Mes' },
+    { id: 'trimestre', label: 'Trimestre' },
+    { id: 'semestre', label: 'Semestre' },
+    { id: 'anual', label: 'Anual' },
   ];
   selectedPeriod = 'mes';
 
   dateFrom = '';
-  dateTo   = '';
+  dateTo = '';
 
-  isLoading    = true;
-  isExporting  = false;
+  isLoading = true;
+  isExporting = false;
 
-  revenueData:    RevenueDay[]            = [];
-  paymentData:    PaymentBreakdown | null = null;
-  productRanking: ProductRanking[]        = [];
-  transactions:   TransactionExport[]     = [];
+  revenueData: RevenueDay[] = [];
+  paymentData: PaymentBreakdown | null = null;
+  productRanking: ProductRanking[] = [];
+  transactions: TransactionExport[] = [];
 
   barChartType = 'bar' as const;
   barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
@@ -51,13 +50,19 @@ export class ReportsComponent implements OnInit {
     maintainAspectRatio: false,
     plugins: {
       legend: { position: 'top' },
-      tooltip: { callbacks: { label: (ctx: any) => ` $${ctx.parsed.y.toLocaleString('es-AR')}` } },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => ` $${ctx.parsed.y.toLocaleString('es-AR')}`,
+        },
+      },
     },
     scales: {
       x: { grid: { display: false } },
       y: {
         beginAtZero: true,
-        ticks: { callback: (v: any) => `$${Number(v).toLocaleString('es-AR')}` },
+        ticks: {
+          callback: (v: any) => `$${Number(v).toLocaleString('es-AR')}`,
+        },
       },
     },
   };
@@ -72,10 +77,10 @@ export class ReportsComponent implements OnInit {
       tooltip: {
         callbacks: {
           label: (ctx: any) => {
-            const data  = ctx.dataset.data as number[];
+            const data = ctx.dataset.data as number[];
             const total = data.reduce((a, b) => a + (b as number), 0);
             const value = ctx.parsed as number;
-            const pct   = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+            const pct = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
             return ` ${ctx.label}: $${value.toLocaleString('es-AR')} (${pct}%)`;
           },
         },
@@ -93,13 +98,16 @@ export class ReportsComponent implements OnInit {
   }
 
   get totalRevenue(): number {
-    return this.revenueData.reduce((s, d) => s + d.bookings + d.sales, 0);
+    return this.revenueData.reduce(
+      (s, d) => s + (Number(d.bookings) || 0) + (Number(d.sales) || 0),
+      0,
+    );
   }
   get totalAlquileres(): number {
-    return this.revenueData.reduce((s, d) => s + d.bookings, 0);
+    return this.revenueData.reduce((s, d) => s + (Number(d.bookings) || 0), 0);
   }
   get totalProductos(): number {
-    return this.revenueData.reduce((s, d) => s + d.sales, 0);
+    return this.revenueData.reduce((s, d) => s + (Number(d.sales) || 0), 0);
   }
   get pctAlquileres(): string {
     return this.totalRevenue > 0
@@ -117,13 +125,16 @@ export class ReportsComponent implements OnInit {
       : 0;
   }
   get transactionTotal(): number {
-    return this.transactions.reduce((s, t) => s + t.total, 0);
+    return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
   }
   get rankingTotalAmount(): number {
-    return this.productRanking.reduce((s, p) => s + p.total, 0);
+    return this.productRanking.reduce((s, p) => s + (Number(p.total) || 0), 0);
   }
   get rankingTotalUnidades(): number {
-    return this.productRanking.reduce((s, p) => s + p.unidades, 0);
+    return this.productRanking.reduce(
+      (s, p) => s + (Number(p.unidades) || 0),
+      0,
+    );
   }
 
   selectPeriod(id: string): void {
@@ -133,67 +144,80 @@ export class ReportsComponent implements OnInit {
   }
 
   private loadAll(): void {
-    const range   = this.getDateRange(this.selectedPeriod);
+    const range = this.getDateRange(this.selectedPeriod);
     this.dateFrom = range.from;
-    this.dateTo   = range.to;
+    this.dateTo = range.to;
     const groupBy = this.getGroupBy(this.selectedPeriod);
 
     this.isLoading = true;
 
     forkJoin({
-      revenue:      this.reportsService.getRevenue(range.from, range.to, groupBy).pipe(catchError(() => of([]))),
-      payment:      this.reportsService.getPaymentMethods(range.from, range.to).pipe(catchError(() => of(null))),
-      ranking:      this.reportsService.getProductsRanking(range.from, range.to).pipe(catchError(() => of([]))),
-      transactions: this.reportsService.getTransactionsExport(range.from, range.to).pipe(catchError(() => of([]))),
-    }).pipe(
-      finalize(() => (this.isLoading = false)),
-    ).subscribe({
-      next: ({ revenue, payment, ranking, transactions }) => {
-        this.revenueData    = revenue      as RevenueDay[];
-        this.paymentData    = payment      as PaymentBreakdown | null;
-        this.productRanking = ranking      as ProductRanking[];
-        this.transactions   = transactions as TransactionExport[];
-        this.buildCharts();
-      },
-      error: () => {
-        this.toast.error('Error al cargar reportes', 'Intente recargar la página');
-      },
-    });
+      revenue: this.reportsService
+        .getRevenue(range.from, range.to, groupBy)
+        .pipe(catchError(() => of([]))),
+      payment: this.reportsService
+        .getPaymentMethods(range.from, range.to)
+        .pipe(catchError(() => of(null))),
+      ranking: this.reportsService
+        .getProductsRanking(range.from, range.to)
+        .pipe(catchError(() => of([]))),
+      transactions: this.reportsService
+        .getTransactionsExport(range.from, range.to)
+        .pipe(catchError(() => of([]))),
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: ({ revenue, payment, ranking, transactions }) => {
+          this.revenueData = revenue as RevenueDay[];
+          this.paymentData = payment as PaymentBreakdown | null;
+          this.productRanking = ranking as ProductRanking[];
+          this.transactions = transactions as TransactionExport[];
+          this.buildCharts();
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cargar reportes',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   private buildCharts(): void {
-    const style        = getComputedStyle(document.documentElement);
+    const style = getComputedStyle(document.documentElement);
     const primaryColor = style.getPropertyValue('--primary').trim();
-    const accentColor  = style.getPropertyValue('--accent').trim();
+    const accentColor = style.getPropertyValue('--accent').trim();
 
     this.barChartData = {
-      labels: this.revenueData.map(d => d.period),
+      labels: this.revenueData.map((d) => d.period),
       datasets: [
         {
-          data:            this.revenueData.map(d => d.bookings),
-          label:           'Alquileres',
+          data: this.revenueData.map((d) => d.bookings),
+          label: 'Alquileres',
           backgroundColor: primaryColor,
-          borderRadius:    { topLeft: 4, topRight: 4 },
+          borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
-          data:            this.revenueData.map(d => d.sales),
-          label:           'Productos',
+          data: this.revenueData.map((d) => d.sales),
+          label: 'Productos',
           backgroundColor: accentColor,
-          borderRadius:    { topLeft: 4, topRight: 4 },
+          borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
     };
 
     this.pieChartData = {
       labels: ['Efectivo', 'Transferencia'],
-      datasets: [{
-        data:            [
-          this.paymentData?.efectivo?.amount      ?? 0,
-          this.paymentData?.transferencia?.amount ?? 0,
-        ],
-        backgroundColor: [accentColor, primaryColor],
-        hoverOffset:     8,
-      }],
+      datasets: [
+        {
+          data: [
+            this.paymentData?.efectivo?.amount ?? 0,
+            this.paymentData?.transferencia?.amount ?? 0,
+          ],
+          backgroundColor: [accentColor, primaryColor],
+          hoverOffset: 8,
+        },
+      ],
     };
   }
 
@@ -206,24 +230,49 @@ export class ReportsComponent implements OnInit {
     }
 
     this.isExporting = true;
-    this.reportsService.getTransactionsExport(this.dateFrom, this.dateTo).pipe(
-      finalize(() => (this.isExporting = false)),
-    ).subscribe({
-      next:  (data) => this.triggerCsvDownload(data),
-      error: ()     => this.toast.error('Error al exportar', 'No se pudo generar el reporte'),
-    });
+    this.reportsService
+      .getTransactionsExport(this.dateFrom, this.dateTo)
+      .pipe(finalize(() => (this.isExporting = false)))
+      .subscribe({
+        next: (data) => this.triggerCsvDownload(data),
+        error: () =>
+          this.toast.error(
+            'Error al exportar',
+            'No se pudo generar el reporte',
+          ),
+      });
   }
 
   private triggerCsvDownload(transactions: TransactionExport[]): void {
-    const headers = ['Fecha', 'Hora', 'Tipo', 'Concepto', 'Efectivo', 'Transferencia', 'Total', 'Registrado por'];
-    const rows    = transactions.map(tx => [tx.date, tx.time, tx.type, tx.concept, tx.cash, tx.transfer, tx.total, tx.createdBy]);
+    const headers = [
+      'Fecha',
+      'Hora',
+      'Tipo',
+      'Concepto',
+      'Efectivo',
+      'Transferencia',
+      'Total',
+      'Registrado por',
+    ];
+    const rows = transactions.map((tx) => [
+      tx.date,
+      tx.time,
+      tx.type,
+      tx.concept,
+      tx.cash,
+      tx.transfer,
+      tx.total,
+      tx.createdBy,
+    ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.join(','))
+      .map((row) => row.join(','))
       .join('\n');
 
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
     const filename = `reporte_financiero_${new Date().toISOString().split('T')[0]}.csv`;
@@ -235,13 +284,16 @@ export class ReportsComponent implements OnInit {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    this.toast.success('Reporte descargado correctamente', 'El archivo CSV se ha descargado exitosamente');
+    this.toast.success(
+      'Reporte descargado correctamente',
+      'El archivo CSV se ha descargado exitosamente',
+    );
   }
 
   private getDateRange(period: string): { from: string; to: string } {
     const today = new Date();
-    const to    = today.toISOString().split('T')[0];
-    let   from: Date;
+    const to = today.toISOString().split('T')[0];
+    let from: Date;
 
     switch (period) {
       case 'semana':
@@ -271,16 +323,22 @@ export class ReportsComponent implements OnInit {
 
   private getGroupBy(period: string): GroupBy {
     switch (period) {
-      case 'semana':    return 'day';
-      case 'mes':       return 'week';
-      case 'trimestre': return 'week';
-      case 'semestre':  return 'month';
-      case 'anual':     return 'month';
-      default:          return 'week';
+      case 'semana':
+        return 'day';
+      case 'mes':
+        return 'week';
+      case 'trimestre':
+        return 'week';
+      case 'semestre':
+        return 'month';
+      case 'anual':
+        return 'month';
+      default:
+        return 'week';
     }
   }
 
-  fmt(value: number): string {
-    return value.toLocaleString('es-AR');
+  fmt(value: number | string | null | undefined): string {
+    return (Number(value) || 0).toLocaleString('es-AR');
   }
 }
