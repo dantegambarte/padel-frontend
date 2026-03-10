@@ -1,1 +1,142 @@
-/* You can add global styles to this file, and also import other style files */
+// ─────────────────────────────────────────────────────────────────────────────
+//   TAILWIND v3 — entry point
+// ─────────────────────────────────────────────────────────────────────────────
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   SCSS VARIABLES — Design tokens como variables SCSS
+// ─────────────────────────────────────────────────────────────────────────────
+$color-primary: oklch(0.42 0.15 281);
+$color-accent: oklch(0.55 0.16 155);
+$color-destructive: oklch(0.55 0.22 25);
+$color-background: oklch(0.98 0.005 264);
+$color-foreground: oklch(0.2 0.01 264);
+$color-card: oklch(1 0 0);
+$color-border: oklch(0.88 0.01 264);
+$color-muted: oklch(0.95 0.01 264);
+$color-sidebar: oklch(0.25 0.02 281);
+$radius: 0.5rem;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   DESIGN TOKENS — Paleta PadelSys
+//   Deep Purple/Indigo (primary) + Emerald Green (accent)
+// ─────────────────────────────────────────────────────────────────────────────
+:root {
+  --background: #{$color-background};
+  --foreground: #{$color-foreground};
+
+  --card: #{$color-card};
+  --card-foreground: #{$color-foreground};
+
+  --popover: #{$color-card};
+  --popover-foreground: #{$color-foreground};
+
+  // Deep Purple/Indigo — botones primarios, ring, logo
+  --primary: #{$color-primary};
+  --primary-foreground: oklch(0.98 0 0);
+
+  // Emerald Green — logo sidebar, badge accent
+  --accent: #{$color-accent};
+  --accent-foreground: oklch(0.98 0 0);
+
+  --secondary: oklch(0.92 0.01 264);
+  --secondary-foreground: #{$color-foreground};
+
+  --muted: #{$color-muted};
+  --muted-foreground: oklch(0.5 0.01 264);
+
+  // Red — errores, destructivo
+  --destructive: #{$color-destructive};
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: #{$color-border};
+  --input: #{$color-border};
+  --ring: #{$color-primary};
+
+  // Chart colors — módulo de Reportes
+  --chart-1: #{$color-accent};
+  --chart-2: #{$color-primary};
+  --chart-3: oklch(0.65 0.18 200);
+  --chart-4: oklch(0.7 0.14 85);
+  --chart-5: oklch(0.6 0.2 320);
+
+  --radius: #{$radius};
+
+  // Sidebar oscuro con texto claro — sidenav de la app
+  --sidebar: #{$color-sidebar};
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: #{$color-primary};
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.03 281);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.32 0.03 281);
+  --sidebar-ring: #{$color-accent};
+}
+
+.dark {
+  --background: oklch(0.15 0.01 281);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.2 0.02 281);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.2 0.02 281);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.55 0.18 281);
+  --primary-foreground: oklch(0.98 0 0);
+  --accent: oklch(0.6 0.18 155);
+  --accent-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.25 0.02 281);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.25 0.02 281);
+  --muted-foreground: oklch(0.6 0.01 264);
+  --destructive: oklch(0.5 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.02 281);
+  --input: oklch(0.3 0.02 281);
+  --ring: oklch(0.55 0.18 281);
+  --chart-1: oklch(0.6 0.18 155);
+  --chart-2: oklch(0.55 0.18 281);
+  --chart-3: oklch(0.7 0.2 200);
+  --chart-4: oklch(0.75 0.16 85);
+  --chart-5: oklch(0.65 0.22 320);
+  --sidebar: oklch(0.18 0.02 281);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.55 0.18 281);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.25 0.02 281);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.25 0.02 281);
+  --sidebar-ring: oklch(0.6 0.18 155);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   BASE STYLES
+// ─────────────────────────────────────────────────────────────────────────────
+@layer base {
+  * {
+    @apply border-border;
+    outline-color: var(--ring);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  // Scrollbar custom
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+}
