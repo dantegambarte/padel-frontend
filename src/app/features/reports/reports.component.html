@@ -1,25 +1,25 @@
 <!-- ─── REPORTES PAGE ─────────────────────────────────────────────────────────── -->
 <div class="p-4 md:p-6 space-y-6">
-
   <!-- ═══════════════════════════════════════════════════════════════════════════
        FILTROS DE PERÍODO
        Botones "Esta Semana / Este Mes / Trimestre / Semestre / Anual"
        variant="default" (activo) vs variant="outline" (inactivo)
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+  <div
+    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+  >
     <div class="p-6">
       <div class="flex flex-wrap gap-2">
         <button
           *ngFor="let period of periods"
           type="button"
           (click)="selectPeriod(period.id)"
-          [ngClass]="selectedPeriod === period.id
-            ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-            : 'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground'"
-          class="inline-flex h-10 items-center justify-center rounded-md px-4 text-sm
-                 font-medium transition-colors
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                 focus-visible:ring-offset-2"
+          [ngClass]="
+            selectedPeriod === period.id
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground'
+          "
+          class="inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {{ period.label }}
         </button>
@@ -32,23 +32,34 @@
        Ingresos Totales / Alquileres / Productos / Ticket Promedio
   ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-
     <!-- Loading skeleton -->
     <ng-container *ngIf="isLoading; else kpiLoaded">
-      <div *ngFor="let i of [1,2,3,4]"
-           class="h-28 animate-pulse rounded-lg border border-border bg-muted shadow-md"></div>
+      <div
+        *ngFor="let i of [1, 2, 3, 4]"
+        class="h-28 animate-pulse rounded-lg border border-border bg-muted shadow-md"
+      ></div>
     </ng-container>
 
     <ng-template #kpiLoaded>
-
       <!-- Ingresos Totales -->
-      <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div
+        class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+      >
         <div class="p-6 pb-2">
-          <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          <h4
+            class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
             Ingresos Totales
           </h4>
@@ -60,52 +71,91 @@
       </div>
 
       <!-- Alquileres -->
-      <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div
+        class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+      >
         <div class="p-6 pb-2">
-          <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-              <polyline points="17 6 23 6 23 12"/>
+          <h4
+            class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
             </svg>
             Alquileres
           </h4>
         </div>
         <div class="px-6 pb-6">
           <p class="text-2xl font-bold">${{ fmt(totalAlquileres) }}</p>
-          <p class="text-xs text-muted-foreground">{{ pctAlquileres }}% del total</p>
+          <p class="text-xs text-muted-foreground">
+            {{ pctAlquileres }}% del total
+          </p>
         </div>
       </div>
 
       <!-- Productos -->
-      <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div
+        class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+      >
         <div class="p-6 pb-2">
-          <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <h4
+            class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+          >
             <!-- Package icon -->
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+              />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
             Productos
           </h4>
         </div>
         <div class="px-6 pb-6">
           <p class="text-2xl font-bold">${{ fmt(totalProductos) }}</p>
-          <p class="text-xs text-muted-foreground">{{ pctProductos }}% del total</p>
+          <p class="text-xs text-muted-foreground">
+            {{ pctProductos }}% del total
+          </p>
         </div>
       </div>
 
       <!-- Ticket Promedio -->
-      <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div
+        class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+      >
         <div class="p-6 pb-2">
-          <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
+          <h4
+            class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+              <line x1="1" y1="10" x2="23" y2="10" />
             </svg>
             Ticket Promedio
           </h4>
@@ -115,20 +165,23 @@
           <p class="text-xs text-accent">+8% vs período anterior</p>
         </div>
       </div>
-
     </ng-template>
-  </div><!-- /KPI cards -->
+  </div>
+  <!-- /KPI cards -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        GRÁFICOS — Barras (Ingresos Categoría) + Pie (Métodos de Pago)
        grid lg:grid-cols-2 — igual que el prototipo
   ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid gap-4 lg:grid-cols-2">
-
     <!-- ── Gráfico de Barras: Ingresos por Categoría ─────────────────────────── -->
-    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
       <div class="p-6">
-        <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <h3
+          class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+        >
           Ingresos por Categoría
         </h3>
         <p class="mt-1.5 text-sm text-muted-foreground">
@@ -136,8 +189,11 @@
         </p>
       </div>
       <div class="px-6 pb-6">
-        <div *ngIf="isLoading" class="h-[300px] animate-pulse rounded-lg bg-muted"></div>
-        <div *ngIf="!isLoading" style="height: 300px; position: relative;">
+        <div
+          *ngIf="isLoading"
+          class="h-[300px] animate-pulse rounded-lg bg-muted"
+        ></div>
+        <div *ngIf="!isLoading" style="height: 300px; position: relative">
           <canvas
             baseChart
             [data]="barChartData"
@@ -149,9 +205,13 @@
     </div>
 
     <!-- ── Gráfico de Pie: Métodos de Pago ───────────────────────────────────── -->
-    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
       <div class="p-6">
-        <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <h3
+          class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+        >
           Métodos de Pago
         </h3>
         <p class="mt-1.5 text-sm text-muted-foreground">
@@ -159,11 +219,17 @@
         </p>
       </div>
       <div class="px-6 pb-6">
-        <div *ngIf="isLoading" class="h-[300px] animate-pulse rounded-lg bg-muted"></div>
+        <div
+          *ngIf="isLoading"
+          class="h-[300px] animate-pulse rounded-lg bg-muted"
+        ></div>
 
         <ng-container *ngIf="!isLoading">
           <!-- Canvas del pie chart -->
-          <div class="flex items-center justify-center" style="height: 300px; position: relative;">
+          <div
+            class="flex items-center justify-center"
+            style="height: 300px; position: relative"
+          >
             <canvas
               baseChart
               [data]="pieChartData"
@@ -175,14 +241,15 @@
           <!-- Leyenda manual debajo del pie: colored dot + label + monto -->
           <!-- Traducción exacta de la leyenda del prototipo -->
           <div class="mt-4 space-y-2">
-
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <!-- Dot en color accent (Efectivo) — clase estática → Tailwind la incluye -->
                 <div class="h-3 w-3 rounded-full bg-accent"></div>
                 <span class="text-sm">Efectivo</span>
               </div>
-              <span class="font-semibold">${{ fmt(paymentData?.efectivo?.amount ?? 0) }}</span>
+              <span class="font-semibold"
+                >${{ fmt(paymentData?.efectivo?.amount ?? 0) }}</span
+              >
             </div>
 
             <div class="flex items-center justify-between">
@@ -191,22 +258,27 @@
                 <div class="h-3 w-3 rounded-full bg-primary"></div>
                 <span class="text-sm">Transferencia</span>
               </div>
-              <span class="font-semibold">${{ fmt(paymentData?.transferencia?.amount ?? 0) }}</span>
+              <span class="font-semibold"
+                >${{ fmt(paymentData?.transferencia?.amount ?? 0) }}</span
+              >
             </div>
-
           </div>
         </ng-container>
       </div>
     </div>
-
-  </div><!-- /charts grid -->
+  </div>
+  <!-- /charts grid -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        RANKING DE PRODUCTOS VENDIDOS
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+  <div
+    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+  >
     <div class="p-6">
-      <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+      <h3
+        class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+      >
         Ranking de Productos Vendidos
       </h3>
       <p class="mt-1.5 text-sm text-muted-foreground">
@@ -214,87 +286,110 @@
       </p>
     </div>
     <div class="px-6 pb-6">
-
       <!-- Loading skeleton -->
       <div class="space-y-3" *ngIf="isLoading">
-        <div *ngFor="let i of [1,2,3,4,5,6]"
-             class="h-16 animate-pulse rounded-lg bg-muted"></div>
+        <div
+          *ngFor="let i of [1, 2, 3, 4, 5, 6]"
+          class="h-16 animate-pulse rounded-lg bg-muted"
+        ></div>
       </div>
 
       <!-- Ranking list -->
       <ng-container *ngIf="!isLoading">
         <div class="space-y-3">
-
-          <div *ngFor="let product of productRanking; let i = index"
-               class="flex items-center gap-4 rounded-lg border border-border p-3">
-
+          <div
+            *ngFor="let product of productRanking; let i = index"
+            class="flex items-center gap-4 rounded-lg border border-border p-3"
+          >
             <!-- Rank number: bg-primary/10 text-primary como en el prototipo -->
-            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center
-                        rounded-full bg-primary/10 font-bold text-primary">
+            <div
+              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary"
+            >
               {{ i + 1 }}
             </div>
 
             <!-- Nombre + unidades -->
             <div class="flex-1">
               <p class="font-medium">{{ product.name }}</p>
-              <p class="text-sm text-muted-foreground">{{ product.unidades }} unidades vendidas</p>
+              <p class="text-sm text-muted-foreground">
+                {{ product.unidades }} unidades vendidas
+              </p>
             </div>
 
             <!-- Monto + badge unidades -->
             <div class="text-right">
               <p class="font-bold">${{ fmt(product.total) }}</p>
               <!-- Badge variant="secondary" -->
-              <span class="mt-1 inline-flex items-center rounded-full border border-transparent
-                           bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
+              <span
+                class="mt-1 inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground"
+              >
                 {{ product.unidades }} unid.
               </span>
             </div>
           </div>
 
           <!-- Empty state -->
-          <p *ngIf="productRanking.length === 0"
-             class="py-6 text-center text-sm text-muted-foreground">
+          <p
+            *ngIf="productRanking.length === 0"
+            class="py-6 text-center text-sm text-muted-foreground"
+          >
             No hay datos de productos para el período seleccionado
           </p>
-
         </div>
 
         <!-- Summary footer: border-t bg-muted/30 como en el prototipo -->
-        <div *ngIf="productRanking.length > 0"
-             class="mt-4 rounded-lg border-t border-border bg-muted/30 p-4">
+        <div
+          *ngIf="productRanking.length > 0"
+          class="mt-4 rounded-lg border-t border-border bg-muted/30 p-4"
+        >
           <div class="flex items-center justify-between">
             <span class="font-semibold">Total Productos:</span>
-            <span class="text-lg font-bold">${{ fmt(rankingTotalAmount) }}</span>
+            <span class="text-lg font-bold"
+              >${{ fmt(rankingTotalAmount) }}</span
+            >
           </div>
-          <div class="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+          <div
+            class="mt-2 flex items-center justify-between text-sm text-muted-foreground"
+          >
             <span>Unidades totales vendidas:</span>
             <span>{{ rankingTotalUnidades }}</span>
           </div>
         </div>
       </ng-container>
-
     </div>
-  </div><!-- /ranking -->
+  </div>
+  <!-- /ranking -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        TABLA DE TRANSACCIONES + BOTÓN EXPORTAR CSV
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
-
+  <div
+    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+  >
     <!-- Header: título + botón exportar (flex justify-between) -->
     <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="flex items-center gap-2 text-xl font-semibold leading-none
-                     tracking-tight text-card-foreground">
+          <h3
+            class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
+          >
             <!-- FileSpreadsheet icon -->
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="8" y1="13" x2="16" y2="13"/>
-              <line x1="8" y1="17" x2="16" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="8" y1="13" x2="16" y2="13" />
+              <line x1="8" y1="17" x2="16" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
             </svg>
             Transacciones Recientes
           </h3>
@@ -308,77 +403,104 @@
           type="button"
           (click)="exportCsv()"
           [disabled]="isExporting"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-md
-                 bg-accent px-4 text-sm font-medium text-accent-foreground
-                 transition-colors hover:bg-accent/90
-                 disabled:pointer-events-none disabled:opacity-50
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <!-- Download icon -->
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          {{ isExporting ? 'Exportando...' : 'Descargar Reporte Excel' }}
+          {{ isExporting ? "Exportando..." : "Descargar Reporte Excel" }}
         </button>
       </div>
     </div>
 
     <!-- Tabla -->
     <div class="px-6 pb-6">
-
       <!-- Loading skeleton -->
       <div *ngIf="isLoading" class="space-y-2">
-        <div *ngFor="let i of [1,2,3,4,5]"
-             class="h-12 animate-pulse rounded-lg bg-muted"></div>
+        <div
+          *ngFor="let i of [1, 2, 3, 4, 5]"
+          class="h-12 animate-pulse rounded-lg bg-muted"
+        ></div>
       </div>
 
       <div *ngIf="!isLoading" class="overflow-x-auto">
         <table class="w-full">
           <thead>
             <tr class="border-b border-border">
-              <th class="p-3 text-left text-sm font-medium text-muted-foreground">Fecha</th>
-              <th class="p-3 text-left text-sm font-medium text-muted-foreground">Tipo</th>
-              <th class="p-3 text-right text-sm font-medium text-muted-foreground">Monto</th>
-              <th class="p-3 text-left text-sm font-medium text-muted-foreground">Método de Pago</th>
+              <th
+                class="p-3 text-left text-sm font-medium text-muted-foreground"
+              >
+                Fecha
+              </th>
+              <th
+                class="p-3 text-left text-sm font-medium text-muted-foreground"
+              >
+                Tipo
+              </th>
+              <th
+                class="p-3 text-right text-sm font-medium text-muted-foreground"
+              >
+                Monto
+              </th>
+              <th
+                class="p-3 text-left text-sm font-medium text-muted-foreground"
+              >
+                Método de Pago
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let tx of transactions"
-                class="border-b border-border last:border-0 hover:bg-muted/50">
-
+            <tr
+              *ngFor="let tx of transactions"
+              class="border-b border-border last:border-0 hover:bg-muted/50"
+            >
               <td class="p-3 text-sm">{{ tx.date }} {{ tx.time }}</td>
 
               <td class="p-3">
                 <!-- Badge: default (booking=bg-primary) vs secondary (sale) -->
                 <span
-                  [ngClass]="tx.type === 'booking'
-                    ? 'border-transparent bg-primary text-primary-foreground'
-                    : 'border-transparent bg-secondary text-secondary-foreground'"
-                  class="inline-flex items-center rounded-full border px-2.5 py-0.5
-                         text-xs font-semibold"
+                  [ngClass]="
+                    tx.type === 'booking'
+                      ? 'border-transparent bg-primary text-primary-foreground'
+                      : 'border-transparent bg-secondary text-secondary-foreground'
+                  "
+                  class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
                 >
-                  {{ tx.type === 'booking' ? 'Alquiler' : 'Venta' }}
+                  {{ tx.type === "booking" ? "Alquiler" : "Venta" }}
                 </span>
               </td>
 
-              <td class="p-3 text-right font-mono font-semibold">${{ fmt(tx.total) }}</td>
+              <td class="p-3 text-right font-mono font-semibold">
+                ${{ fmt(tx.total) }}
+              </td>
 
               <td class="p-3">
                 <!-- Efectivo / Transferencia -->
-                <span class="inline-flex items-center rounded-full border border-border
-                             bg-transparent px-2.5 py-0.5 text-xs font-semibold">
-                  {{ tx.cash > 0 ? 'Efectivo' : 'Transferencia' }}
+                <span
+                  class="inline-flex items-center rounded-full border border-border bg-transparent px-2.5 py-0.5 text-xs font-semibold"
+                >
+                  {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
                 </span>
               </td>
-
             </tr>
           </tbody>
 
           <!-- tfoot con total — bg-muted/30 como en el prototipo -->
-          <tfoot class="border-t border-border bg-muted/30" *ngIf="transactions.length > 0">
+          <tfoot
+            class="border-t border-border bg-muted/30"
+            *ngIf="transactions.length > 0"
+          >
             <tr>
               <td colspan="2" class="p-3 font-semibold">Total</td>
               <td class="p-3 text-right font-mono text-lg font-bold">
@@ -390,12 +512,15 @@
         </table>
 
         <!-- Empty state -->
-        <p *ngIf="transactions.length === 0"
-           class="py-8 text-center text-sm text-muted-foreground">
+        <p
+          *ngIf="transactions.length === 0"
+          class="py-8 text-center text-sm text-muted-foreground"
+        >
           No hay transacciones para el período seleccionado
         </p>
       </div>
     </div>
-  </div><!-- /tabla transacciones -->
-
-</div><!-- /space-y-6 -->
+  </div>
+  <!-- /tabla transacciones -->
+</div>
+<!-- /space-y-6 -->

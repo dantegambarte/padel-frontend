@@ -7,10 +7,6 @@ import { ScheduleComponent } from './schedule.component';
 
 @NgModule({
   declarations: [ScheduleComponent],
-  imports: [
-    CommonModule,
-    FormsModule,
-    ScheduleRoutingModule,
-  ],
+  imports: [CommonModule, FormsModule, ScheduleRoutingModule],
 })
 export class ScheduleModule {}

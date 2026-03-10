@@ -1,16 +1,19 @@
 <!-- Traducción 1:1 de login-screen.tsx — clases Tailwind idénticas al prototipo -->
-<div class="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-muted to-background p-6">
+<div
+  class="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-muted to-background p-6"
+>
   <div class="w-full max-w-md">
-
     <!-- Card -->
-    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-lg">
-
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-lg"
+    >
       <!-- CardHeader -->
       <div class="flex flex-col space-y-1.5 p-6">
-
         <!-- Logo icon -->
         <div class="flex items-center justify-center mb-4">
-          <div class="h-16 w-16 rounded-lg bg-primary flex items-center justify-center shadow-md">
+          <div
+            class="h-16 w-16 rounded-lg bg-primary flex items-center justify-center shadow-md"
+          >
             <svg
               class="h-10 w-10 text-primary-foreground"
               fill="none"
@@ -28,7 +31,9 @@
         </div>
 
         <!-- CardTitle -->
-        <h3 class="text-3xl text-center font-bold tracking-tight text-card-foreground">
+        <h3
+          class="text-3xl text-center font-bold tracking-tight text-card-foreground"
+        >
           PadelSys
         </h3>
         <!-- CardDescription -->
@@ -40,13 +45,11 @@
       <!-- CardContent -->
       <div class="p-6 pt-0">
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-
           <!-- Usuario -->
           <div class="space-y-2">
             <label
               for="username"
-              class="text-sm font-medium leading-none text-card-foreground
-                     peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              class="text-sm font-medium leading-none text-card-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Usuario
             </label>
@@ -56,10 +59,7 @@
               formControlName="username"
               placeholder="Ingrese su usuario"
               autocomplete="username"
-              class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2
-                     text-sm ring-offset-background placeholder:text-muted-foreground
-                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                     focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
@@ -67,8 +67,7 @@
           <div class="space-y-2">
             <label
               for="password"
-              class="text-sm font-medium leading-none text-card-foreground
-                     peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              class="text-sm font-medium leading-none text-card-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Contraseña
             </label>
@@ -78,17 +77,15 @@
               formControlName="password"
               placeholder="Ingrese su contraseña"
               autocomplete="current-password"
-              class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2
-                     text-sm ring-offset-background placeholder:text-muted-foreground
-                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                     focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           <!-- Error message — mismo estilo que el prototipo -->
-          <div *ngIf="errorMessage"
-               class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20
-                       rounded-lg text-destructive text-sm">
+          <div
+            *ngIf="errorMessage"
+            class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm"
+          >
             <!-- AlertCircle icon (lucide inline SVG) -->
             <svg
               class="h-4 w-4 flex-shrink-0"
@@ -110,11 +107,7 @@
           <button
             type="submit"
             [disabled]="form.invalid || isLoading"
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md
-                   text-base font-medium ring-offset-background transition-colors
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                   focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
-                   bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-full px-8"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-base font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-full px-8"
           >
             <ng-container *ngIf="isLoading; else elseLogin">
               <svg
@@ -122,17 +115,24 @@
                 viewBox="0 0 24 24"
                 fill="none"
               >
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
               Iniciando sesión...
             </ng-container>
-            <ng-template #elseLogin>
-              Iniciar Sesión
-            </ng-template>
+            <ng-template #elseLogin> Iniciar Sesión </ng-template>
           </button>
-
         </form>
 
         <!-- Demo credentials hint -->
@@ -149,7 +149,6 @@
             </p>
           </div>
         </div>
-
       </div>
     </div>
   </div>

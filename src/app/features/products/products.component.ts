@@ -22,7 +22,6 @@ type DialogMode = 'create' | 'edit' | 'view';
   templateUrl: './products.component.html',
 })
 export class ProductsComponent implements OnInit {
-
   products: Product[] = [];
   searchQuery = '';
   isLoading = false;
@@ -39,8 +38,11 @@ export class ProductsComponent implements OnInit {
   get categories(): { id: string; name: string }[] {
     const seen = new Set<string>();
     return this.products
-      .map(p => p.category)
-      .filter((c): c is { id: string; name: string } => !!c && !seen.has(c.id) && seen.add(c.id) !== undefined);
+      .map((p) => p.category)
+      .filter(
+        (c): c is { id: string; name: string } =>
+          !!c && !seen.has(c.id) && seen.add(c.id) !== undefined,
+      );
   }
 
   get isNewCategory(): boolean {
@@ -57,23 +59,29 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
-  get isReadOnly(): boolean { return !this.authService.isAdmin; }
-  get viewMode(): boolean   { return this.dialogMode === 'view'; }
+  get isReadOnly(): boolean {
+    return !this.authService.isAdmin;
+  }
+  get viewMode(): boolean {
+    return this.dialogMode === 'view';
+  }
 
-  get totalProducts(): number { return this.products.length; }
+  get totalProducts(): number {
+    return this.products.length;
+  }
 
   get totalInventoryValue(): number {
     return this.products.reduce((sum, p) => sum + p.salePrice * p.stock, 0);
   }
 
   get featuredCount(): number {
-    return this.products.filter(p => p.isFeatured).length;
+    return this.products.filter((p) => p.isFeatured).length;
   }
 
   get filteredProducts(): Product[] {
     if (!this.searchQuery.trim()) return this.products;
     const q = this.searchQuery.toLowerCase();
-    return this.products.filter(p => p.name.toLowerCase().includes(q));
+    return this.products.filter((p) => p.name.toLowerCase().includes(q));
   }
 
   get dialogTitle(): string {
@@ -94,12 +102,20 @@ export class ProductsComponent implements OnInit {
 
   private loadProducts(): void {
     this.isLoading = true;
-    this.productsService.findAll().pipe(
-      finalize(() => (this.isLoading = false)),
-    ).subscribe({
-      next: (products) => { this.products = products; },
-      error: () => { this.toast.error('Error al cargar productos', 'Intente recargar la página'); },
-    });
+    this.productsService
+      .findAll()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (products) => {
+          this.products = products;
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cargar productos',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   openCreate(): void {
@@ -115,11 +131,11 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = product.id;
     this.newCategoryName = '';
     this.form = {
-      name:       product.name,
-      category:   product.category?.id ?? '',
-      costPrice:  product.costPrice?.toString() ?? '',
-      salePrice:  product.salePrice.toString(),
-      stock:      product.stock.toString(),
+      name: product.name,
+      category: product.category?.id ?? '',
+      costPrice: product.costPrice?.toString() ?? '',
+      salePrice: product.salePrice.toString(),
+      stock: product.stock.toString(),
       isFeatured: product.isFeatured,
     };
     this.isDialogOpen = true;
@@ -130,11 +146,11 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = product.id;
     this.newCategoryName = '';
     this.form = {
-      name:       product.name,
-      category:   product.category?.id ?? '',
-      costPrice:  product.costPrice?.toString() ?? '',
-      salePrice:  product.salePrice.toString(),
-      stock:      product.stock.toString(),
+      name: product.name,
+      category: product.category?.id ?? '',
+      costPrice: product.costPrice?.toString() ?? '',
+      salePrice: product.salePrice.toString(),
+      stock: product.stock.toString(),
       isFeatured: product.isFeatured,
     };
     this.isDialogOpen = true;
@@ -151,20 +167,27 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct(): void {
-    const categoryValue = this.isNewCategory ? this.newCategoryName.trim() : this.form.category;
+    const categoryValue = this.isNewCategory
+      ? this.newCategoryName.trim()
+      : this.form.category;
 
-    if (!this.form.name || !categoryValue || !this.form.costPrice ||
-        !this.form.salePrice || !this.form.stock) {
+    if (
+      !this.form.name ||
+      !categoryValue ||
+      !this.form.costPrice ||
+      !this.form.salePrice ||
+      !this.form.stock
+    ) {
       this.toast.error('Error', 'Por favor complete todos los campos');
       return;
     }
 
     const dto: CreateProductDto = {
-      name:       this.form.name,
-      category:   categoryValue,
-      costPrice:  parseFloat(this.form.costPrice),
-      salePrice:  parseFloat(this.form.salePrice),
-      stock:      parseInt(this.form.stock, 10),
+      name: this.form.name,
+      category: categoryValue,
+      costPrice: parseFloat(this.form.costPrice),
+      salePrice: parseFloat(this.form.salePrice),
+      stock: parseInt(this.form.stock, 10),
       isFeatured: this.form.isFeatured,
     };
 
@@ -176,19 +199,28 @@ export class ProductsComponent implements OnInit {
     request$.pipe(finalize(() => (this.isSubmitting = false))).subscribe({
       next: (saved) => {
         if (this.editingProductId) {
-          this.products = this.products.map(p =>
+          this.products = this.products.map((p) =>
             p.id === this.editingProductId ? saved : p,
           );
-          this.toast.success('Producto actualizado', `${saved.name} se actualizó correctamente`);
+          this.toast.success(
+            'Producto actualizado',
+            `${saved.name} se actualizó correctamente`,
+          );
         } else {
           this.products = [...this.products, saved];
-          this.toast.success('Producto agregado', `${saved.name} se agregó al inventario`);
+          this.toast.success(
+            'Producto agregado',
+            `${saved.name} se agregó al inventario`,
+          );
         }
         this.closeDialog();
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error('Ya existe', 'Un producto con ese nombre ya está registrado');
+          this.toast.error(
+            'Ya existe',
+            'Un producto con ese nombre ya está registrado',
+          );
         } else {
           this.toast.error('Error al guardar', 'Intente nuevamente');
         }
@@ -198,15 +230,21 @@ export class ProductsComponent implements OnInit {
 
   deleteProduct(product: Product): void {
     this.deletingId = product.id;
-    this.productsService.remove(product.id).pipe(
-      finalize(() => (this.deletingId = null)),
-    ).subscribe({
-      next: () => {
-        this.products = this.products.filter(p => p.id !== product.id);
-        this.toast.success('Producto eliminado', `${product.name} se eliminó del inventario`);
-      },
-      error: () => { this.toast.error('Error al eliminar', 'Intente nuevamente'); },
-    });
+    this.productsService
+      .remove(product.id)
+      .pipe(finalize(() => (this.deletingId = null)))
+      .subscribe({
+        next: () => {
+          this.products = this.products.filter((p) => p.id !== product.id);
+          this.toast.success(
+            'Producto eliminado',
+            `${product.name} se eliminó del inventario`,
+          );
+        },
+        error: () => {
+          this.toast.error('Error al eliminar', 'Intente nuevamente');
+        },
+      });
   }
 
   fmt(value: number): string {
@@ -222,6 +260,13 @@ export class ProductsComponent implements OnInit {
   }
 
   private emptyForm(): ProductForm {
-    return { name: '', category: '', costPrice: '', salePrice: '', stock: '', isFeatured: false };
+    return {
+      name: '',
+      category: '',
+      costPrice: '',
+      salePrice: '',
+      stock: '',
+      isFeatured: false,
+    };
   }
 }

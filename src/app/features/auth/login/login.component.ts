@@ -41,7 +41,8 @@ export class LoginComponent {
         this.isLoading = false;
         // El backend retorna mensajes genéricos (no revela si el usuario existe)
         if (err.status === 401) {
-          this.errorMessage = 'Credenciales inválidas. Verificá usuario y contraseña.';
+          this.errorMessage =
+            'Credenciales inválidas. Verificá usuario y contraseña.';
         } else if (err.status === 0) {
           this.errorMessage = 'No se pudo conectar con el servidor.';
         } else {

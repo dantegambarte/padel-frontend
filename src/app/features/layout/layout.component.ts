@@ -7,14 +7,14 @@ import { User } from '../../core/models/user.model';
 
 // Mapa de rutas → títulos de página (mismo criterio que main-app.tsx)
 const PAGE_TITLES: Record<string, string> = {
-  dashboard:       'Inicio',
-  schedule:        'Agenda de Turnos',
+  dashboard: 'Inicio',
+  schedule: 'Agenda de Turnos',
   'cash-register': 'Cierre de Caja',
-  pos:             'Nueva Venta',
-  products:        'Productos',
-  reports:         'Reportes',
-  users:           'Usuarios',
-  settings:        'Configuración',
+  pos: 'Nueva Venta',
+  products: 'Productos',
+  reports: 'Reportes',
+  users: 'Usuarios',
+  settings: 'Configuración',
 };
 
 @Component({

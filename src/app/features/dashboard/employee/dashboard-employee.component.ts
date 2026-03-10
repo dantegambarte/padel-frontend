@@ -14,7 +14,6 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './dashboard-employee.component.html',
 })
 export class DashboardEmployeeComponent implements OnInit {
-
   // ── Loading ───────────────────────────────────────────────────────────────────
   isLoading = true;
 
@@ -36,31 +35,34 @@ export class DashboardEmployeeComponent implements OnInit {
     this.isLoading = true;
 
     // Carga paralela — el catchError en cash$ evita que un 404 cancele el forkJoin
-    const cash$ = this.cashService.getCurrent().pipe(
-      catchError(() => of(null)),
-    );
+    const cash$ = this.cashService
+      .getCurrent()
+      .pipe(catchError(() => of(null)));
 
     forkJoin({
-      cash:     cash$,
+      cash: cash$,
       bookings: this.bookingsService.findByDate(this.today),
       lowStock: this.productsService.getLowStock(),
-    }).pipe(
-      finalize(() => (this.isLoading = false)),
-    ).subscribe({
-      next: ({ cash, bookings, lowStock }) => {
-        this.cashAmount = cash?.efectivoEsperado ?? 0;
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: ({ cash, bookings, lowStock }) => {
+          this.cashAmount = cash?.efectivoEsperado ?? 0;
 
-        // Solo turnos con status 'booked' o 'playing', ordenados por hora
-        this.upcomingBookings = bookings
-          .filter(b => b.status === 'booked' || b.status === 'playing')
-          .sort((a, b) => a.hour.localeCompare(b.hour));
+          // Solo turnos con status 'booked' o 'playing', ordenados por hora
+          this.upcomingBookings = bookings
+            .filter((b) => b.status === 'booked' || b.status === 'playing')
+            .sort((a, b) => a.hour.localeCompare(b.hour));
 
-        this.lowStockProducts = lowStock;
-      },
-      error: () => {
-        this.toast.error('Error al cargar el dashboard', 'Intente recargar la página');
-      },
-    });
+          this.lowStockProducts = lowStock;
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cargar el dashboard',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   // ── Computed ──────────────────────────────────────────────────────────────────
@@ -74,9 +76,7 @@ export class DashboardEmployeeComponent implements OnInit {
 
   /** Stat card: trend del próximo turno — nombre de cancha. */
   get proximoTurnoTrend(): string {
-    return this.upcomingBookings[0]
-      ? this.upcomingBookings[0].court.name
-      : '—';
+    return this.upcomingBookings[0] ? this.upcomingBookings[0].court.name : '—';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────

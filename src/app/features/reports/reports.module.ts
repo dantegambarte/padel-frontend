@@ -7,10 +7,6 @@ import { ReportsComponent } from './reports.component';
 
 @NgModule({
   declarations: [ReportsComponent],
-  imports: [
-    CommonModule,
-    NgChartsModule,
-    ReportsRoutingModule,
-  ],
+  imports: [CommonModule, NgChartsModule, ReportsRoutingModule],
 })
 export class ReportsModule {}

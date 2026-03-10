@@ -21,7 +21,7 @@ export class ConfigService {
 
   updateBulk(entries: ConfigEntry[]): Observable<ConfigEntry[]> {
     const configs: Record<string, string> = {};
-    entries.forEach(e => (configs[e.key] = e.value));
+    entries.forEach((e) => (configs[e.key] = e.value));
     return this.http.put<ConfigEntry[]>(`${this.url}/bulk`, { configs });
   }
 }

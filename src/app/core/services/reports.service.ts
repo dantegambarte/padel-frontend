@@ -8,43 +8,43 @@ import { environment } from '../../../environments/environment';
 
 export interface RevenueDay {
   /** El backend formatea según groupBy. */
-  period:   string;
-  bookings: number;  // antes: alquileres
-  sales:    number;  // antes: productos
-  total:    number;
+  period: string;
+  bookings: number; // antes: alquileres
+  sales: number; // antes: productos
+  total: number;
 }
 
 export interface PaymentBreakdown {
-  efectivo:      { amount: number; percentage: number };
+  efectivo: { amount: number; percentage: number };
   transferencia: { amount: number; percentage: number };
 }
 
 /** Shape real del backend GET /reports/summary */
 export interface ReportsSummaryResponse {
-  totalRevenue:     number;
-  bookingsRevenue:  number;
-  salesRevenue:     number;
-  cashTotal:        number;
-  transferTotal:    number;
+  totalRevenue: number;
+  bookingsRevenue: number;
+  salesRevenue: number;
+  cashTotal: number;
+  transferTotal: number;
   transactionCount: number;
 }
 
 export interface ProductRanking {
   productId: string;
-  name:      string;
-  unidades:  number;
-  total:     number;
+  name: string;
+  unidades: number;
+  total: number;
 }
 
 /** Shape real del backend GET /reports/transactions/export */
 export interface TransactionExport {
-  date:      string;   // YYYY-MM-DD
-  time:      string;   // HH:MM
-  type:      string;   // 'booking' | 'sale'
-  concept:   string;
-  cash:      number;
-  transfer:  number;
-  total:     number;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  type: string; // 'booking' | 'sale'
+  concept: string;
+  cash: number;
+  transfer: number;
+  total: number;
   createdBy: string;
 }
 
@@ -64,28 +64,42 @@ export class ReportsService {
   }
 
   /** GET /reports/revenue?dateFrom&dateTo&groupBy — evolución de ingresos para gráficos. */
-  getRevenue(dateFrom: string, dateTo: string, groupBy: GroupBy = 'week'): Observable<RevenueDay[]> {
+  getRevenue(
+    dateFrom: string,
+    dateTo: string,
+    groupBy: GroupBy = 'week',
+  ): Observable<RevenueDay[]> {
     const params = new HttpParams()
       .set('dateFrom', dateFrom)
-      .set('dateTo',   dateTo)
-      .set('groupBy',  groupBy);
+      .set('dateTo', dateTo)
+      .set('groupBy', groupBy);
     return this.http.get<RevenueDay[]>(`${this.url}/revenue`, { params });
   }
 
   /** GET /reports/payment-methods?dateFrom&dateTo — desglose efectivo/transferencia. */
-  getPaymentMethods(dateFrom: string, dateTo: string): Observable<PaymentBreakdown> {
+  getPaymentMethods(
+    dateFrom: string,
+    dateTo: string,
+  ): Observable<PaymentBreakdown> {
     const params = new HttpParams()
       .set('dateFrom', dateFrom)
-      .set('dateTo',   dateTo);
-    return this.http.get<PaymentBreakdown>(`${this.url}/payment-methods`, { params });
+      .set('dateTo', dateTo);
+    return this.http.get<PaymentBreakdown>(`${this.url}/payment-methods`, {
+      params,
+    });
   }
 
   /** GET /reports/products-ranking?dateFrom&dateTo — top 20 productos más vendidos. */
-  getProductsRanking(dateFrom: string, dateTo: string): Observable<ProductRanking[]> {
+  getProductsRanking(
+    dateFrom: string,
+    dateTo: string,
+  ): Observable<ProductRanking[]> {
     const params = new HttpParams()
       .set('dateFrom', dateFrom)
-      .set('dateTo',   dateTo);
-    return this.http.get<ProductRanking[]>(`${this.url}/products-ranking`, { params });
+      .set('dateTo', dateTo);
+    return this.http.get<ProductRanking[]>(`${this.url}/products-ranking`, {
+      params,
+    });
   }
 
   /**
@@ -93,10 +107,16 @@ export class ReportsService {
    * Devuelve JSON plano apto para ser convertido a CSV en el frontend.
    * El frontend aplica el BOM UTF-8 para compatibilidad con Excel en Windows.
    */
-  getTransactionsExport(dateFrom: string, dateTo: string): Observable<TransactionExport[]> {
+  getTransactionsExport(
+    dateFrom: string,
+    dateTo: string,
+  ): Observable<TransactionExport[]> {
     const params = new HttpParams()
       .set('dateFrom', dateFrom)
-      .set('dateTo',   dateTo);
-    return this.http.get<TransactionExport[]>(`${this.url}/transactions/export`, { params });
+      .set('dateTo', dateTo);
+    return this.http.get<TransactionExport[]>(
+      `${this.url}/transactions/export`,
+      { params },
+    );
   }
 }

@@ -1,3 +1,3 @@
 <!-- Shell: despacha al componente correcto según el rol del usuario autenticado -->
-<app-dashboard-admin    *ngIf="isAdmin"></app-dashboard-admin>
+<app-dashboard-admin *ngIf="isAdmin"></app-dashboard-admin>
 <app-dashboard-employee *ngIf="!isAdmin"></app-dashboard-employee>

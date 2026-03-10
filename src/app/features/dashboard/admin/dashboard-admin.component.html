@@ -1,15 +1,15 @@
 <!-- ─── DASHBOARD ADMIN ───────────────────────────────────────────────────────── -->
 <div class="space-y-6 p-4 md:p-6">
-
   <!-- ═══════════════════════════════════════════════════════════════════════════
        KPI CARDS — grid gap-4 md:grid-cols-2 lg:grid-cols-4
   ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
     <!-- Ventas Hoy -->
     <ng-container *ngIf="isLoading; else kpiCards">
-      <div *ngFor="let i of [1,2,3,4]"
-           class="h-32 animate-pulse rounded-lg border border-border bg-muted shadow-md"></div>
+      <div
+        *ngFor="let i of [1, 2, 3, 4]"
+        class="h-32 animate-pulse rounded-lg border border-border bg-muted shadow-md"
+      ></div>
     </ng-container>
 
     <ng-template #kpiCards>
@@ -17,38 +17,46 @@
         title="Ingresos Totales"
         [value]="'$' + fmt(summary?.totalRevenue ?? 0)"
         icon="dollar-sign"
-        [trend]="{ value: 'Período seleccionado', positive: true }">
+        [trend]="{ value: 'Período seleccionado', positive: true }"
+      >
       </app-stat-card>
 
       <app-stat-card
         title="Ingresos Canchas"
         [value]="'$' + fmt(summary?.bookingsRevenue ?? 0)"
         icon="trending-up"
-        [trend]="{ value: 'Alquileres del período', positive: true }">
+        [trend]="{ value: 'Alquileres del período', positive: true }"
+      >
       </app-stat-card>
 
       <app-stat-card
         title="Ventas POS"
         [value]="'$' + fmt(summary?.salesRevenue ?? 0)"
-        icon="calendar">
+        icon="calendar"
+      >
       </app-stat-card>
 
       <app-stat-card
         title="Transacciones"
         [value]="(summary?.transactionCount ?? 0).toString()"
-        icon="users">
+        icon="users"
+      >
       </app-stat-card>
     </ng-template>
-
-  </div><!-- /KPI cards -->
+  </div>
+  <!-- /KPI cards -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        GRÁFICO — Evolución de Ingresos Semanal
        ng2-charts v5 + Chart.js 4 — colores leídos desde CSS vars de Tailwind v4
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+  <div
+    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+  >
     <div class="p-4 md:p-6">
-      <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+      <h3
+        class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+      >
         Evolución de Ingresos (Semanal)
       </h3>
       <p class="mt-1.5 text-sm text-muted-foreground">
@@ -56,12 +64,18 @@
       </p>
     </div>
     <div class="w-full overflow-x-auto px-4 pb-4 md:px-6 md:pb-6">
-
       <!-- Loading skeleton para el chart -->
-      <div *ngIf="isLoading" class="h-[350px] w-full animate-pulse rounded-lg bg-muted"></div>
+      <div
+        *ngIf="isLoading"
+        class="h-[350px] w-full animate-pulse rounded-lg bg-muted"
+      ></div>
 
       <!-- Canvas del chart — h-[350px] + maintainAspectRatio:false = Chart.js llena el div -->
-      <div *ngIf="!isLoading" class="min-w-[300px]" style="height: 350px; position: relative;">
+      <div
+        *ngIf="!isLoading"
+        class="min-w-[300px]"
+        style="height: 350px; position: relative"
+      >
         <canvas
           baseChart
           [data]="barChartData"
@@ -69,85 +83,110 @@
           [type]="barChartType"
         ></canvas>
       </div>
-
     </div>
-  </div><!-- /chart card -->
+  </div>
+  <!-- /chart card -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        QUICK STATS GRID — Resumen del Día + Métodos de Pago
   ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid gap-4 md:grid-cols-2">
-
     <!-- Resumen del Día -->
-    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
       <div class="p-6">
-        <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <h3
+          class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+        >
           Resumen del Día
         </h3>
       </div>
       <div class="space-y-4 px-6 pb-6">
-
         <ng-container *ngIf="isLoading; else resumenContent">
-          <div *ngFor="let i of [1,2,3,4]"
-               class="h-6 animate-pulse rounded bg-muted"></div>
+          <div
+            *ngFor="let i of [1, 2, 3, 4]"
+            class="h-6 animate-pulse rounded bg-muted"
+          ></div>
         </ng-container>
 
         <ng-template #resumenContent>
           <div class="flex items-center justify-between">
             <span class="text-sm text-muted-foreground">Total ingresos</span>
-            <span class="text-lg font-semibold">${{ fmt(summary?.totalRevenue ?? 0) }}</span>
+            <span class="text-lg font-semibold"
+              >${{ fmt(summary?.totalRevenue ?? 0) }}</span
+            >
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-sm text-muted-foreground">Alquileres de cancha</span>
+            <span class="text-sm text-muted-foreground"
+              >Alquileres de cancha</span
+            >
             <span class="text-lg font-semibold text-primary">
               ${{ fmt(summary?.bookingsRevenue ?? 0) }}
             </span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-sm text-muted-foreground">Ventas de productos</span>
+            <span class="text-sm text-muted-foreground"
+              >Ventas de productos</span
+            >
             <span class="text-lg font-semibold text-accent">
               ${{ fmt(summary?.salesRevenue ?? 0) }}
             </span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-sm text-muted-foreground">Transacciones registradas</span>
+            <span class="text-sm text-muted-foreground"
+              >Transacciones registradas</span
+            >
             <span class="text-lg font-semibold">
               {{ summary?.transactionCount ?? 0 }}
             </span>
           </div>
         </ng-template>
-
       </div>
-    </div><!-- /resumen -->
+    </div>
+    <!-- /resumen -->
 
     <!-- Métodos de Pago -->
-    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
       <div class="p-6">
-        <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <h3
+          class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+        >
           Métodos de Pago
         </h3>
       </div>
       <div class="space-y-4 px-6 pb-6">
-
         <ng-container *ngIf="isLoading; else paymentContent">
-          <div *ngFor="let i of [1,2]" class="h-12 animate-pulse rounded bg-muted"></div>
+          <div
+            *ngFor="let i of [1, 2]"
+            class="h-12 animate-pulse rounded bg-muted"
+          ></div>
         </ng-container>
 
         <ng-template #paymentContent>
-
           <!-- Efectivo -->
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Efectivo</span>
               <span class="font-medium">
-                ${{ fmt(summary?.cashTotal ?? 0) }}
-                ({{ summary?.totalRevenue ? ((summary!.cashTotal / summary!.totalRevenue) * 100 | number:'1.0-0') : 0 }}%)
+                ${{ fmt(summary?.cashTotal ?? 0) }} ({{
+                  summary?.totalRevenue
+                    ? ((summary!.cashTotal / summary!.totalRevenue) * 100
+                      | number: "1.0-0")
+                    : 0
+                }}%)
               </span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 class="h-full rounded-full bg-accent"
-                [style.width.%]="summary?.totalRevenue ? (summary!.cashTotal / summary!.totalRevenue) * 100 : 0"
+                [style.width.%]="
+                  summary?.totalRevenue
+                    ? (summary!.cashTotal / summary!.totalRevenue) * 100
+                    : 0
+                "
               ></div>
             </div>
           </div>
@@ -157,23 +196,30 @@
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Transferencia</span>
               <span class="font-medium">
-                ${{ fmt(summary?.transferTotal ?? 0) }}
-                ({{ summary?.totalRevenue ? ((summary!.transferTotal / summary!.totalRevenue) * 100 | number:'1.0-0') : 0 }}%)
+                ${{ fmt(summary?.transferTotal ?? 0) }} ({{
+                  summary?.totalRevenue
+                    ? ((summary!.transferTotal / summary!.totalRevenue) * 100
+                      | number: "1.0-0")
+                    : 0
+                }}%)
               </span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 class="h-full rounded-full bg-primary"
-                [style.width.%]="summary?.totalRevenue ? (summary!.transferTotal / summary!.totalRevenue) * 100 : 0"
+                [style.width.%]="
+                  summary?.totalRevenue
+                    ? (summary!.transferTotal / summary!.totalRevenue) * 100
+                    : 0
+                "
               ></div>
             </div>
           </div>
-
         </ng-template>
-
       </div>
-    </div><!-- /métodos de pago -->
-
-  </div><!-- /quick stats grid -->
-
-</div><!-- /space-y-6 -->
+    </div>
+    <!-- /métodos de pago -->
+  </div>
+  <!-- /quick stats grid -->
+</div>
+<!-- /space-y-6 -->

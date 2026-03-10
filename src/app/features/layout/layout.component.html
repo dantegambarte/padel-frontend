@@ -1,6 +1,5 @@
 <!-- Mobile First responsive layout — off-canvas sidebar + sticky toolbar -->
 <div class="flex h-screen overflow-hidden bg-background">
-
   <!-- Sidebar — off-canvas drawer on mobile, static column on lg+ -->
   <app-sidebar
     [isOpen]="isSidebarOpen"
@@ -9,7 +8,6 @@
 
   <!-- Main area: toolbar + scrollable content -->
   <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
-
     <!-- Toolbar sticky at the top -->
     <app-toolbar
       [title]="currentPageTitle"
@@ -23,6 +21,5 @@
         <router-outlet></router-outlet>
       </div>
     </main>
-
   </div>
 </div>

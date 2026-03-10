@@ -15,12 +15,12 @@ import { StatCardComponent } from './components/stat-card/stat-card.component';
     DashboardComponent,
     DashboardAdminComponent,
     DashboardEmployeeComponent,
-    StatCardComponent,        // Shared dentro del módulo — admin y employee lo usan
+    StatCardComponent, // Shared dentro del módulo — admin y employee lo usan
   ],
   imports: [
-    CommonModule,             // *ngIf, *ngFor, *ngSwitch, [ngClass], [ngStyle]
-    RouterModule,             // routerLink en los accesos rápidos del dashboard employee
-    NgChartsModule,           // baseChart directive + ng2-charts v5
+    CommonModule, // *ngIf, *ngFor, *ngSwitch, [ngClass], [ngStyle]
+    RouterModule, // routerLink en los accesos rápidos del dashboard employee
+    NgChartsModule, // baseChart directive + ng2-charts v5
     DashboardRoutingModule,
   ],
 })

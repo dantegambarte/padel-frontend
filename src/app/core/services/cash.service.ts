@@ -15,19 +15,19 @@ export interface CashMovimiento {
 
 /** Shape normalizado que consume el componente. */
 export interface CashCurrentResponse {
-  sessionId:          string | null;
-  isClosed:           boolean;
-  efectivoEsperado:   number;
+  sessionId: string | null;
+  isClosed: boolean;
+  efectivoEsperado: number;
   transferenciaTotal: number;
-  movimientos:        CashMovimiento[];
+  movimientos: CashMovimiento[];
 }
 
 /** Shape real devuelto por el backend GET /cash/current */
 interface CashApiResponse {
-  session:      { id: string; status: string } | null;
+  session: { id: string; status: string } | null;
   cashExpected: number;
   transferTotal: number;
-  dayTotal:     number;
+  dayTotal: number;
   transactions: {
     id: string;
     type: string;
@@ -63,17 +63,17 @@ export class CashService {
    */
   getCurrent(): Observable<CashCurrentResponse> {
     return this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
-      map(res => ({
-        sessionId:          res.session?.id ?? null,
-        isClosed:           !res.isOpen,
-        efectivoEsperado:   res.cashExpected   ?? 0,
-        transferenciaTotal: res.transferTotal  ?? 0,
-        movimientos: (res.transactions ?? []).map(t => ({
-          id:       t.id,
-          hora:     this.formatHora(t.createdAt),
-          tipo:     t.amountCash > 0 ? 'Efectivo' : 'Transferencia' as const,
+      map((res) => ({
+        sessionId: res.session?.id ?? null,
+        isClosed: !res.isOpen,
+        efectivoEsperado: res.cashExpected ?? 0,
+        transferenciaTotal: res.transferTotal ?? 0,
+        movimientos: (res.transactions ?? []).map((t) => ({
+          id: t.id,
+          hora: this.formatHora(t.createdAt),
+          tipo: t.amountCash > 0 ? 'Efectivo' : ('Transferencia' as const),
           concepto: t.concept,
-          monto:    t.amountCash + t.amountTransfer,
+          monto: t.amountCash + t.amountTransfer,
         })),
       })),
     );
@@ -90,6 +90,10 @@ export class CashService {
   private formatHora(isoString: string): string {
     if (!isoString) return '--:--';
     const date = new Date(isoString);
-    return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return date.toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
   }
 }

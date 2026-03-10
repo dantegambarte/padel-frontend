@@ -10,7 +10,6 @@ import { CashService, CashMovimiento } from '../../core/services/cash.service';
   templateUrl: './cash-register.component.html',
 })
 export class CashRegisterComponent implements OnInit {
-
   isLoading = true;
   sessionId: string | null = null;
   isClosed = false;
@@ -38,11 +37,21 @@ export class CashRegisterComponent implements OnInit {
     return this.authService.currentUser?.fullName ?? 'Usuario';
   }
 
-  get totalEsperado(): number   { return this.efectivoEsperado + this.transferenciaTotal; }
-  get efectivoReal(): number    { return parseFloat(this.efectivoContado || '0'); }
-  get diferencia(): number      { return this.efectivoReal - this.efectivoEsperado; }
-  get absD(): number            { return Math.abs(this.diferencia); }
-  get showDiferencia(): boolean { return !!this.efectivoContado && this.efectivoContado !== ''; }
+  get totalEsperado(): number {
+    return this.efectivoEsperado + this.transferenciaTotal;
+  }
+  get efectivoReal(): number {
+    return parseFloat(this.efectivoContado || '0');
+  }
+  get diferencia(): number {
+    return this.efectivoReal - this.efectivoEsperado;
+  }
+  get absD(): number {
+    return Math.abs(this.diferencia);
+  }
+  get showDiferencia(): boolean {
+    return !!this.efectivoContado && this.efectivoContado !== '';
+  }
 
   get diferenciaClass(): string {
     if (this.diferencia === 0) return 'text-accent';
@@ -69,25 +78,29 @@ export class CashRegisterComponent implements OnInit {
 
   private loadCurrentSession(): void {
     this.isLoading = true;
-    this.cashService.getCurrent().pipe(
-      finalize(() => (this.isLoading = false)),
-    ).subscribe({
-      next: (res) => {
-        // session: null → no hubo operaciones hoy, mostrar "Abrir Caja"
-        if (res.sessionId === null) {
-          this.noSesionActiva = true;
-          return;
-        }
-        this.sessionId          = res.sessionId;
-        this.isClosed           = res.isClosed;
-        this.efectivoEsperado   = res.efectivoEsperado;
-        this.transferenciaTotal = res.transferenciaTotal;
-        this.movimientos        = res.movimientos;
-      },
-      error: () => {
-        this.toast.error('Error al cargar la caja', 'Intente recargar la página');
-      },
-    });
+    this.cashService
+      .getCurrent()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (res) => {
+          // session: null → no hubo operaciones hoy, mostrar "Abrir Caja"
+          if (res.sessionId === null) {
+            this.noSesionActiva = true;
+            return;
+          }
+          this.sessionId = res.sessionId;
+          this.isClosed = res.isClosed;
+          this.efectivoEsperado = res.efectivoEsperado;
+          this.transferenciaTotal = res.transferenciaTotal;
+          this.movimientos = res.movimientos;
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cargar la caja',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   openConfirmDialog(): void {
@@ -109,34 +122,39 @@ export class CashRegisterComponent implements OnInit {
 
   confirmarCierre(): void {
     this.isSubmitting = true;
-    this.cashService.close({
-      efectivoContado: this.efectivoReal,
-      notas: this.notas || undefined,
-    }).pipe(
-      finalize(() => (this.isSubmitting = false)),
-    ).subscribe({
-      next: () => {
-        this.isDialogOpen = false;
-        this.isClosed = true;
-
-        const detalle = this.diferencia === 0
-          ? 'Todo cuadra perfectamente.'
-          : `Diferencia: $${this.fmt(this.absD)}`;
-
-        this.toast.success(
-          'Caja cerrada exitosamente',
-          `Cierre Z realizado por ${this.userName}. ${detalle}`,
-        );
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          this.toast.error('Caja ya cerrada', 'La sesión de caja ya fue cerrada anteriormente');
+    this.cashService
+      .close({
+        efectivoContado: this.efectivoReal,
+        notas: this.notas || undefined,
+      })
+      .pipe(finalize(() => (this.isSubmitting = false)))
+      .subscribe({
+        next: () => {
+          this.isDialogOpen = false;
           this.isClosed = true;
-        } else {
-          this.toast.error('Error al cerrar caja', 'Intente nuevamente');
-        }
-      },
-    });
+
+          const detalle =
+            this.diferencia === 0
+              ? 'Todo cuadra perfectamente.'
+              : `Diferencia: $${this.fmt(this.absD)}`;
+
+          this.toast.success(
+            'Caja cerrada exitosamente',
+            `Cierre Z realizado por ${this.userName}. ${detalle}`,
+          );
+        },
+        error: (err) => {
+          if (err.status === 409) {
+            this.toast.error(
+              'Caja ya cerrada',
+              'La sesión de caja ya fue cerrada anteriormente',
+            );
+            this.isClosed = true;
+          } else {
+            this.toast.error('Error al cerrar caja', 'Intente nuevamente');
+          }
+        },
+      });
   }
 
   fmt(value: number): string {

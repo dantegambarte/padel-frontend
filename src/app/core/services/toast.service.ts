@@ -17,10 +17,7 @@ export class ToastService {
 
   readonly toasts$ = this.toastsSubject.asObservable();
 
-  show(
-    toast: Omit<ToastMessage, 'id'>,
-    duration = 4000,
-  ): void {
+  show(toast: Omit<ToastMessage, 'id'>, duration = 4000): void {
     const id = ++this.nextId;
     this.toastsSubject.next([...this.toastsSubject.value, { ...toast, id }]);
     setTimeout(() => this.dismiss(id), duration);

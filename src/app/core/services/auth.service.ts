@@ -15,9 +15,9 @@ import {
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
-const TOKEN_KEY   = 'padelsys_access_token';
+const TOKEN_KEY = 'padelsys_access_token';
 const REFRESH_KEY = 'padelsys_refresh_token';
-const USER_KEY    = 'padelsys_user';
+const USER_KEY = 'padelsys_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -104,9 +104,9 @@ export class AuthService {
   // ── Privados ──────────────────────────────────────────────────────────────
 
   private persistSession(response: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY,   response.accessToken);
+    localStorage.setItem(TOKEN_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
-    localStorage.setItem(USER_KEY,    JSON.stringify(response.user));
+    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     this.currentUserSubject.next(response.user);
   }
 

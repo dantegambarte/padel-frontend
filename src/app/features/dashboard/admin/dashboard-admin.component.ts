@@ -3,7 +3,11 @@ import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ChartData, ChartOptions, ChartType } from 'chart.js';
 
-import { ReportsService, ReportsSummaryResponse, RevenueDay } from '../../../core/services/reports.service';
+import {
+  ReportsService,
+  ReportsSummaryResponse,
+  RevenueDay,
+} from '../../../core/services/reports.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
@@ -11,7 +15,6 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './dashboard-admin.component.html',
 })
 export class DashboardAdminComponent implements OnInit {
-
   // ── Loading ───────────────────────────────────────────────────────────────────
   isLoading = true;
 
@@ -24,8 +27,18 @@ export class DashboardAdminComponent implements OnInit {
   barChartData: ChartData<'bar'> = {
     labels: [],
     datasets: [
-      { data: [], label: 'Alquileres', backgroundColor: '', borderRadius: { topLeft: 4, topRight: 4 } },
-      { data: [], label: 'Productos',  backgroundColor: '', borderRadius: { topLeft: 4, topRight: 4 } },
+      {
+        data: [],
+        label: 'Alquileres',
+        backgroundColor: '',
+        borderRadius: { topLeft: 4, topRight: 4 },
+      },
+      {
+        data: [],
+        label: 'Productos',
+        backgroundColor: '',
+        borderRadius: { topLeft: 4, topRight: 4 },
+      },
     ],
   };
 
@@ -44,7 +57,9 @@ export class DashboardAdminComponent implements OnInit {
       x: { grid: { display: false } },
       y: {
         beginAtZero: true,
-        ticks: { callback: (value: any) => `$${Number(value).toLocaleString('es-AR')}` },
+        ticks: {
+          callback: (value: any) => `$${Number(value).toLocaleString('es-AR')}`,
+        },
       },
     },
   };
@@ -61,7 +76,7 @@ export class DashboardAdminComponent implements OnInit {
     // en Chrome 111+, Firefox 113+ y Safari 15.4+ (browsers objetivo del proyecto).
     const style = getComputedStyle(document.documentElement);
     const primaryColor = style.getPropertyValue('--primary').trim(); // oklch(0.42 0.15 281)
-    const accentColor  = style.getPropertyValue('--accent').trim();  // oklch(0.55 0.16 155)
+    const accentColor = style.getPropertyValue('--accent').trim(); // oklch(0.55 0.16 155)
 
     const { from, to } = this.getCurrentWeekRange();
 
@@ -69,35 +84,42 @@ export class DashboardAdminComponent implements OnInit {
     forkJoin({
       summary: this.reportsService.getSummary(),
       revenue: this.reportsService.getRevenue(from, to, 'day'),
-    }).pipe(
-      finalize(() => (this.isLoading = false)),
-    ).subscribe({
-      next: ({ summary, revenue }) => {
-        this.summary = summary;
-        this.buildChart(revenue, primaryColor, accentColor);
-      },
-      error: () => {
-        this.toast.error('Error al cargar el dashboard', 'Intente recargar la página');
-      },
-    });
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: ({ summary, revenue }) => {
+          this.summary = summary;
+          this.buildChart(revenue, primaryColor, accentColor);
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cargar el dashboard',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   // ── Chart builder ─────────────────────────────────────────────────────────────
-  private buildChart(data: RevenueDay[], primaryColor: string, accentColor: string): void {
+  private buildChart(
+    data: RevenueDay[],
+    primaryColor: string,
+    accentColor: string,
+  ): void {
     this.barChartData = {
-      labels: data.map(d => d.period),
+      labels: data.map((d) => d.period),
       datasets: [
         {
-          data:            data.map(d => d.bookings),
-          label:           'Alquileres',
+          data: data.map((d) => d.bookings),
+          label: 'Alquileres',
           backgroundColor: primaryColor,
-          borderRadius:    { topLeft: 4, topRight: 4 },
+          borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
-          data:            data.map(d => d.sales),
-          label:           'Productos',
+          data: data.map((d) => d.sales),
+          label: 'Productos',
           backgroundColor: accentColor,
-          borderRadius:    { topLeft: 4, topRight: 4 },
+          borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
     };
@@ -111,8 +133,8 @@ export class DashboardAdminComponent implements OnInit {
   /** Rango lunes–domingo de la semana actual en formato YYYY-MM-DD. */
   private getCurrentWeekRange(): { from: string; to: string } {
     const now = new Date();
-    const day = now.getDay();                          // 0=dom, 1=lun…
-    const diffToMonday = day === 0 ? -6 : 1 - day;    // ajuste a lunes
+    const day = now.getDay(); // 0=dom, 1=lun…
+    const diffToMonday = day === 0 ? -6 : 1 - day; // ajuste a lunes
     const monday = new Date(now);
     monday.setDate(now.getDate() + diffToMonday);
     const sunday = new Date(monday);
@@ -120,7 +142,7 @@ export class DashboardAdminComponent implements OnInit {
 
     return {
       from: monday.toISOString().split('T')[0],
-      to:   sunday.toISOString().split('T')[0],
+      to: sunday.toISOString().split('T')[0],
     };
   }
 }

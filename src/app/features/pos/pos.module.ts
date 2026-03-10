@@ -8,8 +8,8 @@ import { PosComponent } from './pos.component';
 @NgModule({
   declarations: [PosComponent],
   imports: [
-    CommonModule,       // [ngClass], [ngStyle]
-    FormsModule,        // [(ngModel)] en montoEfectivo / montoTransferencia / searchQuery
+    CommonModule, // [ngClass], [ngStyle]
+    FormsModule, // [(ngModel)] en montoEfectivo / montoTransferencia / searchQuery
     PosRoutingModule,
   ],
 })

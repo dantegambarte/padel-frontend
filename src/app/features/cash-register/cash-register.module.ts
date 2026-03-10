@@ -7,10 +7,6 @@ import { CashRegisterComponent } from './cash-register.component';
 
 @NgModule({
   declarations: [CashRegisterComponent],
-  imports: [
-    CommonModule,
-    FormsModule,
-    CashRegisterRoutingModule,
-  ],
+  imports: [CommonModule, FormsModule, CashRegisterRoutingModule],
 })
 export class CashRegisterModule {}
