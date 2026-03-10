@@ -71,7 +71,7 @@
 
           <!-- ── HEADER DE LA GRILLA: Horario + Nombres de canchas ── -->
           <div class="mb-2 grid gap-2" [style.grid-template-columns]="gridColsStyle">
-            <div class="text-sm font-semibold">Horario</div>
+            <div class="sticky left-0 z-10 bg-card text-sm font-semibold">Horario</div>
             <div *ngFor="let court of courts"
                  class="text-center text-sm font-semibold">{{ court.name }}</div>
           </div>
@@ -82,7 +82,7 @@
                  class="grid gap-2" [style.grid-template-columns]="gridColsStyle">
 
               <!-- Etiqueta de hora -->
-              <div class="flex items-center text-sm font-medium text-muted-foreground">
+              <div class="sticky left-0 z-10 bg-card flex items-center text-sm font-medium text-muted-foreground border-r border-border pr-2">
                 {{ hour }}hs
               </div>
 

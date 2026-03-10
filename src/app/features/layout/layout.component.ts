@@ -24,6 +24,7 @@ const PAGE_TITLES: Record<string, string> = {
 export class LayoutComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   currentPageTitle = 'Dashboard';
+  isSidebarOpen = false;
 
   private sub = new Subscription();
 
@@ -58,6 +59,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarOpen = !this.isSidebarOpen;
   }
 
   // Extrae el segmento de ruta final y lo mapea al título correspondiente.

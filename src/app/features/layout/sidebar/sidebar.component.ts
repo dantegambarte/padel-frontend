@@ -1,9 +1,12 @@
 import {
   Component,
   ElementRef,
+  EventEmitter,
   HostListener,
+  Input,
   OnInit,
   OnDestroy,
+  Output,
 } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
@@ -24,6 +27,9 @@ interface NavItem {
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  @Input() isOpen: boolean = false;
+  @Output() closeMenu = new EventEmitter<void>();
+
   currentUser: User | null = null;
   currentUrl = '';
   isUserMenuOpen = false;
@@ -102,6 +108,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   navigate(route: string): void {
     this.router.navigate([route]);
     this.isUserMenuOpen = false;
+    this.closeMenu.emit();
   }
 
   logout(): void {

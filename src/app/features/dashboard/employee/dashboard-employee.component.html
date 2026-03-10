@@ -4,7 +4,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════════
        KPI CARDS — Caja Actual / Próximo Turno / Alertas de Stock
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="grid gap-4 md:grid-cols-3">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
 
     <!-- Loading skeleton -->
     <ng-container *ngIf="isLoading; else empKpiCards">
@@ -45,7 +45,7 @@
        ACCESOS RÁPIDOS — Nuevo Turno + Venta Mostrador
        cursor-pointer + hover:border-primary / hover:border-accent
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
     <!-- Nuevo Turno → /app/agenda -->
     <a routerLink="/app/agenda"

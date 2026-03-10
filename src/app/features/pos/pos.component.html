@@ -1,6 +1,6 @@
 <!-- ─── POS PAGE ─────────────────────────────────────────────────────────────── -->
 <!-- Outer grid: two equal columns, full viewport height minus header/padding   -->
-<div class="grid h-[calc(100vh-12rem)] gap-4 lg:grid-cols-2">
+<div class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:h-[calc(100vh-10rem)]">
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        LEFT PANEL — Catálogo de Productos
@@ -67,7 +67,7 @@
               <!-- Badge variant="secondary" -->
               <span class="mt-1 inline-flex items-center rounded-full border px-2.5 py-0.5
                            text-xs font-semibold bg-secondary text-secondary-foreground">
-                {{ product.category?.name ?? product.category }}
+                {{ product.category }}
               </span>
             </div>
             <div class="flex flex-col items-center gap-1">

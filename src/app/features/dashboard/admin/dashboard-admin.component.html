@@ -1,10 +1,10 @@
 <!-- ─── DASHBOARD ADMIN ───────────────────────────────────────────────────────── -->
-<div class="space-y-6">
+<div class="space-y-6 p-4 md:p-6">
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
        KPI CARDS — grid gap-4 md:grid-cols-2 lg:grid-cols-4
   ════════════════════════════════════════════════════════════════════════════ -->
-  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
     <!-- Ventas Hoy -->
     <ng-container *ngIf="isLoading; else kpiCards">
@@ -47,7 +47,7 @@
        ng2-charts v5 + Chart.js 4 — colores leídos desde CSS vars de Tailwind v4
   ════════════════════════════════════════════════════════════════════════════ -->
   <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
-    <div class="p-6">
+    <div class="p-4 md:p-6">
       <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
         Evolución de Ingresos (Semanal)
       </h3>
@@ -55,13 +55,13 @@
         Comparación entre alquileres de cancha y venta de productos
       </p>
     </div>
-    <div class="px-6 pb-6">
+    <div class="w-full overflow-x-auto px-4 pb-4 md:px-6 md:pb-6">
 
       <!-- Loading skeleton para el chart -->
       <div *ngIf="isLoading" class="h-[350px] w-full animate-pulse rounded-lg bg-muted"></div>
 
       <!-- Canvas del chart — h-[350px] + maintainAspectRatio:false = Chart.js llena el div -->
-      <div *ngIf="!isLoading" style="height: 350px; position: relative;">
+      <div *ngIf="!isLoading" class="min-w-[300px]" style="height: 350px; position: relative;">
         <canvas
           baseChart
           [data]="barChartData"

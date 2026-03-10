@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { User } from '../../../core/models/user.model';
 
@@ -9,6 +9,7 @@ import { User } from '../../../core/models/user.model';
 export class ToolbarComponent {
   @Input() title = '';
   @Input() currentUser: User | null = null;
+  @Output() toggleMenu = new EventEmitter<void>();
 
   isNotifOpen = false;
 

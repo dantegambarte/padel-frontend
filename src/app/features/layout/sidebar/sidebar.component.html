@@ -1,5 +1,17 @@
-<!-- Traducción 1:1 de app-sidebar.tsx — clases Tailwind idénticas al prototipo -->
-<aside class="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+<!-- Overlay (mobile only) — closes sidebar when clicking outside -->
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+  (click)="closeMenu.emit()"
+></div>
+
+<!-- Sidebar panel — off-canvas on mobile, static on lg+ -->
+<aside
+  [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  class="fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-in-out
+         lg:translate-x-0 lg:static lg:h-screen
+         flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+>
 
   <!-- ── Header: logo + nombre + rol ───────────────────────────────────── -->
   <div class="border-b border-sidebar-border p-4">
