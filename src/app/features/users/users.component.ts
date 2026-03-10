@@ -1,56 +1,100 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 
 import { UsersService } from '../../core/services/users.service';
-import { AuthService }  from '../../core/services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { User, CreateUserDto } from '../../core/models/user.model';
+import {
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  UserRole,
+} from '../../core/models/user.model';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
 })
 export class UsersComponent implements OnInit {
-
-  users:       User[] = [];
-  isLoading    = true;
+  users: User[] = [];
+  isLoading = true;
   isDialogOpen = false;
   isSubmitting = false;
-  togglingId:  string | null = null;
+  togglingId: string | null = null;
 
-  form = { username: '', fullName: '', password: '', confirmPassword: '' };
+  // Edit modal
+  isEditOpen = false;
+  editingUser: User | null = null;
+  editForm = { fullName: '', password: '', role: 'employee' as UserRole };
+  editFormError = '';
+  isEditSubmitting = false;
+
+  // Delete
+  deletingId: string | null = null;
+
+  form = {
+    username: '',
+    fullName: '',
+    password: '',
+    confirmPassword: '',
+    role: 'employee' as UserRole,
+  };
   formError = '';
+
+  readonly ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+    { value: 'employee', label: 'Empleado' },
+    { value: 'admin', label: 'Administrador' },
+  ];
 
   constructor(
     private usersService: UsersService,
-    private authService:  AuthService,
-    private toast:        ToastService,
+    private authService: AuthService,
+    private toast: ToastService,
   ) {}
 
-  ngOnInit(): void { this.loadUsers(); }
+  ngOnInit(): void {
+    this.loadUsers();
+  }
 
   @HostListener('document:keydown.escape')
-  onEscape(): void { if (this.isDialogOpen) this.closeDialog(); }
+  onEscape(): void {
+    if (this.isDialogOpen) this.closeDialog();
+    if (this.isEditOpen) this.closeEditModal();
+  }
 
-  get currentUserId(): string { return this.authService.currentUser?.id ?? ''; }
+  get currentUserId(): string {
+    return this.authService.currentUser?.id ?? '';
+  }
 
   canToggle(user: User): boolean {
-    return user.role !== 'admin' && user.id !== this.currentUserId;
+    return user.id !== this.currentUserId;
   }
 
   private loadUsers(): void {
     this.isLoading = true;
     this.usersService.findAll().subscribe({
-      next:  (data) => { this.users = data; this.isLoading = false; },
-      error: ()     => {
-        this.toast.error('Error al cargar usuarios', 'Intente recargar la página');
+      next: (data) => {
+        this.users = data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toast.error(
+          'Error al cargar usuarios',
+          'Intente recargar la página',
+        );
         this.isLoading = false;
       },
     });
   }
 
   openDialog(): void {
-    this.form = { username: '', fullName: '', password: '', confirmPassword: '' };
-    this.formError    = '';
+    this.form = {
+      username: '',
+      fullName: '',
+      password: '',
+      confirmPassword: '',
+      role: 'employee',
+    };
+    this.formError = '';
     this.isDialogOpen = true;
   }
 
@@ -62,7 +106,11 @@ export class UsersComponent implements OnInit {
   submitForm(): void {
     this.formError = '';
 
-    if (!this.form.username.trim() || !this.form.fullName.trim() || !this.form.password) {
+    if (
+      !this.form.username.trim() ||
+      !this.form.fullName.trim() ||
+      !this.form.password
+    ) {
       this.formError = 'Todos los campos son obligatorios.';
       return;
     }
@@ -79,23 +127,101 @@ export class UsersComponent implements OnInit {
       username: this.form.username.trim().toLowerCase(),
       fullName: this.form.fullName.trim(),
       password: this.form.password,
+      role: this.form.role,
     };
 
     this.isSubmitting = true;
     this.usersService.create(dto).subscribe({
       next: (created) => {
         this.isSubmitting = false;
-        this.isDialogOpen  = false;
+        this.isDialogOpen = false;
         this.toast.success(
-          'Empleado creado exitosamente',
+          'Usuario creado exitosamente',
           `"${created.username}" ya puede iniciar sesión`,
         );
         this.loadUsers();
       },
       error: (err) => {
         this.isSubmitting = false;
-        const msg = err?.error?.message ?? 'No se pudo crear el empleado';
+        const msg = err?.error?.message ?? 'No se pudo crear el usuario';
         this.formError = Array.isArray(msg) ? msg.join(', ') : msg;
+      },
+    });
+  }
+
+  openEditModal(user: User): void {
+    this.editingUser = user;
+    this.editForm = { fullName: user.fullName, password: '', role: user.role };
+    this.editFormError = '';
+    this.isEditOpen = true;
+  }
+
+  closeEditModal(): void {
+    if (this.isEditSubmitting) return;
+    this.isEditOpen = false;
+    this.editingUser = null;
+  }
+
+  submitEdit(): void {
+    this.editFormError = '';
+    if (!this.editForm.fullName.trim()) {
+      this.editFormError = 'El nombre completo es obligatorio.';
+      return;
+    }
+    if (this.editForm.password && this.editForm.password.length < 6) {
+      this.editFormError = 'La contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    const dto: UpdateUserDto = {
+      fullName: this.editForm.fullName.trim(),
+      role: this.editForm.role,
+    };
+    if (this.editForm.password) dto.password = this.editForm.password;
+
+    this.isEditSubmitting = true;
+    this.usersService.update(this.editingUser!.id, dto).subscribe({
+      next: (updated) => {
+        this.isEditSubmitting = false;
+        this.isEditOpen = false;
+        this.users = this.users.map((u) => (u.id === updated.id ? updated : u));
+        this.toast.success(
+          'Usuario actualizado',
+          `${updated.fullName} fue actualizado exitosamente`,
+        );
+      },
+      error: (err) => {
+        this.isEditSubmitting = false;
+        const msg = err?.error?.message ?? 'No se pudo actualizar el usuario';
+        this.editFormError = Array.isArray(msg) ? msg.join(', ') : msg;
+      },
+    });
+  }
+
+  deleteUser(user: User): void {
+    if (
+      !confirm(
+        `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`,
+      )
+    )
+      return;
+    this.deletingId = user.id;
+    this.usersService.remove(user.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        this.users = this.users.filter((u) => u.id !== user.id);
+        this.toast.success(
+          'Usuario eliminado',
+          `"${user.username}" fue eliminado del sistema`,
+        );
+      },
+      error: (err) => {
+        this.deletingId = null;
+        const msg = err?.error?.message ?? 'No se pudo eliminar el usuario';
+        this.toast.error(
+          'Error al eliminar',
+          Array.isArray(msg) ? msg.join(', ') : msg,
+        );
       },
     });
   }
@@ -107,13 +233,20 @@ export class UsersComponent implements OnInit {
     this.usersService.toggleStatus(user.id, user.isActive).subscribe({
       next: (updated) => {
         this.togglingId = null;
-        this.users = this.users.map(u => u.id === updated.id ? updated : u);
+        this.users = this.users.map((u) => (u.id === updated.id ? updated : u));
         const label = updated.isActive ? 'activado' : 'desactivado';
-        this.toast.success(`Usuario ${label}`, `${updated.fullName} fue ${label} exitosamente`);
+        this.toast.success(
+          `Usuario ${label}`,
+          `${updated.fullName} fue ${label} exitosamente`,
+        );
       },
-      error: () => {
+      error: (err) => {
         this.togglingId = null;
-        this.toast.error('Error al actualizar estado', 'Intente nuevamente');
+        const msg = err?.error?.message ?? 'Intente nuevamente';
+        this.toast.error(
+          'Error al actualizar estado',
+          Array.isArray(msg) ? msg.join(', ') : msg,
+        );
       },
     });
   }
