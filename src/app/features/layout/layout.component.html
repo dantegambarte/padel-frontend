@@ -1,0 +1,25 @@
+<!-- Estructura base de main-app.tsx traducida a Angular.
+     flex h-screen overflow-hidden → sidebar fijo + área de contenido scrollable -->
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar izquierdo fijo -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Área principal: toolbar sticky + contenido scrollable -->
+  <div class="flex flex-1 flex-col overflow-hidden">
+
+    <!-- Toolbar sticky en la parte superior -->
+    <app-toolbar
+      [title]="currentPageTitle"
+      [currentUser]="currentUser"
+    ></app-toolbar>
+
+    <!-- Contenido de la página activa via router-outlet -->
+    <main class="flex-1 overflow-auto p-6">
+      <div class="mx-auto max-w-7xl">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+
+  </div>
+</div>

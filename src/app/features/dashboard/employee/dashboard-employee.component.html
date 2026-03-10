@@ -1,0 +1,237 @@
+<!-- ─── DASHBOARD EMPLOYEE ────────────────────────────────────────────────────── -->
+<div class="space-y-6">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       KPI CARDS — Caja Actual / Próximo Turno / Alertas de Stock
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="grid gap-4 md:grid-cols-3">
+
+    <!-- Loading skeleton -->
+    <ng-container *ngIf="isLoading; else empKpiCards">
+      <div *ngFor="let i of [1,2,3]"
+           class="h-32 animate-pulse rounded-lg border border-border bg-muted shadow-md"></div>
+    </ng-container>
+
+    <ng-template #empKpiCards>
+
+      <!-- Caja Actual -->
+      <app-stat-card
+        title="Caja Actual (Efectivo)"
+        [value]="'$' + fmt(cashAmount)"
+        icon="dollar-sign">
+      </app-stat-card>
+
+      <!-- Próximo Turno -->
+      <app-stat-card
+        title="Próximo Turno"
+        [value]="proximoTurnoValue"
+        icon="clock"
+        [trend]="{ value: proximoTurnoTrend, positive: true }">
+      </app-stat-card>
+
+      <!-- Alertas de Stock — border-destructive/50 como en el prototipo -->
+      <app-stat-card
+        title="Alertas de Stock"
+        [value]="lowStockProducts.length.toString()"
+        icon="alert-triangle"
+        extraClass="border-destructive/50">
+      </app-stat-card>
+
+    </ng-template>
+
+  </div><!-- /KPI cards -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       ACCESOS RÁPIDOS — Nuevo Turno + Venta Mostrador
+       cursor-pointer + hover:border-primary / hover:border-accent
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="grid gap-4 md:grid-cols-2">
+
+    <!-- Nuevo Turno → /app/agenda -->
+    <a routerLink="/app/agenda"
+       class="block cursor-pointer rounded-lg border border-border bg-card
+              text-card-foreground shadow-md transition-all
+              hover:border-primary hover:shadow-lg">
+      <div class="p-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <!-- Calendar icon -->
+            <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+              Nuevo Turno
+            </h3>
+            <p class="mt-1 text-sm text-muted-foreground">Reservar cancha para un cliente</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 pb-6">
+        <div class="inline-flex h-11 w-full items-center justify-center rounded-md
+                    bg-primary px-8 text-sm font-medium text-primary-foreground
+                    transition-colors hover:bg-primary/90">
+          Ir a Agenda
+        </div>
+      </div>
+    </a>
+
+    <!-- Venta Mostrador → /app/pos -->
+    <a routerLink="/app/pos"
+       class="block cursor-pointer rounded-lg border border-border bg-card
+              text-card-foreground shadow-md transition-all
+              hover:border-accent hover:shadow-lg">
+      <div class="p-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+            <!-- ShoppingCart icon -->
+            <svg class="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+              Venta Mostrador
+            </h3>
+            <p class="mt-1 text-sm text-muted-foreground">Registrar venta de productos</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 pb-6">
+        <div class="inline-flex h-11 w-full items-center justify-center rounded-md
+                    bg-accent px-8 text-sm font-medium text-accent-foreground
+                    transition-colors hover:bg-accent/90">
+          Nueva Venta
+        </div>
+      </div>
+    </a>
+
+  </div><!-- /accesos rápidos -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       PRÓXIMOS TURNOS — tabla de reservas de hoy con status badge
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div class="p-6">
+      <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        Próximos Turnos
+      </h3>
+      <p class="mt-1.5 text-sm text-muted-foreground">Reservas programadas para hoy</p>
+    </div>
+    <div class="px-6 pb-6">
+      <div class="space-y-3">
+
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="isLoading; else bookingsList">
+          <div *ngFor="let i of [1,2,3,4]"
+               class="h-16 animate-pulse rounded-lg bg-muted"></div>
+        </ng-container>
+
+        <ng-template #bookingsList>
+
+          <div *ngFor="let booking of upcomingBookings"
+               class="flex items-center justify-between rounded-lg border border-border p-3">
+
+            <div class="flex items-center gap-3">
+              <!-- Chip de hora: bg-primary/10 text-primary -->
+              <div class="flex h-10 w-10 items-center justify-center rounded-md
+                          bg-primary/10 text-sm font-semibold text-primary">
+                {{ formatHour(booking.hour) }}
+              </div>
+              <div>
+                <p class="font-medium">{{ booking.clientName }}</p>
+                <p class="text-sm text-muted-foreground">{{ booking.court.name }}</p>
+              </div>
+            </div>
+
+            <!-- Badge: paid → default (bg-primary), pending → secondary -->
+            <span
+              [ngClass]="isPaid(booking)
+                ? 'border-transparent bg-primary text-primary-foreground'
+                : 'border-transparent bg-secondary text-secondary-foreground'"
+              class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+            >
+              {{ isPaid(booking) ? 'Pagado' : 'Pendiente' }}
+            </span>
+          </div>
+
+          <!-- Empty state -->
+          <p *ngIf="upcomingBookings.length === 0"
+             class="py-6 text-center text-sm text-muted-foreground">
+            No hay turnos pendientes para hoy
+          </p>
+
+        </ng-template>
+      </div>
+    </div>
+  </div><!-- /próximos turnos -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       ALERTAS DE STOCK BAJO — border-destructive/50 como en el prototipo
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="rounded-lg border border-destructive/50 bg-card
+              text-card-foreground shadow-md">
+    <div class="p-6">
+      <h3 class="flex items-center gap-2 text-xl font-semibold leading-none
+                 tracking-tight text-card-foreground">
+        <!-- AlertTriangle icon text-destructive -->
+        <svg class="h-5 w-5 text-destructive" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Alertas de Stock Bajo
+      </h3>
+      <p class="mt-1.5 text-sm text-muted-foreground">
+        Productos que requieren reabastecimiento
+      </p>
+    </div>
+
+    <div class="px-6 pb-6">
+      <div class="space-y-2">
+
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="isLoading; else stockList">
+          <div *ngFor="let i of [1,2,3]"
+               class="h-14 animate-pulse rounded-lg bg-muted"></div>
+        </ng-container>
+
+        <ng-template #stockList>
+
+          <!-- Fila de alerta: border-destructive/30 bg-destructive/5 -->
+          <div *ngFor="let product of lowStockProducts"
+               class="flex items-center justify-between rounded-lg border
+                      border-destructive/30 bg-destructive/5 p-3">
+            <div>
+              <p class="font-medium">{{ product.name }}</p>
+              <p class="text-sm text-muted-foreground">
+                Stock actual: {{ product.stock }} (mínimo: {{ product.minStock }})
+              </p>
+            </div>
+            <!-- Badge variant="destructive" -->
+            <span class="inline-flex items-center rounded-full border border-transparent
+                         bg-destructive px-2.5 py-0.5 text-xs font-semibold
+                         text-destructive-foreground">
+              {{ product.stock }} unid.
+            </span>
+          </div>
+
+          <!-- Empty state -->
+          <p *ngIf="lowStockProducts.length === 0"
+             class="py-6 text-center text-sm text-muted-foreground">
+            Todos los productos tienen stock suficiente
+          </p>
+
+        </ng-template>
+      </div>
+    </div>
+  </div><!-- /alertas stock -->
+
+</div><!-- /space-y-6 -->

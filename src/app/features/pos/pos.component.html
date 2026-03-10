@@ -1,0 +1,304 @@
+<!-- ─── POS PAGE ─────────────────────────────────────────────────────────────── -->
+<!-- Outer grid: two equal columns, full viewport height minus header/padding   -->
+<div class="grid h-[calc(100vh-12rem)] gap-4 lg:grid-cols-2">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       LEFT PANEL — Catálogo de Productos
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="flex flex-col rounded-lg border border-border bg-card text-card-foreground shadow-md">
+
+    <!-- Card Header -->
+    <div class="flex flex-col space-y-1.5 border-b border-border p-6">
+      <h3 class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <!-- ShoppingCart icon -->
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        </svg>
+        Catálogo de Productos
+      </h3>
+      <p class="text-sm text-muted-foreground">Seleccione los productos para agregar al carrito</p>
+
+      <!-- Search input -->
+      <div class="relative mt-4">
+        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar productos..."
+          [(ngModel)]="searchQuery"
+          class="flex h-10 w-full rounded-md border border-input bg-background
+                 py-2 pl-9 pr-3 text-sm ring-offset-background
+                 placeholder:text-muted-foreground
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:ring-offset-2"
+        />
+      </div>
+    </div>
+
+    <!-- Card Content — product grid -->
+    <div class="flex-1 overflow-auto p-4">
+
+      <ng-container *ngIf="isLoadingProducts; else productList">
+        <!-- Loading skeleton -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div *ngFor="let i of [1,2,3,4,5,6]"
+               class="h-28 animate-pulse rounded-md border border-border bg-muted"></div>
+        </div>
+      </ng-container>
+
+      <ng-template #productList>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <button
+            *ngFor="let product of filteredProducts"
+            type="button"
+            (click)="addToCart(product)"
+            class="flex h-auto flex-col items-center justify-center gap-2 rounded-md
+                   border border-input bg-transparent p-4 text-sm font-medium
+                   transition-colors hover:border-primary hover:bg-primary/5
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <div class="text-center">
+              <p class="font-semibold">{{ product.name }}</p>
+              <!-- Badge variant="secondary" -->
+              <span class="mt-1 inline-flex items-center rounded-full border px-2.5 py-0.5
+                           text-xs font-semibold bg-secondary text-secondary-foreground">
+                {{ product.category?.name ?? product.category }}
+              </span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <p class="text-lg font-bold text-primary">${{ fmt(product.salePrice) }}</p>
+              <p class="text-xs text-muted-foreground">Stock: {{ product.stock }}</p>
+            </div>
+          </button>
+
+          <p *ngIf="filteredProducts.length === 0"
+             class="col-span-full py-8 text-center text-sm text-muted-foreground">
+            No se encontraron productos
+          </p>
+        </div>
+      </ng-template>
+
+    </div>
+  </div><!-- /left panel -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       RIGHT PANEL — Ticket Actual
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="flex flex-col rounded-lg border border-border bg-card text-card-foreground shadow-md">
+
+    <!-- Card Header -->
+    <div class="flex flex-col space-y-1.5 border-b border-border p-6">
+      <h3 class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        <!-- DollarSign icon -->
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        Ticket Actual
+      </h3>
+      <p class="text-sm text-muted-foreground">Revise y confirme la venta</p>
+    </div>
+
+    <!-- Card Content -->
+    <div class="flex flex-1 flex-col gap-4 overflow-hidden p-4">
+
+      <!-- ── Cart items list ──────────────────────────────────────────────────── -->
+      <div class="flex-1 space-y-2 overflow-auto">
+
+        <ng-container *ngIf="cart.length === 0; else cartItems">
+          <!-- Empty state -->
+          <div class="flex h-full items-center justify-center text-center text-muted-foreground">
+            <div>
+              <svg class="mx-auto mb-2 h-12 w-12 opacity-50" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+              </svg>
+              <p>No hay productos en el carrito</p>
+              <p class="text-sm">Seleccione productos del catálogo</p>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #cartItems>
+          <div *ngFor="let item of cart"
+               class="flex items-center gap-3 rounded-lg border border-border p-3">
+
+            <!-- Product info -->
+            <div class="flex-1">
+              <p class="font-medium">{{ item.name }}</p>
+              <p class="text-sm text-muted-foreground">${{ fmt(item.salePrice) }} c/u</p>
+            </div>
+
+            <!-- Qty controls -->
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="updateQuantity(item.productId, -1)"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-md
+                       border border-input bg-transparent text-sm
+                       hover:bg-accent hover:text-accent-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <!-- Minus icon -->
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14"/>
+                </svg>
+              </button>
+
+              <span class="w-8 text-center font-bold">{{ item.quantity }}</span>
+
+              <button
+                type="button"
+                (click)="updateQuantity(item.productId, 1)"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-md
+                       border border-input bg-transparent text-sm
+                       hover:bg-accent hover:text-accent-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <!-- Plus icon -->
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Line total -->
+            <div class="w-20 text-right">
+              <p class="font-bold">${{ fmt(item.salePrice * item.quantity) }}</p>
+            </div>
+
+            <!-- Remove button -->
+            <button
+              type="button"
+              (click)="removeFromCart(item.productId)"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-md
+                     text-destructive hover:bg-destructive/10
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <!-- Trash2 icon -->
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/>
+                <path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+
+          </div>
+        </ng-template>
+      </div><!-- /cart list -->
+
+      <!-- ── Payment section ──────────────────────────────────────────────────── -->
+      <div class="space-y-4 border-t border-border pt-4">
+
+        <!-- Cash / Transfer inputs -->
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="efectivo">
+              Monto Efectivo
+            </label>
+            <input
+              id="efectivo"
+              type="number"
+              min="0"
+              placeholder="0"
+              [(ngModel)]="montoEfectivo"
+              class="flex h-10 w-full rounded-md border border-input bg-background
+                     px-3 py-2 text-sm ring-offset-background
+                     placeholder:text-muted-foreground
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                     focus-visible:ring-offset-2"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="transferencia">
+              Monto Transferencia
+            </label>
+            <input
+              id="transferencia"
+              type="number"
+              min="0"
+              placeholder="0"
+              [(ngModel)]="montoTransferencia"
+              class="flex h-10 w-full rounded-md border border-input bg-background
+                     px-3 py-2 text-sm ring-offset-background
+                     placeholder:text-muted-foreground
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                     focus-visible:ring-offset-2"
+            />
+          </div>
+        </div>
+
+        <!-- Totals block -->
+        <div class="space-y-2 rounded-lg bg-muted p-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-muted-foreground">Subtotal:</span>
+            <span class="font-mono">${{ fmt(total) }}</span>
+          </div>
+
+          <ng-container *ngIf="showPaymentDetails">
+            <div class="flex justify-between text-sm">
+              <span class="text-muted-foreground">Total Pagado:</span>
+              <span class="font-mono">${{ fmt(totalPagado) }}</span>
+            </div>
+
+            <ng-container *ngIf="faltante > 0; else cambioBlock">
+              <div class="flex justify-between text-sm text-destructive">
+                <span>Faltante:</span>
+                <span class="font-mono font-bold">${{ fmt(faltante) }}</span>
+              </div>
+            </ng-container>
+            <ng-template #cambioBlock>
+              <div class="flex justify-between text-sm text-accent">
+                <span>Cambio:</span>
+                <span class="font-mono font-bold">${{ fmt(-faltante) }}</span>
+              </div>
+            </ng-template>
+          </ng-container>
+
+          <!-- Grand total row -->
+          <div class="border-t border-border pt-2">
+            <div class="flex justify-between">
+              <span class="text-lg font-semibold">TOTAL:</span>
+              <span class="text-2xl font-bold text-primary">${{ fmt(total) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirm sale button -->
+        <button
+          type="button"
+          (click)="confirmSale()"
+          [disabled]="isConfirmDisabled"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md
+                 bg-primary px-8 text-sm font-medium text-primary-foreground
+                 transition-colors hover:bg-primary/90
+                 disabled:pointer-events-none disabled:opacity-50
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:ring-offset-2"
+        >
+          <!-- DollarSign icon -->
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <ng-container *ngIf="isSubmitting; else confirmarLabel">Procesando...</ng-container>
+          <ng-template #confirmarLabel>Confirmar Venta</ng-template>
+        </button>
+
+      </div><!-- /payment section -->
+    </div><!-- /card content -->
+  </div><!-- /right panel -->
+
+</div><!-- /outer grid -->
