@@ -5,6 +5,14 @@
 @tailwind components;
 @tailwind utilities;
 
+// ── Calculadora: botón base (aplicado con @apply para reutilizar en el grid) ──
+@layer components {
+  .calc-btn {
+    @apply flex items-center justify-center p-4 text-xl font-medium
+           transition-colors duration-100 active:scale-95 cursor-pointer;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //   SCSS VARIABLES — Design tokens como variables SCSS
 // ─────────────────────────────────────────────────────────────────────────────
