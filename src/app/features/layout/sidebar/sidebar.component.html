@@ -8,22 +8,25 @@
 <!-- Sidebar panel — off-canvas on mobile, static on lg+ -->
 <aside
   [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-in-out
-         lg:translate-x-0 lg:static lg:h-screen
-         flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+  class="fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
 >
-
   <!-- ── Header: logo + nombre + rol ───────────────────────────────────── -->
   <div class="border-b border-sidebar-border p-4">
     <div class="flex items-center gap-3">
       <!-- Cuadrado logo emerald (bg-accent del tema) -->
-      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+      <div
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent"
+      >
         <span class="text-lg font-bold text-accent-foreground">PS</span>
       </div>
       <div>
         <h1 class="text-xl font-bold">PadelSys</h1>
         <p class="text-xs text-sidebar-foreground/60">
-          {{ currentUser?.role === 'admin' ? 'Modo Administrador' : 'Modo Empleado' }}
+          {{
+            currentUser?.role === "admin"
+              ? "Modo Administrador"
+              : "Modo Empleado"
+          }}
         </p>
       </div>
     </div>
@@ -43,49 +46,138 @@
       type="button"
       (click)="navigate(item.route)"
       [ngClass]="navItemClass(item.route)"
-      class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2
-             text-sm font-medium transition-colors
-             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
       <!-- Icons como SVG inline para máxima compatibilidad y fidelidad visual -->
       <ng-container [ngSwitch]="item.icon">
-
-        <svg *ngSwitchCase="'layout-dashboard'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
-          <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+        <svg
+          *ngSwitchCase="'layout-dashboard'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect width="7" height="9" x="3" y="3" rx="1" />
+          <rect width="7" height="5" x="14" y="3" rx="1" />
+          <rect width="7" height="9" x="14" y="12" rx="1" />
+          <rect width="7" height="5" x="3" y="16" rx="1" />
         </svg>
 
-        <svg *ngSwitchCase="'calendar-check'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 2v4"/><path d="M16 2v4"/>
-          <rect width="18" height="18" x="3" y="4" rx="2"/>
-          <path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>
+        <svg
+          *ngSwitchCase="'calendar-check'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M8 2v4" />
+          <path d="M16 2v4" />
+          <rect width="18" height="18" x="3" y="4" rx="2" />
+          <path d="M3 10h18" />
+          <path d="m9 16 2 2 4-4" />
         </svg>
 
-        <svg *ngSwitchCase="'credit-card'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="20" height="14" x="2" y="5" rx="2"/>
-          <line x1="2" x2="22" y1="10" y2="10"/>
+        <svg
+          *ngSwitchCase="'credit-card'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect width="20" height="14" x="2" y="5" rx="2" />
+          <line x1="2" x2="22" y1="10" y2="10" />
         </svg>
 
-        <svg *ngSwitchCase="'shopping-cart'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        <svg
+          *ngSwitchCase="'shopping-cart'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="8" cy="21" r="1" />
+          <circle cx="19" cy="21" r="1" />
+          <path
+            d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+          />
         </svg>
 
-        <svg *ngSwitchCase="'package'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-          <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+        <svg
+          *ngSwitchCase="'package'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m7.5 4.27 9 5.15" />
+          <path
+            d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+          />
+          <path d="m3.3 7 8.7 5 8.7-5" />
+          <path d="M12 22V12" />
         </svg>
 
-        <svg *ngSwitchCase="'bar-chart'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/>
-          <line x1="6" x2="6" y1="20" y2="14"/>
+        <svg
+          *ngSwitchCase="'bar-chart'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" x2="18" y1="20" y2="10" />
+          <line x1="12" x2="12" y1="20" y2="4" />
+          <line x1="6" x2="6" y1="20" y2="14" />
         </svg>
 
-        <svg *ngSwitchCase="'settings'" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-          <circle cx="12" cy="12" r="3"/>
+        <svg
+          *ngSwitchCase="'users'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
 
+        <svg
+          *ngSwitchCase="'settings'"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+          />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
       </ng-container>
 
       <span>{{ item.label }}</span>
@@ -94,17 +186,16 @@
 
   <!-- ── Footer: perfil de usuario con dropdown ─────────────────────────── -->
   <div class="relative border-t border-sidebar-border p-3">
-
     <!-- Trigger del dropdown -->
     <button
       type="button"
       (click)="toggleUserMenu($event)"
-      class="w-full flex items-center justify-start gap-3 rounded-md px-3 py-2
-             text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors
-             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      class="w-full flex items-center justify-start gap-3 rounded-md px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
       <!-- Avatar con iniciales -->
-      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-semibold flex-shrink-0">
+      <div
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-semibold flex-shrink-0"
+      >
         {{ userInitials }}
       </div>
       <div class="flex-1 text-left min-w-0">
@@ -115,56 +206,74 @@
       <svg
         class="h-4 w-4 flex-shrink-0 transition-transform"
         [class.rotate-180]="isUserMenuOpen"
-        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        <path d="m6 9 6 6 6-6"/>
+        <path d="m6 9 6 6 6-6" />
       </svg>
     </button>
 
     <!-- Dropdown menu — se abre hacia arriba (bottom-full) -->
     <div
       *ngIf="isUserMenuOpen"
-      class="absolute bottom-full left-3 right-3 mb-1 z-50
-             rounded-md border border-border bg-popover text-popover-foreground shadow-md
-             animate-in fade-in-0 zoom-in-95"
+      class="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
     >
       <div class="p-2">
         <p class="px-2 py-1.5 text-sm font-semibold">Mi Cuenta</p>
-        <hr class="my-1 border-border">
+        <hr class="my-1 border-border" />
 
         <ng-container *ngIf="currentUser?.role === 'admin'">
           <button
             type="button"
             (click)="navigate('/app/settings')"
-            class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm
-                   hover:bg-accent hover:text-accent-foreground transition-colors"
+            class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <!-- Settings icon mini -->
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+              />
+              <circle cx="12" cy="12" r="3" />
             </svg>
             Configuración
           </button>
-          <hr class="my-1 border-border">
+          <hr class="my-1 border-border" />
         </ng-container>
 
         <button
           type="button"
           (click)="logout()"
-          class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm
-                 text-destructive hover:bg-destructive/10 transition-colors"
+          class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
         >
           <!-- LogOut icon -->
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" x2="9" y1="12" y2="12"/>
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" x2="9" y1="12" y2="12" />
           </svg>
           Cerrar Sesión
         </button>
       </div>
     </div>
-
   </div>
 </aside>

@@ -17,7 +17,7 @@ import { User, UserRole } from '../../../core/models/user.model';
 interface NavItem {
   id: string;
   label: string;
-  icon: string;      // Nombre del SVG inline (ver template)
+  icon: string; // Nombre del SVG inline (ver template)
   route: string;
   roles: UserRole[];
 }
@@ -37,13 +37,62 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private sub = new Subscription();
 
   readonly allNavItems: NavItem[] = [
-    { id: 'dashboard',      label: 'Inicio',                 icon: 'layout-dashboard', route: '/app/dashboard',      roles: ['admin', 'employee'] },
-    { id: 'schedule',       label: 'Agenda de Turnos',       icon: 'calendar-check',   route: '/app/schedule',       roles: ['admin', 'employee'] },
-    { id: 'cash-register',  label: 'Cierre de Caja',         icon: 'credit-card',      route: '/app/cash-register',  roles: ['admin', 'employee'] },
-    { id: 'pos',            label: 'Nueva Venta',            icon: 'shopping-cart',    route: '/app/pos',            roles: ['admin', 'employee'] },
-    { id: 'products',       label: 'Productos',              icon: 'package',          route: '/app/products',       roles: ['admin', 'employee'] },
-    { id: 'reports',        label: 'Reportes',               icon: 'bar-chart',        route: '/app/reports',        roles: ['admin'] },
-    { id: 'settings',       label: 'Configuración',          icon: 'settings',         route: '/app/settings',       roles: ['admin'] },
+    {
+      id: 'dashboard',
+      label: 'Inicio',
+      icon: 'layout-dashboard',
+      route: '/app/dashboard',
+      roles: ['admin', 'employee'],
+    },
+    {
+      id: 'schedule',
+      label: 'Agenda de Turnos',
+      icon: 'calendar-check',
+      route: '/app/schedule',
+      roles: ['admin', 'employee'],
+    },
+    {
+      id: 'cash-register',
+      label: 'Cierre de Caja',
+      icon: 'credit-card',
+      route: '/app/cash-register',
+      roles: ['admin', 'employee'],
+    },
+    {
+      id: 'pos',
+      label: 'Nueva Venta',
+      icon: 'shopping-cart',
+      route: '/app/pos',
+      roles: ['admin', 'employee'],
+    },
+    {
+      id: 'products',
+      label: 'Productos',
+      icon: 'package',
+      route: '/app/products',
+      roles: ['admin', 'employee'],
+    },
+    {
+      id: 'reports',
+      label: 'Reportes',
+      icon: 'bar-chart',
+      route: '/app/reports',
+      roles: ['admin'],
+    },
+    {
+      id: 'users',
+      label: 'Usuarios',
+      icon: 'users',
+      route: '/app/users',
+      roles: ['admin'],
+    },
+    {
+      id: 'settings',
+      label: 'Configuración',
+      icon: 'settings',
+      route: '/app/settings',
+      roles: ['admin'],
+    },
   ];
 
   constructor(
