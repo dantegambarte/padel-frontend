@@ -1,21 +1,37 @@
 <div class="space-y-6">
-
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div class="rounded-lg border border-border bg-card shadow-md">
     <div class="p-6">
       <div class="flex items-center gap-3">
-        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/>
-            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
-                     M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        <div
+          class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
+        >
+          <svg
+            class="h-6 w-6 text-primary"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"
+            />
+            <path
+              d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
+                     M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            />
           </svg>
         </div>
         <div>
-          <h2 class="text-xl font-semibold text-card-foreground">Configuración del Sistema</h2>
-          <p class="text-sm text-muted-foreground">Administre los parámetros globales de PadelSys</p>
+          <h2 class="text-xl font-semibold text-card-foreground">
+            Configuración del Sistema
+          </h2>
+          <p class="text-sm text-muted-foreground">
+            Administre los parámetros globales de PadelSys
+          </p>
         </div>
       </div>
     </div>
@@ -23,34 +39,47 @@
 
   <!-- ── Loading skeleton ────────────────────────────────────────────────── -->
   <ng-container *ngIf="isLoading">
-    <div *ngFor="let i of [1, 2, 3]"
-      class="h-40 animate-pulse rounded-lg border border-border bg-muted/40">
-    </div>
+    <div
+      *ngFor="let i of [1, 2, 3]"
+      class="h-40 animate-pulse rounded-lg border border-border bg-muted/40"
+    ></div>
   </ng-container>
 
   <!-- ── Content ─────────────────────────────────────────────────────────── -->
   <ng-container *ngIf="!isLoading">
-
     <!-- Precios Globales -->
     <div class="rounded-lg border border-border bg-card shadow-md">
       <div class="border-b border-border p-6">
         <div class="flex items-center gap-2">
-          <svg class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          <svg
+            class="h-5 w-5 text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-          <h3 class="text-lg font-semibold text-card-foreground">Precios Globales</h3>
+          <h3 class="text-lg font-semibold text-card-foreground">
+            Precios Globales
+          </h3>
         </div>
-        <p class="mt-1 text-sm text-muted-foreground">Tarifas por hora de alquiler de canchas</p>
+        <p class="mt-1 text-sm text-muted-foreground">
+          Tarifas por hora de alquiler de canchas
+        </p>
       </div>
 
       <div class="p-6 space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
-
           <!-- Precio base -->
           <div class="space-y-1.5">
-            <label class="text-sm font-medium text-foreground" for="precio-base">
+            <label
+              class="text-sm font-medium text-foreground"
+              for="precio-base"
+            >
               Precio Hora Base
             </label>
             <input
@@ -59,14 +88,19 @@
               min="0"
               [(ngModel)]="precioBase"
               placeholder="3000"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
-                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
-            <p class="text-xs text-muted-foreground">Tarifa estándar para clientes regulares</p>
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p class="text-xs text-muted-foreground">
+              Tarifa estándar para clientes regulares
+            </p>
           </div>
 
           <!-- Precio profesor -->
           <div class="space-y-1.5">
-            <label class="text-sm font-medium text-foreground" for="precio-profesor">
+            <label
+              class="text-sm font-medium text-foreground"
+              for="precio-profesor"
+            >
               Precio Hora Profesor
             </label>
             <input
@@ -75,22 +109,29 @@
               min="0"
               [(ngModel)]="precioProfesor"
               placeholder="2500"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
-                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
-            <p class="text-xs text-muted-foreground">Tarifa especial para clases con profesor</p>
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p class="text-xs text-muted-foreground">
+              Tarifa especial para clases con profesor
+            </p>
           </div>
-
         </div>
 
         <!-- Preview -->
         <div class="rounded-lg border border-border bg-accent/5 p-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm text-muted-foreground">Precio actual base:</span>
-            <span class="text-lg font-bold text-accent">${{ fmt(precioBaseNum) }}</span>
+            <span class="text-sm text-muted-foreground"
+              >Precio actual base:</span
+            >
+            <span class="text-lg font-bold text-accent"
+              >${{ fmt(precioBaseNum) }}</span
+            >
           </div>
           <div class="mt-1 flex items-center justify-between">
             <span class="text-sm text-muted-foreground">Precio profesor:</span>
-            <span class="text-lg font-bold text-primary">${{ fmt(precioProfesorNum) }}</span>
+            <span class="text-lg font-bold text-primary"
+              >${{ fmt(precioProfesorNum) }}</span
+            >
           </div>
         </div>
       </div>
@@ -100,12 +141,21 @@
     <div class="rounded-lg border border-border bg-card shadow-md">
       <div class="border-b border-border p-6">
         <div class="flex items-center gap-2">
-          <svg class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
+          <svg
+            class="h-5 w-5 text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
           </svg>
-          <h3 class="text-lg font-semibold text-card-foreground">Horarios de Operación</h3>
+          <h3 class="text-lg font-semibold text-card-foreground">
+            Horarios de Operación
+          </h3>
         </div>
         <p class="mt-1 text-sm text-muted-foreground">
           Defina el horario de apertura y cierre del establecimiento
@@ -114,42 +164,50 @@
 
       <div class="p-6 space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
-
           <!-- Apertura -->
           <div class="space-y-1.5">
-            <label class="text-sm font-medium text-foreground" for="horario-apertura">
+            <label
+              class="text-sm font-medium text-foreground"
+              for="horario-apertura"
+            >
               Horario de Apertura
             </label>
             <input
               id="horario-apertura"
               type="time"
               [(ngModel)]="horarioApertura"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
-                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           </div>
 
           <!-- Cierre -->
           <div class="space-y-1.5">
-            <label class="text-sm font-medium text-foreground" for="horario-cierre">
+            <label
+              class="text-sm font-medium text-foreground"
+              for="horario-cierre"
+            >
               Horario de Cierre
             </label>
             <input
               id="horario-cierre"
               type="time"
               [(ngModel)]="horarioCierre"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
-                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           </div>
-
         </div>
 
         <!-- Preview -->
         <div class="rounded-lg border border-border bg-muted/30 p-3">
           <p class="text-sm text-muted-foreground">
             El establecimiento estará operativo de
-            <span class="font-semibold text-foreground">{{ horarioApertura }}hs</span>
+            <span class="font-semibold text-foreground"
+              >{{ horarioApertura }}hs</span
+            >
             a
-            <span class="font-semibold text-foreground">{{ horarioCierre }}hs</span>
+            <span class="font-semibold text-foreground"
+              >{{ horarioCierre }}hs</span
+            >
           </p>
         </div>
       </div>
@@ -157,49 +215,321 @@
 
     <!-- Canchas Disponibles -->
     <div class="rounded-lg border border-border bg-card shadow-md">
+      <!-- Header con botón Nueva Cancha -->
       <div class="border-b border-border p-6">
-        <h3 class="text-lg font-semibold text-card-foreground">Canchas Disponibles</h3>
-        <p class="mt-1 text-sm text-muted-foreground">Gestión de canchas activas en el sistema</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-card-foreground">Canchas</h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Administrá las canchas disponibles en el sistema
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="openCreateCourtModal()"
+            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+            Nueva Cancha
+          </button>
+        </div>
       </div>
 
       <div class="p-6">
-        <!-- Empty courts state -->
-        <ng-container *ngIf="courts.length === 0">
-          <p class="text-sm text-muted-foreground">No hay canchas registradas.</p>
-        </ng-container>
+        <!-- Empty state -->
+        <div
+          *ngIf="courts.length === 0"
+          class="flex flex-col items-center justify-center py-10 text-center"
+        >
+          <svg
+            class="h-10 w-10 text-muted-foreground/40 mb-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+          </svg>
+          <p class="text-sm font-medium text-muted-foreground">
+            No hay canchas registradas
+          </p>
+          <p class="text-xs text-muted-foreground mt-1">
+            Hacé clic en "Nueva Cancha" para agregar la primera.
+          </p>
+        </div>
 
-        <!-- Courts list -->
-        <div *ngIf="courts.length > 0" class="space-y-3">
-          <div
-            *ngFor="let court of courts"
-            class="flex items-center justify-between rounded-lg border border-border p-3">
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-10 w-10 items-center justify-center rounded-md font-bold"
-                [ngClass]="court.isActive ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground'">
-                {{ court.name.charAt(0).toUpperCase() }}
-              </div>
-              <div>
-                <p class="font-medium text-card-foreground">{{ court.name }}</p>
-                <p class="text-xs text-muted-foreground">
-                  Estado:
-                  <span [ngClass]="court.isActive ? 'text-accent' : 'text-destructive'">
-                    {{ court.isActive ? 'Activa' : 'Inactiva' }}
+        <!-- Courts table -->
+        <div *ngIf="courts.length > 0" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border">
+                <th class="pb-3 text-left font-medium text-muted-foreground">
+                  Cancha
+                </th>
+                <th class="pb-3 text-left font-medium text-muted-foreground">
+                  Descripción
+                </th>
+                <th class="pb-3 text-center font-medium text-muted-foreground">
+                  Estado
+                </th>
+                <th class="pb-3 text-right font-medium text-muted-foreground">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let court of courts"
+                class="border-b border-border last:border-0 transition-colors hover:bg-muted/20"
+              >
+                <!-- Nombre -->
+                <td class="py-3 pr-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sm font-bold"
+                      [ngClass]="
+                        court.isActive
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      "
+                    >
+                      {{ court.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="font-medium text-card-foreground">{{
+                      court.name
+                    }}</span>
+                  </div>
+                </td>
+
+                <!-- Descripción -->
+                <td class="py-3 pr-4 text-muted-foreground">
+                  {{ court.description || "—" }}
+                </td>
+
+                <!-- Estado badge -->
+                <td class="py-3 text-center">
+                  <span
+                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    [ngClass]="
+                      court.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-destructive/10 text-destructive'
+                    "
+                  >
+                    {{ court.isActive ? "Activa" : "Inactiva" }}
                   </span>
-                </p>
-              </div>
-            </div>
-            <span
-              class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              [ngClass]="court.isActive
-                ? 'bg-accent/10 text-accent'
-                : 'bg-destructive/10 text-destructive'">
-              {{ court.isActive ? 'Activa' : 'Inactiva' }}
-            </span>
-          </div>
+                </td>
+
+                <!-- Botón Editar -->
+                <td class="py-3 text-right">
+                  <button
+                    type="button"
+                    (click)="openEditCourtModal(court)"
+                    class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <svg
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                      />
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                      />
+                    </svg>
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
+
+    <!-- ── Modal: Crear / Editar Cancha ──────────────────────────────────── -->
+    <ng-container *ngIf="isCourtModalOpen">
+      <!-- Backdrop -->
+      <div
+        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in-0"
+        (click)="closeCourtModal()"
+        aria-hidden="true"
+      ></div>
+
+      <!-- Panel -->
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          class="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl animate-in fade-in-0 zoom-in-95"
+          (click)="$event.stopPropagation()"
+        >
+          <!-- Header -->
+          <div class="border-b border-border p-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10"
+              >
+                <svg
+                  class="h-5 w-5 text-primary"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-card-foreground">
+                  {{
+                    courtModalMode === "create"
+                      ? "Nueva Cancha"
+                      : "Editar Cancha"
+                  }}
+                </h3>
+                <p class="text-sm text-muted-foreground">
+                  {{
+                    courtModalMode === "create"
+                      ? "Completá los datos para agregar la cancha"
+                      : "Modificá los datos de la cancha"
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="space-y-4 p-6">
+            <!-- Error banner -->
+            <div
+              *ngIf="courtFormError"
+              class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {{ courtFormError }}
+            </div>
+
+            <!-- Nombre -->
+            <div class="space-y-1.5">
+              <label
+                class="text-sm font-medium text-foreground"
+                for="court-name"
+              >
+                Nombre <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="court-name"
+                type="text"
+                [(ngModel)]="courtForm.name"
+                placeholder="Ej: Cancha 1"
+                maxlength="100"
+                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+
+            <!-- Descripción -->
+            <div class="space-y-1.5">
+              <label
+                class="text-sm font-medium text-foreground"
+                for="court-desc"
+              >
+                Descripción
+                <span class="text-xs font-normal text-muted-foreground"
+                  >(opcional)</span
+                >
+              </label>
+              <input
+                id="court-desc"
+                type="text"
+                [(ngModel)]="courtForm.description"
+                placeholder="Ej: Cancha cubierta, césped sintético"
+                maxlength="255"
+                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+
+            <!-- Estado activo/inactivo -->
+            <div
+              class="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3"
+            >
+              <div>
+                <p class="text-sm font-medium text-foreground">Cancha activa</p>
+                <p class="text-xs text-muted-foreground">
+                  Las canchas inactivas no aparecen en la Agenda
+                </p>
+              </div>
+              <!-- Toggle switch -->
+              <button
+                type="button"
+                (click)="courtForm.isActive = !courtForm.isActive"
+                [ngClass]="
+                  courtForm.isActive ? 'bg-primary' : 'bg-muted-foreground/30'
+                "
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span
+                  [ngClass]="
+                    courtForm.isActive ? 'translate-x-5' : 'translate-x-0'
+                  "
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                >
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex justify-end gap-3 border-t border-border px-6 py-4">
+            <button
+              type="button"
+              (click)="closeCourtModal()"
+              [disabled]="isCourtSubmitting"
+              class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              (click)="saveCourtModal()"
+              [disabled]="isCourtSubmitting"
+              class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ng-container *ngIf="isCourtSubmitting">Guardando…</ng-container>
+              <ng-container *ngIf="!isCourtSubmitting">
+                {{
+                  courtModalMode === "create"
+                    ? "Crear Cancha"
+                    : "Guardar Cambios"
+                }}
+              </ng-container>
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
 
     <!-- ── Botones de acción ─────────────────────────────────────────────── -->
     <div class="flex justify-end gap-3">
@@ -207,22 +537,19 @@
         type="button"
         (click)="cancel()"
         [disabled]="isSubmitting"
-        class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium
-               text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50">
+        class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+      >
         Cancelar
       </button>
       <button
         type="button"
         (click)="save()"
         [disabled]="isSubmitting"
-        class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground
-               shadow-sm transition-colors hover:bg-primary/90
-               disabled:cursor-not-allowed disabled:opacity-50">
+        class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
         <ng-container *ngIf="isSubmitting">Guardando…</ng-container>
         <ng-container *ngIf="!isSubmitting">Guardar Configuración</ng-container>
       </button>
     </div>
-
   </ng-container>
-
 </div>
