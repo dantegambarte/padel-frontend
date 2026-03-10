@@ -89,7 +89,7 @@ export class PosComponent implements OnInit {
           name:      product.name,
           salePrice: product.salePrice,
           stock:     product.stock,
-          category:  product.category ?? '',
+          category:  typeof product.category === 'object' && product.category !== null ? product.category.name : (product.category || ''),
           quantity:  1,
         },
       ];

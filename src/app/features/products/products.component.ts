@@ -105,7 +105,7 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = product.id;
     this.form = {
       name:      product.name,
-      category:  product.category ?? '',
+      category:  typeof product.category === 'object' && product.category !== null ? product.category.id : (product.category || ''),
       costPrice: product.costPrice?.toString() ?? '',
       salePrice: product.salePrice.toString(),
       stock:     product.stock.toString(),
@@ -119,7 +119,7 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = product.id;
     this.form = {
       name:      product.name,
-      category:  product.category ?? '',
+      category:  typeof product.category === 'object' && product.category !== null ? product.category.id : (product.category || ''),
       costPrice: product.costPrice?.toString() ?? '',
       salePrice: product.salePrice.toString(),
       stock:     product.stock.toString(),

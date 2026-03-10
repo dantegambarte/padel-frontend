@@ -6,7 +6,7 @@ export interface Product {
   stock: number;
   isFeatured: boolean;
   isActive: boolean;
-  category?: string;
+  category?: { id: string; name: string } | string;
 }
 
 export interface CreateProductDto {

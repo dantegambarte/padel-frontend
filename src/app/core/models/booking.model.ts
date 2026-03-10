@@ -22,12 +22,13 @@ export interface BookingResponse {
   id: string;
   court: Court;
   courtId: string;
-  date: string;       // YYYY-MM-DD
-  hour: string;       // HH:MM
+  date: string;           // YYYY-MM-DD
+  hour: string;           // HH:MM
   clientName: string;
   status: BookingStatus;
   priceType: PriceType;
   priceAmount: number;
+  durationMinutes: number;
   items: BookingItem[];
   payment: BookingPayment | null;
   createdAt: string;
@@ -39,6 +40,7 @@ export interface CreateBookingDto {
   hour: string;
   clientName: string;
   priceType: PriceType;
+  durationMinutes: number;
   amountCash: number;
   amountTransfer: number;
   items: { productId: string; quantity: number }[];
