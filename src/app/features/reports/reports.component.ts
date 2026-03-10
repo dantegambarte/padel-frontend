@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import * as XLSX from 'xlsx';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ChartData, ChartOptions, ChartType } from 'chart.js';
@@ -128,11 +129,11 @@ export class ReportsComponent implements OnInit {
     return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
   }
   get rankingTotalAmount(): number {
-    return this.productRanking.reduce((s, p) => s + (Number(p.total) || 0), 0);
+    return this.productRanking.reduce((s, p) => s + (Number(p.revenue) || 0), 0);
   }
   get rankingTotalUnidades(): number {
     return this.productRanking.reduce(
-      (s, p) => s + (Number(p.unidades) || 0),
+      (s, p) => s + (Number(p.qty) || 0),
       0,
     );
   }
@@ -221,11 +222,11 @@ export class ReportsComponent implements OnInit {
     };
   }
 
-  exportCsv(): void {
+  exportExcel(): void {
     if (this.isExporting) return;
 
     if (this.transactions.length > 0) {
-      this.triggerCsvDownload(this.transactions);
+      this.triggerExcelDownload(this.transactions);
       return;
     }
 
@@ -234,7 +235,7 @@ export class ReportsComponent implements OnInit {
       .getTransactionsExport(this.dateFrom, this.dateTo)
       .pipe(finalize(() => (this.isExporting = false)))
       .subscribe({
-        next: (data) => this.triggerCsvDownload(data),
+        next: (data) => this.triggerExcelDownload(data),
         error: () =>
           this.toast.error(
             'Error al exportar',
@@ -243,50 +244,72 @@ export class ReportsComponent implements OnInit {
       });
   }
 
-  private triggerCsvDownload(transactions: TransactionExport[]): void {
-    const headers = [
-      'Fecha',
-      'Hora',
-      'Tipo',
-      'Concepto',
-      'Efectivo',
-      'Transferencia',
-      'Total',
-      'Registrado por',
-    ];
-    const rows = transactions.map((tx) => [
-      tx.date,
-      tx.time,
-      tx.type,
-      tx.concept,
-      tx.cash,
-      tx.transfer,
-      tx.total,
-      tx.createdBy,
-    ]);
+  private triggerExcelDownload(transactions: TransactionExport[]): void {
+    // 1. Mapear datos con encabezados en español
+    const rows = transactions.map((tx) => ({
+      Fecha: tx.date,
+      Hora: tx.time,
+      Tipo: tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta mostrador' : tx.type,
+      Concepto: tx.concept,
+      Efectivo: Number(tx.cash) || 0,
+      Transferencia: Number(tx.transfer) || 0,
+      Total: Number(tx.total) || 0,
+      'Registrado por': tx.createdBy,
+    }));
 
-    const csvContent = [headers, ...rows]
-      .map((row) => row.join(','))
-      .join('\n');
+    // 2. Agregar fila de totales
+    const totalEfectivo = rows.reduce((s, r) => s + r.Efectivo, 0);
+    const totalTransferencia = rows.reduce((s, r) => s + r.Transferencia, 0);
+    const totalGeneral = rows.reduce((s, r) => s + r.Total, 0);
 
-    const blob = new Blob(['\uFEFF' + csvContent], {
-      type: 'text/csv;charset=utf-8;',
+    rows.push({
+      Fecha: 'TOTAL',
+      Hora: '',
+      Tipo: '',
+      Concepto: '',
+      Efectivo: totalEfectivo,
+      Transferencia: totalTransferencia,
+      Total: totalGeneral,
+      'Registrado por': '',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
 
-    const filename = `reporte_financiero_${new Date().toISOString().split('T')[0]}.csv`;
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // 3. Crear worksheet y workbook
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
+
+    // 4. Ajustar ancho de columnas
+    ws['!cols'] = [
+      { wch: 12 },  // Fecha
+      { wch: 8 },   // Hora
+      { wch: 18 },  // Tipo
+      { wch: 36 },  // Concepto
+      { wch: 14 },  // Efectivo
+      { wch: 16 },  // Transferencia
+      { wch: 14 },  // Total
+      { wch: 20 },  // Registrado por
+    ];
+
+    // 5. Aplicar formato de moneda a columnas numéricas (E, F, G → índices 4,5,6)
+    const moneyFmt = '"$"#,##0.00';
+    const totalRows = rows.length + 1; // +1 por la fila de encabezado
+    ['E', 'F', 'G'].forEach((col) => {
+      for (let r = 2; r <= totalRows; r++) {
+        const cellRef = `${col}${r}`;
+        if (ws[cellRef]) {
+          ws[cellRef].z = moneyFmt;
+        }
+      }
+    });
+
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Reporte Financiero');
+
+    // 6. Descargar archivo
+    const filename = `Reporte_Financiero_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
 
     this.toast.success(
-      'Reporte descargado correctamente',
-      'El archivo CSV se ha descargado exitosamente',
+      'Reporte Excel descargado',
+      'El archivo .xlsx se ha generado exitosamente',
     );
   }
 

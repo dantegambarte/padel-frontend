@@ -30,10 +30,11 @@ export interface ReportsSummaryResponse {
 }
 
 export interface ProductRanking {
+  rank: number;
   productId: string;
   name: string;
-  unidades: number;
-  total: number;
+  qty: number;
+  revenue: number;
 }
 
 /** Shape real del backend GET /reports/transactions/export */

@@ -312,18 +312,18 @@
             <div class="flex-1">
               <p class="font-medium">{{ product.name }}</p>
               <p class="text-sm text-muted-foreground">
-                {{ product.unidades }} unidades vendidas
+                {{ product.qty }} unidades vendidas
               </p>
             </div>
 
             <!-- Monto + badge unidades -->
             <div class="text-right">
-              <p class="font-bold">${{ fmt(product.total) }}</p>
+              <p class="font-bold">${{ fmt(product.revenue) }}</p>
               <!-- Badge variant="secondary" -->
               <span
                 class="mt-1 inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground"
               >
-                {{ product.unidades }} unid.
+                {{ product.qty }} unid.
               </span>
             </div>
           </div>
@@ -361,7 +361,7 @@
   <!-- /ranking -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
-       TABLA DE TRANSACCIONES + BOTÓN EXPORTAR CSV
+       TABLA DE TRANSACCIONES + BOTÓN EXPORTAR EXCEL
   ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
@@ -401,7 +401,7 @@
         <!-- Botón Exportar: bg-accent hover:bg-accent/90 como en el prototipo -->
         <button
           type="button"
-          (click)="exportCsv()"
+          (click)="exportExcel()"
           [disabled]="isExporting"
           class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
