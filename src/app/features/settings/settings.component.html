@@ -1,0 +1,228 @@
+<div class="space-y-6">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="rounded-lg border border-border bg-card shadow-md">
+    <div class="p-6">
+      <div class="flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/>
+            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
+                     M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-semibold text-card-foreground">Configuración del Sistema</h2>
+          <p class="text-sm text-muted-foreground">Administre los parámetros globales de PadelSys</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading skeleton ────────────────────────────────────────────────── -->
+  <ng-container *ngIf="isLoading">
+    <div *ngFor="let i of [1, 2, 3]"
+      class="h-40 animate-pulse rounded-lg border border-border bg-muted/40">
+    </div>
+  </ng-container>
+
+  <!-- ── Content ─────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!isLoading">
+
+    <!-- Precios Globales -->
+    <div class="rounded-lg border border-border bg-card shadow-md">
+      <div class="border-b border-border p-6">
+        <div class="flex items-center gap-2">
+          <svg class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <h3 class="text-lg font-semibold text-card-foreground">Precios Globales</h3>
+        </div>
+        <p class="mt-1 text-sm text-muted-foreground">Tarifas por hora de alquiler de canchas</p>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid gap-4 md:grid-cols-2">
+
+          <!-- Precio base -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="precio-base">
+              Precio Hora Base
+            </label>
+            <input
+              id="precio-base"
+              type="number"
+              min="0"
+              [(ngModel)]="precioBase"
+              placeholder="3000"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <p class="text-xs text-muted-foreground">Tarifa estándar para clientes regulares</p>
+          </div>
+
+          <!-- Precio profesor -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="precio-profesor">
+              Precio Hora Profesor
+            </label>
+            <input
+              id="precio-profesor"
+              type="number"
+              min="0"
+              [(ngModel)]="precioProfesor"
+              placeholder="2500"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <p class="text-xs text-muted-foreground">Tarifa especial para clases con profesor</p>
+          </div>
+
+        </div>
+
+        <!-- Preview -->
+        <div class="rounded-lg border border-border bg-accent/5 p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-muted-foreground">Precio actual base:</span>
+            <span class="text-lg font-bold text-accent">${{ fmt(precioBaseNum) }}</span>
+          </div>
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-sm text-muted-foreground">Precio profesor:</span>
+            <span class="text-lg font-bold text-primary">${{ fmt(precioProfesorNum) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horarios de Operación -->
+    <div class="rounded-lg border border-border bg-card shadow-md">
+      <div class="border-b border-border p-6">
+        <div class="flex items-center gap-2">
+          <svg class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <h3 class="text-lg font-semibold text-card-foreground">Horarios de Operación</h3>
+        </div>
+        <p class="mt-1 text-sm text-muted-foreground">
+          Defina el horario de apertura y cierre del establecimiento
+        </p>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid gap-4 md:grid-cols-2">
+
+          <!-- Apertura -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="horario-apertura">
+              Horario de Apertura
+            </label>
+            <input
+              id="horario-apertura"
+              type="time"
+              [(ngModel)]="horarioApertura"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+          </div>
+
+          <!-- Cierre -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="horario-cierre">
+              Horario de Cierre
+            </label>
+            <input
+              id="horario-cierre"
+              type="time"
+              [(ngModel)]="horarioCierre"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm
+                     focus:outline-none focus:ring-2 focus:ring-primary/40">
+          </div>
+
+        </div>
+
+        <!-- Preview -->
+        <div class="rounded-lg border border-border bg-muted/30 p-3">
+          <p class="text-sm text-muted-foreground">
+            El establecimiento estará operativo de
+            <span class="font-semibold text-foreground">{{ horarioApertura }}hs</span>
+            a
+            <span class="font-semibold text-foreground">{{ horarioCierre }}hs</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canchas Disponibles -->
+    <div class="rounded-lg border border-border bg-card shadow-md">
+      <div class="border-b border-border p-6">
+        <h3 class="text-lg font-semibold text-card-foreground">Canchas Disponibles</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Gestión de canchas activas en el sistema</p>
+      </div>
+
+      <div class="p-6">
+        <!-- Empty courts state -->
+        <ng-container *ngIf="courts.length === 0">
+          <p class="text-sm text-muted-foreground">No hay canchas registradas.</p>
+        </ng-container>
+
+        <!-- Courts list -->
+        <div *ngIf="courts.length > 0" class="space-y-3">
+          <div
+            *ngFor="let court of courts"
+            class="flex items-center justify-between rounded-lg border border-border p-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-md font-bold"
+                [ngClass]="court.isActive ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground'">
+                {{ court.name.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <p class="font-medium text-card-foreground">{{ court.name }}</p>
+                <p class="text-xs text-muted-foreground">
+                  Estado:
+                  <span [ngClass]="court.isActive ? 'text-accent' : 'text-destructive'">
+                    {{ court.isActive ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <span
+              class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              [ngClass]="court.isActive
+                ? 'bg-accent/10 text-accent'
+                : 'bg-destructive/10 text-destructive'">
+              {{ court.isActive ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Botones de acción ─────────────────────────────────────────────── -->
+    <div class="flex justify-end gap-3">
+      <button
+        type="button"
+        (click)="cancel()"
+        [disabled]="isSubmitting"
+        class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium
+               text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="isSubmitting"
+        class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground
+               shadow-sm transition-colors hover:bg-primary/90
+               disabled:cursor-not-allowed disabled:opacity-50">
+        <ng-container *ngIf="isSubmitting">Guardando…</ng-container>
+        <ng-container *ngIf="!isSubmitting">Guardar Configuración</ng-container>
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>

@@ -1,0 +1,682 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     AGENDA COMPONENT — Traducción 1:1 de agenda-page.tsx
+     Clases Tailwind y estructura HTML idénticas al prototipo React.
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- ──── CARD DE LA GRILLA ─────────────────────────────────────────────────── -->
+<div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+
+  <!-- Card Header -->
+  <div class="flex flex-col space-y-1.5 p-6 pb-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h3 class="text-2xl font-semibold leading-none tracking-tight">
+        Agenda de Canchas
+      </h3>
+
+      <!-- Date picker + botón refrescar -->
+      <div class="flex items-center gap-2">
+        <label for="fecha" class="text-sm font-medium text-muted-foreground">Fecha:</label>
+        <input
+          id="fecha"
+          type="date"
+          [(ngModel)]="selectedDate"
+          (change)="onDateChange()"
+          class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm
+                 ring-offset-background focus-visible:outline-none focus-visible:ring-2
+                 focus-visible:ring-ring focus-visible:ring-offset-2"
+        />
+        <button
+          type="button"
+          (click)="loadBookings()"
+          title="Actualizar grilla"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input
+                 bg-background hover:bg-accent hover:text-accent-foreground transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <!-- Refresh icon -->
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Content -->
+  <div class="p-6 pt-0">
+
+    <!-- Error state -->
+    <div *ngIf="loadError"
+         class="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+      <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+      </svg>
+      {{ loadError }}
+    </div>
+
+    <!-- Loading skeleton -->
+    <div *ngIf="isLoading && courts.length === 0 && !loadError" class="space-y-2">
+      <div *ngFor="let i of [1,2,3,4,5,6]"
+           class="h-14 animate-pulse rounded-lg bg-muted"></div>
+    </div>
+
+    <ng-container *ngIf="!loadError && courts.length > 0">
+      <div class="overflow-x-auto">
+        <div class="min-w-[600px]">
+
+          <!-- ── HEADER DE LA GRILLA: Horario + Nombres de canchas ── -->
+          <div class="mb-2 grid gap-2" [style.grid-template-columns]="gridColsStyle">
+            <div class="text-sm font-semibold">Horario</div>
+            <div *ngFor="let court of courts"
+                 class="text-center text-sm font-semibold">{{ court.name }}</div>
+          </div>
+
+          <!-- ── FILAS DE LA GRILLA: una por cada hora ── -->
+          <div class="space-y-2">
+            <div *ngFor="let hour of HOURS"
+                 class="grid gap-2" [style.grid-template-columns]="gridColsStyle">
+
+              <!-- Etiqueta de hora -->
+              <div class="flex items-center text-sm font-medium text-muted-foreground">
+                {{ hour }}hs
+              </div>
+
+              <!-- Celdas: una por cada cancha -->
+              <ng-container *ngFor="let court of courts">
+                <ng-container *ngIf="getBooking(court.id, hour) as booking; else availableSlot">
+                  <div
+                    role="button"
+                    tabindex="0"
+                    (click)="onSlotClick(court, hour)"
+                    (keydown.enter)="onSlotClick(court, hour)"
+                    [ngClass]="getSlotClass(court.id, hour)"
+                    class="rounded-lg border-2 p-3 text-left transition-all hover:shadow-md
+                           relative group cursor-pointer min-h-[64px]"
+                  >
+                    <!-- ── Slot OCUPADO ── -->
+                    <div class="space-y-1 pr-6">
+                      <p class="text-sm font-semibold leading-tight truncate">
+                        {{ booking.clientName }}
+                      </p>
+                      <!-- Badge de estado — idéntico al prototipo -->
+                      <span
+                        [ngClass]="getStatusBadgeClass(booking.status)"
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                      >
+                        {{ getStatusLabel(booking.status) }}
+                      </span>
+                    </div>
+
+                    <!-- Botón eliminar: solo admin, visible en hover (group-hover) -->
+                    <button
+                      *ngIf="isAdmin"
+                      type="button"
+                      (click)="onDeleteFromGrid(booking, $event)"
+                      title="Cancelar reserva"
+                      class="absolute top-1 right-1 h-6 w-6
+                             flex items-center justify-center rounded
+                             opacity-0 group-hover:opacity-100 transition-opacity
+                             bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <!-- Trash2 icon — 3x3 igual que el prototipo -->
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </ng-container>
+
+                <ng-template #availableSlot>
+                  <div
+                    role="button"
+                    tabindex="0"
+                    (click)="onSlotClick(court, hour)"
+                    (keydown.enter)="onSlotClick(court, hour)"
+                    [ngClass]="getSlotClass(court.id, hour)"
+                    class="rounded-lg border-2 p-3 text-left transition-all hover:shadow-md
+                           relative group cursor-pointer min-h-[64px]"
+                  >
+                    <!-- ── Slot DISPONIBLE ── -->
+                    <div class="flex h-full min-h-[40px] items-center justify-center
+                                text-xs text-muted-foreground">
+                      Disponible
+                    </div>
+                  </div>
+                </ng-template>
+              </ng-container>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── LEYENDA — idéntica al prototipo ── -->
+      <div class="mt-6 flex flex-wrap gap-4 border-t border-border pt-4">
+        <div class="flex items-center gap-2">
+          <div class="h-4 w-4 rounded border-2 border-dashed border-muted-foreground/30"></div>
+          <span class="text-sm">Disponible</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-4 w-4 rounded border-2 border-primary bg-primary/10"></div>
+          <span class="text-sm">Reservado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-4 w-4 rounded border-2 border-accent bg-accent/10"></div>
+          <span class="text-sm">Jugando</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-4 w-4 rounded border-2 border-muted-foreground/30 bg-muted/30"></div>
+          <span class="text-sm">Completado</span>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL (DIALOG) — Equivalente al <Dialog> de Radix UI del prototipo.
+     Implementado con overlay fixed + panel fixed centrado (sin dependencias).
+     ═══════════════════════════════════════════════════════════════════════ -->
+<ng-container *ngIf="isDialogOpen">
+
+  <!-- Backdrop: cierra el modal al hacer click fuera, con blur (idéntico a Radix) -->
+  <div
+    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in-0"
+    (click)="closeDialog()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Panel del diálogo — max-h-[90vh] overflow-y-auto exacto del prototipo -->
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialog-title"
+    class="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2
+           w-[calc(100%-2rem)] max-w-[600px] max-h-[90vh] overflow-y-auto
+           rounded-lg border border-border bg-background p-6 shadow-lg
+           animate-in fade-in-0 zoom-in-95"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- Botón X (cerrar) en esquina superior derecha -->
+    <button
+      type="button"
+      (click)="closeDialog()"
+      aria-label="Cerrar"
+      class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background
+             transition-opacity hover:opacity-100
+             focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+      </svg>
+    </button>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         CREATE MODE — Formulario de nueva reserva (slot vacío clickeado)
+         ════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="dialogMode === 'create'">
+
+      <!-- Dialog Header -->
+      <div class="mb-6">
+        <h2 id="dialog-title" class="text-lg font-semibold leading-none tracking-tight">
+          Reserva: {{ selectedSlot?.court?.name }} — {{ selectedSlot?.hour }}hs a {{ endHour }}hs
+        </h2>
+        <p class="mt-1 text-sm text-muted-foreground">
+          Gestione la reserva y productos asociados
+        </p>
+      </div>
+
+      <div class="space-y-6 pb-2">
+
+        <!-- ── Nombre del cliente ── -->
+        <div class="space-y-2">
+          <label for="clientName" class="text-sm font-medium leading-none">
+            Nombre del Cliente
+          </label>
+          <input
+            id="clientName"
+            type="text"
+            [(ngModel)]="clientName"
+            placeholder="Ej: Juan Pérez"
+            autocomplete="off"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2
+                   text-sm ring-offset-background placeholder:text-muted-foreground
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                   focus-visible:ring-offset-2"
+          />
+        </div>
+
+        <!-- ── Duración del turno ── -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none">Duración del turno</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let opt of DURATION_OPTIONS"
+              type="button"
+              (click)="durationMinutes = opt.value"
+              [ngClass]="durationMinutes === opt.value
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground'"
+              class="flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            De <span class="font-semibold">{{ selectedSlot?.hour }}hs</span>
+            a <span class="font-semibold">{{ endHour }}hs</span>
+            — Precio cancha: <span class="font-semibold">${{ fmt(courtPrice) }}</span>
+          </p>
+        </div>
+
+      <!-- ── Tipo de precio (RadioGroup) ── -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none">Tipo de Precio</label>
+          <div class="mt-1 space-y-2">
+            <div class="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="radio-standard"
+                name="priceType"
+                value="standard"
+                [(ngModel)]="priceType"
+                class="h-4 w-4 accent-primary"
+              />
+              <label for="radio-standard" class="text-sm font-normal cursor-pointer">
+                Precio Estándar (${{ PRICES.standard.toLocaleString('es-AR') }})
+              </label>
+            </div>
+            <div class="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="radio-professor"
+                name="priceType"
+                value="professor"
+                [(ngModel)]="priceType"
+                class="h-4 w-4 accent-primary"
+              />
+              <label for="radio-professor" class="text-sm font-normal cursor-pointer">
+                Precio Profesor (${{ PRICES.professor.toLocaleString('es-AR') }})
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Sección de Productos ── -->
+        <div class="space-y-3 rounded-lg border border-border p-4">
+          <label class="text-sm font-medium leading-none">Productos (Consumos)</label>
+
+          <!-- Botones de acceso rápido (isFeatured = true) — cargados dinámicamente -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let product of featuredProducts"
+              type="button"
+              (click)="addToCart(product)"
+              class="inline-flex items-center gap-1 rounded-md border border-input bg-background
+                     px-3 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground
+                     transition-colors focus-visible:outline-none focus-visible:ring-2
+                     focus-visible:ring-ring"
+            >
+              <!-- Plus icon -->
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"/><path d="M12 5v14"/>
+              </svg>
+              {{ product.name }}
+            </button>
+          </div>
+
+          <!-- Buscador con autocomplete — idéntico al prototipo -->
+          <div class="relative">
+            <svg
+              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="productSearch"
+              (ngModelChange)="onSearchChange()"
+              placeholder="Buscar más productos..."
+              autocomplete="off"
+              class="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2
+                     text-sm ring-offset-background placeholder:text-muted-foreground
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                     focus-visible:ring-offset-2"
+            />
+
+            <!-- Dropdown de resultados — aparece solo si hay coincidencias -->
+            <div *ngIf="searchResults.length > 0"
+                 class="absolute z-10 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg">
+              <button
+                *ngFor="let product of searchResults"
+                type="button"
+                (click)="addToCart(product)"
+                class="flex w-full items-center justify-between p-2 text-sm
+                       hover:bg-accent hover:text-accent-foreground transition-colors
+                       first:rounded-t-lg last:rounded-b-lg"
+              >
+                <span>{{ product.name }}</span>
+                <span class="text-muted-foreground">${{ fmt(product.salePrice) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de items en el carrito — bg-muted/30 idéntico al prototipo -->
+          <div *ngIf="cart.length > 0"
+               class="space-y-2 rounded-md bg-muted/30 p-3">
+
+            <div *ngFor="let item of cart"
+                 class="flex items-center justify-between">
+
+              <!-- Controles de cantidad + nombre -->
+              <div class="flex items-center gap-2">
+                <!-- Botón − -->
+                <button
+                  type="button"
+                  (click)="updateQty(item.productId, item.quantity - 1)"
+                  class="h-6 w-6 flex items-center justify-center rounded
+                         border border-input bg-transparent hover:bg-accent
+                         transition-colors text-sm font-medium"
+                >-</button>
+
+                <span class="w-8 text-center text-sm">{{ item.quantity }}</span>
+
+                <!-- Botón + -->
+                <button
+                  type="button"
+                  (click)="updateQty(item.productId, item.quantity + 1)"
+                  class="h-6 w-6 flex items-center justify-center rounded
+                         border border-input bg-transparent hover:bg-accent
+                         transition-colors text-sm font-medium"
+                >+</button>
+
+                <span class="text-sm">{{ item.name }}</span>
+              </div>
+
+              <!-- Precio de línea + quitar -->
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold">
+                  ${{ fmt(item.unitPrice * item.quantity) }}
+                </span>
+                <!-- Botón X — quitar del carrito -->
+                <button
+                  type="button"
+                  (click)="removeFromCart(item.productId)"
+                  class="h-6 w-6 flex items-center justify-center rounded
+                         text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Subtotal productos -->
+            <div class="flex justify-between border-t border-border pt-2 text-sm font-semibold">
+              <span>Subtotal Productos:</span>
+              <span>${{ fmt(cartSubtotal) }}</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── Sección de Pago — border-accent/50 bg-accent/5 igual al prototipo ── -->
+        <div class="space-y-4 rounded-lg border border-accent/50 bg-accent/5 p-4">
+
+          <!-- Total a pagar -->
+          <div class="flex items-center justify-between text-lg font-bold">
+            <span>Total a Pagar:</span>
+            <span>${{ fmt(totalReserva) }}</span>
+          </div>
+
+          <!-- Efectivo + Transferencia -->
+          <div class="grid gap-3 md:grid-cols-2">
+            <div class="space-y-2">
+              <label for="efectivo" class="text-sm font-medium leading-none">
+                Monto en Efectivo
+              </label>
+              <input
+                id="efectivo"
+                type="number"
+                [(ngModel)]="pagoEfectivo"
+                min="0"
+                placeholder="0"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2
+                       text-sm ring-offset-background placeholder:text-muted-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                       focus-visible:ring-offset-2"
+              />
+            </div>
+            <div class="space-y-2">
+              <label for="transferencia" class="text-sm font-medium leading-none">
+                Monto por Transferencia
+              </label>
+              <input
+                id="transferencia"
+                type="number"
+                [(ngModel)]="pagoTransferencia"
+                min="0"
+                placeholder="0"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2
+                       text-sm ring-offset-background placeholder:text-muted-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                       focus-visible:ring-offset-2"
+              />
+            </div>
+          </div>
+
+          <!-- Indicador de saldo — colores condicionales idénticos al prototipo cn() -->
+          <div
+            [ngClass]="balanceClass"
+            class="rounded-lg p-3 text-center text-sm font-semibold"
+          >
+            {{ balanceText }}
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Dialog Footer -->
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeDialog()"
+          class="inline-flex items-center justify-center rounded-md border border-input
+                 bg-background px-4 py-2 text-sm font-medium hover:bg-accent
+                 hover:text-accent-foreground transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="saveBooking()"
+          [disabled]="isSaving"
+          class="inline-flex items-center justify-center gap-2 rounded-md
+                 bg-primary text-primary-foreground px-4 py-2 text-sm font-medium
+                 hover:bg-primary/90 transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 disabled:pointer-events-none disabled:opacity-50"
+        >
+          <ng-container *ngIf="isSaving; else guardarLabel">
+            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Guardando...
+          </ng-container>
+          <ng-template #guardarLabel>
+            Guardar Reserva
+          </ng-template>
+        </button>
+      </div>
+
+    </ng-container>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         DETAIL MODE — Vista de reserva existente con acciones de estado
+         ════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="dialogMode === 'detail' && selectedBooking">
+
+      <!-- Dialog Header -->
+      <div class="mb-6 pr-8">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 id="dialog-title" class="text-lg font-semibold leading-none tracking-tight">
+            {{ selectedSlot?.court?.name }} — {{ selectedSlot?.hour }}hs
+          </h2>
+          <span
+            [ngClass]="getStatusBadgeClass(selectedBooking.status)"
+            class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+          >
+            {{ getStatusLabel(selectedBooking.status) }}
+          </span>
+        </div>
+        <p class="mt-1 text-sm text-muted-foreground">Detalles de la reserva</p>
+      </div>
+
+      <div class="space-y-4">
+
+        <!-- Info del cliente y precio -->
+        <div class="rounded-lg border border-border divide-y divide-border">
+          <div class="flex justify-between px-4 py-3 text-sm">
+            <span class="text-muted-foreground">Cliente</span>
+            <span class="font-semibold">{{ selectedBooking.clientName }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-3 text-sm">
+            <span class="text-muted-foreground">Tipo de precio</span>
+            <span class="font-semibold">
+              {{ selectedBooking.priceType === 'standard' ? 'Estándar' : 'Profesor' }}
+            </span>
+          </div>
+          <div class="flex justify-between px-4 py-3 text-sm">
+            <span class="text-muted-foreground">Precio cancha</span>
+            <span class="font-semibold">${{ fmt(selectedBooking.priceAmount) }}</span>
+          </div>
+        </div>
+
+        <!-- Productos consumidos -->
+        <div *ngIf="selectedBooking.items.length > 0"
+             class="rounded-lg border border-border p-4">
+          <p class="mb-3 text-sm font-medium">Productos consumidos</p>
+          <div class="space-y-2">
+            <div *ngFor="let item of selectedBooking.items"
+                 class="flex justify-between text-sm">
+              <span>{{ item.quantity }}× {{ item.product.name }}</span>
+              <span class="font-medium">${{ fmt(item.unitPrice * item.quantity) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pago registrado -->
+        <div *ngIf="selectedBooking.payment"
+             class="rounded-lg border border-accent/50 bg-accent/5 p-4 space-y-2">
+          <p class="text-sm font-medium">Pago registrado</p>
+          <div class="flex justify-between text-sm">
+            <span class="text-muted-foreground">Efectivo</span>
+            <span>${{ fmt(selectedBooking.payment.amountCash) }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-muted-foreground">Transferencia</span>
+            <span>${{ fmt(selectedBooking.payment.amountTransfer) }}</span>
+          </div>
+          <div class="flex justify-between border-t border-border pt-2 text-sm font-bold">
+            <span>Total pagado</span>
+            <span>
+              ${{ fmt(selectedBooking.payment.amountCash + selectedBooking.payment.amountTransfer) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Botones de acción para transiciones de estado -->
+
+        <button
+          *ngIf="selectedBooking.status === 'booked'"
+          type="button"
+          (click)="onStartPlaying(selectedBooking)"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-md
+                 bg-accent text-accent-foreground px-4 py-2.5 text-sm font-medium
+                 hover:bg-accent/90 transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Iniciar Partido
+        </button>
+
+        <button
+          *ngIf="selectedBooking.status === 'playing'"
+          type="button"
+          (click)="onFinishPlaying(selectedBooking)"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-md
+                 bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium
+                 hover:bg-primary/90 transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+          Finalizar Turno
+        </button>
+
+        <!-- Cancelar: solo admin, solo en estados no terminales -->
+        <button
+          *ngIf="isAdmin && selectedBooking.status !== 'completed' && selectedBooking.status !== 'cancelled'"
+          type="button"
+          (click)="onCancelBooking(selectedBooking)"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-md
+                 border border-destructive/50 bg-destructive/10 text-destructive
+                 px-4 py-2 text-sm font-medium
+                 hover:bg-destructive hover:text-destructive-foreground transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"/>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          </svg>
+          Cancelar Reserva
+        </button>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-6 flex justify-end">
+        <button
+          type="button"
+          (click)="closeDialog()"
+          class="inline-flex items-center justify-center rounded-md border border-input
+                 bg-background px-4 py-2 text-sm font-medium hover:bg-accent
+                 hover:text-accent-foreground transition-colors
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Cerrar
+        </button>
+      </div>
+
+    </ng-container>
+
+  </div>
+</ng-container>

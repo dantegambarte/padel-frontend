@@ -1,0 +1,408 @@
+<!-- ─── CAJA PAGE ─────────────────────────────────────────────────────────────── -->
+
+<!-- ══ Estado: sin sesión activa ═════════════════════════════════════════════ -->
+<div *ngIf="noSesionActiva"
+     class="flex flex-col items-center justify-center rounded-lg border border-border
+            bg-card p-12 text-center shadow-md">
+  <svg class="mb-4 h-12 w-12 text-muted-foreground opacity-50" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+  </svg>
+  <h3 class="text-lg font-semibold text-card-foreground">Sin caja abierta</h3>
+  <p class="mt-1 text-sm text-muted-foreground">
+    No hay una sesión de caja activa para hoy. Realice una venta o reserva para abrir la caja automáticamente.
+  </p>
+</div>
+
+<!-- ══ Contenido principal (sesión existe) ═══════════════════════════════════ -->
+<div *ngIf="!noSesionActiva" class="space-y-6">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       FILA DE TARJETAS RESUMEN (3 KPIs)
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="grid gap-4 md:grid-cols-3">
+
+    <!-- Efectivo Esperado -->
+    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div class="pb-2 p-6">
+        <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <!-- DollarSign icon -->
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          Efectivo Esperado
+        </h4>
+      </div>
+      <div class="px-6 pb-6">
+        <ng-container *ngIf="isLoading; else showEfectivo">
+          <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
+        </ng-container>
+        <ng-template #showEfectivo>
+          <p class="text-2xl font-bold">${{ fmt(efectivoEsperado) }}</p>
+          <p class="text-xs text-muted-foreground">Según ventas del sistema</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Transferencias -->
+    <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+      <div class="pb-2 p-6">
+        <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <!-- CreditCard icon -->
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Transferencias
+        </h4>
+      </div>
+      <div class="px-6 pb-6">
+        <ng-container *ngIf="isLoading; else showTransferencia">
+          <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
+        </ng-container>
+        <ng-template #showTransferencia>
+          <p class="text-2xl font-bold">${{ fmt(transferenciaTotal) }}</p>
+          <p class="text-xs text-muted-foreground">Registradas en el sistema</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Total del Día: border-accent/50 como en el prototipo -->
+    <div class="rounded-lg border border-accent/50 bg-card text-card-foreground shadow-md">
+      <div class="pb-2 p-6">
+        <h4 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <!-- TrendingUp icon -->
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+          Total del Día
+        </h4>
+      </div>
+      <div class="px-6 pb-6">
+        <ng-container *ngIf="isLoading; else showTotal">
+          <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
+        </ng-container>
+        <ng-template #showTotal>
+          <p class="text-2xl font-bold text-accent">${{ fmt(totalEsperado) }}</p>
+          <p class="text-xs text-muted-foreground">Efectivo + Transferencias</p>
+        </ng-template>
+      </div>
+    </div>
+
+  </div><!-- /grid KPIs -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       CARD — Arqueo de Caja
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div class="p-6">
+      <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        Arqueo de Caja — Empleado: {{ userName }}
+      </h3>
+      <p class="mt-1.5 text-sm text-muted-foreground">
+        Verificación de efectivo físico vs sistema
+      </p>
+    </div>
+
+    <div class="space-y-6 px-6 pb-6">
+
+      <!-- Grid: valores sistema + conteo físico -->
+      <div class="grid gap-6 md:grid-cols-2">
+
+        <!-- Panel Izquierdo: Valores del Sistema -->
+        <div class="space-y-4 rounded-lg border border-border p-4">
+          <h3 class="font-semibold">Valores del Sistema</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-sm text-muted-foreground">Efectivo esperado:</span>
+              <span class="font-semibold">${{ fmt(efectivoEsperado) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-muted-foreground">Transferencias:</span>
+              <span class="font-semibold">${{ fmt(transferenciaTotal) }}</span>
+            </div>
+            <div class="flex justify-between border-t border-border pt-2">
+              <span class="font-semibold">Total:</span>
+              <span class="font-bold">${{ fmt(totalEsperado) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel Derecho: Conteo Físico -->
+        <div class="space-y-4 rounded-lg border border-border p-4">
+          <h3 class="font-semibold">Conteo Físico</h3>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="efectivo-real">
+              Efectivo Real Contado
+            </label>
+            <input
+              id="efectivo-real"
+              type="number"
+              min="0"
+              placeholder="0"
+              [(ngModel)]="efectivoContado"
+              [disabled]="isClosed"
+              class="flex h-10 w-full rounded-md border border-input bg-background
+                     px-3 py-2 text-lg font-semibold ring-offset-background
+                     placeholder:text-muted-foreground
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                     focus-visible:ring-offset-2
+                     disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          <!-- Resumen de diferencia (visible cuando hay input) -->
+          <div *ngIf="showDiferencia" class="mt-4 space-y-2">
+            <div class="flex justify-between">
+              <span class="text-sm text-muted-foreground">Efectivo contado:</span>
+              <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
+            </div>
+            <div class="flex justify-between border-t border-border pt-2">
+              <span class="font-semibold">Diferencia:</span>
+              <span class="font-bold" [ngClass]="diferenciaClass">
+                {{ diferenciaText }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div><!-- /grid -->
+
+      <!-- Banner de resultado: verde (cuadra) o amarillo (diferencia) -->
+      <div *ngIf="showDiferencia" class="flex items-center gap-3 rounded-lg p-4"
+           [ngClass]="indicatorClass">
+
+        <!-- Cuadra -->
+        <ng-container *ngIf="diferencia === 0; else hasDifferenceIndicator">
+          <!-- CheckCircle2 icon -->
+          <svg class="h-6 w-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div>
+            <p class="font-semibold">La caja cuadra perfectamente</p>
+            <p class="text-sm opacity-80">El efectivo contado coincide con el sistema</p>
+          </div>
+        </ng-container>
+
+        <!-- Hay diferencia -->
+        <ng-template #hasDifferenceIndicator>
+          <!-- AlertCircle icon -->
+          <svg class="h-6 w-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <p class="font-semibold">{{ discrepancyLabel }}</p>
+            <p class="text-sm opacity-80">Verifique el conteo antes de cerrar la caja</p>
+          </div>
+        </ng-template>
+
+      </div><!-- /banner -->
+
+      <!-- Notas del Cierre -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none" for="notas">
+          Notas del Cierre
+        </label>
+        <input
+          id="notas"
+          type="text"
+          placeholder="Agregar observaciones..."
+          [(ngModel)]="notas"
+          [disabled]="isClosed"
+          class="flex h-10 w-full rounded-md border border-input bg-background
+                 px-3 py-2 text-sm ring-offset-background
+                 placeholder:text-muted-foreground
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:ring-offset-2
+                 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+      </div>
+
+      <!-- Botón de cierre O indicador de caja cerrada -->
+      <ng-container *ngIf="!isClosed; else cajaCerrada">
+        <button
+          type="button"
+          (click)="openConfirmDialog()"
+          [disabled]="!efectivoContado"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md
+                 bg-accent px-8 text-sm font-medium text-accent-foreground
+                 transition-colors hover:bg-accent/90
+                 disabled:pointer-events-none disabled:opacity-50
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:ring-offset-2"
+        >
+          Cerrar Caja Z
+        </button>
+      </ng-container>
+
+      <ng-template #cajaCerrada>
+        <div class="flex items-center justify-center gap-3 rounded-lg border-2
+                    border-accent bg-accent/5 p-4 text-accent">
+          <!-- Lock icon -->
+          <svg class="h-6 w-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <p class="font-semibold">
+            Caja cerrada — No se pueden realizar más operaciones del día
+          </p>
+        </div>
+      </ng-template>
+
+    </div><!-- /arqueo body -->
+  </div><!-- /card arqueo -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       CARD — Movimientos del Día
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">
+    <div class="p-6">
+      <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
+        Movimientos del Día
+      </h3>
+      <p class="mt-1.5 text-sm text-muted-foreground">
+        Historial de transacciones registradas
+      </p>
+    </div>
+
+    <div class="px-6 pb-6">
+      <div class="space-y-2">
+
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="isLoading; else movimientosLoaded">
+          <div *ngFor="let i of [1,2,3,4,5]"
+               class="h-16 w-full animate-pulse rounded-lg bg-muted"></div>
+        </ng-container>
+
+        <ng-template #movimientosLoaded>
+
+          <!-- Lista de movimientos -->
+          <div *ngFor="let mov of movimientos"
+               class="flex items-center justify-between rounded-lg border border-border p-3">
+            <div class="flex items-center gap-3">
+
+              <!-- Chip de hora: bg-primary/10 text-primary como en el prototipo -->
+              <div class="flex h-10 w-10 items-center justify-center rounded-md
+                          bg-primary/10 text-xs font-semibold text-primary">
+                {{ mov.hora }}
+              </div>
+
+              <div>
+                <p class="font-medium">{{ mov.concepto }}</p>
+                <!-- Badge: default (Efectivo) vs secondary (Transferencia) -->
+                <span
+                  [ngClass]="mov.tipo === 'Efectivo'
+                    ? 'border-transparent bg-primary text-primary-foreground'
+                    : 'border-transparent bg-secondary text-secondary-foreground'"
+                  class="inline-flex items-center rounded-full border px-2.5 py-0.5
+                         text-xs font-semibold"
+                >
+                  {{ mov.tipo }}
+                </span>
+              </div>
+            </div>
+
+            <p class="text-lg font-bold">${{ fmt(mov.monto) }}</p>
+          </div>
+
+          <!-- Empty state -->
+          <p *ngIf="movimientos.length === 0"
+             class="py-8 text-center text-sm text-muted-foreground">
+            No hay movimientos registrados
+          </p>
+
+        </ng-template>
+      </div>
+    </div>
+  </div><!-- /card movimientos -->
+
+</div><!-- /contenido principal -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL — Confirmar Cierre de Caja (pure CSS overlay, Angular 15 *ngIf)
+════════════════════════════════════════════════════════════════════════════ -->
+<ng-container *ngIf="isDialogOpen">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+       (click)="closeDialog()"></div>
+
+  <!-- Panel -->
+  <div class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2
+              rounded-lg border border-border bg-card p-6 shadow-lg"
+       (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold leading-none tracking-tight text-card-foreground">
+        Confirmar Cierre de Caja
+      </h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">
+        Esta acción bloqueará el día y no podrá realizar más cambios. ¿Está seguro?
+      </p>
+    </div>
+
+    <!-- Resumen de cierre -->
+    <div class="space-y-4 py-4">
+      <div class="rounded-lg border border-border bg-muted/30 p-4">
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Efectivo esperado:</span>
+            <span class="font-semibold">${{ fmt(efectivoEsperado) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Efectivo contado:</span>
+            <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
+          </div>
+          <div class="flex justify-between border-t border-border pt-2">
+            <span class="font-bold">Diferencia:</span>
+            <span class="font-bold" [ngClass]="diferenciaClass">
+              {{ diferenciaText }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3">
+      <button
+        type="button"
+        (click)="closeDialog()"
+        [disabled]="isSubmitting"
+        class="inline-flex h-10 items-center justify-center rounded-md border border-input
+               bg-transparent px-4 text-sm font-medium
+               hover:bg-accent hover:text-accent-foreground
+               disabled:pointer-events-none disabled:opacity-50
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmarCierre()"
+        [disabled]="isSubmitting"
+        class="inline-flex h-10 items-center justify-center rounded-md
+               bg-accent px-4 text-sm font-medium text-accent-foreground
+               transition-colors hover:bg-accent/90
+               disabled:pointer-events-none disabled:opacity-50
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {{ isSubmitting ? 'Cerrando...' : 'Confirmar Cierre' }}
+      </button>
+    </div>
+
+  </div><!-- /panel -->
+</ng-container><!-- /modal -->
