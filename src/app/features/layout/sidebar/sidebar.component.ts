@@ -37,13 +37,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private sub = new Subscription();
 
   readonly allNavItems: NavItem[] = [
-    { id: 'dashboard',      label: 'Dashboard',              icon: 'layout-dashboard', route: '/app/dashboard',      roles: ['admin', 'employee'] },
-    { id: 'schedule',       label: 'Schedule',               icon: 'calendar-check',   route: '/app/schedule',       roles: ['admin', 'employee'] },
-    { id: 'cash-register',  label: 'Cash Register',          icon: 'credit-card',      route: '/app/cash-register',  roles: ['admin', 'employee'] },
-    { id: 'pos',            label: 'New Sale (POS)',          icon: 'shopping-cart',    route: '/app/pos',            roles: ['admin', 'employee'] },
-    { id: 'products',       label: 'Products',               icon: 'package',          route: '/app/products',       roles: ['admin', 'employee'] },
-    { id: 'reports',        label: 'Financial Reports',      icon: 'bar-chart',        route: '/app/reports',        roles: ['admin'] },
-    { id: 'settings',       label: 'Settings',               icon: 'settings',         route: '/app/settings',       roles: ['admin'] },
+    { id: 'dashboard',      label: 'Inicio',                 icon: 'layout-dashboard', route: '/app/dashboard',      roles: ['admin', 'employee'] },
+    { id: 'schedule',       label: 'Agenda de Turnos',       icon: 'calendar-check',   route: '/app/schedule',       roles: ['admin', 'employee'] },
+    { id: 'cash-register',  label: 'Cierre de Caja',         icon: 'credit-card',      route: '/app/cash-register',  roles: ['admin', 'employee'] },
+    { id: 'pos',            label: 'Nueva Venta',            icon: 'shopping-cart',    route: '/app/pos',            roles: ['admin', 'employee'] },
+    { id: 'products',       label: 'Productos',              icon: 'package',          route: '/app/products',       roles: ['admin', 'employee'] },
+    { id: 'reports',        label: 'Reportes',               icon: 'bar-chart',        route: '/app/reports',        roles: ['admin'] },
+    { id: 'settings',       label: 'Configuración',          icon: 'settings',         route: '/app/settings',       roles: ['admin'] },
   ];
 
   constructor(
