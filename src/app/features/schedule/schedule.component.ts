@@ -16,6 +16,7 @@ import { Court } from '../../core/models/court.model';
 import { Product } from '../../core/models/product.model';
 import {
   BookingResponse,
+  BookingPayment,
   BookingStatus,
   PriceType,
   CreateBookingDto,
@@ -177,7 +178,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.bookingMap.clear();
           bookings.forEach(b => {
             if (b.status !== 'cancelled') {
-              this.bookingMap.set(`${b.courtId}-${b.hour}`, b);
+              this.addToBookingMap(b);
             }
           });
           this.isLoading = false;
@@ -198,13 +199,71 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return this.bookingMap.get(`${courtId}-${hour}`);
   }
 
+  /** True if this is the FIRST hour slot of a booking (i.e. the booking starts at this hour). */
+  isStartSlot(courtId: string, hour: string): boolean {
+    const b = this.getBooking(courtId, hour);
+    return b != null && b.hour === hour;
+  }
+
+  /** True if this hour is covered by a multi-slot booking that STARTED at an earlier hour. */
+  isContinuationSlot(courtId: string, hour: string): boolean {
+    const b = this.getBooking(courtId, hour);
+    return b != null && b.hour !== hour;
+  }
+
+  /** True if this is the LAST hour of a multi-slot booking (for bottom rounding). */
+  isLastContinuationSlot(courtId: string, hour: string): boolean {
+    const b = this.getBooking(courtId, hour);
+    if (!b || b.hour === hour) return false;
+    const slots = Math.ceil((b.durationMinutes ?? 60) / 60);
+    const [h, m] = b.hour.split(':').map(Number);
+    const totalMin = h * 60 + m + (slots - 1) * 60;
+    const lastH = Math.floor(totalMin / 60) % 24;
+    const lastM = totalMin % 60;
+    const lastHour = `${lastH.toString().padStart(2, '0')}:${lastM.toString().padStart(2, '0')}`;
+    return hour === lastHour;
+  }
+
+  /**
+   * Returns border-width + border-radius Tailwind classes to visually connect
+   * multi-slot booking cells into a single tall block.
+   * - Single slot or available → full border + full rounding (rounded-lg border-2).
+   * - Start of multi-slot      → top rounding only, no bottom border.
+   * - Middle continuation      → side borders only, no top/bottom border or rounding.
+   * - Last continuation        → bottom rounding only, no top border.
+   */
+  getSlotConnectClass(courtId: string, hour: string): string {
+    const b = this.getBooking(courtId, hour);
+    if (!b) return 'rounded-lg border-2';
+    const slots = Math.ceil((b.durationMinutes ?? 60) / 60);
+    if (slots <= 1) return 'rounded-lg border-2';
+    if (b.hour === hour)                          return 'rounded-t-lg rounded-b-none border-t-2 border-l-2 border-r-2';
+    if (this.isLastContinuationSlot(courtId, hour)) return 'rounded-t-none rounded-b-lg border-b-2 border-l-2 border-r-2';
+    return 'rounded-none border-l-2 border-r-2';
+  }
+
   getSlotClass(courtId: string, hour: string): string {
     const b = this.getBooking(courtId, hour);
-    if (!b)                      return 'border-dashed border-muted-foreground/30 hover:border-primary/50';
-    if (b.status === 'booked')   return 'border-primary bg-primary/10';
-    if (b.status === 'playing')  return 'border-accent bg-accent/10';
+    if (!b)                       return 'border-dashed border-muted-foreground/30 hover:border-primary/50';
+    if (b.status === 'booked')    return 'border-primary bg-primary/10';
+    if (b.status === 'playing')   return 'border-accent bg-accent/10';
     if (b.status === 'completed') return 'border-muted-foreground/30 bg-muted/30';
     return 'border-dashed border-muted-foreground/30';
+  }
+
+  /** Calculates end time from the booking currently shown in the detail dialog. */
+  get detailEndHour(): string {
+    if (!this.selectedBooking) return '';
+    const [h, m] = this.selectedBooking.hour.split(':').map(Number);
+    const totalMin = h * 60 + m + (this.selectedBooking.durationMinutes ?? 60);
+    const endH = Math.floor(totalMin / 60) % 24;
+    const endM = totalMin % 60;
+    return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+  }
+
+  /** Safely sums payment amounts (backend returns them as numeric strings). */
+  getPaymentTotal(payment: BookingPayment): number {
+    return Number(payment.amountCash) + Number(payment.amountTransfer);
   }
 
   getStatusLabel(status: BookingStatus): string {
@@ -274,32 +333,25 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.saldoPendiente > 0) {
-      this.toast.error(
-        'Pago incompleto',
-        `Falta abonar: $${this.saldoPendiente.toLocaleString('es-AR')}`,
-      );
-      return;
-    }
-
     this.isSaving = true;
 
     const dto: CreateBookingDto = {
-      courtId:       this.selectedSlot.court.id,
-      date:          this.selectedDate,
-      hour:          this.selectedSlot.hour,
-      clientName:    this.clientName.trim(),
-      priceType:     this.priceType,
-      amountCash:    Number(this.pagoEfectivo)     || 0,
+      courtId:        this.selectedSlot.court.id,
+      date:           this.selectedDate,
+      hour:           this.selectedSlot.hour,
+      clientName:     this.clientName.trim(),
+      priceType:      this.priceType,
+      durationMinutes: this.durationMinutes,
+      amountCash:     Number(this.pagoEfectivo)      || 0,
       amountTransfer: Number(this.pagoTransferencia) || 0,
-      items:         this.cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
+      items:          this.cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
     };
 
     this.sub.add(
       this.bookingsService.create(dto).subscribe({
         next: (booking) => {
           this.isSaving = false;
-          this.bookingMap.set(`${booking.courtId}-${booking.hour}`, booking);
+          this.addToBookingMap(booking);
           this.toast.success(
             'Reserva guardada',
             `Turno de ${booking.clientName} en ${booking.court.name} a las ${booking.hour}hs`,
@@ -327,7 +379,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.updateStatus(booking.id, { status: 'playing' }).subscribe({
         next: (updated) => {
-          this.bookingMap.set(`${updated.courtId}-${updated.hour}`, updated);
+          this.removeFromBookingMap(booking);
+          this.addToBookingMap(updated);
           this.selectedBooking = updated;
           this.toast.success('Partido iniciado', `${booking.clientName} está jugando.`);
         },
@@ -342,7 +395,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.updateStatus(booking.id, { status: 'completed' }).subscribe({
         next: (updated) => {
-          this.bookingMap.set(`${updated.courtId}-${updated.hour}`, updated);
+          this.removeFromBookingMap(booking);
+          this.addToBookingMap(updated);
           this.selectedBooking = updated;
           this.toast.success('Turno finalizado', `Turno de ${booking.clientName} completado.`);
         },
@@ -361,7 +415,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.cancel(booking.id).subscribe({
         next: () => {
-          this.bookingMap.delete(`${booking.courtId}-${booking.hour}`);
+          this.removeFromBookingMap(booking);
           this.toast.info('Reserva cancelada', `Turno de ${booking.clientName} cancelado.`);
           this.closeDialog();
         },
@@ -430,8 +484,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.isDialogOpen) this.closeDialog();
   }
 
+  /** Adds a booking to bookingMap for its start hour and all covered continuation hours. */
+  private addToBookingMap(booking: BookingResponse): void {
+    const duration = booking.durationMinutes ?? 60;
+    const slots = Math.ceil(duration / 60);
+    const [h, m] = booking.hour.split(':').map(Number);
+    for (let i = 0; i < slots; i++) {
+      const totalMin = h * 60 + m + i * 60;
+      const slotH = Math.floor(totalMin / 60) % 24;
+      const slotM = totalMin % 60;
+      const slotHour = `${slotH.toString().padStart(2, '0')}:${slotM.toString().padStart(2, '0')}`;
+      this.bookingMap.set(`${booking.courtId}-${slotHour}`, booking);
+    }
+  }
+
+  /** Removes a booking from bookingMap for its start hour and all covered continuation hours. */
+  private removeFromBookingMap(booking: BookingResponse): void {
+    const duration = booking.durationMinutes ?? 60;
+    const slots = Math.ceil(duration / 60);
+    const [h, m] = booking.hour.split(':').map(Number);
+    for (let i = 0; i < slots; i++) {
+      const totalMin = h * 60 + m + i * 60;
+      const slotH = Math.floor(totalMin / 60) % 24;
+      const slotM = totalMin % 60;
+      const slotHour = `${slotH.toString().padStart(2, '0')}:${slotM.toString().padStart(2, '0')}`;
+      this.bookingMap.delete(`${booking.courtId}-${slotHour}`);
+    }
+  }
+
   fmt(n: number): string {
-    return n.toLocaleString('es-AR');
+    return Number(n).toLocaleString('es-AR');
   }
 
   trackByHour(_: number, hour: string): string { return hour; }

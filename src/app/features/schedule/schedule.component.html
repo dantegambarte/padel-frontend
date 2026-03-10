@@ -77,8 +77,10 @@
           </div>
 
           <!-- ── FILAS DE LA GRILLA: una por cada hora ── -->
-          <div class="space-y-2">
-            <div *ngFor="let hour of HOURS"
+          <!-- space-y-[1px]: gap mínimo entre filas.  Las celdas de continuación
+               usan -mt-px + z-[1] para cerrar ese pixel y formar un bloque unificado. -->
+          <div class="space-y-[1px]">
+            <div *ngFor="let hour of HOURS; trackBy: trackByHour"
                  class="grid gap-2" [style.grid-template-columns]="gridColsStyle">
 
               <!-- Etiqueta de hora -->
@@ -87,54 +89,76 @@
               </div>
 
               <!-- Celdas: una por cada cancha -->
-              <ng-container *ngFor="let court of courts">
-                <ng-container *ngIf="getBooking(court.id, hour) as booking; else availableSlot">
-                  <div
-                    role="button"
-                    tabindex="0"
-                    (click)="onSlotClick(court, hour)"
-                    (keydown.enter)="onSlotClick(court, hour)"
-                    [ngClass]="getSlotClass(court.id, hour)"
-                    class="rounded-lg border-2 p-3 text-left transition-all hover:shadow-md
-                           relative group cursor-pointer min-h-[64px]"
-                  >
-                    <!-- ── Slot OCUPADO ── -->
-                    <div class="space-y-1 pr-6">
-                      <p class="text-sm font-semibold leading-tight truncate">
-                        {{ booking.clientName }}
-                      </p>
-                      <!-- Badge de estado — idéntico al prototipo -->
-                      <span
-                        [ngClass]="getStatusBadgeClass(booking.status)"
-                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                      >
-                        {{ getStatusLabel(booking.status) }}
-                      </span>
-                    </div>
+              <ng-container *ngFor="let court of courts; trackBy: trackByCourt">
 
-                    <!-- Botón eliminar: solo admin, visible en hover (group-hover) -->
-                    <button
-                      *ngIf="isAdmin"
-                      type="button"
-                      (click)="onDeleteFromGrid(booking, $event)"
-                      title="Cancelar reserva"
-                      class="absolute top-1 right-1 h-6 w-6
-                             flex items-center justify-center rounded
-                             opacity-0 group-hover:opacity-100 transition-opacity
-                             bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground"
+                <!-- ── 1. SLOT DE INICIO: primera hora de esta reserva ── -->
+                <ng-container *ngIf="isStartSlot(court.id, hour)">
+                  <ng-container *ngIf="getBooking(court.id, hour) as booking">
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="onSlotClick(court, hour)"
+                      (keydown.enter)="onSlotClick(court, hour)"
+                      [ngClass]="[getSlotClass(court.id, hour), getSlotConnectClass(court.id, hour)]"
+                      class="p-3 text-left transition-all hover:shadow-md
+                             relative group cursor-pointer min-h-[64px]"
                     >
-                      <!-- Trash2 icon — 3x3 igual que el prototipo -->
-                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 6h18"/>
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                      </svg>
-                    </button>
-                  </div>
+                      <div class="space-y-1 pr-6">
+                        <p class="text-sm font-semibold leading-tight truncate">
+                          {{ booking.clientName }}
+                        </p>
+                        <span
+                          [ngClass]="getStatusBadgeClass(booking.status)"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                        >
+                          {{ getStatusLabel(booking.status) }}
+                        </span>
+                        <!-- Duration label for multi-slot bookings -->
+                        <span *ngIf="(booking.durationMinutes ?? 60) > 60"
+                              class="block text-xs text-muted-foreground/70">
+                          {{ booking.durationMinutes }} min
+                        </span>
+                      </div>
+                      <button
+                        *ngIf="isAdmin"
+                        type="button"
+                        (click)="onDeleteFromGrid(booking, $event)"
+                        title="Cancelar reserva"
+                        class="absolute top-1 right-1 h-6 w-6
+                               flex items-center justify-center rounded
+                               opacity-0 group-hover:opacity-100 transition-opacity
+                               bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </ng-container>
                 </ng-container>
 
-                <ng-template #availableSlot>
+                <!-- ── 2. SLOT DE CONTINUACIÓN: hora cubierta por reserva multi-slot ──
+                     -mt-px z-[1]: cierra el 1 px de gap y se superpone limpiamente -->
+                <ng-container *ngIf="isContinuationSlot(court.id, hour)">
+                  <ng-container *ngIf="getBooking(court.id, hour) as booking">
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="onSlotClick(court, hour)"
+                      (keydown.enter)="onSlotClick(court, hour)"
+                      [ngClass]="[getSlotClass(court.id, hour), getSlotConnectClass(court.id, hour)]"
+                      class="-mt-px relative z-[1] min-h-[64px] cursor-pointer
+                             transition-all hover:shadow-md"
+                    >
+                    </div>
+                  </ng-container>
+                </ng-container>
+
+                <!-- ── 3. SLOT DISPONIBLE: sin reserva ── -->
+                <ng-container *ngIf="!getBooking(court.id, hour)">
                   <div
                     role="button"
                     tabindex="0"
@@ -144,13 +168,13 @@
                     class="rounded-lg border-2 p-3 text-left transition-all hover:shadow-md
                            relative group cursor-pointer min-h-[64px]"
                   >
-                    <!-- ── Slot DISPONIBLE ── -->
                     <div class="flex h-full min-h-[40px] items-center justify-center
                                 text-xs text-muted-foreground">
                       Disponible
                     </div>
                   </div>
-                </ng-template>
+                </ng-container>
+
               </ng-container>
 
             </div>
@@ -542,7 +566,7 @@
       <div class="mb-6 pr-8">
         <div class="flex flex-wrap items-center gap-3">
           <h2 id="dialog-title" class="text-lg font-semibold leading-none tracking-tight">
-            {{ selectedSlot?.court?.name }} — {{ selectedSlot?.hour }}hs
+            {{ selectedSlot?.court?.name }} — {{ selectedSlot?.hour }}hs a {{ detailEndHour }}hs
           </h2>
           <span
             [ngClass]="getStatusBadgeClass(selectedBooking.status)"
@@ -593,17 +617,15 @@
           <p class="text-sm font-medium">Pago registrado</p>
           <div class="flex justify-between text-sm">
             <span class="text-muted-foreground">Efectivo</span>
-            <span>${{ fmt(selectedBooking.payment.amountCash) }}</span>
+            <span>${{ fmt(+selectedBooking.payment.amountCash) }}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-muted-foreground">Transferencia</span>
-            <span>${{ fmt(selectedBooking.payment.amountTransfer) }}</span>
+            <span>${{ fmt(+selectedBooking.payment.amountTransfer) }}</span>
           </div>
           <div class="flex justify-between border-t border-border pt-2 text-sm font-bold">
             <span>Total pagado</span>
-            <span>
-              ${{ fmt(selectedBooking.payment.amountCash + selectedBooking.payment.amountTransfer) }}
-            </span>
+            <span>${{ fmt(getPaymentTotal(selectedBooking.payment)) }}</span>
           </div>
         </div>
 
