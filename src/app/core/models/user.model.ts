@@ -13,6 +13,14 @@ export interface CreateUserDto {
   username: string;
   fullName: string;
   password: string;
+  role?: UserRole;
+}
+
+export interface UpdateUserDto {
+  fullName?: string;
+  password?: string;
+  role?: UserRole;
+  isActive?: boolean;
 }
 
 export interface AuthResponse {

@@ -22,8 +22,8 @@ export interface BookingResponse {
   id: string;
   court: Court;
   courtId: string;
-  date: string;           // YYYY-MM-DD
-  hour: string;           // HH:MM
+  date: string; // YYYY-MM-DD
+  hour: string; // HH:MM
   clientName: string;
   status: BookingStatus;
   priceType: PriceType;
@@ -48,4 +48,12 @@ export interface CreateBookingDto {
 
 export interface UpdateBookingStatusDto {
   status: BookingStatus;
+}
+
+export interface UpdateBookingDto {
+  status?: BookingStatus;
+  clientName?: string;
+  amountCash?: number;
+  amountTransfer?: number;
+  items?: { productId: string; quantity: number }[];
 }
