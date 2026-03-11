@@ -76,6 +76,7 @@ export class SettingsComponent implements OnInit {
   }
 
   private applyConfig(entries: ConfigEntry[]): void {
+    if (!Array.isArray(entries)) return;
     const map = new Map(entries.map((e) => [e.key, e.value]));
     if (map.has('precio_base')) this.precioBase = map.get('precio_base')!;
     if (map.has('precio_profesor'))
