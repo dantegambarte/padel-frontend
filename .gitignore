@@ -11,6 +11,13 @@
 npm-debug.log
 yarn-error.log
 .package-lock.json
+package-lock.json
+
+# Playwright E2E
+/e2e/auth-state.json
+/playwright-report
+/test-results
+/blob-report
 
 # IDEs and editors
 .idea/
