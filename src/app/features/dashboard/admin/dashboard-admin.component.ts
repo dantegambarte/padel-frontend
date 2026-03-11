@@ -140,9 +140,12 @@ export class DashboardAdminComponent implements OnInit {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
+    const localStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     return {
-      from: monday.toISOString().split('T')[0],
-      to: sunday.toISOString().split('T')[0],
+      from: localStr(monday),
+      to: localStr(sunday),
     };
   }
 }

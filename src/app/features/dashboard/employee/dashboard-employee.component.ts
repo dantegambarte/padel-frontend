@@ -22,7 +22,10 @@ export class DashboardEmployeeComponent implements OnInit {
   upcomingBookings: BookingResponse[] = [];
   lowStockProducts: LowStockProduct[] = [];
 
-  private today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  private today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })(); // YYYY-MM-DD hora local (evita desfase UTC-3)
 
   constructor(
     private bookingsService: BookingsService,
