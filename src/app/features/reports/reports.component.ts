@@ -36,6 +36,13 @@ export class ReportsComponent implements OnInit {
   dateFrom = '';
   dateTo = '';
 
+  /** Fecha seleccionada en el calendario (YYYY-MM-DD). Vacía = filtro inactivo. */
+  selectedDate = '';
+  /** True cuando el usuario eligió un día concreto en el datepicker. */
+  dateFilterActive = false;
+  /** Fecha máxima permitida en el datepicker: hoy. */
+  readonly maxDate = this.localDateStr(new Date());
+
   isLoading = true;
   isExporting = false;
 
@@ -139,8 +146,29 @@ export class ReportsComponent implements OnInit {
   }
 
   selectPeriod(id: string): void {
+    // Al elegir un período, se desactiva el filtro de día exacto
+    this.dateFilterActive = false;
+    this.selectedDate = '';
     if (this.selectedPeriod === id) return;
     this.selectedPeriod = id;
+    this.loadAll();
+  }
+
+  /** Llamado cuando el usuario elige una fecha en el datepicker. */
+  onDateChange(value: string): void {
+    if (!value) {
+      this.clearDateFilter();
+      return;
+    }
+    this.selectedDate = value;
+    this.dateFilterActive = true;
+    this.loadAll();
+  }
+
+  /** Limpia el filtro de día y vuelve al período activo. */
+  clearDateFilter(): void {
+    this.selectedDate = '';
+    this.dateFilterActive = false;
     this.loadAll();
   }
 
@@ -148,22 +176,25 @@ export class ReportsComponent implements OnInit {
     const range = this.getDateRange(this.selectedPeriod);
     this.dateFrom = range.from;
     this.dateTo = range.to;
-    const groupBy = this.getGroupBy(this.selectedPeriod);
+
+    // Cuando hay filtro de día exacto, groupBy='day' para que el gráfico muestre esa jornada
+    const groupBy = this.dateFilterActive ? 'day' : this.getGroupBy(this.selectedPeriod);
+    const date = this.dateFilterActive ? this.selectedDate : undefined;
 
     this.isLoading = true;
 
     forkJoin({
       revenue: this.reportsService
-        .getRevenue(range.from, range.to, groupBy)
+        .getRevenue(range.from, range.to, groupBy, date)
         .pipe(catchError(() => of([]))),
       payment: this.reportsService
-        .getPaymentMethods(range.from, range.to)
+        .getPaymentMethods(range.from, range.to, date)
         .pipe(catchError(() => of(null))),
       ranking: this.reportsService
-        .getProductsRanking(range.from, range.to)
+        .getProductsRanking(range.from, range.to, date)
         .pipe(catchError(() => of([]))),
       transactions: this.reportsService
-        .getTransactionsExport(range.from, range.to)
+        .getTransactionsExport(range.from, range.to, date)
         .pipe(catchError(() => of([]))),
     })
       .pipe(finalize(() => (this.isLoading = false)))
@@ -231,8 +262,9 @@ export class ReportsComponent implements OnInit {
     }
 
     this.isExporting = true;
+    const date = this.dateFilterActive ? this.selectedDate : undefined;
     this.reportsService
-      .getTransactionsExport(this.dateFrom, this.dateTo)
+      .getTransactionsExport(this.dateFrom, this.dateTo, date)
       .pipe(finalize(() => (this.isExporting = false)))
       .subscribe({
         next: (data) => this.triggerExcelDownload(data),
@@ -304,7 +336,7 @@ export class ReportsComponent implements OnInit {
     XLSX.utils.book_append_sheet(wb, ws, 'Reporte Financiero');
 
     // 6. Descargar archivo
-    const filename = `Reporte_Financiero_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `Reporte_Financiero_${this.localDateStr(new Date())}.xlsx`;
     XLSX.writeFile(wb, filename);
 
     this.toast.success(
@@ -313,9 +345,20 @@ export class ReportsComponent implements OnInit {
     );
   }
 
+  /**
+   * Devuelve la fecha en formato YYYY-MM-DD usando la hora LOCAL del navegador,
+   * evitando el desfase de UTC-3 que produce toISOString() después de las 21hs.
+   */
+  private localDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   private getDateRange(period: string): { from: string; to: string } {
     const today = new Date();
-    const to = today.toISOString().split('T')[0];
+    const to = this.localDateStr(today);
     let from: Date;
 
     switch (period) {
@@ -341,7 +384,7 @@ export class ReportsComponent implements OnInit {
         from = new Date(today.getFullYear(), today.getMonth(), 1);
     }
 
-    return { from: from.toISOString().split('T')[0], to };
+    return { from: this.localDateStr(from), to };
   }
 
   private getGroupBy(period: string): GroupBy {
