@@ -257,14 +257,17 @@
      Implementado con overlay fixed + panel fixed centrado (sin dependencias).
      ═══════════════════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="isDialogOpen">
-  <!-- Backdrop: cierra el modal al hacer click fuera, con blur (idéntico a Radix) -->
+  <!-- Backdrop principal: z-40 para que el confirm (z-[60]) quede siempre encima.
+       pointer-events-none cuando el confirm está abierto evita que closeDialog()
+       se dispare desde abajo mientras el confirm intercepta los clicks. -->
   <div
-    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in-0"
+    class="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm animate-in fade-in-0"
+    [class.pointer-events-none]="confirmDialogOpen"
     (click)="closeDialog()"
     aria-hidden="true"
   ></div>
 
-  <!-- Panel del diálogo — max-h-[90vh] overflow-y-auto exacto del prototipo -->
+  <!-- Panel del diálogo — z-50 (por encima del backdrop pero bajo el confirm) -->
   <div
     role="dialog"
     aria-modal="true"
@@ -1359,17 +1362,24 @@
 
 <!-- ──── CONFIRM DIALOG (in-app, reemplaza browser confirm()) ─────────────── -->
 <ng-container *ngIf="confirmDialogOpen">
-  <!-- Backdrop -->
+  <!-- Backdrop del confirm: SIN backdrop-blur-sm para no duplicar el blur del modal
+       principal. Usa bg-black/40 en lugar de /50 porque el modal principal ya
+       oscurece el fondo. z-[60] garantiza que quede entre el panel principal (z-50)
+       y el panel de confirm (z-[70]). -->
   <div
-    class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
-    (click)="confirmDialogCancel()"
+    class="fixed inset-0 z-[60] bg-black/40"
+    (click)="confirmDialogCancel(); $event.stopPropagation()"
+    aria-hidden="true"
   ></div>
 
-  <!-- Panel -->
+  <!-- Panel del confirm: stopPropagation en el contenedor evita que cualquier
+       click dentro burbujee hacia el backdrop principal. -->
   <div
     role="alertdialog"
     aria-modal="true"
+    aria-labelledby="confirm-dialog-title"
     class="fixed left-1/2 top-1/2 z-[70] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-xl"
+    (click)="$event.stopPropagation()"
   >
     <!-- Icono de advertencia -->
     <div class="mb-4 flex items-center gap-3">
@@ -1392,7 +1402,7 @@
           <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
       </div>
-      <h3 class="text-base font-semibold text-foreground">
+      <h3 id="confirm-dialog-title" class="text-base font-semibold text-foreground">
         {{ confirmDialogTitle }}
       </h3>
     </div>
@@ -1404,14 +1414,14 @@
     <div class="flex justify-end gap-3">
       <button
         type="button"
-        (click)="confirmDialogCancel()"
+        (click)="confirmDialogCancel(); $event.stopPropagation()"
         class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Volver
       </button>
       <button
         type="button"
-        (click)="confirmDialogAccept()"
+        (click)="confirmDialogAccept(); $event.stopPropagation()"
         class="inline-flex items-center justify-center rounded-md bg-destructive text-destructive-foreground px-4 py-2 text-sm font-medium hover:bg-destructive/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Cerrar sin guardar

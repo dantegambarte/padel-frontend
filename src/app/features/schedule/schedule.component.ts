@@ -31,7 +31,10 @@ interface CartItem {
   templateUrl: './schedule.component.html',
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
-  selectedDate = new Date().toISOString().split('T')[0];
+  selectedDate = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
   courts: Court[] = [];
   allProducts: Product[] = [];
   get featuredProducts(): Product[] {
@@ -290,20 +293,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Altura en píxeles de la tarjeta de reserva.
+   * Altura en píxeles de la tarjeta de reserva — proporcional exacta a durationMinutes.
    *
    * GEOMETRÍA (con space-y-2 entre filas):
    *   - Cada fila mide exactamente 96 px (h-24, border-box).
-   *   - space-y-2 agrega 8 px de margin-top entre filas consecutivas.
+   *   - space-y-2 agrega 8 px de margin-top entre cada par de filas consecutivas.
    *   - La tarjeta es position:absolute dentro del wrapper de la fila de inicio.
-   *   - Para cubrir N filas la tarjeta debe incluir las N filas Y los (N-1) gaps:
-   *       height = 96*N + 8*(N-1)
-   *   - Ejemplo: 2 slots → 96*2 + 8*1 = 200 px
-   *              3 slots → 96*3 + 8*2 = 304 px
+   *
+   * FÓRMULA:
+   *   altura_base = (durationMinutes / 60) * 96          ← proporcional exacta
+   *   gaps        = Math.floor(durationMinutes / 60) * 8  ← un gap por cada hora COMPLETA cruzada
+   *   total       = altura_base + gaps
+   *
+   * Ejemplos:
+   *    60 min → (60/60)*96 + floor(60/60)*8  =  96 +  8 = 104... NO:
+   *             floor(1)*8 = 8  pero 60 min ocupa sólo 1 fila → 0 gaps
+   *
+   *   CORRECCIÓN: los gaps se cuentan entre filas cruzadas, es decir
+   *   floor(durationMinutes / 60) gaps si durationMinutes > 60, 0 si ≤ 60.
+   *   Fórmula final: gaps = Math.floor((durationMinutes - 1) / 60) * 8
+   *
+   *    60 min → (60/60)*96  + floor(59/60)*8  =  96 + 0*8 =  96 px
+   *    90 min → (90/60)*96  + floor(89/60)*8  = 144 + 1*8 = 152 px
+   *   120 min → (120/60)*96 + floor(119/60)*8 = 192 + 1*8 = 200 px
+   *   180 min → (180/60)*96 + floor(179/60)*8 = 288 + 2*8 = 304 px
    */
   getBookingBlockHeight(booking: BookingResponse): number {
-    const slots = Math.ceil((booking.durationMinutes ?? 60) / 60);
-    return 96 * slots + 8 * (slots - 1);
+    const mins = booking.durationMinutes ?? 60;
+    const baseHeight = (mins / 60) * 96;
+    const gaps = Math.floor((mins - 1) / 60) * 8;
+    return baseHeight + gaps;
   }
 
   getSlotClass(courtId: string, hour: string): string {
@@ -523,6 +542,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   closeDialog(): void {
+    // Guard: si el confirm ya está abierto, ignorar nuevas llamadas para evitar
+    // que el backdrop principal siga disparando closeDialog() mientras el confirm
+    // está visible (race condition entre los dos ng-container).
+    if (this.confirmDialogOpen) return;
+
     if (this.dialogMode === 'detail') {
       const hasPaid = this.detailPaidCount > 0;
       const hasPayment = this.hasUnsavedPaymentChanges;
