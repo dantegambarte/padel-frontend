@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Subscription, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { AuthService } from '../../core/services/auth.service';
 import { CourtsService } from '../../core/services/courts.service';
@@ -259,17 +260,31 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return b != null && b.hour !== hour;
   }
 
-  /** True if this is the LAST hour of a multi-slot booking (for bottom rounding). */
+  /** True if this is the LAST whole-hour continuation row of a multi-slot booking. */
   isLastContinuationSlot(courtId: string, hour: string): boolean {
     const b = this.getBooking(courtId, hour);
     if (!b || b.hour === hour) return false;
-    const slots = Math.ceil((b.durationMinutes ?? 60) / 60);
-    const [h, m] = b.hour.split(':').map(Number);
-    const totalMin = h * 60 + m + (slots - 1) * 60;
-    const lastH = Math.floor(totalMin / 60) % 24;
-    const lastM = totalMin % 60;
-    const lastHour = `${lastH.toString().padStart(2, '0')}:${lastM.toString().padStart(2, '0')}`;
-    return hour === lastHour;
+    const [bh, bm] = b.hour.split(':').map(Number);
+    const endMin = bh * 60 + bm + (b.durationMinutes ?? 60);
+    // Last continuation row is the highest whole hour H where H*60 < endMin
+    const lastContinuationH = Math.floor((endMin - 1) / 60);
+    const lastContinuationHour = `${lastContinuationH.toString().padStart(2, '0')}:00`;
+    return hour === lastContinuationHour;
+  }
+
+  /**
+   * Returns the booking that STARTS at HH:30 within the given whole-hour row.
+   * E.g. getBookingAtHalf(courtId, '14:00') looks up key 'courtId-14:30'.
+   */
+  getBookingAtHalf(courtId: string, hour: string): BookingResponse | undefined {
+    const hh = hour.split(':')[0];
+    return this.bookingMap.get(`${courtId}-${hh}:30`);
+  }
+
+  /** Top offset in px for a booking card — 48px for :30 starts, 0 for :00 starts. */
+  getBookingTopOffset(booking: BookingResponse): number {
+    const minutes = parseInt(booking.hour.split(':')[1], 10);
+    return minutes === 30 ? 48 : 0;
   }
 
   /**
@@ -488,13 +503,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return map[status] ?? 'bg-muted text-muted-foreground';
   }
 
-  onSlotClick(court: Court, hour: string): void {
-    const booking = this.getBooking(court.id, hour);
-    if (booking) {
-      this.openDetailDialog(court, hour, booking);
-    } else {
-      this.openCreateDialog(court, hour);
+  onSlotClick(court: Court, hour: string, minutes: '00' | '30' = '00'): void {
+    // Compute the exact slot time (e.g. '14:00' or '14:30')
+    const fullHour = minutes === '30' ? `${hour.split(':')[0]}:30` : hour;
+    const booking = this.getBooking(court.id, fullHour);
+    if (booking && booking.hour === fullHour) {
+      // Clicked on an existing booking's start time
+      this.openDetailDialog(court, fullHour, booking);
+    } else if (!booking) {
+      // Slot is free — open create dialog with the exact start time
+      this.openCreateDialog(court, fullHour);
     }
+    // If booking exists but booking.hour !== fullHour it's a continuation slot — ignore click
   }
 
   private openCreateDialog(court: Court, hour: string): void {
@@ -823,15 +843,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       );
       return;
     }
+
+    // Guard: evita doble-click / retry mientras el request está en vuelo
+    if (this.isSavingDetail) return;
+    this.isSavingDetail = true;
+
     this.sub.add(
-      this.bookingsService.cancel(booking.id).subscribe({
+      this.bookingsService.cancel(booking.id).pipe(
+        finalize(() => { this.isSavingDetail = false; }),
+      ).subscribe({
         next: () => {
           this.removeFromBookingMap(booking);
           this.toast.info(
             'Reserva cancelada',
             `Turno de ${booking.clientName} cancelado.`,
           );
-          this.closeDialog();
+          this.forceCloseDialog();
         },
         error: (err) => {
           this.toast.error(
@@ -958,42 +985,90 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.isDialogOpen) this.closeDialog();
   }
 
-  /** Adds a booking to bookingMap for its start hour and all covered continuation hours.
+  /** Adds a booking to bookingMap for its start hour and all covered whole-hour continuation rows.
    *
-   *  Regla anti-sobreescritura:
-   *  - El slot de INICIO (i === 0) siempre se asigna (es la fuente de verdad).
-   *  - Los slots de CONTINUACIÓN (i > 0) solo se asignan si ese key aún no existe,
-   *    evitando que un turno multi-slot pise a un turno independiente que ya estaba
-   *    mapeado en esa hora (ej: un turno completado de 60min en la hora cubierta).
+   *  Estrategia minuto-exacta (soporta turnos que inician a :30):
+   *  1. Registra la hora exacta de inicio (ej. '14:30').
+   *  2. Registra como CONTINUACIÓN cada fila de hora entera HH:00 que quede
+   *     completamente cubierta por el turno (HH*60 >= primer múltiplo de 60
+   *     después del inicio, y HH*60 < fin).
+   *  3. Anti-sobreescritura: no pisa continuaciones ya mapeadas.
+   *
+   *  Ejemplos:
+   *   14:00 + 90 min → inicio '14:00', continuación '15:00'
+   *   14:30 + 90 min → inicio '14:30', continuación '15:00'
+   *   14:30 + 60 min → inicio '14:30', continuación '15:00'
+   *   14:30 + 30 min → inicio '14:30', sin continuaciones (termina en 15:00 exacto)
    */
   private addToBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
-    const slots = Math.ceil(duration / 60);
     const [h, m] = booking.hour.split(':').map(Number);
-    for (let i = 0; i < slots; i++) {
-      const totalMin = h * 60 + m + i * 60;
-      const slotH = Math.floor(totalMin / 60) % 24;
-      const slotM = totalMin % 60;
-      const slotHour = `${slotH.toString().padStart(2, '0')}:${slotM.toString().padStart(2, '0')}`;
+    const startMin = h * 60 + m;
+    const endMin   = startMin + duration;
+
+    // 1. Slot de inicio exacto (puede ser HH:00 o HH:30)
+    this.bookingMap.set(`${booking.courtId}-${booking.hour}`, booking);
+
+    // 2. Filas de continuación: primera hora entera posterior al inicio, hasta antes del fin
+    const firstContinuationMin = Math.ceil(startMin / 60) * 60;
+    for (let minMark = firstContinuationMin; minMark < endMin; minMark += 60) {
+      const rH = Math.floor(minMark / 60) % 24;
+      const slotHour = `${rH.toString().padStart(2, '0')}:00`;
       const key = `${booking.courtId}-${slotHour}`;
-      // Continuación: no sobreescribir si el slot ya está ocupado por otro booking
-      if (i > 0 && this.bookingMap.has(key)) continue;
+      if (slotHour === booking.hour) continue; // ya registrado como inicio
+      if (this.bookingMap.has(key)) continue;  // no sobreescribir
       this.bookingMap.set(key, booking);
     }
   }
 
-  /** Removes a booking from bookingMap for its start hour and all covered continuation hours. */
+  /** Removes a booking from bookingMap for its exact start key and all whole-hour continuation rows. */
   private removeFromBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
-    const slots = Math.ceil(duration / 60);
     const [h, m] = booking.hour.split(':').map(Number);
-    for (let i = 0; i < slots; i++) {
-      const totalMin = h * 60 + m + i * 60;
-      const slotH = Math.floor(totalMin / 60) % 24;
-      const slotM = totalMin % 60;
-      const slotHour = `${slotH.toString().padStart(2, '0')}:${slotM.toString().padStart(2, '0')}`;
+    const startMin = h * 60 + m;
+    const endMin   = startMin + duration;
+
+    this.bookingMap.delete(`${booking.courtId}-${booking.hour}`);
+
+    const firstContinuationMin = Math.ceil(startMin / 60) * 60;
+    for (let minMark = firstContinuationMin; minMark < endMin; minMark += 60) {
+      const rH = Math.floor(minMark / 60) % 24;
+      const slotHour = `${rH.toString().padStart(2, '0')}:00`;
+      if (slotHour === booking.hour) continue;
       this.bookingMap.delete(`${booking.courtId}-${slotHour}`);
     }
+  }
+
+  // ── Tooltip helpers — calculan datos de una reserva sin necesitar estado ──
+
+  getBookingEndHour(booking: BookingResponse): string {
+    const [h, m] = booking.hour.split(':').map(Number);
+    const totalMin = h * 60 + m + booking.durationMinutes;
+    const endH = Math.floor(totalMin / 60) % 24;
+    const endM = totalMin % 60;
+    return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+  }
+
+  getBookingItemsTotal(booking: BookingResponse): number {
+    return booking.items.reduce(
+      (s, i) => s + Number(i.unitPrice) * Number(i.quantity),
+      0,
+    );
+  }
+
+  getBookingTotal(booking: BookingResponse): number {
+    return Number(booking.priceAmount) + this.getBookingItemsTotal(booking);
+  }
+
+  getBookingPaid(booking: BookingResponse): number {
+    return (
+      Number(booking.payment?.amountCash ?? 0) +
+      Number(booking.payment?.amountTransfer ?? 0)
+    );
+  }
+
+  getBookingPending(booking: BookingResponse): number {
+    return this.getBookingTotal(booking) - this.getBookingPaid(booking);
   }
 
   fmt(n: number): string {
