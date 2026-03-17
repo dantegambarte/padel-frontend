@@ -4,24 +4,19 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
-
 export interface RevenueDay {
-  /** El backend formatea según groupBy. */
   period: string;
-  bookings: number; // antes: alquileres
-  sales: number; // antes: productos
+  bookings: number;
+  sales: number;
   total: number;
 }
 
-/** Shape real del backend GET /reports/payment-methods */
 export interface PaymentBreakdown {
   cash: { total: number; percentage: number };
   transfer: { total: number; percentage: number };
   grandTotal: number;
 }
 
-/** Shape real del backend GET /reports/summary */
 export interface ReportsSummaryResponse {
   totalRevenue: number;
   bookingsRevenue: number;
@@ -39,11 +34,10 @@ export interface ProductRanking {
   revenue: number;
 }
 
-/** Shape real del backend GET /reports/transactions/export */
 export interface TransactionExport {
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
-  type: string; // 'booking' | 'sale'
+  date: string;
+  time: string;
+  type: string;
   concept: string;
   cash: number;
   transfer: number;
@@ -53,23 +47,20 @@ export interface TransactionExport {
 
 export type GroupBy = 'day' | 'week' | 'month';
 
-// ── Servicio ──────────────────────────────────────────────────────────────────
-
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly url = `${environment.apiUrl}/reports`;
 
   constructor(private http: HttpClient) {}
 
-  /** GET /reports/summary — KPIs + resumen del día para Dashboard Admin. */
+  /** Devuelve el resumen de KPIs del período actual para el Dashboard Admin. */
   getSummary(): Observable<ReportsSummaryResponse> {
     return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`);
   }
 
   /**
-   * Construye HttpParams para los endpoints de reportes.
-   * Si se pasa `date`, envía sólo ese parámetro (el backend lo prioriza).
-   * Si se pasan `dateFrom`/`dateTo`, envía el rango de período.
+   * Construye los `HttpParams` para los endpoints de reportes.
+   * Si se pasa `date`, lo prioriza; si se pasa un rango, usa `dateFrom`/`dateTo`.
    */
   private buildParams(
     options: { date: string } | { dateFrom: string; dateTo: string },
@@ -82,7 +73,13 @@ export class ReportsService {
       .set('dateTo', options.dateTo);
   }
 
-  /** GET /reports/revenue — evolución de ingresos para gráficos. */
+  /**
+   * Devuelve la evolución de ingresos agrupada por período para los gráficos.
+   * @param dateFrom - Fecha de inicio del rango (YYYY-MM-DD).
+   * @param dateTo   - Fecha de fin del rango (YYYY-MM-DD).
+   * @param groupBy  - Granularidad: 'day' | 'week' | 'month'.
+   * @param date     - Día exacto opcional; tiene prioridad sobre el rango.
+   */
   getRevenue(
     dateFrom: string,
     dateTo: string,
@@ -96,7 +93,12 @@ export class ReportsService {
     return this.http.get<RevenueDay[]>(`${this.url}/revenue`, { params });
   }
 
-  /** GET /reports/payment-methods — desglose efectivo/transferencia. */
+  /**
+   * Devuelve el desglose de pagos en efectivo y transferencia del período.
+   * @param dateFrom - Fecha de inicio (YYYY-MM-DD).
+   * @param dateTo   - Fecha de fin (YYYY-MM-DD).
+   * @param date     - Día exacto opcional.
+   */
   getPaymentMethods(
     dateFrom: string,
     dateTo: string,
@@ -110,7 +112,12 @@ export class ReportsService {
     });
   }
 
-  /** GET /reports/products-ranking — top 20 productos más vendidos. */
+  /**
+   * Devuelve el top 20 de productos más vendidos en el período.
+   * @param dateFrom - Fecha de inicio (YYYY-MM-DD).
+   * @param dateTo   - Fecha de fin (YYYY-MM-DD).
+   * @param date     - Día exacto opcional.
+   */
   getProductsRanking(
     dateFrom: string,
     dateTo: string,
@@ -125,8 +132,11 @@ export class ReportsService {
   }
 
   /**
-   * GET /reports/transactions/export
-   * Devuelve JSON plano apto para ser convertido a Excel en el frontend.
+   * Devuelve el detalle de transacciones del período en formato plano,
+   * listo para ser convertido a Excel en el frontend.
+   * @param dateFrom - Fecha de inicio (YYYY-MM-DD).
+   * @param dateTo   - Fecha de fin (YYYY-MM-DD).
+   * @param date     - Día exacto opcional.
    */
   getTransactionsExport(
     dateFrom: string,

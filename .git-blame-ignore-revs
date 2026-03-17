@@ -1,2 +1,4 @@
 # Prettier full-repo format — ignorar en git blame
 9554f72
+# docs: eliminar comentarios inline y agregar JSDoc en español en todo el codebase
+bc36fb5

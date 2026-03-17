@@ -19,20 +19,20 @@ export class SettingsComponent implements OnInit {
   isLoading = true;
   isSubmitting = false;
 
-  // ── Precios & horarios ──────────────────────────────────────────────────
   precioBase = '3000';
   precioProfesor = '2500';
   horarioApertura = '09:00';
   horarioCierre = '23:00';
 
-  // Snapshot de los valores al cargar. Se compara contra los actuales para
-  // determinar si el usuario realizó algún cambio (dirty state manual,
-  // ya que el componente no usa ReactiveFormsModule).
   private savedPrecioBase = '';
   private savedPrecioProfesor = '';
   private savedHorarioApertura = '';
   private savedHorarioCierre = '';
 
+  /**
+   * `true` si algún campo difiere del snapshot guardado al cargar.
+   * Implementa dirty state manual ya que el componente no usa ReactiveFormsModule.
+   */
   get isDirty(): boolean {
     return (
       this.precioBase       !== this.savedPrecioBase       ||
@@ -42,10 +42,8 @@ export class SettingsComponent implements OnInit {
     );
   }
 
-  // ── Canchas ─────────────────────────────────────────────────────────────
   courts: Court[] = [];
 
-  // ── Modal de cancha ─────────────────────────────────────────────────────
   isCourtModalOpen = false;
   isCourtSubmitting = false;
   courtModalMode: 'create' | 'edit' = 'create';
@@ -71,6 +69,7 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  /** Carga la configuración y la lista de canchas en paralelo. */
   private loadAll(): void {
     this.isLoading = true;
     forkJoin({
@@ -92,6 +91,10 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  /**
+   * Aplica las entradas de configuración al formulario y actualiza el snapshot
+   * para que el formulario quede en estado "limpio" al cargar.
+   */
   private applyConfig(entries: ConfigEntry[]): void {
     if (!Array.isArray(entries)) return;
     const map = new Map(entries.map((e) => [e.key, e.value]));
@@ -100,22 +103,23 @@ export class SettingsComponent implements OnInit {
     if (map.has('horario_apertura')) this.horarioApertura = map.get('horario_apertura')!;
     if (map.has('horario_cierre'))   this.horarioCierre   = map.get('horario_cierre')!;
 
-    // Actualizar snapshot: a partir de aquí el formulario está "limpio"
     this.savedPrecioBase      = this.precioBase;
     this.savedPrecioProfesor  = this.precioProfesor;
     this.savedHorarioApertura = this.horarioApertura;
     this.savedHorarioCierre   = this.horarioCierre;
   }
 
+  /** Precio base convertido a número. */
   get precioBaseNum(): number {
     return parseInt(this.precioBase || '0', 10) || 0;
   }
+
+  /** Precio profesor convertido a número. */
   get precioProfesorNum(): number {
     return parseInt(this.precioProfesor || '0', 10) || 0;
   }
 
-  // ── Guardar configuración de precios/horarios ───────────────────────────
-
+  /** Guarda la configuración de precios y horarios y actualiza el snapshot. */
   save(): void {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
@@ -132,7 +136,6 @@ export class SettingsComponent implements OnInit {
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: () => {
-          // Actualizar snapshot para que el formulario vuelva a estado "limpio"
           this.savedPrecioBase      = this.precioBase;
           this.savedPrecioProfesor  = this.precioProfesor;
           this.savedHorarioApertura = this.horarioApertura;
@@ -150,12 +153,12 @@ export class SettingsComponent implements OnInit {
       });
   }
 
+  /** Descarta los cambios pendientes recargando la configuración desde el servidor. */
   cancel(): void {
     this.loadAll();
   }
 
-  // ── Modal de canchas ────────────────────────────────────────────────────
-
+  /** Abre el modal en modo creación con el formulario vacío. */
   openCreateCourtModal(): void {
     this.courtModalMode = 'create';
     this.editingCourtId = null;
@@ -164,6 +167,7 @@ export class SettingsComponent implements OnInit {
     this.isCourtModalOpen = true;
   }
 
+  /** Abre el modal en modo edición pre-cargando los datos de la cancha. */
   openEditCourtModal(court: Court): void {
     this.courtModalMode = 'edit';
     this.editingCourtId = court.id;
@@ -176,11 +180,13 @@ export class SettingsComponent implements OnInit {
     this.isCourtModalOpen = true;
   }
 
+  /** Cierra el modal de cancha si no hay una petición en curso. */
   closeCourtModal(): void {
     if (this.isCourtSubmitting) return;
     this.isCourtModalOpen = false;
   }
 
+  /** Valida y envía el formulario de cancha para creación o edición. */
   saveCourtModal(): void {
     this.courtFormError = '';
 
@@ -244,6 +250,7 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     return value.toLocaleString('es-AR');
   }

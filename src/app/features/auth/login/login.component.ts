@@ -13,6 +13,9 @@ export class LoginComponent {
   errorMessage = '';
   isLoading = false;
 
+  /**
+   * Inicializa el formulario reactivo con los campos `username` y `password`.
+   */
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -24,6 +27,10 @@ export class LoginComponent {
     });
   }
 
+  /**
+   * Envía las credenciales al servicio de autenticación.
+   * Muestra mensajes de error descriptivos según el código HTTP recibido.
+   */
   onSubmit(): void {
     if (this.form.invalid || this.isLoading) return;
 
@@ -39,7 +46,6 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading = false;
-        // El backend retorna mensajes genéricos (no revela si el usuario existe)
         if (err.status === 401) {
           this.errorMessage =
             'Credenciales inválidas. Verificá usuario y contraseña.';

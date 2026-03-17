@@ -17,7 +17,7 @@ import { User, UserRole } from '../../../core/models/user.model';
 interface NavItem {
   id: string;
   label: string;
-  icon: string; // Nombre del SVG inline (ver template)
+  icon: string;
   route: string;
   roles: UserRole[];
 }
@@ -95,11 +95,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
     },
   ];
 
-  /** Referencia al listener para poder removerlo en ngOnDestroy. */
+  /**
+   * Handler de click global registrado fuera de la zona Angular.
+   * Solo entra a la zona (y dispara change detection) cuando el menú está abierto
+   * y el click ocurrió fuera del sidebar, evitando repints innecesarios.
+   */
   private readonly documentClickHandler = (event: Event): void => {
-    // Solo entra a la zona Angular (y dispara CD) si el menú está abierto
-    // y el click fue fuera del sidebar. De lo contrario no hace nada y
-    // Angular jamás entera de este evento → sin CD → sin repaint del backdrop-blur.
     if (
       this.isUserMenuOpen &&
       !this.elRef.nativeElement.contains(event.target as Node)
@@ -117,6 +118,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private ngZone: NgZone,
   ) {}
 
+  /**
+   * Suscribe al usuario activo y a los eventos de navegación para mantener
+   * `currentUrl` sincronizado. Registra el listener de click fuera de la zona Angular.
+   */
   ngOnInit(): void {
     this.currentUrl = this.router.url;
 
@@ -134,8 +139,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }),
     );
 
-    // Registrar el listener FUERA de la zona Angular para que los clicks
-    // que no cambian estado no provoquen ciclos de change detection.
     this.ngZone.runOutsideAngular(() => {
       document.addEventListener('click', this.documentClickHandler);
     });
@@ -146,12 +149,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.documentClickHandler);
   }
 
+  /** Devuelve los ítems de navegación permitidos para el rol del usuario actual. */
   get filteredNavItems(): NavItem[] {
     const role = this.currentUser?.role;
     if (!role) return [];
     return this.allNavItems.filter((item) => item.roles.includes(role));
   }
 
+  /** Devuelve las dos primeras iniciales del nombre completo del usuario, en mayúsculas. */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
     return name
@@ -162,35 +167,45 @@ export class SidebarComponent implements OnInit, OnDestroy {
       .slice(0, 2);
   }
 
+  /** Devuelve la etiqueta legible del rol del usuario actual. */
   get roleLabel(): string {
     return this.currentUser?.role === 'admin' ? 'Administrador' : 'Empleado';
   }
 
+  /** Devuelve `true` si la URL actual comienza con la ruta dada. */
   isActive(route: string): boolean {
     return this.currentUrl.startsWith(route);
   }
 
-  /** Clases dinámicas del ítem de navegación — igual que la lógica condicional del prototipo. */
+  /** Devuelve las clases CSS del ítem de navegación según su estado activo/inactivo. */
   navItemClass(route: string): string {
     return this.isActive(route)
       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
       : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground';
   }
 
+  /**
+   * Navega a la ruta indicada, cierra el menú de usuario y emite el evento de cierre del sidebar.
+   * @param route - Ruta de destino.
+   */
   navigate(route: string): void {
     this.router.navigate([route]);
     this.isUserMenuOpen = false;
     this.closeMenu.emit();
   }
 
+  /** Cierra el menú de usuario y ejecuta el logout. */
   logout(): void {
     this.isUserMenuOpen = false;
     this.authService.logout();
   }
 
+  /**
+   * Alterna la visibilidad del menú de usuario.
+   * Detiene la propagación para evitar que el handler global lo cierre inmediatamente.
+   */
   toggleUserMenu(event: Event): void {
     event.stopPropagation();
     this.isUserMenuOpen = !this.isUserMenuOpen;
   }
-
 }

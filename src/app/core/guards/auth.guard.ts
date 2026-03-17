@@ -4,6 +4,10 @@ import { Observable, map, take } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
+/**
+ * Route guard that protects private application routes.
+ * Redirects unauthenticated users to `/auth/login`.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
   constructor(
@@ -11,6 +15,10 @@ export class AuthGuard implements CanActivate {
     private router: Router,
   ) {}
 
+  /**
+   * Checks whether the current user is authenticated.
+   * Returns `true` to allow navigation or a {@link UrlTree} to redirect to the login page.
+   */
   canActivate(): Observable<boolean | UrlTree> {
     return this.authService.currentUser$.pipe(
       take(1),
@@ -18,7 +26,6 @@ export class AuthGuard implements CanActivate {
         if (user) {
           return true;
         }
-        // Redirige al login preservando la URL destino como queryParam
         return this.router.createUrlTree(['/auth/login']);
       }),
     );

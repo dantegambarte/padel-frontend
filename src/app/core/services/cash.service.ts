@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 
+/** Un movimiento de caja individual que se muestra en la lista de transacciones del día. */
 export interface CashMovimiento {
   id: string;
   hora: string;
@@ -13,7 +14,7 @@ export interface CashMovimiento {
   monto: number;
 }
 
-/** Shape normalizado que consume el componente. */
+/** Estructura normalizada consumida por el componente de caja. */
 export interface CashCurrentResponse {
   sessionId: string | null;
   isClosed: boolean;
@@ -22,7 +23,7 @@ export interface CashCurrentResponse {
   movimientos: CashMovimiento[];
 }
 
-/** Shape real devuelto por el backend GET /cash/current */
+/** Estructura cruda devuelta por el endpoint `GET /cash/current` del backend. */
 interface CashApiResponse {
   session: { id: string; status: string } | null;
   cashExpected: number;
@@ -39,17 +40,22 @@ interface CashApiResponse {
   isOpen: boolean;
 }
 
+/** Payload para cerrar la sesión de caja actual. */
 export interface CloseCashDto {
   efectivoContado: number;
   notas?: string;
 }
 
+/** Respuesta devuelta tras un cierre de caja exitoso. */
 export interface CloseCashResponse {
   id: string;
   closedAt: string;
   diferencia: number;
 }
 
+/**
+ * Servicio para interactuar con los endpoints de la API de caja.
+ */
 @Injectable({ providedIn: 'root' })
 export class CashService {
   private readonly url = `${environment.apiUrl}/cash`;
@@ -57,17 +63,14 @@ export class CashService {
   constructor(private http: HttpClient) {}
 
   /**
-   * GET /cash/current
-   * Devuelve el resumen de la sesión activa del día: totales + movimientos.
-   * Si no hay sesión abierta el backend devuelve 404 → el componente lo maneja.
+   * Obtiene el resumen de la sesión de caja actual, incluyendo totales y movimientos.
+   * PostgreSQL serializa las columnas `numeric` como strings; este método las convierte a números.
    */
   getCurrent(): Observable<CashCurrentResponse> {
     return this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
       map((res) => ({
         sessionId: res.session?.id ?? null,
         isClosed: !res.isOpen,
-        // PostgreSQL serializa `numeric` como string (ej: "3000.00").
-        // Number() convierte a number real antes de que fmt/toLocaleString lo procese.
         efectivoEsperado:   Number(res.cashExpected)   || 0,
         transferenciaTotal: Number(res.transferTotal)  || 0,
         movimientos: (res.transactions ?? []).map((t) => ({
@@ -82,13 +85,17 @@ export class CashService {
   }
 
   /**
-   * POST /cash/close
-   * Cierra la sesión actual con el efectivo contado físicamente.
+   * Cierra la sesión de caja actual con el monto de efectivo contado físicamente.
+   * @param dto - Contiene el efectivo contado y notas opcionales.
    */
   close(dto: CloseCashDto): Observable<CloseCashResponse> {
     return this.http.post<CloseCashResponse>(`${this.url}/close`, dto);
   }
 
+  /**
+   * Formatea un timestamp ISO a una cadena HH:MM usando el locale argentino.
+   * @param isoString - Cadena de fecha y hora en formato ISO 8601.
+   */
   private formatHora(isoString: string): string {
     if (!isoString) return '--:--';
     const date = new Date(isoString);

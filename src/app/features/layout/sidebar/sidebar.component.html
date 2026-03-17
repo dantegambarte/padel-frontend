@@ -1,19 +1,15 @@
-<!-- Overlay (mobile only) — closes sidebar when clicking outside -->
 <div
   *ngIf="isOpen"
   class="fixed inset-0 bg-black/50 z-40 lg:hidden"
   (click)="closeMenu.emit()"
 ></div>
 
-<!-- Sidebar panel — off-canvas on mobile, static on lg+ -->
 <aside
   [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
   class="fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
 >
-  <!-- ── Header: logo + nombre + rol ───────────────────────────────────── -->
   <div class="border-b border-sidebar-border p-4">
     <div class="flex items-center gap-3">
-      <!-- Logo del complejo -->
       <img
         src="assets/imagen.png"
         alt="La Caldera Logo"
@@ -32,14 +28,12 @@
     </div>
   </div>
 
-  <!-- ── Saludo ──────────────────────────────────────────────────────────── -->
   <div class="p-4 border-b border-sidebar-border">
     <p class="text-sm text-sidebar-foreground/80">
       Hola, <span class="font-semibold">{{ currentUser?.fullName }}</span>
     </p>
   </div>
 
-  <!-- ── Navegación ──────────────────────────────────────────────────────── -->
   <nav class="flex-1 space-y-1 p-3">
     <button
       *ngFor="let item of filteredNavItems"
@@ -48,7 +42,6 @@
       [ngClass]="navItemClass(item.route)"
       class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
-      <!-- Icons como SVG inline para máxima compatibilidad y fidelidad visual -->
       <ng-container [ngSwitch]="item.icon">
         <svg
           *ngSwitchCase="'layout-dashboard'"
@@ -184,15 +177,12 @@
     </button>
   </nav>
 
-  <!-- ── Footer: perfil de usuario con dropdown ─────────────────────────── -->
   <div class="relative border-t border-sidebar-border p-3">
-    <!-- Trigger del dropdown -->
     <button
       type="button"
       (click)="toggleUserMenu($event)"
       class="w-full flex items-center justify-start gap-3 rounded-md px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
-      <!-- Avatar con iniciales -->
       <div
         class="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-semibold flex-shrink-0"
       >
@@ -202,7 +192,6 @@
         <p class="text-sm font-medium truncate">{{ currentUser?.fullName }}</p>
         <p class="text-xs text-sidebar-foreground/60">{{ roleLabel }}</p>
       </div>
-      <!-- ChevronDown icon -->
       <svg
         class="h-4 w-4 flex-shrink-0 transition-transform"
         [class.rotate-180]="isUserMenuOpen"
@@ -217,7 +206,6 @@
       </svg>
     </button>
 
-    <!-- Dropdown menu — se abre hacia arriba (bottom-full) -->
     <div
       *ngIf="isUserMenuOpen"
       class="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
@@ -232,7 +220,6 @@
             (click)="navigate('/app/settings')"
             class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            <!-- Settings icon mini -->
             <svg
               class="h-4 w-4"
               viewBox="0 0 24 24"
@@ -257,7 +244,6 @@
           (click)="logout()"
           class="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
         >
-          <!-- LogOut icon -->
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"

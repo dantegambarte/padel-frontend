@@ -22,8 +22,11 @@ export class SalesService {
 
   constructor(private http: HttpClient) {}
 
-  /** POST /sales — confirma una venta.
-   *  Genera un UUID único por intento para que el backend detecte duplicados. */
+  /**
+   * Confirma una venta de mostrador.
+   * Envía un `X-Idempotency-Key` único para que el backend detecte y rechace duplicados.
+   * @param dto - Items vendidos y montos de pago.
+   */
   create(dto: CreateSaleDto): Observable<SaleResponse> {
     const headers = new HttpHeaders({
       'X-Idempotency-Key': crypto.randomUUID(),

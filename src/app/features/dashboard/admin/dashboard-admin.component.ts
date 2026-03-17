@@ -15,13 +15,10 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './dashboard-admin.component.html',
 })
 export class DashboardAdminComponent implements OnInit {
-  // ── Loading ───────────────────────────────────────────────────────────────────
   isLoading = true;
 
-  // ── Summary data ──────────────────────────────────────────────────────────────
   summary: ReportsSummaryResponse | null = null;
 
-  // ── Chart (ng2-charts + Chart.js) ────────────────────────────────────────────
   barChartType = 'bar' as const;
 
   barChartData: ChartData<'bar'> = {
@@ -69,14 +66,15 @@ export class DashboardAdminComponent implements OnInit {
     private toast: ToastService,
   ) {}
 
+  /**
+   * Carga en paralelo el resumen de KPIs y los ingresos de la semana actual.
+   * Lee los colores del tema desde las CSS custom properties de Tailwind v4
+   * y los inyecta en el gráfico de barras.
+   */
   ngOnInit(): void {
-    // ── Lee los colores del tema desde las CSS custom properties de Tailwind v4.
-    // getComputedStyle lee los valores CALCULADOS de :root.
-    // Retorna la string completa 'oklch(L C H)' que Canvas 2D acepta directamente
-    // en Chrome 111+, Firefox 113+ y Safari 15.4+ (browsers objetivo del proyecto).
     const style = getComputedStyle(document.documentElement);
-    const primaryColor = style.getPropertyValue('--primary').trim(); // oklch(0.42 0.15 281)
-    const accentColor = style.getPropertyValue('--accent').trim(); // oklch(0.55 0.16 155)
+    const primaryColor = style.getPropertyValue('--primary').trim();
+    const accentColor = style.getPropertyValue('--accent').trim();
 
     const { from, to } = this.getCurrentWeekRange();
 
@@ -100,7 +98,12 @@ export class DashboardAdminComponent implements OnInit {
       });
   }
 
-  // ── Chart builder ─────────────────────────────────────────────────────────────
+  /**
+   * Construye los datasets del gráfico de barras con los datos de ingresos semanales.
+   * @param data         - Array de períodos con bookings y sales.
+   * @param primaryColor - Color CSS para alquileres.
+   * @param accentColor  - Color CSS para productos.
+   */
   private buildChart(
     data: RevenueDay[],
     primaryColor: string,
@@ -125,16 +128,16 @@ export class DashboardAdminComponent implements OnInit {
     };
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     return value.toLocaleString('es-AR');
   }
 
-  /** Rango lunes–domingo de la semana actual en formato YYYY-MM-DD. */
+  /** Devuelve el rango lunes–domingo de la semana actual en formato YYYY-MM-DD. */
   private getCurrentWeekRange(): { from: string; to: string } {
     const now = new Date();
-    const day = now.getDay(); // 0=dom, 1=lun…
-    const diffToMonday = day === 0 ? -6 : 1 - day; // ajuste a lunes
+    const day = now.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
     const monday = new Date(now);
     monday.setDate(now.getDate() + diffToMonday);
     const sunday = new Date(monday);

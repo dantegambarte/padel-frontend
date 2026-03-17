@@ -11,25 +11,43 @@ export class UsersService {
 
   constructor(private http: HttpClient) {}
 
+  /** Devuelve todos los usuarios del sistema. */
   findAll(): Observable<User[]> {
     return this.http.get<User[]>(this.url);
   }
 
+  /**
+   * Crea un nuevo usuario.
+   * @param dto - Datos del usuario a crear.
+   */
   create(dto: CreateUserDto): Observable<User> {
     return this.http.post<User>(this.url, dto);
   }
 
-  /** Activa o desactiva un usuario. El backend expone PATCH /:id con { isActive }. */
+  /**
+   * Invierte el estado activo/inactivo del usuario indicado.
+   * @param id            - Identificador del usuario.
+   * @param currentStatus - Estado actual; se envía el valor opuesto al backend.
+   */
   toggleStatus(id: string, currentStatus: boolean): Observable<User> {
     return this.http.patch<User>(`${this.url}/${id}`, {
       isActive: !currentStatus,
     });
   }
 
+  /**
+   * Actualiza parcialmente un usuario existente.
+   * @param id  - Identificador del usuario.
+   * @param dto - Campos a modificar.
+   */
   update(id: string, dto: UpdateUserDto): Observable<User> {
     return this.http.patch<User>(`${this.url}/${id}`, dto);
   }
 
+  /**
+   * Elimina un usuario del sistema.
+   * @param id - Identificador del usuario.
+   */
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }

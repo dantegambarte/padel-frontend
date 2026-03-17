@@ -1,20 +1,15 @@
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     AGENDA COMPONENT — Traducción 1:1 de agenda-page.tsx
-     Clases Tailwind y estructura HTML idénticas al prototipo React.
-     ═══════════════════════════════════════════════════════════════════════ -->
 
-<!-- ──── CARD DE LA GRILLA ─────────────────────────────────────────────────── -->
+
 <div
   class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
 >
-  <!-- Card Header -->
+  
   <div class="flex flex-col space-y-1.5 p-6 pb-3">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h3 class="text-2xl font-semibold leading-none tracking-tight">
         Agenda de Canchas
       </h3>
 
-      <!-- Date picker + botón refrescar -->
       <div class="flex items-center gap-2">
         <label for="fecha" class="text-sm font-medium text-muted-foreground"
           >Fecha:</label
@@ -32,7 +27,7 @@
           title="Actualizar grilla"
           class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <!-- Refresh icon -->
+          
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -52,9 +47,8 @@
     </div>
   </div>
 
-  <!-- Card Content -->
   <div class="p-6 pt-0">
-    <!-- Error state -->
+    
     <div
       *ngIf="loadError"
       class="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
@@ -75,7 +69,6 @@
       {{ loadError }}
     </div>
 
-    <!-- Loading skeleton -->
     <div
       *ngIf="isLoading && courts.length === 0 && !loadError"
       class="space-y-2"
@@ -87,25 +80,15 @@
     </div>
 
     <ng-container *ngIf="!loadError && courts.length > 0">
-      <!-- ══════════════════════════════════════════════════════════════════════
-           LAYOUT DOS PANELES — Resuelve MOB-02 (sticky no fiable en CSS Grid/Chromium)
-           ─────────────────────────────────────────────────────────────────────────────
-           • PANEL IZQUIERDO (w-20, flex-none): columna de horas. Nunca hace scroll.
-             Al estar fuera del contenedor overflow-x-auto, el anclaje es 100% fiable
-             en cualquier navegador mobile sin depender de position:sticky.
-           • PANEL DERECHO (flex-1, overflow-x-auto): canchas. Scroll horizontal interno.
-           • Sincronización vertical: ambos paneles usan h-24 + space-y-2, garantizando
-             que cada fila de hora izquierda quede alineada con su fila de canchas.
-           ══════════════════════════════════════════════════════════════════════════ -->
+      
       <div class="flex pb-4">
 
-        <!-- ── PANEL IZQUIERDO: columna de horas ───────────────────────────── -->
         <div class="flex-none w-20 z-20 bg-white/95 backdrop-blur-sm border-r border-slate-200 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]">
-          <!-- Header: "Horario" — misma altura que el header del panel derecho (h-7 mb-2) -->
+          
           <div class="mb-2 h-7 flex items-center text-sm font-semibold">
             Horario
           </div>
-          <!-- Filas de hora — h-24 + space-y-2 sincronizado con el panel derecho -->
+          
           <div class="space-y-2">
             <div
               *ngFor="let hour of HOURS; trackBy: trackByHour"
@@ -116,10 +99,8 @@
           </div>
         </div>
 
-        <!-- ── PANEL DERECHO: canchas con scroll horizontal interno ──────────
-             overscroll-x-contain: evita que el scroll se propague al body (iOS/Android) -->
         <div class="flex-1 overflow-x-auto overscroll-x-contain">
-          <!-- Header: nombres de canchas — h-7 mb-2 alineado con el panel izquierdo -->
+          
           <div
             class="mb-2 h-7 grid gap-2 items-center"
             [style.grid-template-columns]="courtColsStyle"
@@ -132,34 +113,18 @@
             </div>
           </div>
 
-          <!-- ══════════════════════════════════════════════════════════════════
-               GRILLA — DOS CAPAS SUPERPUESTAS (estilo Google Calendar)
-               ════════════════════════════════════════════════════════════════
-               ARQUITECTURA:
-                 • CAPA 1 (fondo): grilla punteada con dos mitades clickeables
-                   de 48 px. Se renderiza SIEMPRE para todas las horas y canchas.
-                 • CAPA 2 (reservas): tarjetas position:absolute renderizadas
-                   SOLO en la fila de inicio de cada reserva. Desbordan hacia abajo.
-               INVARIANTES:
-                 • courtColsStyle: repeat(N, minmax(200px, 1fr)) — sin columna de horas.
-                 • Cada fila: h-24 = 96 px, overflow-visible.
-                 • space-y-2 = 8 px de gap entre filas.
-               ═══════════════════════════════════════════════════════════════ -->
           <div class="space-y-2">
             <div
               *ngFor="let hour of HOURS; trackBy: trackByHour"
               class="grid gap-2 h-24 overflow-visible"
               [style.grid-template-columns]="courtColsStyle"
             >
-              <!-- Una columna por cancha -->
+              
               <ng-container *ngFor="let court of courts; trackBy: trackByCourt">
                 <div class="relative h-24 overflow-visible">
 
-                  <!-- ── CAPA 1: Grilla de fondo — siempre presente ──────────
-                       Dos mitades clickeables de 48 px. Sin texto estático.
-                       El hover bg-slate-100 indica interactividad al usuario. -->
                   <div class="absolute inset-0 flex flex-col">
-                    <!-- Mitad :00 -->
+                    
                     <div
                       role="button"
                       tabindex="0"
@@ -170,7 +135,7 @@
                              cursor-pointer transition-colors
                              hover:bg-slate-100 hover:border-primary/50"
                     ></div>
-                    <!-- Mitad :30 -->
+                    
                     <div
                       role="button"
                       tabindex="0"
@@ -183,22 +148,14 @@
                     ></div>
                   </div>
 
-                  <!-- ── CAPA 2a: Reserva que inicia a :00 ─────────────────
-                       ARQUITECTURA DE STACKING:
-                       El wrapper (absolute, SIN z-index) no crea stacking context.
-                       Así card (z-10) y tooltip (z-[100]) compiten directamente en
-                       el stacking context de la celda, sin que el z-10 del card
-                       limite al tooltip. El halfBooking (z-20) queda entre ambos
-                       y el tooltip z-[100] flota por encima de todo. -->
                   <ng-container *ngIf="isStartSlot(court.id, hour)">
                     <ng-container *ngIf="getBooking(court.id, hour) as booking">
 
-                      <!-- Wrapper sin z-index: no crea stacking context -->
                       <div
                         class="absolute inset-x-0 top-0"
                         [style.height.px]="getBookingBlockHeight(booking)"
                       >
-                        <!-- Tarjeta: peer/b00 dispara visibilidad del tooltip hermano -->
+                        
                         <div
                           role="button"
                           tabindex="0"
@@ -208,12 +165,7 @@
                           class="peer/b00 absolute inset-[2px] z-10 rounded-lg border-2 text-left bg-card
                                  overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
                         >
-                          <!-- ── LAYOUT ADAPTATIVO ────────────────────────────
-                               30min  → una sola fila horizontal (espacio muy justo)
-                               60min  → nombre + [badge · duración] en segunda línea
-                               90min+ → apilado vertical (layout original) -->
 
-                          <!-- 30min: fila horizontal compacta -->
                           <ng-container *ngIf="booking.durationMinutes <= 30">
                             <div class="flex items-center gap-1 min-w-0 pr-5 h-full">
                               <p class="text-xs font-semibold leading-none truncate min-w-0 shrink">
@@ -231,7 +183,6 @@
                             </div>
                           </ng-container>
 
-                          <!-- 60min: nombre en línea 1, badge+duración en línea 2 -->
                           <ng-container *ngIf="booking.durationMinutes > 30 && booking.durationMinutes <= 60">
                             <div class="flex flex-col gap-1 pr-6">
                               <p class="text-sm font-semibold leading-tight truncate">
@@ -247,7 +198,6 @@
                             </div>
                           </ng-container>
 
-                          <!-- 90+min: apilado vertical -->
                           <ng-container *ngIf="booking.durationMinutes > 60">
                             <div class="space-y-1 pr-6">
                               <p class="text-sm font-semibold leading-tight truncate">
@@ -278,16 +228,12 @@
                           </button>
                         </div>
 
-                        <!-- ── TOOLTIP — hermano del card, z-[100] en el mismo stacking context ──
-                             peer-hover/b00: se activa cuando el peer (card de arriba) recibe hover.
-                             Al ser hermano (no hijo) del card z-10, su z-[100] compite directamente
-                             con el halfBooking z-20 → tooltip siempre queda encima. -->
                         <div class="pointer-events-none opacity-0 peer-hover/b00:opacity-100
                                     transition-opacity duration-150 delay-200
                                     flex flex-col absolute z-[100] top-full mt-1 left-0
                                     w-56 bg-white rounded-lg shadow-lg border border-slate-200 p-2.5
                                     text-slate-800">
-                          <!-- Cabecera -->
+                          
                           <div class="flex items-start justify-between gap-2 mb-2">
                             <p class="text-sm font-bold leading-tight">{{ booking.clientName }}</p>
                             <span
@@ -295,7 +241,7 @@
                               class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium shrink-0"
                             >{{ getStatusLabel(booking.status) }}</span>
                           </div>
-                          <!-- Horario -->
+                          
                           <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
                             <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -306,7 +252,7 @@
                             </span>
                             <span class="text-slate-400">· {{ booking.durationMinutes }} min</span>
                           </div>
-                          <!-- Finanzas -->
+                          
                           <div class="border-t border-slate-100 pt-2 space-y-1">
                             <div class="flex justify-between text-xs text-slate-500">
                               <span>Cancha</span>
@@ -338,23 +284,19 @@
                             </div>
                           </div>
                         </div>
-                        <!-- ── FIN TOOLTIP ─────────────────────────────────── -->
 
                       </div>
                     </ng-container>
                   </ng-container>
 
-                  <!-- ── CAPA 2b: Reserva que inicia a :30 ─────────────────
-                       Mismo patrón de wrapper sin z-index que la capa 2a. -->
                   <ng-container *ngIf="getBookingAtHalf(court.id, hour) as halfBooking">
 
-                    <!-- Wrapper sin z-index: no crea stacking context -->
                     <div
                       class="absolute inset-x-0"
                       style="top: 48px"
                       [style.height.px]="getBookingBlockHeight(halfBooking)"
                     >
-                      <!-- Tarjeta: peer/b30 dispara visibilidad del tooltip hermano -->
+                      
                       <div
                         role="button"
                         tabindex="0"
@@ -364,9 +306,7 @@
                         class="peer/b30 absolute inset-[2px] z-20 rounded-lg border-2 text-left bg-card
                                overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
                       >
-                          <!-- ── LAYOUT ADAPTATIVO (mismas reglas que capa 2a) ── -->
 
-                          <!-- 30min: fila horizontal compacta -->
                           <ng-container *ngIf="halfBooking.durationMinutes <= 30">
                             <div class="flex items-center gap-1 min-w-0 pr-5 h-full">
                               <p class="text-xs font-semibold leading-none truncate min-w-0 shrink">
@@ -384,7 +324,6 @@
                             </div>
                           </ng-container>
 
-                          <!-- 60min: nombre en línea 1, badge+duración en línea 2 -->
                           <ng-container *ngIf="halfBooking.durationMinutes > 30 && halfBooking.durationMinutes <= 60">
                             <div class="flex flex-col gap-1 pr-6">
                               <p class="text-sm font-semibold leading-tight truncate">
@@ -400,7 +339,6 @@
                             </div>
                           </ng-container>
 
-                          <!-- 90+min: apilado vertical -->
                           <ng-container *ngIf="halfBooking.durationMinutes > 60">
                             <div class="space-y-1 pr-6">
                               <p class="text-sm font-semibold leading-tight truncate">
@@ -431,13 +369,12 @@
                         </button>
                       </div>
 
-                      <!-- ── TOOLTIP — hermano del card, z-[100] ─────────── -->
                       <div class="pointer-events-none opacity-0 peer-hover/b30:opacity-100
                                   transition-opacity duration-150 delay-200
                                   flex flex-col absolute z-[100] top-full mt-1 left-0
                                   w-56 bg-white rounded-lg shadow-lg border border-slate-200 p-2.5
                                   text-slate-800">
-                        <!-- Cabecera: nombre + estado -->
+                        
                         <div class="flex items-start justify-between gap-2 mb-2">
                           <p class="text-sm font-bold leading-tight">{{ halfBooking.clientName }}</p>
                           <span
@@ -446,7 +383,6 @@
                           >{{ getStatusLabel(halfBooking.status) }}</span>
                         </div>
 
-                        <!-- Horario -->
                         <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
                           <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -458,7 +394,6 @@
                           <span class="text-slate-400">· {{ halfBooking.durationMinutes }} min</span>
                         </div>
 
-                        <!-- Finanzas -->
                         <div class="border-t border-slate-100 pt-2 space-y-1">
                           <div class="flex justify-between text-xs text-slate-500">
                             <span>Cancha</span>
@@ -476,7 +411,6 @@
                             <span>${{ fmt(getBookingTotal(halfBooking)) }}</span>
                           </div>
 
-                          <!-- Saldo pendiente / pagado -->
                           <div
                             class="flex items-center justify-between text-xs rounded-md px-2 py-1.5 mt-1"
                             [ngClass]="getBookingPending(halfBooking) <= 0
@@ -497,7 +431,7 @@
                           </div>
                         </div>
                       </div>
-                      <!-- ── FIN TOOLTIP ─────────────────────────────────── -->
+                      
                     </div>
                   </ng-container>
 
@@ -508,7 +442,6 @@
         </div>
       </div>
 
-      <!-- ── LEYENDA ── -->
       <div class="mt-6 flex flex-wrap gap-4 border-t border-border pt-4">
         <div class="flex items-center gap-2">
           <div
@@ -539,22 +472,15 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     MODAL (DIALOG) — Equivalente al <Dialog> de Radix UI del prototipo.
-     Implementado con overlay fixed + panel fixed centrado (sin dependencias).
-     ═══════════════════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="isDialogOpen">
-  <!-- Wrapper: cubre el viewport completo, centra el panel con flexbox.
-       Al usar inset-0 + flex, el centrado es independiente del containing block
-       del ancestro overflow-hidden, evitando el bug de fixed+overflow en Chromium mobile. -->
+  
   <div
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
     (click)="closeDialog()"
   >
-    <!-- Backdrop -->
+    
     <div class="absolute inset-0 bg-black/50 cursor-pointer" aria-hidden="true"></div>
 
-    <!-- Panel del diálogo -->
     <div
       role="dialog"
       aria-modal="true"
@@ -563,7 +489,7 @@
       class="relative z-10 w-full max-w-[600px] max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95"
       (click)="$event.stopPropagation()"
     >
-    <!-- Botón X (cerrar) en esquina superior derecha -->
+    
     <button
       type="button"
       (click)="closeDialog()"
@@ -584,11 +510,8 @@
       </svg>
     </button>
 
-    <!-- ════════════════════════════════════════════════════════════════════
-         CREATE MODE — Formulario de nueva reserva (slot vacío clickeado)
-         ════════════════════════════════════════════════════════════════ -->
     <ng-container *ngIf="dialogMode === 'create'">
-      <!-- Dialog Header -->
+      
       <div class="mb-6">
         <h2
           id="dialog-title"
@@ -603,7 +526,7 @@
       </div>
 
       <div class="space-y-6 pb-2">
-        <!-- ── Nombre del cliente ── -->
+        
         <div class="space-y-2">
           <label for="clientName" class="text-sm font-medium leading-none">
             Nombre del Cliente
@@ -618,7 +541,6 @@
           />
         </div>
 
-        <!-- ── Duración del turno ── -->
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none"
             >Duración del turno</label
@@ -645,7 +567,6 @@
           </p>
         </div>
 
-        <!-- ── Tipo de precio (RadioGroup) ── -->
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none">Tipo de Precio</label>
           <div class="mt-1 space-y-2">
@@ -686,13 +607,11 @@
           </div>
         </div>
 
-        <!-- ── Sección de Productos ── -->
         <div class="space-y-3 rounded-lg border border-border p-4">
           <label class="text-sm font-medium leading-none"
             >Productos (Consumos)</label
           >
 
-          <!-- Botones de acceso rápido (isFeatured = true) — cargados dinámicamente -->
           <div class="flex flex-wrap gap-2">
             <button
               *ngFor="let product of featuredProducts"
@@ -700,7 +619,7 @@
               (click)="addToCart(product)"
               class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <!-- Plus icon -->
+              
               <svg
                 class="h-3 w-3"
                 viewBox="0 0 24 24"
@@ -717,7 +636,6 @@
             </button>
           </div>
 
-          <!-- Buscador con autocomplete — idéntico al prototipo -->
           <div class="relative">
             <svg
               class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -740,7 +658,6 @@
               class="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
 
-            <!-- Dropdown de resultados — catálogo completo -->
             <div
               *ngIf="searchResults.length > 0"
               class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-xl"
@@ -763,7 +680,6 @@
             </div>
           </div>
 
-          <!-- Lista de items en el carrito — bg-muted/30 idéntico al prototipo -->
           <div
             *ngIf="cart.length > 0"
             class="space-y-2 rounded-md bg-muted/30 p-3"
@@ -772,9 +688,9 @@
               *ngFor="let item of cart"
               class="flex items-center justify-between"
             >
-              <!-- Controles de cantidad + nombre -->
+              
               <div class="flex items-center gap-2">
-                <!-- Botón − -->
+                
                 <button
                   type="button"
                   (click)="updateQty(item.productId, item.quantity - 1)"
@@ -785,7 +701,6 @@
 
                 <span class="w-8 text-center text-sm">{{ item.quantity }}</span>
 
-                <!-- Botón + -->
                 <button
                   type="button"
                   (click)="updateQty(item.productId, item.quantity + 1)"
@@ -797,12 +712,11 @@
                 <span class="text-sm">{{ item.name }}</span>
               </div>
 
-              <!-- Precio de línea + quitar -->
               <div class="flex items-center gap-2">
                 <span class="text-sm font-semibold">
                   ${{ fmt(item.unitPrice * item.quantity) }}
                 </span>
-                <!-- Botón X — quitar del carrito -->
+                
                 <button
                   type="button"
                   (click)="removeFromCart(item.productId)"
@@ -824,7 +738,6 @@
               </div>
             </div>
 
-            <!-- Subtotal productos -->
             <div
               class="flex justify-between border-t border-border pt-2 text-sm font-semibold"
             >
@@ -834,17 +747,15 @@
           </div>
         </div>
 
-        <!-- ── Sección de Pago — border-accent/50 bg-accent/5 igual al prototipo ── -->
         <div
           class="space-y-4 rounded-lg border border-accent/50 bg-accent/5 p-4"
         >
-          <!-- Total a pagar -->
+          
           <div class="flex items-center justify-between text-lg font-bold">
             <span>Total a Pagar:</span>
             <span>${{ fmt(totalReserva) }}</span>
           </div>
 
-          <!-- Efectivo + Transferencia -->
           <div class="grid gap-3 md:grid-cols-2">
             <div class="space-y-2">
               <label for="efectivo" class="text-sm font-medium leading-none">
@@ -877,7 +788,6 @@
             </div>
           </div>
 
-          <!-- Indicador de saldo — colores condicionales idénticos al prototipo cn() -->
           <div
             [ngClass]="balanceClass"
             class="rounded-lg p-3 text-center text-sm font-semibold"
@@ -887,7 +797,6 @@
         </div>
       </div>
 
-      <!-- Dialog Footer -->
       <div class="mt-6 flex justify-end gap-3">
         <button
           type="button"
@@ -925,11 +834,8 @@
       </div>
     </ng-container>
 
-    <!-- ════════════════════════════════════════════════════════════════════
-         DETAIL MODE — Vista de reserva existente con acciones de estado
-         ════════════════════════════════════════════════════════════════ -->
     <ng-container *ngIf="dialogMode === 'detail' && selectedBooking">
-      <!-- Dialog Header -->
+      
       <div class="mb-6 pr-8">
         <div class="flex flex-wrap items-center gap-3">
           <h2
@@ -950,7 +856,7 @@
       </div>
 
       <div class="space-y-4">
-        <!-- ── Info del cliente y precio (siempre solo lectura) ── -->
+        
         <div class="rounded-lg border border-border divide-y divide-border">
           <div class="flex justify-between px-4 py-3 text-sm">
             <span class="text-muted-foreground">Cliente</span>
@@ -974,16 +880,13 @@
           </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════
-             SECCIÓN EDITABLE — solo visible cuando booked o playing
-             ═══════════════════════════════════════════════════════════ -->
         <ng-container
           *ngIf="
             selectedBooking.status === 'booked' ||
             selectedBooking.status === 'playing'
           "
         >
-          <!-- ── Productos / Consumos ── -->
+          
           <div class="space-y-3 rounded-lg border border-border p-4">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium leading-none">
@@ -1016,7 +919,6 @@
               </span>
             </div>
 
-            <!-- Chips de acceso rápido -->
             <div class="flex flex-wrap gap-2">
               <button
                 *ngFor="let product of featuredProducts"
@@ -1040,7 +942,6 @@
               </button>
             </div>
 
-            <!-- Buscador -->
             <div class="relative">
               <svg
                 class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -1084,7 +985,6 @@
               </div>
             </div>
 
-            <!-- Carrito del detalle -->
             <div
               *ngIf="detailCart.length > 0"
               class="space-y-2 rounded-md bg-muted/30 p-3"
@@ -1146,16 +1046,15 @@
             </div>
           </div>
 
-          <!-- ── Sección de Pago editable ── -->
           <div
             class="space-y-4 rounded-lg border border-accent/50 bg-accent/5 p-4"
           >
-            <!-- Total -->
+            
             <div class="flex items-center justify-between text-lg font-bold">
               <span>Total a Pagar:</span>
               <div class="flex items-center gap-2">
                 <span>${{ fmt(detailTotalReserva) }}</span>
-                <!-- Atajo rápido a la calculadora global -->
+                
                 <button
                   type="button"
                   (click)="calcService.toggle()"
@@ -1251,9 +1150,8 @@
               </div>
             </div>
 
-            <!-- ── Jugadores + Pagaron ── -->
             <div class="grid grid-cols-2 gap-4">
-              <!-- Cantidad de jugadores -->
+              
               <div class="space-y-1.5">
                 <p class="text-xs font-medium text-muted-foreground">
                   Jugadores en cancha
@@ -1287,7 +1185,6 @@
                 </div>
               </div>
 
-              <!-- Personas que pagaron -->
               <div class="space-y-1.5">
                 <p class="text-xs font-medium text-muted-foreground">
                   Pagaron
@@ -1302,7 +1199,7 @@
                     {{ detailPaidCount }}/{{ detailPlayerCount }}
                   </span>
                 </p>
-                <!-- Burbujas con flex-wrap para no desbordar -->
+                
                 <div class="flex flex-wrap gap-1 mt-1">
                   <ng-container
                     *ngFor="
@@ -1323,7 +1220,6 @@
               </div>
             </div>
 
-            <!-- ── División de costos ── -->
             <div
               class="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground space-y-0.5"
             >
@@ -1344,7 +1240,6 @@
               </div>
             </div>
 
-            <!-- ── Botones de cobro por jugador ── -->
             <div class="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
@@ -1384,7 +1279,6 @@
               </button>
             </div>
 
-            <!-- ── Inputs de monto ── -->
             <div class="grid gap-3 md:grid-cols-2">
               <div class="space-y-2">
                 <label
@@ -1418,7 +1312,6 @@
               </div>
             </div>
 
-            <!-- ── Botones Liquidar (sólo visibles si hay saldo pendiente) ── -->
             <div
               *ngIf="detailSaldoPendiente > 0"
               class="grid grid-cols-2 gap-2"
@@ -1445,7 +1338,6 @@
               </button>
             </div>
 
-            <!-- Indicador de saldo -->
             <div
               [ngClass]="detailBalanceClass"
               class="rounded-lg p-3 text-center text-sm font-semibold"
@@ -1454,7 +1346,6 @@
             </div>
           </div>
 
-          <!-- ── Registrar pago / consumos (sin cambiar estado) ── -->
           <button
             type="button"
             (click)="saveDetailChanges()"
@@ -1497,9 +1388,7 @@
             </ng-template>
           </button>
         </ng-container>
-        <!-- ── Fin sección editable ── -->
 
-        <!-- ── Vista de solo lectura para turnos completados ── -->
         <ng-container
           *ngIf="
             selectedBooking.status === 'completed' ||
@@ -1545,8 +1434,6 @@
             </div>
           </div>
         </ng-container>
-
-        <!-- ── Botones de transición de estado ── -->
 
         <button
           *ngIf="selectedBooking.status === 'booked'"
@@ -1610,7 +1497,6 @@
           </p>
         </div>
 
-        <!-- Cancelar: solo admin, solo cuando el turno aún NO inició (booked) -->
         <button
           *ngIf="isAdmin && selectedBooking.status === 'booked'"
           type="button"
@@ -1635,7 +1521,6 @@
         </button>
       </div>
 
-      <!-- Footer -->
       <div class="mt-6 flex justify-end">
         <button
           type="button"
@@ -1647,14 +1532,8 @@
       </div>
     </ng-container>
   </div>
-  </div><!-- /flex centering wrapper -->
+  </div>
 
-  <!-- ── CONFIRM DIALOG ────────────────────────────────────────────────────────
-       Vive DENTRO del mismo ng-container de isDialogOpen para que Angular lo
-       gestione como una sola EmbeddedViewRef. Así evitamos las dos mutaciones
-       DOM simultáneas que causaban el parpadeo del backdrop con backdrop-blur. -->
-
-  <!-- Dim overlay sobre el modal principal: sin blur extra (ya existe el del backdrop) -->
   <div
     *ngIf="confirmDialogOpen"
     class="fixed inset-0 z-[60] bg-black/40"
@@ -1662,7 +1541,6 @@
     aria-hidden="true"
   ></div>
 
-  <!-- Panel del confirm -->
   <div
     *ngIf="confirmDialogOpen"
     role="alertdialog"
@@ -1671,7 +1549,7 @@
     class="fixed left-1/2 top-1/2 z-[70] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-xl"
     (click)="$event.stopPropagation()"
   >
-    <!-- Icono de advertencia -->
+    
     <div class="mb-4 flex items-center gap-3">
       <div
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100"

@@ -16,38 +16,48 @@ export class ProductsService {
 
   constructor(private http: HttpClient) {}
 
-  /** GET /products — tabla de gestión de inventario. */
+  /** Devuelve todos los productos — usado en la tabla de gestión de inventario. */
   findAll(): Observable<Product[]> {
     return this.http.get<Product[]>(this.url);
   }
 
-  /** GET /products/featured — acceso rápido en Agenda y POS. */
+  /** Devuelve sólo los productos marcados como destacados — acceso rápido en Agenda y POS. */
   getFeatured(): Observable<Product[]> {
     return this.http.get<Product[]>(`${this.url}/featured`);
   }
 
-  /** GET /products?search=term — búsqueda en tiempo real del modal de Agenda. */
+  /** Busca productos por nombre en tiempo real. */
   search(term: string): Observable<Product[]> {
     const params = new HttpParams().set('search', term);
     return this.http.get<Product[]>(this.url, { params });
   }
 
-  /** POST /products — crear nuevo producto. */
+  /**
+   * Crea un nuevo producto.
+   * @param dto - Payload de creación.
+   */
   create(dto: CreateProductDto): Observable<Product> {
     return this.http.post<Product>(this.url, dto);
   }
 
-  /** PATCH /products/:id — editar producto existente. */
+  /**
+   * Actualiza parcialmente un producto existente.
+   * @param id  - Identificador del producto.
+   * @param dto - Campos a modificar.
+   */
   update(id: string, dto: UpdateProductDto): Observable<Product> {
     return this.http.patch<Product>(`${this.url}/${id}`, dto);
   }
 
-  /** DELETE /products/:id — eliminar producto. */
+  /**
+   * Elimina un producto del sistema.
+   * @param id - Identificador del producto.
+   */
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
 
-  /** GET /products/low-stock — productos bajo el mínimo configurado. */
+  /** Devuelve los productos con stock por debajo del mínimo configurado. */
   getLowStock(): Observable<LowStockProduct[]> {
     return this.http.get<LowStockProduct[]>(`${this.url}/low-stock`);
   }

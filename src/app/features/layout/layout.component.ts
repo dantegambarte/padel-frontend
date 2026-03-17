@@ -5,7 +5,6 @@ import { Subscription, filter, map } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/user.model';
 
-// Mapa de rutas → títulos de página (mismo criterio que main-app.tsx)
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Inicio',
   schedule: 'Agenda de Turnos',
@@ -33,18 +32,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private router: Router,
   ) {}
 
+  /**
+   * Suscribe al usuario autenticado y actualiza el título de página
+   * tanto al cargar como en cada evento de navegación.
+   */
   ngOnInit(): void {
-    // Suscribirse al usuario actual
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
         this.currentUser = user;
       }),
     );
 
-    // Resolver el título inicial al cargar el componente
     this.currentPageTitle = this.resolveTitleFromUrl(this.router.url);
 
-    // Actualizar el título en cada navegación
     this.sub.add(
       this.router.events
         .pipe(
@@ -61,12 +61,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Alterna la visibilidad del sidebar en mobile. */
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
-  // Extrae el segmento de ruta final y lo mapea al título correspondiente.
-  // /app/schedule → "Schedule"
+  /**
+   * Extrae el último segmento de la URL y lo mapea al título de página correspondiente.
+   * @param url - URL completa de la ruta activa.
+   */
   private resolveTitleFromUrl(url: string): string {
     const segments = url.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1] ?? 'dashboard';

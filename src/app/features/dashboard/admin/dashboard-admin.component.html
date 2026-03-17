@@ -1,10 +1,5 @@
-<!-- ─── DASHBOARD ADMIN ───────────────────────────────────────────────────────── -->
 <div class="space-y-6 p-4 md:p-6">
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       KPI CARDS — grid gap-4 md:grid-cols-2 lg:grid-cols-4
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <!-- Ventas Hoy -->
     <ng-container *ngIf="isLoading; else kpiCards">
       <div
         *ngFor="let i of [1, 2, 3, 4]"
@@ -44,12 +39,7 @@
       </app-stat-card>
     </ng-template>
   </div>
-  <!-- /KPI cards -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       GRÁFICO — Evolución de Ingresos Semanal
-       ng2-charts v5 + Chart.js 4 — colores leídos desde CSS vars de Tailwind v4
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -64,13 +54,11 @@
       </p>
     </div>
     <div class="w-full overflow-x-auto px-4 pb-4 md:px-6 md:pb-6">
-      <!-- Loading skeleton para el chart -->
       <div
         *ngIf="isLoading"
         class="h-[350px] w-full animate-pulse rounded-lg bg-muted"
       ></div>
 
-      <!-- Canvas del chart — h-[350px] + maintainAspectRatio:false = Chart.js llena el div -->
       <div
         *ngIf="!isLoading"
         class="min-w-[300px]"
@@ -85,13 +73,8 @@
       </div>
     </div>
   </div>
-  <!-- /chart card -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       QUICK STATS GRID — Resumen del Día + Métodos de Pago
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid gap-4 md:grid-cols-2">
-    <!-- Resumen del Día -->
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -144,9 +127,7 @@
         </ng-template>
       </div>
     </div>
-    <!-- /resumen -->
 
-    <!-- Métodos de Pago -->
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -166,7 +147,6 @@
         </ng-container>
 
         <ng-template #paymentContent>
-          <!-- Efectivo -->
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Efectivo</span>
@@ -191,7 +171,6 @@
             </div>
           </div>
 
-          <!-- Transferencia -->
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Transferencia</span>
@@ -218,8 +197,5 @@
         </ng-template>
       </div>
     </div>
-    <!-- /métodos de pago -->
   </div>
-  <!-- /quick stats grid -->
 </div>
-<!-- /space-y-6 -->

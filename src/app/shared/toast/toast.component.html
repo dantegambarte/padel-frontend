@@ -1,4 +1,4 @@
-<!-- Toast container: fixed bottom-right, z-index por encima de modales -->
+
 <div
   class="fixed bottom-4 right-4 z-[200] flex flex-col gap-2"
   style="width: 360px; max-width: calc(100vw - 2rem)"
@@ -6,7 +6,7 @@
   aria-label="Notificaciones"
 >
   <div *ngFor="let toast of toasts" [class]="toastClass(toast.variant)">
-    <!-- Icon -->
+    
     <div class="mt-0.5 flex-shrink-0" [ngSwitch]="toast.variant">
       <svg
         *ngSwitchCase="'success'"
@@ -51,7 +51,6 @@
       </svg>
     </div>
 
-    <!-- Text -->
     <div class="flex-1 min-w-0">
       <p class="text-sm font-semibold leading-tight">{{ toast.title }}</p>
       <p *ngIf="toast.description" class="mt-0.5 text-sm opacity-90">
@@ -59,7 +58,6 @@
       </p>
     </div>
 
-    <!-- Dismiss -->
     <button
       type="button"
       (click)="dismiss(toast.id)"

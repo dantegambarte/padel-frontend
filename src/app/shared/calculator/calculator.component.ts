@@ -9,10 +9,14 @@ import { CalculatorService } from '../../core/services/calculator.service';
 export class CalculatorComponent implements OnInit, OnDestroy {
   visible = false;
 
-  display = '0'; // lo que ve el usuario en pantalla
-  operand1 = ''; // primer número acumulado (público: accedido desde el template)
-  private operator = ''; // operador pendiente (+  −  ×  ÷)
-  private waitingForOperand2 = false; // próximo dígito reemplaza display
+  /** Valor actualmente mostrado en pantalla. */
+  display = '0';
+  /** Primer operando acumulado (accedido desde el template para mostrar contexto). */
+  operand1 = '';
+  /** Operador pendiente (+, −, ×, ÷). */
+  private operator = '';
+  /** Cuando es `true`, el próximo dígito reemplaza el display en lugar de concatenarse. */
+  private waitingForOperand2 = false;
 
   private sub = new Subscription();
 
@@ -28,44 +32,29 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Cierra la calculadora. */
   close(): void {
     this.calcService.close();
   }
 
+  /**
+   * Maneja el teclado cuando la calculadora está visible.
+   * Detiene la propagación de las teclas interceptadas para evitar que disparen
+   * acciones en componentes del fondo (por ejemplo, Enter cerrando un modal de reservas).
+   */
   @HostListener('window:keydown', ['$event'])
   onKey(e: KeyboardEvent): void {
     if (!this.visible) return;
 
-    // Lista de teclas que la calculadora intercepta completamente.
-    // Cualquier tecla en esta lista detiene la propagación para que no
-    // dispare acciones en modales de fondo (ej. Enter cerrando el modal de reservas).
     const HANDLED = new Set([
       'Escape',
-      '0',
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '.',
-      ',',
-      '+',
-      '-',
-      '*',
-      '/',
-      'Enter',
-      '=',
-      'Backspace',
-      'Delete',
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      '.', ',', '+', '-', '*', '/',
+      'Enter', '=', 'Backspace', 'Delete',
     ]);
 
     if (!HANDLED.has(e.key)) return;
 
-    // Detener propagación SIEMPRE que la calculadora esté abierta y la tecla sea nuestra
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -112,8 +101,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Entrada de dígitos ────────────────────────────────────────────────────
-
+  /** Agrega un dígito al display. Si se espera el segundo operando, reemplaza el valor actual. */
   appendDigit(d: string): void {
     if (this.waitingForOperand2) {
       this.display = d;
@@ -121,12 +109,12 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     } else {
       this.display = this.display === '0' ? d : this.display + d;
     }
-    // Límite de 15 dígitos para no desbordar la pantalla
     if (this.display.replace('.', '').replace('-', '').length > 15) {
       this.display = this.display.slice(0, -1);
     }
   }
 
+  /** Agrega el separador decimal al display si aún no tiene uno. */
   appendDot(): void {
     if (this.waitingForOperand2) {
       this.display = '0.';
@@ -138,15 +126,17 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Elimina el último carácter del display. */
   backspace(): void {
     if (this.waitingForOperand2) return;
     this.display = this.display.length > 1 ? this.display.slice(0, -1) : '0';
   }
 
-  // ── Operadores ────────────────────────────────────────────────────────────
-
+  /**
+   * Establece el operador pendiente. Si ya había una operación en curso,
+   * calcula el resultado primero (encadenamiento de operaciones).
+   */
   setOperator(op: string): void {
-    // Si ya hay una operación pendiente, calcular primero (chaining)
     if (this.operator && !this.waitingForOperand2) {
       this.calculate();
     }
@@ -155,6 +145,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.waitingForOperand2 = true;
   }
 
+  /**
+   * Ejecuta la operación pendiente y muestra el resultado.
+   * Evita aritmética de punto flotante sucia usando `toPrecision(12)`.
+   */
   calculate(): void {
     if (!this.operator || this.waitingForOperand2) return;
 
@@ -184,12 +178,12 @@ export class CalculatorComponent implements OnInit, OnDestroy {
         return;
     }
 
-    // Evitar aritmética de punto flotante sucia (ej. 0.1+0.2 = 0.30000000000000004)
     const rounded = parseFloat(result.toPrecision(12));
     this.display = String(rounded);
     this.reset();
   }
 
+  /** Invierte el signo del valor actual en pantalla. */
   toggleSign(): void {
     if (this.display === '0' || this.display === 'Error') return;
     this.display = this.display.startsWith('-')
@@ -197,31 +191,32 @@ export class CalculatorComponent implements OnInit, OnDestroy {
       : '-' + this.display;
   }
 
+  /** Convierte el valor actual a su equivalente porcentual (divide por 100). */
   percent(): void {
     const n = parseFloat(this.display);
     if (isNaN(n)) return;
     this.display = String(parseFloat((n / 100).toPrecision(12)));
   }
 
+  /** Resetea el display a 0 y limpia el estado interno. */
   clear(): void {
     this.display = '0';
     this.reset();
   }
 
+  /** Limpia el estado interno de operandos y operador sin tocar el display. */
   private reset(): void {
     this.operand1 = '';
     this.operator = '';
     this.waitingForOperand2 = false;
   }
 
-  // ── Display helpers ───────────────────────────────────────────────────────
-
   /** Muestra el operador activo en el header para contexto visual. */
   get activeOperator(): string {
     return this.operator;
   }
 
-  /** Formatea el display para facilitar la lectura (separador de miles). */
+  /** Formatea el display con separador de miles para facilitar la lectura. */
   get formattedDisplay(): string {
     if (this.display === 'Error') return 'Error';
     const parts = this.display.split('.');

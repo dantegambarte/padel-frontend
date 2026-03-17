@@ -3,35 +3,22 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuard } from './core/guards/auth.guard';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  RUTAS RAÍZ
-//
-//  Separación entre zona pública y zona privada:
-//
-//  /auth/login        → LoginComponent       (público, sin AuthGuard)
-//  /app/**            → LayoutComponent      (privado, protegido por AuthGuard)
-//    /app/dashboard   → DashboardShellComponent
-//    /app/schedule      → ScheduleComponent
-//    /app/cash-register → CashRegisterComponent
-//    /app/pos           → PosComponent
-//    /app/products      → ProductsComponent
-//    /app/reports       → ReportsComponent
-//    /app/settings      → SettingsComponent
-//
-//  El AuthGuard redirige a /auth/login si no hay sesión activa.
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Top-level application routes.
+ *
+ * - `/auth/login`  — public zone, lazy-loaded {@link AuthModule}
+ * - `/app/**`      — private zone, lazy-loaded {@link LayoutModule}, protected by {@link AuthGuard}
+ * - `**`           — catch-all redirect to `/auth/login`
+ */
 const routes: Routes = [
-  // Raíz → login
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
 
-  // Zona pública — lazy loaded
   {
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
 
-  // Zona privada — lazy loaded, protegida por AuthGuard
   {
     path: 'app',
     loadChildren: () =>
@@ -39,10 +26,12 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
 
-  // Catch-all → login
   { path: '**', redirectTo: '/auth/login' },
 ];
 
+/**
+ * Application routing module — registers the root-level route table.
+ */
 @NgModule({
   imports: [RouterModule.forRoot(routes, { scrollPositionRestoration: 'top' })],
   exports: [RouterModule],

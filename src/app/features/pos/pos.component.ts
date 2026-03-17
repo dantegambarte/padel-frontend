@@ -20,9 +20,8 @@ interface PosCartItem {
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
-  // ── State ─────────────────────────────────────────────────────────────────────
   products: Product[] = [];
-  cart: PosCartItem[] = []; // Immutable updates — mismo patrón que React setState
+  cart: PosCartItem[] = [];
   searchQuery = '';
   montoEfectivo = '';
   montoTransferencia = '';
@@ -39,6 +38,10 @@ export class PosComponent implements OnInit {
     this.loadProducts();
   }
 
+  /**
+   * Carga todos los productos activos desde el servidor.
+   * Filtra los inactivos antes de asignarlos al estado.
+   */
   private loadProducts(): void {
     this.isLoadingProducts = true;
     this.productsService
@@ -57,13 +60,14 @@ export class PosComponent implements OnInit {
       });
   }
 
-  // ── Computed ──────────────────────────────────────────────────────────────────
+  /** Devuelve los productos filtrados por el término de búsqueda actual. */
   get filteredProducts(): Product[] {
     if (!this.searchQuery.trim()) return this.products;
     const q = this.searchQuery.toLowerCase();
     return this.products.filter((p) => p.name.toLowerCase().includes(q));
   }
 
+  /** Total del carrito sumando precio × cantidad de cada ítem. */
   get total(): number {
     return this.cart.reduce(
       (sum, item) => sum + item.salePrice * item.quantity,
@@ -71,21 +75,32 @@ export class PosComponent implements OnInit {
     );
   }
 
+  /** Monto en efectivo ingresado, convertido a número. */
   get efectivo(): number {
     return parseFloat(this.montoEfectivo) || 0;
   }
+
+  /** Monto en transferencia ingresado, convertido a número. */
   get transferencia(): number {
     return parseFloat(this.montoTransferencia) || 0;
   }
+
+  /** Suma del efectivo y la transferencia ingresados. */
   get totalPagado(): number {
     return this.efectivo + this.transferencia;
   }
+
+  /** Diferencia entre el total del carrito y lo ya pagado (puede ser negativa = vuelto). */
   get faltante(): number {
     return this.total - this.totalPagado;
   }
+
+  /** Indica si se deben mostrar los detalles de pago en la UI. */
   get showPaymentDetails(): boolean {
     return this.totalPagado > 0;
   }
+
+  /** `true` cuando el botón "Confirmar Venta" debe estar deshabilitado. */
   get isConfirmDisabled(): boolean {
     return (
       this.cart.length === 0 ||
@@ -94,7 +109,11 @@ export class PosComponent implements OnInit {
     );
   }
 
-  // ── Cart (IMMUTABLE — identical to React's setCart pattern) ───────────────────
+  /**
+   * Agrega un producto al carrito o incrementa su cantidad si ya existe.
+   * Muestra un error si se supera el stock disponible.
+   * @param product - Producto a agregar.
+   */
   addToCart(product: Product): void {
     const existing = this.cart.find((i) => i.productId === product.id);
     if (existing) {
@@ -123,6 +142,12 @@ export class PosComponent implements OnInit {
     }
   }
 
+  /**
+   * Incrementa o decrementa la cantidad de un ítem del carrito.
+   * Si la nueva cantidad llega a 0, elimina el ítem.
+   * @param productId - Identificador del producto.
+   * @param delta     - Valor a sumar (positivo o negativo).
+   */
   updateQuantity(productId: string, delta: number): void {
     const item = this.cart.find((i) => i.productId === productId);
     if (!item) return;
@@ -141,17 +166,24 @@ export class PosComponent implements OnInit {
     }
   }
 
+  /**
+   * Elimina un ítem del carrito por su id de producto.
+   * @param productId - Identificador del producto a quitar.
+   */
   removeFromCart(productId: string): void {
     this.cart = this.cart.filter((i) => i.productId !== productId);
   }
 
-  // ── Formatter ─────────────────────────────────────────────────────────────────
+  /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     if (value === 0) return '0';
     return value.toLocaleString('es-AR');
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────────
+  /**
+   * Valida el carrito y el pago, luego envía la venta al servidor.
+   * Limpia el carrito y los montos de pago al completarse con éxito.
+   */
   confirmSale(): void {
     if (this.cart.length === 0) {
       this.toast.error(
@@ -177,7 +209,6 @@ export class PosComponent implements OnInit {
       amountTransfer: this.transferencia,
     };
 
-    // Guardamos el total antes de limpiar el carrito para usarlo en el toast
     const totalStr = this.fmt(this.total);
 
     this.isSubmitting = true;
@@ -205,7 +236,7 @@ export class PosComponent implements OnInit {
               'Stock insuficiente',
               'Uno o más productos no tienen stock suficiente',
             );
-            this.loadProducts(); // refresca stock desde el backend
+            this.loadProducts();
           } else {
             this.toast.error('Error al procesar venta', 'Intente nuevamente');
           }

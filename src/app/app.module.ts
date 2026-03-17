@@ -7,6 +7,10 @@ import { AppComponent } from './app.component';
 import { SharedModule } from './shared/shared.module';
 import { CoreModule } from './core/core.module';
 
+/**
+ * Root Angular module.
+ * Bootstraps {@link AppComponent} and imports the core feature and routing modules.
+ */
 @NgModule({
   declarations: [AppComponent],
   imports: [

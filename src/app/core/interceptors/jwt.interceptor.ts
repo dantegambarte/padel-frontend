@@ -18,15 +18,28 @@ import {
 
 import { AuthService } from '../services/auth.service';
 
+/**
+ * Interceptor HTTP que adjunta el Bearer token a cada request saliente
+ * y gestiona la renovación transparente del token ante respuestas 401.
+ *
+ * Las requests concurrentes que reciben un 401 mientras ya hay un refresh en curso
+ * se encolan y se reintentan una vez que el nuevo access token está disponible.
+ */
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
-  // Previene múltiples llamadas paralelas al endpoint /refresh.
-  // Cuando isRefreshing = true, las otras peticiones hacen cola en el Subject.
+  /**
+   * Evita múltiples llamadas paralelas al endpoint `/refresh`.
+   * Cuando `isRefreshing` es `true`, las demás requests se encolan en `refreshTokenSubject`.
+   */
   private isRefreshing = false;
   private refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
   constructor(private authService: AuthService) {}
 
+  /**
+   * Intercepta cada request HTTP, adjunta el access token actual si existe
+   * y delega los errores 401 a {@link handle401Error}.
+   */
   intercept(
     request: HttpRequest<unknown>,
     next: HttpHandler,
@@ -39,8 +52,6 @@ export class JwtInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        // Solo intentar refresh en 401 fuera de los endpoints de auth
-        // para evitar loops infinitos.
         if (error.status === 401 && !request.url.includes('/auth/')) {
           return this.handle401Error(request, next);
         }
@@ -49,6 +60,11 @@ export class JwtInterceptor implements HttpInterceptor {
     );
   }
 
+  /**
+   * Intenta renovar el access token al recibir un 401 fuera de los endpoints de auth.
+   * Si ya hay un refresh en curso, encola la request hasta que el nuevo token esté listo.
+   * Dispara el logout automático cuando el refresh falla.
+   */
   private handle401Error(
     request: HttpRequest<unknown>,
     next: HttpHandler,
@@ -65,14 +81,12 @@ export class JwtInterceptor implements HttpInterceptor {
         }),
         catchError((error) => {
           this.isRefreshing = false;
-          // El refresh falló (token expirado) → logout automático
           this.authService.logout();
           return throwError(() => error);
         }),
       );
     }
 
-    // Mientras se está refrescando, poner en cola las demás peticiones.
     return this.refreshTokenSubject.pipe(
       filter((token) => token !== null),
       take(1),
@@ -80,6 +94,11 @@ export class JwtInterceptor implements HttpInterceptor {
     );
   }
 
+  /**
+   * Clona la request dada y establece el header `Authorization: Bearer <token>`.
+   * @param request - Request HTTP original.
+   * @param token   - Cadena del access token.
+   */
   private attachToken(
     request: HttpRequest<unknown>,
     token: string,

@@ -21,14 +21,12 @@ export class UsersComponent implements OnInit {
   isSubmitting = false;
   togglingId: string | null = null;
 
-  // Edit modal
   isEditOpen = false;
   editingUser: User | null = null;
   editForm = { fullName: '', password: '', role: 'employee' as UserRole };
   editFormError = '';
   isEditSubmitting = false;
 
-  // Delete
   deletingId: string | null = null;
 
   form = {
@@ -61,14 +59,17 @@ export class UsersComponent implements OnInit {
     if (this.isEditOpen) this.closeEditModal();
   }
 
+  /** ID del usuario actualmente autenticado. */
   get currentUserId(): string {
     return this.authService.currentUser?.id ?? '';
   }
 
+  /** `true` si el usuario dado puede ser activado/desactivado (no es el usuario logueado). */
   canToggle(user: User): boolean {
     return user.id !== this.currentUserId;
   }
 
+  /** Carga la lista de usuarios desde el servidor. */
   private loadUsers(): void {
     this.isLoading = true;
     this.usersService.findAll().subscribe({
@@ -86,6 +87,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /** Abre el diálogo de creación de usuario con el formulario vacío. */
   openDialog(): void {
     this.form = {
       username: '',
@@ -98,11 +100,13 @@ export class UsersComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /** Cierra el diálogo de creación si no hay una petición en curso. */
   closeDialog(): void {
     if (this.isSubmitting) return;
     this.isDialogOpen = false;
   }
 
+  /** Valida y envía el formulario de creación de usuario. */
   submitForm(): void {
     this.formError = '';
 
@@ -149,6 +153,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /** Abre el modal de edición pre-cargando los datos del usuario. */
   openEditModal(user: User): void {
     this.editingUser = user;
     this.editForm = { fullName: user.fullName, password: '', role: user.role };
@@ -156,12 +161,14 @@ export class UsersComponent implements OnInit {
     this.isEditOpen = true;
   }
 
+  /** Cierra el modal de edición si no hay una petición en curso. */
   closeEditModal(): void {
     if (this.isEditSubmitting) return;
     this.isEditOpen = false;
     this.editingUser = null;
   }
 
+  /** Valida y envía el formulario de edición de usuario. */
   submitEdit(): void {
     this.editFormError = '';
     if (!this.editForm.fullName.trim()) {
@@ -198,6 +205,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /** Solicita confirmación y elimina el usuario indicado. */
   deleteUser(user: User): void {
     if (
       !confirm(
@@ -226,6 +234,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /** Activa o desactiva el usuario indicado (no se puede aplicar al propio usuario logueado). */
   toggleStatus(user: User): void {
     if (!this.canToggle(user) || this.togglingId) return;
     this.togglingId = user.id;
@@ -251,6 +260,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /** Formatea una fecha ISO como string localizado en formato argentino. */
   formatDate(iso: string): string {
     return iso ? new Date(iso).toLocaleDateString('es-AR') : '—';
   }

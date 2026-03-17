@@ -1,10 +1,5 @@
-<!-- ─── DASHBOARD EMPLOYEE ────────────────────────────────────────────────────── -->
 <div class="space-y-6">
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       KPI CARDS — Caja Actual / Próximo Turno / Alertas de Stock
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-    <!-- Loading skeleton -->
     <ng-container *ngIf="isLoading; else empKpiCards">
       <div
         *ngFor="let i of [1, 2, 3]"
@@ -13,7 +8,6 @@
     </ng-container>
 
     <ng-template #empKpiCards>
-      <!-- Caja Actual -->
       <app-stat-card
         title="Caja Actual (Efectivo)"
         [value]="'$' + fmt(cashAmount)"
@@ -21,7 +15,6 @@
       >
       </app-stat-card>
 
-      <!-- Próximo Turno -->
       <app-stat-card
         title="Próximo Turno"
         [value]="proximoTurnoValue"
@@ -30,7 +23,6 @@
       >
       </app-stat-card>
 
-      <!-- Alertas de Stock — border-destructive/50 como en el prototipo -->
       <app-stat-card
         title="Alertas de Stock"
         [value]="lowStockProducts.length.toString()"
@@ -40,14 +32,8 @@
       </app-stat-card>
     </ng-template>
   </div>
-  <!-- /KPI cards -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       ACCESOS RÁPIDOS — Nuevo Turno + Venta Mostrador
-       cursor-pointer + hover:border-primary / hover:border-accent
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <!-- Nuevo Turno → /app/schedule -->
     <a
       routerLink="/app/schedule"
       class="block cursor-pointer rounded-lg border border-border bg-card text-card-foreground shadow-md transition-all hover:border-primary hover:shadow-lg"
@@ -57,7 +43,6 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
           >
-            <!-- Calendar icon -->
             <svg
               class="h-6 w-6 text-primary"
               viewBox="0 0 24 24"
@@ -94,7 +79,6 @@
       </div>
     </a>
 
-    <!-- Venta Mostrador → /app/pos -->
     <a
       routerLink="/app/pos"
       class="block cursor-pointer rounded-lg border border-border bg-card text-card-foreground shadow-md transition-all hover:border-accent hover:shadow-lg"
@@ -104,7 +88,6 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10"
           >
-            <!-- ShoppingCart icon -->
             <svg
               class="h-6 w-6 text-accent"
               viewBox="0 0 24 24"
@@ -142,11 +125,7 @@
       </div>
     </a>
   </div>
-  <!-- /accesos rápidos -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       PRÓXIMOS TURNOS — tabla de reservas de hoy con status badge
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -162,7 +141,6 @@
     </div>
     <div class="px-6 pb-6">
       <div class="space-y-3">
-        <!-- Loading skeleton -->
         <ng-container *ngIf="isLoading; else bookingsList">
           <div
             *ngFor="let i of [1, 2, 3, 4]"
@@ -176,7 +154,6 @@
             class="flex items-center justify-between rounded-lg border border-border p-3"
           >
             <div class="flex items-center gap-3">
-              <!-- Chip de hora: bg-primary/10 text-primary -->
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary"
               >
@@ -190,7 +167,6 @@
               </div>
             </div>
 
-            <!-- Badge: paid → default (bg-primary), pending → secondary -->
             <span
               [ngClass]="
                 isPaid(booking)
@@ -203,7 +179,6 @@
             </span>
           </div>
 
-          <!-- Empty state -->
           <p
             *ngIf="upcomingBookings.length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
@@ -214,11 +189,7 @@
       </div>
     </div>
   </div>
-  <!-- /próximos turnos -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       ALERTAS DE STOCK BAJO — border-destructive/50 como en el prototipo
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-destructive/50 bg-card text-card-foreground shadow-md"
   >
@@ -226,7 +197,6 @@
       <h3
         class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
       >
-        <!-- AlertTriangle icon text-destructive -->
         <svg
           class="h-5 w-5 text-destructive"
           viewBox="0 0 24 24"
@@ -251,7 +221,6 @@
 
     <div class="px-6 pb-6">
       <div class="space-y-2">
-        <!-- Loading skeleton -->
         <ng-container *ngIf="isLoading; else stockList">
           <div
             *ngFor="let i of [1, 2, 3]"
@@ -260,7 +229,6 @@
         </ng-container>
 
         <ng-template #stockList>
-          <!-- Fila de alerta: border-destructive/30 bg-destructive/5 -->
           <div
             *ngFor="let product of lowStockProducts"
             class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3"
@@ -272,7 +240,6 @@
                 {{ product.minStock }})
               </p>
             </div>
-            <!-- Badge variant="destructive" -->
             <span
               class="inline-flex items-center rounded-full border border-transparent bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground"
             >
@@ -280,7 +247,6 @@
             </span>
           </div>
 
-          <!-- Empty state -->
           <p
             *ngIf="lowStockProducts.length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
@@ -291,6 +257,4 @@
       </div>
     </div>
   </div>
-  <!-- /alertas stock -->
 </div>
-<!-- /space-y-6 -->

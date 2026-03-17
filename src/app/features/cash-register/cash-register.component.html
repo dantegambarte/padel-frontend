@@ -1,6 +1,3 @@
-<!-- ─── CAJA PAGE ─────────────────────────────────────────────────────────────── -->
-
-<!-- ══ Estado: sin sesión activa ═════════════════════════════════════════════ -->
 <div
   *ngIf="noSesionActiva"
   class="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center shadow-md"
@@ -24,13 +21,8 @@
   </p>
 </div>
 
-<!-- ══ Contenido principal (sesión existe) ═══════════════════════════════════ -->
 <div *ngIf="!noSesionActiva" class="space-y-6">
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       FILA DE TARJETAS RESUMEN (3 KPIs)
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid gap-4 md:grid-cols-3">
-    <!-- Efectivo Esperado -->
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -38,7 +30,6 @@
         <h4
           class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
         >
-          <!-- DollarSign icon -->
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -65,7 +56,6 @@
       </div>
     </div>
 
-    <!-- Transferencias -->
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -73,7 +63,6 @@
         <h4
           class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
         >
-          <!-- CreditCard icon -->
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -100,7 +89,6 @@
       </div>
     </div>
 
-    <!-- Total del Día: border-accent/50 como en el prototipo -->
     <div
       class="rounded-lg border border-accent/50 bg-card text-card-foreground shadow-md"
     >
@@ -108,7 +96,6 @@
         <h4
           class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
         >
-          <!-- TrendingUp icon -->
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -137,11 +124,7 @@
       </div>
     </div>
   </div>
-  <!-- /grid KPIs -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       CARD — Arqueo de Caja
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -157,9 +140,7 @@
     </div>
 
     <div class="space-y-6 px-6 pb-6">
-      <!-- Grid: valores sistema + conteo físico -->
       <div class="grid gap-6 md:grid-cols-2">
-        <!-- Panel Izquierdo: Valores del Sistema -->
         <div class="space-y-4 rounded-lg border border-border p-4">
           <h3 class="font-semibold">Valores del Sistema</h3>
           <div class="space-y-2">
@@ -180,7 +161,6 @@
           </div>
         </div>
 
-        <!-- Panel Derecho: Conteo Físico -->
         <div class="space-y-4 rounded-lg border border-border p-4">
           <h3 class="font-semibold">Conteo Físico</h3>
 
@@ -199,7 +179,6 @@
             />
           </div>
 
-          <!-- Resumen de diferencia (visible cuando hay input) -->
           <div *ngIf="showDiferencia" class="mt-4 space-y-2">
             <div class="flex justify-between">
               <span class="text-sm text-muted-foreground"
@@ -216,17 +195,13 @@
           </div>
         </div>
       </div>
-      <!-- /grid -->
 
-      <!-- Banner de resultado: verde (cuadra) o amarillo (diferencia) -->
       <div
         *ngIf="showDiferencia"
         class="flex items-center gap-3 rounded-lg p-4"
         [ngClass]="indicatorClass"
       >
-        <!-- Cuadra -->
         <ng-container *ngIf="diferencia === 0; else hasDifferenceIndicator">
-          <!-- CheckCircle2 icon -->
           <svg
             class="h-6 w-6 flex-shrink-0"
             viewBox="0 0 24 24"
@@ -247,9 +222,7 @@
           </div>
         </ng-container>
 
-        <!-- Hay diferencia -->
         <ng-template #hasDifferenceIndicator>
-          <!-- AlertCircle icon -->
           <svg
             class="h-6 w-6 flex-shrink-0"
             viewBox="0 0 24 24"
@@ -271,9 +244,7 @@
           </div>
         </ng-template>
       </div>
-      <!-- /banner -->
 
-      <!-- Notas del Cierre -->
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none" for="notas">
           Notas del Cierre
@@ -288,7 +259,6 @@
         />
       </div>
 
-      <!-- Botón de cierre O indicador de caja cerrada -->
       <ng-container *ngIf="!isClosed; else cajaCerrada">
         <button
           type="button"
@@ -304,7 +274,6 @@
         <div
           class="flex items-center justify-center gap-3 rounded-lg border-2 border-accent bg-accent/5 p-4 text-accent"
         >
-          <!-- Lock icon -->
           <svg
             class="h-6 w-6 flex-shrink-0"
             viewBox="0 0 24 24"
@@ -323,13 +292,8 @@
         </div>
       </ng-template>
     </div>
-    <!-- /arqueo body -->
   </div>
-  <!-- /card arqueo -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       CARD — Movimientos del Día
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -346,7 +310,6 @@
 
     <div class="px-6 pb-6">
       <div class="space-y-2">
-        <!-- Loading skeleton -->
         <ng-container *ngIf="isLoading; else movimientosLoaded">
           <div
             *ngFor="let i of [1, 2, 3, 4, 5]"
@@ -355,13 +318,11 @@
         </ng-container>
 
         <ng-template #movimientosLoaded>
-          <!-- Lista de movimientos -->
           <div
             *ngFor="let mov of movimientos"
             class="flex items-center justify-between rounded-lg border border-border p-3"
           >
             <div class="flex items-center gap-3">
-              <!-- Chip de hora: bg-primary/10 text-primary como en el prototipo -->
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-xs font-semibold text-primary"
               >
@@ -370,7 +331,6 @@
 
               <div>
                 <p class="font-medium">{{ mov.concepto }}</p>
-                <!-- Badge: default (Efectivo) vs secondary (Transferencia) -->
                 <span
                   [ngClass]="
                     mov.tipo === 'Efectivo'
@@ -387,7 +347,6 @@
             <p class="text-lg font-bold">${{ fmt(mov.monto) }}</p>
           </div>
 
-          <!-- Empty state -->
           <p
             *ngIf="movimientos.length === 0"
             class="py-8 text-center text-sm text-muted-foreground"
@@ -398,26 +357,18 @@
       </div>
     </div>
   </div>
-  <!-- /card movimientos -->
 </div>
-<!-- /contenido principal -->
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     MODAL — Confirmar Cierre de Caja (pure CSS overlay, Angular 15 *ngIf)
-════════════════════════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="isDialogOpen">
-  <!-- Backdrop -->
   <div
     class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
     (click)="closeDialog()"
   ></div>
 
-  <!-- Panel -->
   <div
     class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-lg"
     (click)="$event.stopPropagation()"
   >
-    <!-- Header -->
     <div class="mb-4">
       <h2
         class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
@@ -430,7 +381,6 @@
       </p>
     </div>
 
-    <!-- Resumen de cierre -->
     <div class="space-y-4 py-4">
       <div class="rounded-lg border border-border bg-muted/30 p-4">
         <div class="space-y-2">
@@ -452,7 +402,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="flex justify-end gap-3">
       <button
         type="button"
@@ -472,5 +421,4 @@
       </button>
     </div>
   </div>
-  <!-- /panel --> </ng-container
-><!-- /modal -->
+</ng-container>

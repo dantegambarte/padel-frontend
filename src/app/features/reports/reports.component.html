@@ -1,16 +1,11 @@
-<!-- ─── REPORTES PAGE ─────────────────────────────────────────────────────────── -->
+
 <div class="p-4 md:p-6 space-y-6">
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       FILTROS DE PERÍODO + BÚSQUEDA POR FECHA EXACTA
-       Botones "Esta Semana / Este Mes / Trimestre / Semestre / Anual"
-       + datepicker para consultar un día específico
-  ════════════════════════════════════════════════════════════════════════════ -->
+  
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
     <div class="p-6 space-y-4">
 
-      <!-- Fila 1: Botones de período -->
       <div class="flex flex-wrap gap-2">
         <button
           *ngFor="let period of periods"
@@ -27,7 +22,6 @@
         </button>
       </div>
 
-      <!-- Separador -->
       <div class="flex items-center gap-3">
         <div class="flex-1 border-t border-border"></div>
         <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -36,9 +30,8 @@
         <div class="flex-1 border-t border-border"></div>
       </div>
 
-      <!-- Fila 2: Datepicker + badge activo + botón limpiar -->
       <div class="flex flex-wrap items-center gap-3">
-        <!-- Ícono calendario -->
+        
         <svg
           class="h-4 w-4 shrink-0 text-muted-foreground"
           viewBox="0 0 24 24"
@@ -72,12 +65,11 @@
           class="h-10 rounded-md border bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
 
-        <!-- Badge "Viendo: día X" cuando filtro activo -->
         <span
           *ngIf="dateFilterActive"
           class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
         >
-          <!-- CheckCircle icon -->
+          
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
             <polyline points="22 4 12 14.01 9 11.01"/>
@@ -85,14 +77,13 @@
           Viendo: {{ selectedDate }}
         </span>
 
-        <!-- Botón limpiar (sólo visible cuando filtro activo) -->
         <button
           *ngIf="dateFilterActive"
           type="button"
           (click)="clearDateFilter()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-transparent px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <!-- X icon -->
+          
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -104,12 +95,8 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       TARJETAS KPI — grid md:grid-cols-4
-       Ingresos Totales / Alquileres / Productos / Ticket Promedio
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-    <!-- Loading skeleton -->
+    
     <ng-container *ngIf="isLoading; else kpiLoaded">
       <div
         *ngFor="let i of [1, 2, 3, 4]"
@@ -118,7 +105,7 @@
     </ng-container>
 
     <ng-template #kpiLoaded>
-      <!-- Ingresos Totales -->
+      
       <div
         class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
       >
@@ -147,7 +134,6 @@
         </div>
       </div>
 
-      <!-- Alquileres -->
       <div
         class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
       >
@@ -178,7 +164,6 @@
         </div>
       </div>
 
-      <!-- Productos -->
       <div
         class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
       >
@@ -186,7 +171,7 @@
           <h4
             class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
           >
-            <!-- Package icon -->
+            
             <svg
               class="h-4 w-4"
               viewBox="0 0 24 24"
@@ -214,7 +199,6 @@
         </div>
       </div>
 
-      <!-- Ticket Promedio -->
       <div
         class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
       >
@@ -244,14 +228,9 @@
       </div>
     </ng-template>
   </div>
-  <!-- /KPI cards -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       GRÁFICOS — Barras (Ingresos Categoría) + Pie (Métodos de Pago)
-       grid lg:grid-cols-2 — igual que el prototipo
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div class="grid gap-4 lg:grid-cols-2">
-    <!-- ── Gráfico de Barras: Ingresos por Categoría ─────────────────────────── -->
+    
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -281,7 +260,6 @@
       </div>
     </div>
 
-    <!-- ── Gráfico de Pie: Métodos de Pago ───────────────────────────────────── -->
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -302,7 +280,7 @@
         ></div>
 
         <ng-container *ngIf="!isLoading">
-          <!-- Canvas del pie chart -->
+          
           <div
             class="flex items-center justify-center"
             style="height: 300px; position: relative"
@@ -315,12 +293,10 @@
             ></canvas>
           </div>
 
-          <!-- Leyenda manual debajo del pie: colored dot + label + monto -->
-          <!-- Traducción exacta de la leyenda del prototipo -->
           <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <!-- Dot en color accent (Efectivo) — clase estática → Tailwind la incluye -->
+                
                 <div class="h-3 w-3 rounded-full bg-accent"></div>
                 <span class="text-sm">Efectivo</span>
               </div>
@@ -331,7 +307,7 @@
 
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <!-- Dot en color primary (Transferencia) -->
+                
                 <div class="h-3 w-3 rounded-full bg-primary"></div>
                 <span class="text-sm">Transferencia</span>
               </div>
@@ -344,11 +320,7 @@
       </div>
     </div>
   </div>
-  <!-- /charts grid -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       RANKING DE PRODUCTOS VENDIDOS
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -363,7 +335,7 @@
       </p>
     </div>
     <div class="px-6 pb-6">
-      <!-- Loading skeleton -->
+      
       <div class="space-y-3" *ngIf="isLoading">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5, 6]"
@@ -371,21 +343,19 @@
         ></div>
       </div>
 
-      <!-- Ranking list -->
       <ng-container *ngIf="!isLoading">
         <div class="space-y-3">
           <div
             *ngFor="let product of productRanking; let i = index"
             class="flex items-center gap-4 rounded-lg border border-border p-3"
           >
-            <!-- Rank number: bg-primary/10 text-primary como en el prototipo -->
+            
             <div
               class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary"
             >
               {{ i + 1 }}
             </div>
 
-            <!-- Nombre + unidades -->
             <div class="flex-1">
               <p class="font-medium">{{ product.name }}</p>
               <p class="text-sm text-muted-foreground">
@@ -393,10 +363,9 @@
               </p>
             </div>
 
-            <!-- Monto + badge unidades -->
             <div class="text-right">
               <p class="font-bold">${{ fmt(product.revenue) }}</p>
-              <!-- Badge variant="secondary" -->
+              
               <span
                 class="mt-1 inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground"
               >
@@ -405,7 +374,6 @@
             </div>
           </div>
 
-          <!-- Empty state -->
           <p
             *ngIf="productRanking.length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
@@ -414,7 +382,6 @@
           </p>
         </div>
 
-        <!-- Summary footer: border-t bg-muted/30 como en el prototipo -->
         <div
           *ngIf="productRanking.length > 0"
           class="mt-4 rounded-lg border-t border-border bg-muted/30 p-4"
@@ -435,22 +402,18 @@
       </ng-container>
     </div>
   </div>
-  <!-- /ranking -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       TABLA DE TRANSACCIONES + BOTÓN EXPORTAR EXCEL
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
-    <!-- Header: título + botón exportar (flex justify-between) -->
+    
     <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <h3
             class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
           >
-            <!-- FileSpreadsheet icon -->
+            
             <svg
               class="h-5 w-5"
               viewBox="0 0 24 24"
@@ -475,14 +438,13 @@
           </p>
         </div>
 
-        <!-- Botón Exportar: bg-accent hover:bg-accent/90 como en el prototipo -->
         <button
           type="button"
           (click)="exportExcel()"
           [disabled]="isExporting"
           class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <!-- Download icon -->
+          
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -501,9 +463,8 @@
       </div>
     </div>
 
-    <!-- Tabla -->
     <div class="px-6 pb-6">
-      <!-- Loading skeleton -->
+      
       <div *ngIf="isLoading" class="space-y-2">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5]"
@@ -545,7 +506,7 @@
               <td class="p-3 text-sm">{{ tx.date }} {{ tx.time }}</td>
 
               <td class="p-3">
-                <!-- Badge: default (booking=bg-primary) vs secondary (sale) -->
+                
                 <span
                   [ngClass]="
                     tx.type === 'booking'
@@ -563,7 +524,7 @@
               </td>
 
               <td class="p-3">
-                <!-- Efectivo / Transferencia -->
+                
                 <span
                   class="inline-flex items-center rounded-full border border-border bg-transparent px-2.5 py-0.5 text-xs font-semibold"
                 >
@@ -573,7 +534,6 @@
             </tr>
           </tbody>
 
-          <!-- tfoot con total — bg-muted/30 como en el prototipo -->
           <tfoot
             class="border-t border-border bg-muted/30"
             *ngIf="transactions.length > 0"
@@ -588,7 +548,6 @@
           </tfoot>
         </table>
 
-        <!-- Empty state -->
         <p
           *ngIf="transactions.length === 0"
           class="py-8 text-center text-sm text-muted-foreground"
@@ -598,6 +557,5 @@
       </div>
     </div>
   </div>
-  <!-- /tabla transacciones -->
+  
 </div>
-<!-- /space-y-6 -->

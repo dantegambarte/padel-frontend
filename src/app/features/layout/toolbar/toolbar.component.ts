@@ -16,6 +16,7 @@ export class ToolbarComponent {
 
   constructor(public calcService: CalculatorService) {}
 
+  /** Devuelve las dos primeras iniciales del nombre completo del usuario, en mayúsculas. */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
     return name
@@ -28,10 +29,12 @@ export class ToolbarComponent {
       .slice(0, 2);
   }
 
+  /** Alterna la visibilidad del panel de notificaciones. */
   toggleNotif(): void {
     this.isNotifOpen = !this.isNotifOpen;
   }
 
+  /** Cierra el panel de notificaciones. */
   closeNotif(): void {
     this.isNotifOpen = false;
   }

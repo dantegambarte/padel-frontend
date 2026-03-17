@@ -1,3 +1,4 @@
+/** A product available for sale at the facility. */
 export interface Product {
   id: string;
   name: string;
@@ -9,6 +10,7 @@ export interface Product {
   category?: { id: string; name: string };
 }
 
+/** Payload for creating a new product. */
 export interface CreateProductDto {
   name: string;
   categoryId?: string;
@@ -18,8 +20,10 @@ export interface CreateProductDto {
   isFeatured: boolean;
 }
 
+/** Payload for partially updating an existing product. */
 export type UpdateProductDto = Partial<CreateProductDto>;
 
+/** A product whose stock is below the configured minimum threshold. */
 export interface LowStockProduct {
   id: string;
   name: string;

@@ -7,9 +7,6 @@ import {
   tap,
   catchError,
   throwError,
-  filter,
-  take,
-  switchMap,
 } from 'rxjs';
 
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
@@ -19,18 +16,25 @@ const TOKEN_KEY = 'padelsys_access_token';
 const REFRESH_KEY = 'padelsys_refresh_token';
 const USER_KEY = 'padelsys_user';
 
+/**
+ * Servicio responsable de la gestión del estado de autenticación.
+ *
+ * Persiste los tokens y el usuario actual en `localStorage` para que la sesión
+ * sobreviva una recarga completa de la página. Expone un stream reactivo (`currentUser$`)
+ * al que los componentes y guards pueden suscribirse para reaccionar a eventos de login/logout.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
-  // ── Fuente de verdad del estado de autenticación ─────────────────────────
-  // Se inicializa desde localStorage para preservar la sesión al recargar.
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.loadUserFromStorage(),
   );
 
-  /** Observable público: los componentes se suscriben a este para reaccionar
-   *  a cambios de sesión (login / logout / token refresh). */
+  /**
+   * Stream observable del usuario autenticado actualmente.
+   * Emite `null` cuando no hay sesión activa.
+   */
   readonly currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
@@ -38,25 +42,25 @@ export class AuthService {
     private router: Router,
   ) {}
 
-  // ── Getters síncronos (para guards y lógica que no necesita Observable) ──
-
+  /** Devuelve el usuario autenticado actualmente de forma sincrónica, o `null` si no hay sesión. */
   get currentUser(): User | null {
     return this.currentUserSubject.value;
   }
 
+  /** Devuelve `true` cuando hay una sesión de usuario activa. */
   get isLoggedIn(): boolean {
     return !!this.currentUserSubject.value;
   }
 
+  /** Devuelve `true` cuando el usuario actual tiene el rol `admin`. */
   get isAdmin(): boolean {
     return this.currentUserSubject.value?.role === 'admin';
   }
 
-  // ── Métodos de sesión ─────────────────────────────────────────────────────
-
   /**
-   * POST /api/v1/auth/login
-   * Persiste los tokens y actualiza el BehaviorSubject.
+   * Autentica a un usuario con las credenciales dadas.
+   * Persiste los tokens recibidos y el usuario en `localStorage` si tiene éxito.
+   * @param credentials - Nombre de usuario y contraseña.
    */
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http
@@ -65,9 +69,9 @@ export class AuthService {
   }
 
   /**
-   * POST /api/v1/auth/refresh
-   * Llamado automáticamente por el interceptor cuando recibe un 401.
-   * Si falla (refresh token expirado), hace logout.
+   * Solicita un nuevo access token usando el refresh token almacenado.
+   * Es llamado automáticamente por {@link JwtInterceptor} ante respuestas 401.
+   * Dispara el logout cuando el refresh token expiró.
    */
   refresh(): Observable<AuthResponse> {
     const token = this.getRefreshToken();
@@ -82,7 +86,7 @@ export class AuthService {
       );
   }
 
-  /** Limpia la sesión local y redirige al login. */
+  /** Limpia la sesión local y redirige al usuario a la página de login. */
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
@@ -91,18 +95,20 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  // ── Token helpers ─────────────────────────────────────────────────────────
-
+  /** Devuelve el access token almacenado, o `null` si no hay ninguno. */
   getAccessToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
 
+  /** Devuelve el refresh token almacenado, o `null` si no hay ninguno. */
   getRefreshToken(): string | null {
     return localStorage.getItem(REFRESH_KEY);
   }
 
-  // ── Privados ──────────────────────────────────────────────────────────────
-
+  /**
+   * Persiste los tokens de autenticación y los datos del usuario en `localStorage`
+   * y actualiza el subject reactivo del usuario.
+   */
   private persistSession(response: AuthResponse): void {
     localStorage.setItem(TOKEN_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
@@ -110,6 +116,10 @@ export class AuthService {
     this.currentUserSubject.next(response.user);
   }
 
+  /**
+   * Intenta leer el objeto usuario desde `localStorage`.
+   * Devuelve `null` cuando el valor almacenado está ausente o tiene formato inválido.
+   */
   private loadUserFromStorage(): User | null {
     try {
       const raw = localStorage.getItem(USER_KEY);

@@ -38,6 +38,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   })();
   courts: Court[] = [];
   allProducts: Product[] = [];
+
+  /** Productos marcados como destacados, disponibles para agregar rápidamente. */
   get featuredProducts(): Product[] {
     return this.allProducts.filter((p) => p.isFeatured);
   }
@@ -86,7 +88,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   selectedSlot: { court: Court; hour: string } | null = null;
   selectedBooking: BookingResponse | null = null;
 
-  // ── Create form state ────────────────────────────────────────────────────
   clientName = '';
   priceType: PriceType = 'standard';
   cart: CartItem[] = [];
@@ -95,7 +96,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   productSearch = '';
   searchResults: Product[] = [];
 
-  // ── Detail form state (editable while booked/playing) ────────────────────
   detailCart: CartItem[] = [];
   detailAmountCash = 0;
   detailAmountTransfer = 0;
@@ -106,13 +106,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   detailSearchResults: Product[] = [];
   isAutoSavingItems = false;
 
-  // ── Confirm dialog (in-app, replaces native browser confirm) ─────────────
   confirmDialogOpen = false;
   confirmDialogTitle = '';
   confirmDialogMessage = '';
   private confirmCallback: (() => void) | null = null;
 
-  // Saved payment amounts — used to detect unsaved changes
   private savedAmountCash = 0;
   private savedAmountTransfer = 0;
 
@@ -135,32 +133,30 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** `true` si el usuario actual es administrador. */
   get isAdmin(): boolean {
     return this.authService.isAdmin;
   }
 
+  /**
+   * Genera el valor de `grid-template-columns` para la grilla de turnos.
+   * La primera columna (horas) tiene ancho fijo de 80 px; las canchas usan minmax(200px, 1fr).
+   */
   get gridColsStyle(): string {
-    // Columna de horas con ancho FIJO en px: garantiza que header y filas de datos
-    // usen exactamente la misma anchura para la primera columna, independientemente
-    // del texto que contenga ("Horario" vs "09:00hs"). Sin esto, el `auto` de CSS
-    // grid calcula el ancho por separado en cada grid → desalineación.
-    // minmax(200px, 1fr): cada columna de cancha tiene mínimo 200 px.
-    // En mobile (390 px) con 2+ canchas el total supera el viewport → el
-    // contenedor overflow-x-auto activa el scroll horizontal interno sin
-    // que el body desborde. En desktop las columnas crecen con 1fr como antes.
     return `80px repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
-  /** Solo las columnas de canchas (sin la columna de horas).
-   *  Usado por el panel derecho scrollable en el layout de dos paneles. */
+  /** Solo las columnas de canchas (sin la columna de horas), para el panel derecho scrollable. */
   get courtColsStyle(): string {
     return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
+  /** Precio de la cancha según el tipo de precio y la duración seleccionada. */
   get courtPrice(): number {
     return this.PRICES[this.priceType] * (this.durationMinutes / 60);
   }
 
+  /** Hora de fin calculada a partir del slot seleccionado y la duración. */
   get endHour(): string {
     if (!this.selectedSlot) return '';
     const [h, m] = this.selectedSlot.hour.split(':').map(Number);
@@ -170,30 +166,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
   }
 
+  /** Subtotal de los ítems del carrito de creación. */
   get cartSubtotal(): number {
     return this.cart.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
   }
 
+  /** Total de la reserva: precio cancha + subtotal de ítems. */
   get totalReserva(): number {
     return this.courtPrice + this.cartSubtotal;
   }
 
+  /** Suma de efectivo y transferencia ingresados en el formulario de creación. */
   get totalPagado(): number {
     return (
       (Number(this.pagoEfectivo) || 0) + (Number(this.pagoTransferencia) || 0)
     );
   }
 
+  /** Diferencia entre el total y lo pagado (puede ser negativo = vuelto). */
   get saldoPendiente(): number {
     return this.totalReserva - this.totalPagado;
   }
 
+  /** Clases CSS del badge de balance según el estado del pago. */
   get balanceClass(): string {
     if (this.saldoPendiente === 0) return 'bg-accent text-accent-foreground';
     if (this.saldoPendiente > 0) return 'bg-destructive/10 text-destructive';
     return 'bg-yellow-500/10 text-yellow-700';
   }
 
+  /** Texto descriptivo del balance: pago completo, falta pagar o vuelto. */
   get balanceText(): string {
     const fmt = (n: number) => n.toLocaleString('es-AR');
     if (this.saldoPendiente === 0) return '✓ Pago Completo';
@@ -202,6 +204,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `Vuelto: $${fmt(Math.abs(this.saldoPendiente))}`;
   }
 
+  /** Carga canchas y productos en paralelo, luego dispara la carga de reservas del día. */
   private loadInitialData(): void {
     this.isLoading = true;
     this.loadError = '';
@@ -226,6 +229,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Recarga las reservas del día seleccionado y actualiza el bookingMap. */
   loadBookings(): void {
     this.isLoading = true;
     this.sub.add(
@@ -250,60 +254,57 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Dispara la recarga de reservas al cambiar la fecha seleccionada. */
   onDateChange(): void {
     this.loadBookings();
   }
 
+  /** Devuelve la reserva mapeada para una cancha y hora específica. */
   getBooking(courtId: string, hour: string): BookingResponse | undefined {
     return this.bookingMap.get(`${courtId}-${hour}`);
   }
 
-  /** True if this is the FIRST hour slot of a booking (i.e. the booking starts at this hour). */
+  /** True si este slot es la hora de inicio de una reserva. */
   isStartSlot(courtId: string, hour: string): boolean {
     const b = this.getBooking(courtId, hour);
     return b != null && b.hour === hour;
   }
 
-  /** True if this hour is covered by a multi-slot booking that STARTED at an earlier hour. */
+  /** True si este slot es una continuación de una reserva que inició antes. */
   isContinuationSlot(courtId: string, hour: string): boolean {
     const b = this.getBooking(courtId, hour);
     return b != null && b.hour !== hour;
   }
 
-  /** True if this is the LAST whole-hour continuation row of a multi-slot booking. */
+  /** True si este slot es la última fila de continuación de una reserva multi-hora. */
   isLastContinuationSlot(courtId: string, hour: string): boolean {
     const b = this.getBooking(courtId, hour);
     if (!b || b.hour === hour) return false;
     const [bh, bm] = b.hour.split(':').map(Number);
     const endMin = bh * 60 + bm + (b.durationMinutes ?? 60);
-    // Last continuation row is the highest whole hour H where H*60 < endMin
     const lastContinuationH = Math.floor((endMin - 1) / 60);
     const lastContinuationHour = `${lastContinuationH.toString().padStart(2, '0')}:00`;
     return hour === lastContinuationHour;
   }
 
   /**
-   * Returns the booking that STARTS at HH:30 within the given whole-hour row.
-   * E.g. getBookingAtHalf(courtId, '14:00') looks up key 'courtId-14:30'.
+   * Devuelve la reserva que inicia a HH:30 dentro de la fila de hora entera indicada.
+   * Ejemplo: `getBookingAtHalf(courtId, '14:00')` busca la clave `courtId-14:30`.
    */
   getBookingAtHalf(courtId: string, hour: string): BookingResponse | undefined {
     const hh = hour.split(':')[0];
     return this.bookingMap.get(`${courtId}-${hh}:30`);
   }
 
-  /** Top offset in px for a booking card — 48px for :30 starts, 0 for :00 starts. */
+  /** Offset superior en px para la tarjeta de reserva: 48 px si inicia a :30, 0 si a :00. */
   getBookingTopOffset(booking: BookingResponse): number {
     const minutes = parseInt(booking.hour.split(':')[1], 10);
     return minutes === 30 ? 48 : 0;
   }
 
   /**
-   * Returns border-width + border-radius Tailwind classes to visually connect
-   * multi-slot booking cells into a single tall block.
-   * - Single slot or available → full border + full rounding (rounded-lg border-2).
-   * - Start of multi-slot      → top rounding only, no bottom border.
-   * - Middle continuation      → side borders only, no top/bottom border or rounding.
-   * - Last continuation        → bottom rounding only, no top border.
+   * Devuelve clases Tailwind de borde y redondeo para conectar visualmente los slots
+   * de una reserva multi-hora en un bloque continuo.
    */
   getSlotConnectClass(courtId: string, hour: string): string {
     const b = this.getBooking(courtId, hour);
@@ -318,30 +319,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Altura en píxeles de la tarjeta de reserva — proporcional exacta a durationMinutes.
+   * Altura en píxeles de la tarjeta de reserva, proporcional a `durationMinutes`.
    *
-   * GEOMETRÍA (con space-y-2 entre filas):
-   *   - Cada fila mide exactamente 96 px (h-24, border-box).
-   *   - space-y-2 agrega 8 px de margin-top entre cada par de filas consecutivas.
-   *   - La tarjeta es position:absolute dentro del wrapper de la fila de inicio.
-   *
-   * FÓRMULA:
-   *   altura_base = (durationMinutes / 60) * 96          ← proporcional exacta
-   *   gaps        = Math.floor(durationMinutes / 60) * 8  ← un gap por cada hora COMPLETA cruzada
-   *   total       = altura_base + gaps
-   *
-   * Ejemplos:
-   *    60 min → (60/60)*96 + floor(60/60)*8  =  96 +  8 = 104... NO:
-   *             floor(1)*8 = 8  pero 60 min ocupa sólo 1 fila → 0 gaps
-   *
-   *   CORRECCIÓN: los gaps se cuentan entre filas cruzadas, es decir
-   *   floor(durationMinutes / 60) gaps si durationMinutes > 60, 0 si ≤ 60.
-   *   Fórmula final: gaps = Math.floor((durationMinutes - 1) / 60) * 8
-   *
-   *    60 min → (60/60)*96  + floor(59/60)*8  =  96 + 0*8 =  96 px
-   *    90 min → (90/60)*96  + floor(89/60)*8  = 144 + 1*8 = 152 px
-   *   120 min → (120/60)*96 + floor(119/60)*8 = 192 + 1*8 = 200 px
-   *   180 min → (180/60)*96 + floor(179/60)*8 = 288 + 2*8 = 304 px
+   * FÓRMULA: `(mins / 60) * 96 + floor((mins - 1) / 60) * 8`
+   * donde 96 px es la altura de cada fila y 8 px es el gap entre filas (space-y-2).
    */
   getBookingBlockHeight(booking: BookingResponse): number {
     const mins = booking.durationMinutes ?? 60;
@@ -350,25 +331,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return baseHeight + gaps;
   }
 
+  /** Devuelve las clases CSS del slot según su estado (disponible, reservado, jugando, completado). */
   getSlotClass(courtId: string, hour: string): string {
     const b = this.getBooking(courtId, hour);
     if (!b)
-      // Disponible: borde punteado sutil, hover suave
       return 'border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/5';
     if (b.status === 'booked')
-      // Reservado: azul primario
       return 'border-primary bg-primary/10 text-primary';
     if (b.status === 'playing')
-      // Jugando: verde vibrante — grita ACTIVO
       return 'border-green-500 bg-green-50 text-green-800';
     if (b.status === 'completed')
-      // Completado: bloque histórico sólido, inequívocamente inactivo
       return 'border-slate-400 bg-slate-100 text-slate-600';
     return 'border-dashed border-muted-foreground/30';
   }
 
-  // ── Detail mode computed values ─────────────────────────────────────────
-
+  /** Subtotal de los ítems del carrito en el modo detalle. */
   get detailItemsSubtotal(): number {
     return this.detailCart.reduce(
       (sum, i) => sum + Number(i.unitPrice) * Number(i.quantity),
@@ -376,13 +353,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Total cancha + consumos. Usa Number() para evitar concatenación con strings de PostgreSQL. */
+  /** Total cancha + consumos en el modo detalle. Usa Number() para evitar concatenación con strings de PostgreSQL. */
   get detailTotalReserva(): number {
     return (
       Number(this.selectedBooking?.priceAmount ?? 0) + this.detailItemsSubtotal
     );
   }
 
+  /** Suma de los montos de pago ingresados en el modo detalle. */
   get detailTotalPagado(): number {
     return (
       (Number(this.detailAmountCash) || 0) +
@@ -390,17 +368,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** > 0 → deuda; el botón "Finalizar" queda deshabilitado. */
+  /** Saldo pendiente en el modo detalle. Nunca negativo; mayor a 0 bloquea el botón "Finalizar". */
   get detailSaldoPendiente(): number {
     return Math.max(0, this.detailTotalReserva - this.detailTotalPagado);
   }
 
+  /** Clases CSS del badge de balance en el modo detalle. */
   get detailBalanceClass(): string {
     if (this.detailSaldoPendiente <= 0)
       return 'bg-green-50 text-green-800 border border-green-200';
     return 'bg-destructive/10 text-destructive';
   }
 
+  /** Texto del badge de balance en el modo detalle. */
   get detailBalanceText(): string {
     if (this.detailSaldoPendiente <= 0) return '✓ Pago Completo';
     return `Falta Pagar: $${this.fmt(this.detailSaldoPendiente)}`;
@@ -412,7 +392,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return Math.ceil(this.detailTotalReserva / n);
   }
 
-  /** Deuda restante dividida entre los jugadores que AÚN NO pagaron. */
+  /** Deuda restante dividida entre los jugadores que aún no pagaron. */
   get detailDebtPerPlayer(): number {
     const remaining = Math.max(
       1,
@@ -421,22 +401,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return Math.ceil(this.detailSaldoPendiente / remaining);
   }
 
-  /** Si hay una seña ya registrada (en DB), hay pago parcial previo. */
+  /** `true` si ya existe un pago parcial previo registrado en la base de datos. */
   get hasPriorPayment(): boolean {
     return this.savedAmountCash + this.savedAmountTransfer > 0;
   }
 
-  /** Monto que se suma a un input cuando un jugador paga.
-   *  Con seña: usa la deuda restante por jugador restante.
-   *  Sin seña: usa el costo total por jugador. */
+  /**
+   * Monto que se suma al input de pago cuando un jugador paga.
+   * Con seña previa usa la deuda por jugador restante; sin seña usa el costo total por jugador.
+   */
   get perPlayerAmount(): number {
     return this.hasPriorPayment
       ? this.detailDebtPerPlayer
       : this.detailCostPerPlayer;
   }
 
-  // ── Acciones de cobro ────────────────────────────────────────────────────
-
+  /** Registra el pago en efectivo de un jugador e incrementa el contador de pagados. */
   addPaidByCash(): void {
     if (
       this.detailPaidCount >= this.detailPlayerCount ||
@@ -448,6 +428,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPaidCount++;
   }
 
+  /** Registra el pago por transferencia de un jugador e incrementa el contador de pagados. */
   addPaidByTransfer(): void {
     if (
       this.detailPaidCount >= this.detailPlayerCount ||
@@ -459,11 +440,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPaidCount++;
   }
 
+  /** Decrementa el contador de jugadores pagados (deshacer). */
   decPaidCount(): void {
     if (this.detailPaidCount <= 0) return;
     this.detailPaidCount--;
   }
 
+  /** Completa el saldo pendiente con efectivo y marca todos los jugadores como pagados. */
   settleInCash(): void {
     if (this.detailSaldoPendiente <= 0) return;
     this.detailAmountCash =
@@ -471,6 +454,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPaidCount = this.detailPlayerCount;
   }
 
+  /** Completa el saldo pendiente con transferencia y marca todos los jugadores como pagados. */
   settleInTransfer(): void {
     if (this.detailSaldoPendiente <= 0) return;
     this.detailAmountTransfer =
@@ -478,7 +462,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPaidCount = this.detailPlayerCount;
   }
 
-  /** Calculates end time from the booking currently shown in the detail dialog. */
+  /** Hora de fin calculada a partir de la reserva actualmente mostrada en el detalle. */
   get detailEndHour(): string {
     if (!this.selectedBooking) return '';
     const [h, m] = this.selectedBooking.hour.split(':').map(Number);
@@ -488,11 +472,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
   }
 
-  /** Safely sums payment amounts (backend returns them as numeric strings). */
+  /** Suma los montos de un pago (el backend devuelve strings numéricos desde PostgreSQL). */
   getPaymentTotal(payment: BookingPayment): number {
     return Number(payment.amountCash) + Number(payment.amountTransfer);
   }
 
+  /** Devuelve el label en español del estado de una reserva. */
   getStatusLabel(status: BookingStatus): string {
     const map: Record<BookingStatus, string> = {
       booked: 'Reservado',
@@ -503,6 +488,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return map[status] ?? status;
   }
 
+  /** Devuelve las clases CSS del badge de estado de una reserva. */
   getStatusBadgeClass(status: BookingStatus): string {
     const map: Record<BookingStatus, string> = {
       booked: 'bg-primary/15 text-primary',
@@ -513,20 +499,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return map[status] ?? 'bg-muted text-muted-foreground';
   }
 
+  /**
+   * Maneja el click sobre un slot de la grilla.
+   * Si hay una reserva iniciando en ese slot, abre el detalle; si está libre, abre el formulario de creación.
+   * Los slots de continuación (donde la reserva inició antes) son ignorados.
+   */
   onSlotClick(court: Court, hour: string, minutes: '00' | '30' = '00'): void {
-    // Compute the exact slot time (e.g. '14:00' or '14:30')
     const fullHour = minutes === '30' ? `${hour.split(':')[0]}:30` : hour;
     const booking = this.getBooking(court.id, fullHour);
     if (booking && booking.hour === fullHour) {
-      // Clicked on an existing booking's start time
       this.openDetailDialog(court, fullHour, booking);
     } else if (!booking) {
-      // Slot is free — open create dialog with the exact start time
       this.openCreateDialog(court, fullHour);
     }
-    // If booking exists but booking.hour !== fullHour it's a continuation slot — ignore click
   }
 
+  /** Abre el diálogo en modo creación para el slot indicado. */
   private openCreateDialog(court: Court, hour: string): void {
     this.dialogMode = 'create';
     this.selectedSlot = { court, hour };
@@ -535,6 +523,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isDialogOpen = true;
   }
 
+  /** Abre el diálogo en modo detalle pre-cargando los datos de la reserva. */
   private openDetailDialog(
     court: Court,
     hour: string,
@@ -547,6 +536,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isDialogOpen = true;
   }
 
+  /** Inicializa el estado del modo detalle a partir de los datos de la reserva. */
   private initDetailState(booking: BookingResponse): void {
     this.detailCart = booking.items.map((item) => ({
       productId: item.productId,
@@ -564,6 +554,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailSearchResults = [];
   }
 
+  /** `true` si los montos de pago actuales difieren del snapshot guardado en DB. */
   get hasUnsavedPaymentChanges(): boolean {
     return (
       Number(this.detailAmountCash) !== this.savedAmountCash ||
@@ -571,10 +562,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Cierra el diálogo. Si hay pagos sin guardar o jugadores marcados como pagados,
+   * muestra un diálogo de confirmación antes de cerrar.
+   */
   closeDialog(): void {
-    // Guard: si el confirm ya está abierto, ignorar nuevas llamadas para evitar
-    // que el backdrop principal siga disparando closeDialog() mientras el confirm
-    // está visible (race condition entre los dos ng-container).
     if (this.confirmDialogOpen) return;
 
     if (this.dialogMode === 'detail') {
@@ -596,6 +588,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.forceCloseDialog();
   }
 
+  /** Acepta el diálogo de confirmación y ejecuta el callback registrado. */
   confirmDialogAccept(): void {
     this.confirmDialogOpen = false;
     if (this.confirmCallback) {
@@ -604,11 +597,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Cancela el diálogo de confirmación sin ejecutar ninguna acción. */
   confirmDialogCancel(): void {
     this.confirmDialogOpen = false;
     this.confirmCallback = null;
   }
 
+  /** Cierra el diálogo sin validaciones, limpiando todo el estado temporal. */
   private forceCloseDialog(): void {
     this.isDialogOpen = false;
     this.productSearch = '';
@@ -621,6 +616,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.savedAmountTransfer = 0;
   }
 
+  /** Resetea el formulario de creación a sus valores iniciales. */
   private resetForm(): void {
     this.clientName = '';
     this.priceType = 'standard';
@@ -632,6 +628,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.searchResults = [];
   }
 
+  /** Valida el formulario y envía la petición de creación de reserva al servidor. */
   saveBooking(): void {
     if (!this.selectedSlot || this.isSaving) return;
 
@@ -720,7 +717,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // Preserve detailCart (already auto-saved), only refresh payment from server
           const cash = Number(updated.payment?.amountCash ?? 0);
           const transfer = Number(updated.payment?.amountTransfer ?? 0);
           this.detailAmountCash = cash;
@@ -743,7 +739,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Auto-guarda items del carrito inmediatamente (sin tocar el pago). */
+  /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */
   private autoSaveItems(): void {
     if (!this.selectedBooking || this.isAutoSavingItems) return;
     this.isAutoSavingItems = true;
@@ -762,7 +758,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // Rebuild cart from server response so unit prices are authoritative
           this.detailCart = updated.items.map((item) => ({
             productId: item.productId,
             name: item.product.name,
@@ -781,6 +776,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Cambia el estado de la reserva a "jugando". */
   onStartPlaying(booking: BookingResponse): void {
     this.isSavingDetail = true;
 
@@ -795,7 +791,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // Only update status reference — preserve detailCart and payment inputs
           this.toast.success(
             'Partido iniciado',
             `${booking.clientName} está jugando.`,
@@ -812,6 +807,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Finaliza el turno registrando el pago final y cambiando el estado a "completado". */
   onFinishPlaying(booking: BookingResponse): void {
     this.isSavingDetail = true;
 
@@ -845,6 +841,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Cancela una reserva (solo admins). Evita doble-click con el guard `isSavingDetail`. */
   onCancelBooking(booking: BookingResponse): void {
     if (!this.isAdmin) {
       this.toast.error(
@@ -854,7 +851,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Guard: evita doble-click / retry mientras el request está en vuelo
     if (this.isSavingDetail) return;
     this.isSavingDetail = true;
 
@@ -880,11 +876,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Cancela una reserva directamente desde la grilla deteniendo la propagación del evento. */
   onDeleteFromGrid(booking: BookingResponse, event: Event): void {
     event.stopPropagation();
     this.onCancelBooking(booking);
   }
 
+  /** Agrega un producto al carrito de creación o incrementa su cantidad si ya existe. */
   addToCart(product: Product): void {
     const idx = this.cart.findIndex((i) => i.productId === product.id);
 
@@ -908,10 +906,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.searchResults = [];
   }
 
+  /** Elimina un ítem del carrito de creación por su id de producto. */
   removeFromCart(productId: string): void {
     this.cart = this.cart.filter((i) => i.productId !== productId);
   }
 
+  /** Actualiza la cantidad de un ítem del carrito de creación; lo elimina si la cantidad llega a 0. */
   updateQty(productId: string, qty: number): void {
     if (qty <= 0) {
       this.removeFromCart(productId);
@@ -922,6 +922,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Filtra los productos disponibles según el término de búsqueda del formulario de creación. */
   onSearchChange(): void {
     const term = this.productSearch.trim().toLowerCase();
     if (!term) {
@@ -933,8 +934,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ── Detail cart methods ───────────────────────────────────────────────────
-
+  /** Agrega un producto al carrito de detalle y dispara el auto-guardado. */
   addToDetailCart(product: Product): void {
     const idx = this.detailCart.findIndex((i) => i.productId === product.id);
     if (idx >= 0) {
@@ -957,11 +957,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.autoSaveItems();
   }
 
+  /** Elimina un ítem del carrito de detalle y dispara el auto-guardado. */
   removeFromDetailCart(productId: string): void {
     this.detailCart = this.detailCart.filter((i) => i.productId !== productId);
     this.autoSaveItems();
   }
 
+  /** Actualiza la cantidad de un ítem del carrito de detalle y dispara el auto-guardado. */
   updateDetailQty(productId: string, qty: number): void {
     if (qty <= 0) {
       this.detailCart = this.detailCart.filter(
@@ -975,6 +977,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.autoSaveItems();
   }
 
+  /** Filtra los productos disponibles según el término de búsqueda del formulario de detalle. */
   onDetailSearchChange(): void {
     const term = this.detailProductSearch.trim().toLowerCase();
     if (!term) {
@@ -995,20 +998,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.isDialogOpen) this.closeDialog();
   }
 
-  /** Adds a booking to bookingMap for its start hour and all covered whole-hour continuation rows.
+  /**
+   * Registra una reserva en el bookingMap para su slot de inicio y todas las filas
+   * de continuación de hora entera que cubre.
    *
-   *  Estrategia minuto-exacta (soporta turnos que inician a :30):
-   *  1. Registra la hora exacta de inicio (ej. '14:30').
-   *  2. Registra como CONTINUACIÓN cada fila de hora entera HH:00 que quede
-   *     completamente cubierta por el turno (HH*60 >= primer múltiplo de 60
-   *     después del inicio, y HH*60 < fin).
-   *  3. Anti-sobreescritura: no pisa continuaciones ya mapeadas.
-   *
-   *  Ejemplos:
-   *   14:00 + 90 min → inicio '14:00', continuación '15:00'
-   *   14:30 + 90 min → inicio '14:30', continuación '15:00'
-   *   14:30 + 60 min → inicio '14:30', continuación '15:00'
-   *   14:30 + 30 min → inicio '14:30', sin continuaciones (termina en 15:00 exacto)
+   * Soporta turnos que inician a :30; las continuaciones son las filas HH:00
+   * cuyo inicio en minutos cae dentro del rango `[startMin, endMin)`.
    */
   private addToBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
@@ -1016,22 +1011,20 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const startMin = h * 60 + m;
     const endMin   = startMin + duration;
 
-    // 1. Slot de inicio exacto (puede ser HH:00 o HH:30)
     this.bookingMap.set(`${booking.courtId}-${booking.hour}`, booking);
 
-    // 2. Filas de continuación: primera hora entera posterior al inicio, hasta antes del fin
     const firstContinuationMin = Math.ceil(startMin / 60) * 60;
     for (let minMark = firstContinuationMin; minMark < endMin; minMark += 60) {
       const rH = Math.floor(minMark / 60) % 24;
       const slotHour = `${rH.toString().padStart(2, '0')}:00`;
       const key = `${booking.courtId}-${slotHour}`;
-      if (slotHour === booking.hour) continue; // ya registrado como inicio
-      if (this.bookingMap.has(key)) continue;  // no sobreescribir
+      if (slotHour === booking.hour) continue;
+      if (this.bookingMap.has(key)) continue;
       this.bookingMap.set(key, booking);
     }
   }
 
-  /** Removes a booking from bookingMap for its exact start key and all whole-hour continuation rows. */
+  /** Elimina una reserva del bookingMap para su slot de inicio y todas sus continuaciones. */
   private removeFromBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
     const [h, m] = booking.hour.split(':').map(Number);
@@ -1049,8 +1042,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Tooltip helpers — calculan datos de una reserva sin necesitar estado ──
-
+  /** Devuelve la hora de fin de una reserva a partir de su hora de inicio y duración. */
   getBookingEndHour(booking: BookingResponse): string {
     const [h, m] = booking.hour.split(':').map(Number);
     const totalMin = h * 60 + m + booking.durationMinutes;
@@ -1059,6 +1051,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
   }
 
+  /** Suma el total de ítems consumidos en una reserva. */
   getBookingItemsTotal(booking: BookingResponse): number {
     return booking.items.reduce(
       (s, i) => s + Number(i.unitPrice) * Number(i.quantity),
@@ -1066,10 +1059,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Devuelve el total general de una reserva (cancha + ítems). */
   getBookingTotal(booking: BookingResponse): number {
     return Number(booking.priceAmount) + this.getBookingItemsTotal(booking);
   }
 
+  /** Devuelve el monto ya pagado de una reserva (efectivo + transferencia). */
   getBookingPaid(booking: BookingResponse): number {
     return (
       Number(booking.payment?.amountCash ?? 0) +
@@ -1077,10 +1072,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Devuelve el saldo pendiente de una reserva. */
   getBookingPending(booking: BookingResponse): number {
     return this.getBookingTotal(booking) - this.getBookingPaid(booking);
   }
 
+  /** Formatea un número usando el locale argentino. */
   fmt(n: number): string {
     return Number(n).toLocaleString('es-AR');
   }

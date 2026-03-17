@@ -1,20 +1,13 @@
-<!-- ─── POS PAGE ─────────────────────────────────────────────────────────────── -->
-<!-- Outer grid: two equal columns, full viewport height minus header/padding   -->
 <div
   class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:h-[calc(100vh-10rem)]"
 >
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       LEFT PANEL — Catálogo de Productos
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="flex flex-col rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
-    <!-- Card Header -->
     <div class="flex flex-col space-y-1.5 border-b border-border p-6">
       <h3
         class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
       >
-        <!-- ShoppingCart icon -->
         <svg
           class="h-5 w-5"
           viewBox="0 0 24 24"
@@ -36,7 +29,6 @@
         Seleccione los productos para agregar al carrito
       </p>
 
-      <!-- Search input -->
       <div class="relative mt-4">
         <svg
           class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -59,10 +51,8 @@
       </div>
     </div>
 
-    <!-- Card Content — product grid -->
     <div class="flex-1 overflow-auto p-4">
       <ng-container *ngIf="isLoadingProducts; else productList">
-        <!-- Loading skeleton -->
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div
             *ngFor="let i of [1, 2, 3, 4, 5, 6]"
@@ -81,7 +71,6 @@
           >
             <div class="text-center">
               <p class="font-semibold">{{ product.name }}</p>
-              <!-- Badge variant="secondary" -->
               <span
                 class="mt-1 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground"
               >
@@ -108,20 +97,14 @@
       </ng-template>
     </div>
   </div>
-  <!-- /left panel -->
 
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       RIGHT PANEL — Ticket Actual
-  ════════════════════════════════════════════════════════════════════════════ -->
   <div
     class="flex flex-col rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
-    <!-- Card Header -->
     <div class="flex flex-col space-y-1.5 border-b border-border p-6">
       <h3
         class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
       >
-        <!-- DollarSign icon -->
         <svg
           class="h-5 w-5"
           viewBox="0 0 24 24"
@@ -139,12 +122,9 @@
       <p class="text-sm text-muted-foreground">Revise y confirme la venta</p>
     </div>
 
-    <!-- Card Content -->
     <div class="flex flex-1 flex-col gap-4 overflow-hidden p-4">
-      <!-- ── Cart items list ──────────────────────────────────────────────────── -->
       <div class="flex-1 space-y-2 overflow-auto">
         <ng-container *ngIf="cart.length === 0; else cartItems">
-          <!-- Empty state -->
           <div
             class="flex h-full items-center justify-center text-center text-muted-foreground"
           >
@@ -175,7 +155,6 @@
             *ngFor="let item of cart"
             class="flex items-center gap-3 rounded-lg border border-border p-3"
           >
-            <!-- Product info -->
             <div class="flex-1">
               <p class="font-medium">{{ item.name }}</p>
               <p class="text-sm text-muted-foreground">
@@ -183,14 +162,12 @@
               </p>
             </div>
 
-            <!-- Qty controls -->
             <div class="flex items-center gap-2">
               <button
                 type="button"
                 (click)="updateQuantity(item.productId, -1)"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <!-- Minus icon -->
                 <svg
                   class="h-4 w-4"
                   viewBox="0 0 24 24"
@@ -211,7 +188,6 @@
                 (click)="updateQuantity(item.productId, 1)"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <!-- Plus icon -->
                 <svg
                   class="h-4 w-4"
                   viewBox="0 0 24 24"
@@ -227,20 +203,17 @@
               </button>
             </div>
 
-            <!-- Line total -->
             <div class="w-20 text-right">
               <p class="font-bold">
                 ${{ fmt(item.salePrice * item.quantity) }}
               </p>
             </div>
 
-            <!-- Remove button -->
             <button
               type="button"
               (click)="removeFromCart(item.productId)"
               class="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <!-- Trash2 icon -->
               <svg
                 class="h-4 w-4"
                 viewBox="0 0 24 24"
@@ -260,11 +233,8 @@
           </div>
         </ng-template>
       </div>
-      <!-- /cart list -->
 
-      <!-- ── Payment section ──────────────────────────────────────────────────── -->
       <div class="space-y-4 border-t border-border pt-4">
-        <!-- Cash / Transfer inputs -->
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="space-y-2">
             <label class="text-sm font-medium leading-none" for="efectivo">
@@ -294,7 +264,6 @@
           </div>
         </div>
 
-        <!-- Totals block -->
         <div class="space-y-2 rounded-lg bg-muted p-4">
           <div class="flex justify-between text-sm">
             <span class="text-muted-foreground">Subtotal:</span>
@@ -321,7 +290,6 @@
             </ng-template>
           </ng-container>
 
-          <!-- Grand total row -->
           <div class="border-t border-border pt-2">
             <div class="flex justify-between">
               <span class="text-lg font-semibold">TOTAL:</span>
@@ -332,14 +300,12 @@
           </div>
         </div>
 
-        <!-- Confirm sale button -->
         <button
           type="button"
           (click)="confirmSale()"
           [disabled]="isConfirmDisabled"
           class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <!-- DollarSign icon -->
           <svg
             class="h-5 w-5"
             viewBox="0 0 24 24"
@@ -358,10 +324,6 @@
           <ng-template #confirmarLabel>Confirmar Venta</ng-template>
         </button>
       </div>
-      <!-- /payment section -->
     </div>
-    <!-- /card content -->
   </div>
-  <!-- /right panel -->
 </div>
-<!-- /outer grid -->

@@ -105,39 +105,56 @@ export class ReportsComponent implements OnInit {
     this.loadAll();
   }
 
+  /** Suma total de ingresos (alquileres + ventas) del período seleccionado. */
   get totalRevenue(): number {
     return this.revenueData.reduce(
       (s, d) => s + (Number(d.bookings) || 0) + (Number(d.sales) || 0),
       0,
     );
   }
+
+  /** Total de ingresos por alquileres del período. */
   get totalAlquileres(): number {
     return this.revenueData.reduce((s, d) => s + (Number(d.bookings) || 0), 0);
   }
+
+  /** Total de ingresos por ventas de productos del período. */
   get totalProductos(): number {
     return this.revenueData.reduce((s, d) => s + (Number(d.sales) || 0), 0);
   }
+
+  /** Porcentaje de ingresos por alquileres sobre el total. */
   get pctAlquileres(): string {
     return this.totalRevenue > 0
       ? ((this.totalAlquileres / this.totalRevenue) * 100).toFixed(1)
       : '0.0';
   }
+
+  /** Porcentaje de ingresos por productos sobre el total. */
   get pctProductos(): string {
     return this.totalRevenue > 0
       ? ((this.totalProductos / this.totalRevenue) * 100).toFixed(1)
       : '0.0';
   }
+
+  /** Ticket promedio por transacción. */
   get ticketPromedio(): number {
     return this.transactions.length > 0
       ? Math.round(this.totalRevenue / this.transactions.length)
       : 0;
   }
+
+  /** Suma total de todas las transacciones del período. */
   get transactionTotal(): number {
     return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
   }
+
+  /** Monto total generado por el ranking de productos. */
   get rankingTotalAmount(): number {
     return this.productRanking.reduce((s, p) => s + (Number(p.revenue) || 0), 0);
   }
+
+  /** Cantidad total de unidades vendidas en el ranking. */
   get rankingTotalUnidades(): number {
     return this.productRanking.reduce(
       (s, p) => s + (Number(p.qty) || 0),
@@ -145,8 +162,8 @@ export class ReportsComponent implements OnInit {
     );
   }
 
+  /** Selecciona un período y recarga los datos. Desactiva el filtro de día exacto. */
   selectPeriod(id: string): void {
-    // Al elegir un período, se desactiva el filtro de día exacto
     this.dateFilterActive = false;
     this.selectedDate = '';
     if (this.selectedPeriod === id) return;
@@ -172,12 +189,12 @@ export class ReportsComponent implements OnInit {
     this.loadAll();
   }
 
+  /** Carga todos los datos del reporte en paralelo usando el período y filtro de fecha actuales. */
   private loadAll(): void {
     const range = this.getDateRange(this.selectedPeriod);
     this.dateFrom = range.from;
     this.dateTo = range.to;
 
-    // Cuando hay filtro de día exacto, groupBy='day' para que el gráfico muestre esa jornada
     const groupBy = this.dateFilterActive ? 'day' : this.getGroupBy(this.selectedPeriod);
     const date = this.dateFilterActive ? this.selectedDate : undefined;
 
@@ -215,6 +232,7 @@ export class ReportsComponent implements OnInit {
       });
   }
 
+  /** Construye los datasets para el gráfico de barras y el de torta con los colores del tema. */
   private buildCharts(): void {
     const style = getComputedStyle(document.documentElement);
     const primaryColor = style.getPropertyValue('--primary').trim();
@@ -253,6 +271,7 @@ export class ReportsComponent implements OnInit {
     };
   }
 
+  /** Exporta las transacciones del período actual a un archivo Excel (.xlsx). */
   exportExcel(): void {
     if (this.isExporting) return;
 
@@ -276,8 +295,11 @@ export class ReportsComponent implements OnInit {
       });
   }
 
+  /**
+   * Genera el archivo Excel a partir de las transacciones, aplica formato de moneda
+   * y dispara la descarga en el navegador.
+   */
   private triggerExcelDownload(transactions: TransactionExport[]): void {
-    // 1. Mapear datos con encabezados en español
     const rows = transactions.map((tx) => ({
       Fecha: tx.date,
       Hora: tx.time,
@@ -289,7 +311,6 @@ export class ReportsComponent implements OnInit {
       'Registrado por': tx.createdBy,
     }));
 
-    // 2. Agregar fila de totales
     const totalEfectivo = rows.reduce((s, r) => s + r.Efectivo, 0);
     const totalTransferencia = rows.reduce((s, r) => s + r.Transferencia, 0);
     const totalGeneral = rows.reduce((s, r) => s + r.Total, 0);
@@ -305,24 +326,21 @@ export class ReportsComponent implements OnInit {
       'Registrado por': '',
     });
 
-    // 3. Crear worksheet y workbook
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
 
-    // 4. Ajustar ancho de columnas
     ws['!cols'] = [
-      { wch: 12 },  // Fecha
-      { wch: 8 },   // Hora
-      { wch: 18 },  // Tipo
-      { wch: 36 },  // Concepto
-      { wch: 14 },  // Efectivo
-      { wch: 16 },  // Transferencia
-      { wch: 14 },  // Total
-      { wch: 20 },  // Registrado por
+      { wch: 12 },
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 36 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 20 },
     ];
 
-    // 5. Aplicar formato de moneda a columnas numéricas (E, F, G → índices 4,5,6)
     const moneyFmt = '"$"#,##0.00';
-    const totalRows = rows.length + 1; // +1 por la fila de encabezado
+    const totalRows = rows.length + 1;
     ['E', 'F', 'G'].forEach((col) => {
       for (let r = 2; r <= totalRows; r++) {
         const cellRef = `${col}${r}`;
@@ -335,7 +353,6 @@ export class ReportsComponent implements OnInit {
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Reporte Financiero');
 
-    // 6. Descargar archivo
     const filename = `Reporte_Financiero_${this.localDateStr(new Date())}.xlsx`;
     XLSX.writeFile(wb, filename);
 
@@ -346,7 +363,7 @@ export class ReportsComponent implements OnInit {
   }
 
   /**
-   * Devuelve la fecha en formato YYYY-MM-DD usando la hora LOCAL del navegador,
+   * Devuelve la fecha en formato YYYY-MM-DD usando la hora local del navegador,
    * evitando el desfase de UTC-3 que produce toISOString() después de las 21hs.
    */
   private localDateStr(d: Date): string {
@@ -356,6 +373,7 @@ export class ReportsComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
+  /** Calcula el rango de fechas (from/to) correspondiente al período indicado. */
   private getDateRange(period: string): { from: string; to: string } {
     const today = new Date();
     const to = this.localDateStr(today);
@@ -387,6 +405,7 @@ export class ReportsComponent implements OnInit {
     return { from: this.localDateStr(from), to };
   }
 
+  /** Devuelve el agrupamiento de datos (day/week/month) adecuado para el período. */
   private getGroupBy(period: string): GroupBy {
     switch (period) {
       case 'semana':
@@ -404,6 +423,7 @@ export class ReportsComponent implements OnInit {
     }
   }
 
+  /** Formatea un número como string con el locale argentino. */
   fmt(value: number | string | null | undefined): string {
     return (Number(value) || 0).toLocaleString('es-AR');
   }

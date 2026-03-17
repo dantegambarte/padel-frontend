@@ -25,13 +25,16 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Descarta el toast con el id indicado. */
   dismiss(id: number): void {
     this.toastService.dismiss(id);
   }
 
+  /**
+   * Devuelve las clases CSS del toast según su variante.
+   * Usa colores concretos (no variables CSS) para garantizar contraste independientemente del tema.
+   */
   toastClass(variant: ToastMessage['variant']): string {
-    // Usamos colores concretos (no variables CSS) para garantizar contraste
-    // independientemente del tema. shadow-xl + border visible para separar del fondo.
     const base =
       'flex items-start gap-3 rounded-lg border p-4 shadow-xl ' +
       'animate-in slide-in-from-right-full duration-300';

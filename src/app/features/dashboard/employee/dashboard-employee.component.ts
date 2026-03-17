@@ -14,18 +14,20 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './dashboard-employee.component.html',
 })
 export class DashboardEmployeeComponent implements OnInit {
-  // ── Loading ───────────────────────────────────────────────────────────────────
   isLoading = true;
 
-  // ── Data ──────────────────────────────────────────────────────────────────────
   cashAmount = 0;
   upcomingBookings: BookingResponse[] = [];
   lowStockProducts: LowStockProduct[] = [];
 
+  /**
+   * Fecha de hoy en formato YYYY-MM-DD usando hora local
+   * para evitar el desfase provocado por UTC-3.
+   */
   private today = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })(); // YYYY-MM-DD hora local (evita desfase UTC-3)
+  })();
 
   constructor(
     private bookingsService: BookingsService,
@@ -34,10 +36,13 @@ export class DashboardEmployeeComponent implements OnInit {
     private toast: ToastService,
   ) {}
 
+  /**
+   * Carga en paralelo la caja, las reservas de hoy y los productos con stock bajo.
+   * El error de caja no cancela el `forkJoin` gracias al `catchError`.
+   */
   ngOnInit(): void {
     this.isLoading = true;
 
-    // Carga paralela — el catchError en cash$ evita que un 404 cancele el forkJoin
     const cash$ = this.cashService
       .getCurrent()
       .pipe(catchError(() => of(null)));
@@ -52,7 +57,6 @@ export class DashboardEmployeeComponent implements OnInit {
         next: ({ cash, bookings, lowStock }) => {
           this.cashAmount = cash?.efectivoEsperado ?? 0;
 
-          // Solo turnos con status 'booked' o 'playing', ordenados por hora
           this.upcomingBookings = bookings
             .filter((b) => b.status === 'booked' || b.status === 'playing')
             .sort((a, b) => a.hour.localeCompare(b.hour));
@@ -68,35 +72,29 @@ export class DashboardEmployeeComponent implements OnInit {
       });
   }
 
-  // ── Computed ──────────────────────────────────────────────────────────────────
-
-  /** Stat card: próximo turno — hora del primero de la lista. */
+  /** Devuelve la hora del próximo turno o 'Sin turnos' si no hay ninguno. */
   get proximoTurnoValue(): string {
     return this.upcomingBookings[0]
       ? this.formatHour(this.upcomingBookings[0].hour)
       : 'Sin turnos';
   }
 
-  /** Stat card: trend del próximo turno — nombre de cancha. */
+  /** Devuelve el nombre de la cancha del próximo turno. */
   get proximoTurnoTrend(): string {
     return this.upcomingBookings[0] ? this.upcomingBookings[0].court.name : '—';
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
-
+  /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     return value.toLocaleString('es-AR');
   }
 
-  /** Devuelve la hora en formato HH:MM. El campo hour ya viene como string 'HH:MM'. */
+  /** Devuelve la hora en formato HH:MM tal como viene del backend. */
   formatHour(hour: string): string {
     return hour;
   }
 
-  /** Badge variant para el estado del turno.
-   *  Pagado (payment registrado) → 'default' (bg-primary),
-   *  Pendiente (sin payment)     → 'secondary'.
-   */
+  /** Devuelve `true` si la reserva tiene un pago registrado. */
   isPaid(booking: BookingResponse): boolean {
     return booking.payment !== null;
   }

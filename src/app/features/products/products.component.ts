@@ -35,6 +35,7 @@ export class ProductsComponent implements OnInit {
 
   newCategoryName = '';
 
+  /** Lista de categorías únicas extraídas del inventario actual. */
   get categories(): { id: string; name: string }[] {
     const seen = new Set<string>();
     return this.products
@@ -45,6 +46,7 @@ export class ProductsComponent implements OnInit {
       );
   }
 
+  /** `true` cuando el usuario seleccionó "Nueva categoría" en el selector. */
   get isNewCategory(): boolean {
     return this.form.category === '__nueva__';
   }
@@ -59,36 +61,45 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
+  /** `true` cuando el usuario no es administrador y sólo puede ver los productos. */
   get isReadOnly(): boolean {
     return !this.authService.isAdmin;
   }
+
+  /** `true` cuando el diálogo está en modo de sólo lectura. */
   get viewMode(): boolean {
     return this.dialogMode === 'view';
   }
 
+  /** Cantidad total de productos en el inventario. */
   get totalProducts(): number {
     return this.products.length;
   }
 
+  /** Valor total del inventario calculado como suma de (precio venta × stock). */
   get totalInventoryValue(): number {
     return this.products.reduce((sum, p) => sum + p.salePrice * p.stock, 0);
   }
 
+  /** Cantidad de productos marcados como destacados. */
   get featuredCount(): number {
     return this.products.filter((p) => p.isFeatured).length;
   }
 
+  /** Devuelve los productos filtrados por el término de búsqueda actual. */
   get filteredProducts(): Product[] {
     if (!this.searchQuery.trim()) return this.products;
     const q = this.searchQuery.toLowerCase();
     return this.products.filter((p) => p.name.toLowerCase().includes(q));
   }
 
+  /** Título del diálogo según el modo activo. */
   get dialogTitle(): string {
     if (this.viewMode) return 'Detalles del Producto';
     return this.editingProductId ? 'Editar Producto' : 'Agregar Producto';
   }
 
+  /** Descripción del diálogo según el modo activo. */
   get dialogDescription(): string {
     if (this.viewMode) return 'Información del producto';
     return this.editingProductId
@@ -96,10 +107,14 @@ export class ProductsComponent implements OnInit {
       : 'Complete la información del nuevo producto';
   }
 
+  /** Etiqueta del botón de submit según si se está creando o editando. */
   get submitLabel(): string {
     return this.editingProductId ? 'Guardar Cambios' : 'Agregar Producto';
   }
 
+  /**
+   * Carga todos los productos desde el servidor y los asigna al estado local.
+   */
   private loadProducts(): void {
     this.isLoading = true;
     this.productsService
@@ -118,6 +133,7 @@ export class ProductsComponent implements OnInit {
       });
   }
 
+  /** Abre el diálogo en modo creación con el formulario vacío. */
   openCreate(): void {
     this.dialogMode = 'create';
     this.editingProductId = null;
@@ -126,6 +142,10 @@ export class ProductsComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /**
+   * Abre el diálogo en modo edición pre-cargando los datos del producto.
+   * @param product - Producto a editar.
+   */
   openEdit(product: Product): void {
     this.dialogMode = 'edit';
     this.editingProductId = product.id;
@@ -141,6 +161,10 @@ export class ProductsComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /**
+   * Abre el diálogo en modo vista (solo lectura) con los datos del producto.
+   * @param product - Producto a visualizar.
+   */
   openView(product: Product): void {
     this.dialogMode = 'view';
     this.editingProductId = product.id;
@@ -156,6 +180,7 @@ export class ProductsComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /** Cierra el diálogo y limpia el nombre de nueva categoría. */
   closeDialog(): void {
     this.isDialogOpen = false;
     this.newCategoryName = '';
@@ -166,6 +191,10 @@ export class ProductsComponent implements OnInit {
     if (this.isDialogOpen) this.closeDialog();
   }
 
+  /**
+   * Valida el formulario y envía la petición de creación o actualización al servidor.
+   * Si el usuario eligió "Nueva categoría", omite `categoryId` del DTO (es opcional).
+   */
   saveProduct(): void {
     const categoryValue = this.isNewCategory
       ? this.newCategoryName.trim()
@@ -182,9 +211,6 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
-    // El backend espera `categoryId` (UUID), no `category` (string de nombre).
-    // Si el usuario seleccionó "Nueva categoría", form.category es '__nueva__'
-    // y no hay UUID disponible → se omite categoryId (es opcional en el DTO).
     const dto: CreateProductDto = {
       name: this.form.name,
       ...(this.isNewCategory ? {} : { categoryId: categoryValue }),
@@ -231,6 +257,10 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  /**
+   * Elimina un producto del inventario.
+   * @param product - Producto a eliminar.
+   */
   deleteProduct(product: Product): void {
     this.deletingId = product.id;
     this.productsService
@@ -250,18 +280,22 @@ export class ProductsComponent implements OnInit {
       });
   }
 
+  /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     return value.toLocaleString('es-AR');
   }
 
+  /** Devuelve las primeras dos letras del nombre en mayúsculas como avatar. */
   initials(name: string): string {
     return name.substring(0, 2).toUpperCase();
   }
 
+  /** Alterna el estado de destacado en el formulario (sólo en modo edición/creación). */
   toggleFeatured(): void {
     if (!this.viewMode) this.form.isFeatured = !this.form.isFeatured;
   }
 
+  /** Devuelve un `ProductForm` vacío para inicializar o resetear el formulario. */
   private emptyForm(): ProductForm {
     return {
       name: '',
