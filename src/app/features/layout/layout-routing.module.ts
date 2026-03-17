@@ -63,6 +63,12 @@ const routes: Routes = [
           import('../settings/settings.module').then((m) => m.SettingsModule),
         data: { title: 'Settings' },
       },
+      {
+        path: 'account',
+        loadChildren: () =>
+          import('../account/account.module').then((m) => m.AccountModule),
+        data: { title: 'Mi Cuenta' },
+      },
     ],
   },
 ];

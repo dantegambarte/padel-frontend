@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { User } from '../../../core/models/user.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { CalculatorService } from '../../../core/services/calculator.service';
 
 @Component({
@@ -14,7 +16,11 @@ export class ToolbarComponent {
 
   isNotifOpen = false;
 
-  constructor(public calcService: CalculatorService) {}
+  constructor(
+    public calcService: CalculatorService,
+    private router: Router,
+    public authService: AuthService,
+  ) {}
 
   /** Devuelve las dos primeras iniciales del nombre completo del usuario, en mayúsculas. */
   get userInitials(): string {
@@ -27,6 +33,11 @@ export class ToolbarComponent {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  }
+
+  /** Navega a la página de cuenta del usuario. */
+  goToAccount(): void {
+    this.router.navigate(['/app/account']);
   }
 
   /** Alterna la visibilidad del panel de notificaciones. */

@@ -17,6 +17,7 @@ const routes: Routes = [
     loadChildren: () =>
       import('./features/layout/layout.module').then((m) => m.LayoutModule),
     canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
   },
 
   { path: '**', redirectTo: '/auth/login' },
