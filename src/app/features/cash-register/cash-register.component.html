@@ -385,64 +385,61 @@
 
 <ng-container *ngIf="isDialogOpen">
   <div
-    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+    appModalScrollLock
+    class="modal-backdrop"
     (click)="closeDialog()"
-  ></div>
-
-  <div
-    class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-lg"
-    (click)="$event.stopPropagation()"
   >
-    <div class="mb-4">
-      <h2
-        class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
-      >
-        Confirmar Cierre de Caja
-      </h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">
-        Esta acción bloqueará el día y no podrá realizar más cambios. ¿Está
-        seguro?
-      </p>
-    </div>
+    <div class="modal-card max-w-md" (click)="$event.stopPropagation()">
 
-    <div class="space-y-4 py-4">
-      <div class="rounded-lg border border-border bg-muted/30 p-4">
-        <div class="space-y-2">
-          <div class="flex justify-between">
-            <span>Efectivo esperado:</span>
-            <span class="font-semibold">${{ fmt(efectivoEsperado) }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Efectivo contado:</span>
-            <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
-          </div>
-          <div class="flex justify-between border-t border-border pt-2">
-            <span class="font-bold">Diferencia:</span>
-            <span class="font-bold" [ngClass]="diferenciaClass">
-              {{ diferenciaText }}
-            </span>
+      <!-- Header -->
+      <div class="modal-header">
+        <h2 class="text-lg font-semibold leading-none tracking-tight text-card-foreground">
+          Confirmar Cierre de Caja
+        </h2>
+        <p class="mt-1.5 text-sm text-muted-foreground">
+          Esta acción bloqueará el día y no podrá realizar más cambios. ¿Está seguro?
+        </p>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <div class="rounded-lg border border-border bg-muted/30 p-4">
+          <div class="flex flex-col gap-2">
+            <div class="flex justify-between">
+              <span>Efectivo esperado:</span>
+              <span class="font-semibold">${{ fmt(efectivoEsperado) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Efectivo contado:</span>
+              <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
+            </div>
+            <div class="flex justify-between border-t border-border pt-2">
+              <span class="font-bold">Diferencia:</span>
+              <span class="font-bold" [ngClass]="diferenciaClass">{{ diferenciaText }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="flex justify-end gap-3">
-      <button
-        type="button"
-        (click)="closeDialog()"
-        [disabled]="isSubmitting"
-        class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        Cancelar
-      </button>
-      <button
-        type="button"
-        (click)="confirmarCierre()"
-        [disabled]="isSubmitting"
-        class="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {{ isSubmitting ? "Cerrando..." : "Confirmar Cierre" }}
-      </button>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button
+          type="button"
+          (click)="closeDialog()"
+          [disabled]="isSubmitting"
+          class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmarCierre()"
+          [disabled]="isSubmitting"
+          class="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {{ isSubmitting ? "Cerrando..." : "Confirmar Cierre" }}
+        </button>
+      </div>
     </div>
   </div>
 </ng-container>
