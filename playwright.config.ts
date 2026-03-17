@@ -24,5 +24,21 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/auth-state.json' },
     },
+    {
+      // Simula viewport móvil 390×844 sobre Chromium (ya instalado).
+      // devices['iPhone 13'] usa WebKit por defecto y requiere instalación aparte.
+      // Con browserName: 'chromium' + viewport manual obtenemos el mismo tamaño
+      // de pantalla sin necesidad de instalar browsers adicionales.
+      name: 'mobile-chrome',
+      testMatch: /.*\.mobile\.spec\.ts/,
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+        storageState: 'e2e/auth-state.json',
+      },
+    },
   ],
 });
