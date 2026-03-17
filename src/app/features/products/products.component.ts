@@ -182,9 +182,12 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
+    // El backend espera `categoryId` (UUID), no `category` (string de nombre).
+    // Si el usuario seleccionó "Nueva categoría", form.category es '__nueva__'
+    // y no hay UUID disponible → se omite categoryId (es opcional en el DTO).
     const dto: CreateProductDto = {
       name: this.form.name,
-      category: categoryValue,
+      ...(this.isNewCategory ? {} : { categoryId: categoryValue }),
       costPrice: parseFloat(this.form.costPrice),
       salePrice: parseFloat(this.form.salePrice),
       stock: parseInt(this.form.stock, 10),
