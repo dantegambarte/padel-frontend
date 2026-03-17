@@ -14,9 +14,11 @@ export interface RevenueDay {
   total: number;
 }
 
+/** Shape real del backend GET /reports/payment-methods */
 export interface PaymentBreakdown {
-  efectivo: { amount: number; percentage: number };
-  transferencia: { amount: number; percentage: number };
+  cash: { total: number; percentage: number };
+  transfer: { total: number; percentage: number };
+  grandTotal: number;
 }
 
 /** Shape real del backend GET /reports/summary */
@@ -103,7 +105,9 @@ export class ReportsService {
     const params = date
       ? this.buildParams({ date })
       : this.buildParams({ dateFrom, dateTo });
-    return this.http.get<PaymentBreakdown>(`${this.url}/payment-methods`, { params });
+    return this.http.get<PaymentBreakdown>(`${this.url}/payment-methods`, {
+      params,
+    });
   }
 
   /** GET /reports/products-ranking — top 20 productos más vendidos. */
@@ -115,7 +119,9 @@ export class ReportsService {
     const params = date
       ? this.buildParams({ date })
       : this.buildParams({ dateFrom, dateTo });
-    return this.http.get<ProductRanking[]>(`${this.url}/products-ranking`, { params });
+    return this.http.get<ProductRanking[]>(`${this.url}/products-ranking`, {
+      params,
+    });
   }
 
   /**
