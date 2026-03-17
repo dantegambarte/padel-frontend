@@ -51,4 +51,17 @@ export class UsersService {
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
+
+  /**
+   * Restablece la contraseña de un usuario (solo Admin).
+   * La contraseña viaja por HTTPS y se hashea en el servidor — nunca se almacena en texto plano.
+   * @param id          - UUID del usuario al que se le resetea la contraseña.
+   * @param newPassword - Nueva contraseña temporal definida por el administrador.
+   */
+  resetPassword(id: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+    return this.http.patch<{ success: boolean; message: string }>(
+      `${this.url}/${id}/reset-password`,
+      { newPassword },
+    );
+  }
 }

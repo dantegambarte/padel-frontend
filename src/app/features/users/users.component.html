@@ -140,6 +140,20 @@
                   >
                     Editar
                   </button>
+
+                  <!-- Botón Restablecer Contraseña — no disponible para el propio usuario logueado -->
+                  <button
+                    *ngIf="canToggle(user)"
+                    (click)="openResetModal(user)"
+                    title="Restablecer Contraseña"
+                    class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-300/60 bg-amber-50 text-amber-600 shadow-sm transition-colors hover:bg-amber-100 hover:border-amber-400 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-700/50 dark:hover:bg-amber-900/40"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                  </button>
+
                   <button
                     *ngIf="canToggle(user)"
                     (click)="toggleStatus(user)"
@@ -196,15 +210,116 @@
     Nuevo Usuario
   </button>
 
+  <!-- ── Modal: Restablecer Contraseña ──────────────────────────────────── -->
+  <ng-container *ngIf="isResetOpen && resetTargetUser">
+    <div
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      (click)="closeResetModal()"
+    >
+      <div class="absolute inset-0 bg-black/60" aria-hidden="true"></div>
+      <div
+        class="relative z-10 w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- Header -->
+        <div class="border-b border-border p-6">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/40">
+              <svg class="h-6 w-6 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-card-foreground">
+                Restablecer Contraseña
+              </h3>
+              <p class="text-sm text-muted-foreground">
+                {{ resetTargetUser.fullName }}
+                <span class="font-mono text-xs">({{ resetTargetUser.username }})</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="space-y-4 p-6">
+          <!-- Aviso de seguridad -->
+          <div class="flex items-start gap-2 rounded-md border border-amber-200/60 bg-amber-50/80 px-3 py-2.5 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/30 dark:text-amber-400">
+            <svg class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>La contraseña se guardará encriptada. Anotá la nueva clave y entregásela al empleado en persona.</span>
+          </div>
+
+          <!-- Error -->
+          <div
+            *ngIf="resetPasswordError"
+            class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {{ resetPasswordError }}
+          </div>
+
+          <!-- Input -->
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-foreground" for="reset-pwd">
+              Nueva Contraseña Temporal
+            </label>
+            <input
+              id="reset-pwd"
+              type="password"
+              [(ngModel)]="resetPassword"
+              placeholder="Mínimo 6 caracteres"
+              [disabled]="isResetSubmitting"
+              (keydown.enter)="submitReset()"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/50 disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 border-t border-border px-6 py-4">
+          <button
+            type="button"
+            (click)="closeResetModal()"
+            [disabled]="isResetSubmitting"
+            class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="submitReset()"
+            [disabled]="isResetSubmitting || !resetPassword"
+            class="inline-flex items-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <ng-container *ngIf="isResetSubmitting">
+              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              Guardando…
+            </ng-container>
+            <ng-container *ngIf="!isResetSubmitting">
+              Guardar Nueva Contraseña
+            </ng-container>
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
   <ng-container *ngIf="isEditOpen && editingUser">
     <div
-      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4"
       (click)="closeEditModal()"
-    ></div>
-
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    >
+      <div class="absolute inset-0 bg-black/60" aria-hidden="true"></div>
       <div
-        class="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
+        class="relative z-10 w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
         (click)="$event.stopPropagation()"
       >
         <div class="border-b border-border p-6">
@@ -323,13 +438,12 @@
 
   <ng-container *ngIf="isDialogOpen">
     <div
-      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4"
       (click)="closeDialog()"
-    ></div>
-
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    >
+      <div class="absolute inset-0 bg-black/60" aria-hidden="true"></div>
       <div
-        class="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
+        class="relative z-10 w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
         (click)="$event.stopPropagation()"
       >
         <div class="border-b border-border p-6">
