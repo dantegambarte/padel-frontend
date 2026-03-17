@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import {
@@ -22,9 +22,14 @@ export class BookingsService {
     return this.http.get<BookingResponse[]>(this.url, { params });
   }
 
-  /** POST /bookings — crea una reserva nueva (atómico: cancha + productos + caja). */
+  /** POST /bookings — crea una reserva nueva (atómico: cancha + productos + caja).
+   *  Genera un UUID único por intento y lo envía como X-Idempotency-Key para que
+   *  el backend detecte y rechace requests duplicados (red lenta, doble envío). */
   create(dto: CreateBookingDto): Observable<BookingResponse> {
-    return this.http.post<BookingResponse>(this.url, dto);
+    const headers = new HttpHeaders({
+      'X-Idempotency-Key': crypto.randomUUID(),
+    });
+    return this.http.post<BookingResponse>(this.url, dto, { headers });
   }
 
   /**

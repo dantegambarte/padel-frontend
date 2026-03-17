@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -22,7 +22,12 @@ export class SalesService {
 
   constructor(private http: HttpClient) {}
 
+  /** POST /sales — confirma una venta.
+   *  Genera un UUID único por intento para que el backend detecte duplicados. */
   create(dto: CreateSaleDto): Observable<SaleResponse> {
-    return this.http.post<SaleResponse>(this.url, dto);
+    const headers = new HttpHeaders({
+      'X-Idempotency-Key': crypto.randomUUID(),
+    });
+    return this.http.post<SaleResponse>(this.url, dto, { headers });
   }
 }
