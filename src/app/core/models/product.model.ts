@@ -11,7 +11,7 @@ export interface Product {
 
 export interface CreateProductDto {
   name: string;
-  category: string;
+  categoryId?: string;
   costPrice: number;
   salePrice: number;
   stock: number;
