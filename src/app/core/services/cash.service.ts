@@ -66,14 +66,16 @@ export class CashService {
       map((res) => ({
         sessionId: res.session?.id ?? null,
         isClosed: !res.isOpen,
-        efectivoEsperado: res.cashExpected ?? 0,
-        transferenciaTotal: res.transferTotal ?? 0,
+        // PostgreSQL serializa `numeric` como string (ej: "3000.00").
+        // Number() convierte a number real antes de que fmt/toLocaleString lo procese.
+        efectivoEsperado:   Number(res.cashExpected)   || 0,
+        transferenciaTotal: Number(res.transferTotal)  || 0,
         movimientos: (res.transactions ?? []).map((t) => ({
           id: t.id,
           hora: this.formatHora(t.createdAt),
-          tipo: t.amountCash > 0 ? 'Efectivo' : ('Transferencia' as const),
+          tipo: Number(t.amountCash) > 0 ? 'Efectivo' : ('Transferencia' as const),
           concepto: t.concept,
-          monto: t.amountCash + t.amountTransfer,
+          monto: Number(t.amountCash) + Number(t.amountTransfer),
         })),
       })),
     );
