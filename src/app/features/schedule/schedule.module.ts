@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 
 import { ScheduleRoutingModule } from './schedule-routing.module';
 import { ScheduleComponent } from './schedule.component';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [ScheduleComponent],
-  imports: [CommonModule, FormsModule, ScheduleRoutingModule],
+  imports: [CommonModule, FormsModule, ScheduleRoutingModule, SharedModule],
 })
 export class ScheduleModule {}

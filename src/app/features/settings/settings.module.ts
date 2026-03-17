@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [SettingsComponent],
-  imports: [CommonModule, FormsModule, SettingsRoutingModule],
+  imports: [CommonModule, FormsModule, SettingsRoutingModule, SharedModule],
 })
 export class SettingsModule {}
