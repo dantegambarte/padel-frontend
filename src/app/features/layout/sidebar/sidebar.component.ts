@@ -2,8 +2,8 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostListener,
   Input,
+  NgZone,
   OnInit,
   OnDestroy,
   Output,
@@ -95,10 +95,26 @@ export class SidebarComponent implements OnInit, OnDestroy {
     },
   ];
 
+  /** Referencia al listener para poder removerlo en ngOnDestroy. */
+  private readonly documentClickHandler = (event: Event): void => {
+    // Solo entra a la zona Angular (y dispara CD) si el menú está abierto
+    // y el click fue fuera del sidebar. De lo contrario no hace nada y
+    // Angular jamás entera de este evento → sin CD → sin repaint del backdrop-blur.
+    if (
+      this.isUserMenuOpen &&
+      !this.elRef.nativeElement.contains(event.target as Node)
+    ) {
+      this.ngZone.run(() => {
+        this.isUserMenuOpen = false;
+      });
+    }
+  };
+
   constructor(
     private authService: AuthService,
     private router: Router,
     private elRef: ElementRef,
+    private ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
@@ -117,10 +133,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
           this.currentUrl = e.urlAfterRedirects;
         }),
     );
+
+    // Registrar el listener FUERA de la zona Angular para que los clicks
+    // que no cambian estado no provoquen ciclos de change detection.
+    this.ngZone.runOutsideAngular(() => {
+      document.addEventListener('click', this.documentClickHandler);
+    });
   }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+    document.removeEventListener('click', this.documentClickHandler);
   }
 
   get filteredNavItems(): NavItem[] {
@@ -170,11 +193,4 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isUserMenuOpen = !this.isUserMenuOpen;
   }
 
-  /** Cierra el dropdown si el click fue fuera del sidebar. */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isUserMenuOpen = false;
-    }
-  }
 }
