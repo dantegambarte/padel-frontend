@@ -5,8 +5,8 @@ import { Observable, map, take } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Route guard that protects private application routes.
- * Redirects unauthenticated users to `/auth/login`.
+ * Guard de ruta que protege las rutas privadas.
+ * Redirige al login a los usuarios no autenticados.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
@@ -16,8 +16,8 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   /**
-   * Checks whether the current user is authenticated.
-   * Returns `true` to allow navigation or a {@link UrlTree} to redirect to the login page.
+   * Verifica si el usuario actual está autenticado.
+   * Devuelve `true` para permitir la navegación o un {@link UrlTree} para redirigir al login.
    */
   canActivate(): Observable<boolean | UrlTree> {
     return this.authService.currentUser$.pipe(

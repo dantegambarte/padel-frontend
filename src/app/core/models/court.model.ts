@@ -1,4 +1,4 @@
-/** A padel court entity. */
+/** Entidad de una cancha de pádel. */
 export interface Court {
   id: string;
   name: string;
@@ -6,14 +6,14 @@ export interface Court {
   isActive: boolean;
 }
 
-/** Payload for creating a new court. */
+/** Payload para crear una nueva cancha. */
 export interface CreateCourtDto {
   name: string;
   description?: string;
   isActive?: boolean;
 }
 
-/** Payload for partially updating an existing court. */
+/** Payload para actualizar parcialmente una cancha existente. */
 export interface UpdateCourtDto {
   name?: string;
   description?: string;

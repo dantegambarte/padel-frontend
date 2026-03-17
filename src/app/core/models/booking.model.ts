@@ -1,13 +1,13 @@
 import { Court } from './court.model';
 import { Product } from './product.model';
 
-/** Possible lifecycle states of a booking. */
+/** Posibles estados del ciclo de vida de una reserva. */
 export type BookingStatus = 'booked' | 'playing' | 'completed' | 'cancelled';
 
-/** Pricing strategy applied to the booking. */
+/** Estrategia de precios aplicada a la reserva. */
 export type PriceType = 'standard' | 'professor';
 
-/** A single product line associated with a booking. */
+/** Línea de producto asociada a una reserva. */
 export interface BookingItem {
   id: string;
   productId: string;
@@ -16,21 +16,21 @@ export interface BookingItem {
   product: Pick<Product, 'id' | 'name'>;
 }
 
-/** Payment record linked to a booking. */
+/** Registro de pago vinculado a una reserva. */
 export interface BookingPayment {
   id: string;
   amountCash: number;
   amountTransfer: number;
 }
 
-/** Full booking entity returned by the API. */
+/** Entidad completa de reserva devuelta por la API. */
 export interface BookingResponse {
   id: string;
   court: Court;
   courtId: string;
-  /** ISO date string in YYYY-MM-DD format. */
+  /** Fecha en formato ISO YYYY-MM-DD. */
   date: string;
-  /** Time string in HH:MM format. */
+  /** Hora en formato HH:MM. */
   hour: string;
   clientName: string;
   status: BookingStatus;
@@ -42,7 +42,7 @@ export interface BookingResponse {
   createdAt: string;
 }
 
-/** Payload for creating a new booking. */
+/** Payload para crear una nueva reserva. */
 export interface CreateBookingDto {
   courtId: string;
   date: string;
@@ -55,12 +55,12 @@ export interface CreateBookingDto {
   items: { productId: string; quantity: number }[];
 }
 
-/** Payload for transitioning a booking's status. */
+/** Payload para transicionar el estado de una reserva. */
 export interface UpdateBookingStatusDto {
   status: BookingStatus;
 }
 
-/** Payload for updating payment details, items, or status of an existing booking. */
+/** Payload para actualizar el pago, los ítems o el estado de una reserva existente. */
 export interface UpdateBookingDto {
   status?: BookingStatus;
   clientName?: string;

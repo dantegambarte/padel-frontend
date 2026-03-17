@@ -1,7 +1,7 @@
-/** Role assigned to a system user. */
+/** Rol asignado a un usuario del sistema. */
 export type UserRole = 'admin' | 'employee';
 
-/** A system user entity. */
+/** Entidad de usuario del sistema. */
 export interface User {
   id: string;
   username: string;
@@ -11,7 +11,7 @@ export interface User {
   createdAt: string;
 }
 
-/** Payload for creating a new user. */
+/** Payload para crear un nuevo usuario. */
 export interface CreateUserDto {
   username: string;
   fullName: string;
@@ -19,7 +19,7 @@ export interface CreateUserDto {
   role?: UserRole;
 }
 
-/** Payload for partially updating an existing user. */
+/** Payload para actualizar parcialmente un usuario existente. */
 export interface UpdateUserDto {
   fullName?: string;
   password?: string;
@@ -27,14 +27,14 @@ export interface UpdateUserDto {
   isActive?: boolean;
 }
 
-/** Response returned by the authentication endpoints (login / refresh). */
+/** Respuesta devuelta por los endpoints de autenticación (login / refresh). */
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
 }
 
-/** Credentials submitted during login. */
+/** Credenciales enviadas durante el login. */
 export interface LoginCredentials {
   username: string;
   password: string;
