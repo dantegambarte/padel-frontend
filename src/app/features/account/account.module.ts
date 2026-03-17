@@ -5,9 +5,10 @@ import { RouterModule } from '@angular/router';
 
 import { AccountRoutingModule } from './account-routing.module';
 import { AccountComponent } from './account.component';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [AccountComponent],
-  imports: [CommonModule, FormsModule, RouterModule, AccountRoutingModule],
+  imports: [CommonModule, FormsModule, RouterModule, AccountRoutingModule, SharedModule],
 })
 export class AccountModule {}

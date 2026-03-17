@@ -1,9 +1,10 @@
-<div *ngIf="saleId" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="close()">
-  <div class="no-print absolute inset-0 bg-black/50 cursor-pointer" aria-hidden="true"></div>
+<div *ngIf="saleId" appModalScrollLock class="modal-backdrop" (click)="close()">
 
   <div role="dialog" aria-modal="true" aria-label="Comanda de Consumo"
-    class="relative z-10 w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-white shadow-xl"
+    class="modal-card max-w-sm"
     (click)="$event.stopPropagation()">
+
+    <!-- Loading -->
     <div *ngIf="isLoading" class="flex items-center justify-center p-12">
       <svg class="h-8 w-8 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -11,20 +12,22 @@
       </svg>
     </div>
 
+    <!-- Error -->
     <div *ngIf="!isLoading && loadError" class="p-8 text-center text-sm text-destructive">
       {{ loadError }}
     </div>
 
+    <!-- Content -->
     <ng-container *ngIf="!isLoading && sale">
-      <div class="ticket-print-area p-5 text-sm text-black">
+
+      <!-- Body (scrollable) -->
+      <div class="modal-body ticket-print-area text-sm text-black">
 
         <div class="mb-4 text-center border-b border-dashed border-slate-300 pb-3">
           <p class="text-base font-bold tracking-wide uppercase">La Caldera</p>
           <p class="text-xs text-slate-500">Comanda de Consumo</p>
           <ng-container *ngIf="formatFechaHora(sale.createdAt) as dt">
-            <p class="mt-1 text-xs">
-              {{ dt.fecha }} — {{ dt.hora }}
-            </p>
+            <p class="mt-1 text-xs">{{ dt.fecha }} — {{ dt.hora }}</p>
           </ng-container>
           <p *ngIf="sale.customerName" class="mt-1 text-xs font-medium">
             Cliente: {{ sale.customerName }}
@@ -70,10 +73,10 @@
         <p class="mt-4 text-center text-xs text-slate-400 border-t border-dashed border-slate-300 pt-3">
           ¡Gracias por su visita!
         </p>
-
       </div>
 
-      <div class="no-print flex gap-2 px-5 pb-5">
+      <!-- Footer -->
+      <div class="no-print modal-footer">
         <button type="button" (click)="print()"
           class="flex-1 inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

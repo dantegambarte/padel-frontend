@@ -9,7 +9,46 @@
 @layer components {
   .calc-btn {
     @apply flex items-center justify-center p-4 text-xl font-medium
-           transition-colors duration-100 active:scale-95 cursor-pointer;
+           transition-all duration-100 active:scale-95 select-none cursor-pointer;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   MODAL SYSTEM — Flexbox Sandwich Modal estandarizado
+//   Patrón: backdrop → card → [header | body | footer]
+//   - backdrop: fondo oscuro que bloquea scroll y touch en iOS
+//   - card:     contenedor adaptativo con max-h y flex column
+//   - header:   cabecera rígida (flex-shrink-0)
+//   - body:     zona scrollable independiente (flex-1 + overflow-y-auto)
+//   - footer:   pie rígido con botones de acción (flex-shrink-0)
+// ─────────────────────────────────────────────────────────────────────────────
+@layer components {
+  // Fondo oscuro bloqueado
+  .modal-backdrop {
+    @apply fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm
+           flex items-center justify-center p-4 sm:p-6 touch-none;
+  }
+
+  // Tarjeta blanca adaptativa (No supera el 85% de la pantalla)
+  .modal-card {
+    @apply bg-card rounded-2xl shadow-2xl w-full max-w-lg
+           flex flex-col overflow-hidden max-h-[85dvh];
+  }
+
+  // Cabecera rígida
+  .modal-header {
+    @apply p-5 sm:p-6 border-b border-border flex-shrink-0 bg-card;
+  }
+
+  // Cuerpo fluido con scroll independiente
+  .modal-body {
+    @apply p-5 sm:p-6 overflow-y-auto overscroll-contain flex-1;
+  }
+
+  // Pie rígido
+  .modal-footer {
+    @apply p-4 sm:p-6 border-t border-border flex-shrink-0 flex justify-end gap-3;
+    background-color: var(--muted);
   }
 }
 
@@ -169,6 +208,59 @@ $radius: 0.5rem;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//   MOBILE SCROLL UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
+// ── iOS Body Scroll Lock — se agrega al <body> cuando un modal está abierto ──
+.ios-modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@layer utilities {
+  .scroll-smooth-mobile {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  // Affordance visual para contenedores con scroll horizontal.
+  // Sombras fuertes (rgba 0.25, 24px) pensadas para iOS donde Safari oculta
+  // las scrollbars personalizadas. En Android/Desktop la scrollbar refuerza.
+  .scroll-hint-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+
+    background-color: white;
+    background-image:
+      // Capas que "tapan" la sombra cuando se llega al borde (local)
+      linear-gradient(to right, white 30%, rgba(255,255,255,0)),
+      linear-gradient(to left, white 30%, rgba(255,255,255,0)),
+      // Sombras oscuras de fondo visibles solo cuando hay desborde (scroll)
+      linear-gradient(to right, rgba(0,0,0,0.25), rgba(0,0,0,0)),
+      linear-gradient(to left, rgba(0,0,0,0.25), rgba(0,0,0,0));
+    background-position: left center, right center, left center, right center;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 24px 100%, 24px 100%;
+    background-attachment: local, local, scroll, scroll;
+
+    // Scrollbar visible para Android/Desktop (iOS la ignora)
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //   BASE STYLES
 // ─────────────────────────────────────────────────────────────────────────────
 @layer base {
@@ -177,8 +269,16 @@ $radius: 0.5rem;
     outline-color: var(--ring);
   }
 
+  html {
+    overflow: hidden;
+    height: 100vh;
+    height: 100dvh;
+  }
+
   body {
     @apply bg-background text-foreground;
+    overflow: hidden;
+    height: 100%;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;

@@ -9,14 +9,19 @@ import { CalculatorService } from '../../core/services/calculator.service';
 export class CalculatorComponent implements OnInit, OnDestroy {
   visible = false;
 
-  /** Valor actualmente mostrado en pantalla. */
-  display = '0';
-  /** Primer operando acumulado (accedido desde el template para mostrar contexto). */
-  operand1 = '';
+  /** Número que se está tipeando actualmente o el resultado mostrado. */
+  currentInput = '0';
+  /** Primer operando guardado antes de aplicar el operador. */
+  previousInput = '';
   /** Operador pendiente (+, −, ×, ÷). */
-  private operator = '';
-  /** Cuando es `true`, el próximo dígito reemplaza el display en lugar de concatenarse. */
+  operator = '';
+  /** Texto del renglón superior: muestra la operación acumulada. */
+  expressionHistory = '';
+
+  /** Cuando es `true`, el próximo dígito reemplaza el display. */
   private waitingForOperand2 = false;
+  /** Indica que se acaba de pulsar `=` — el próximo dígito arranca una operación nueva. */
+  private justEvaluated = false;
 
   private sub = new Subscription();
 
@@ -32,16 +37,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-  /** Cierra la calculadora. */
   close(): void {
     this.calcService.close();
   }
 
-  /**
-   * Maneja el teclado cuando la calculadora está visible.
-   * Detiene la propagación de las teclas interceptadas para evitar que disparen
-   * acciones en componentes del fondo (por ejemplo, Enter cerrando un modal de reservas).
-   */
   @HostListener('window:keydown', ['$event'])
   onKey(e: KeyboardEvent): void {
     if (!this.visible) return;
@@ -59,167 +58,164 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    if (e.key === 'Escape') {
-      this.close();
-      return;
-    }
-    if (e.key >= '0' && e.key <= '9') {
-      this.appendDigit(e.key);
-      return;
-    }
-    if (e.key === '.' || e.key === ',') {
-      this.appendDot();
-      return;
-    }
-    if (e.key === '+') {
-      this.setOperator('+');
-      return;
-    }
-    if (e.key === '-') {
-      this.setOperator('−');
-      return;
-    }
-    if (e.key === '*') {
-      this.setOperator('×');
-      return;
-    }
-    if (e.key === '/') {
-      this.setOperator('÷');
-      return;
-    }
-    if (e.key === 'Enter' || e.key === '=') {
-      this.calculate();
-      return;
-    }
-    if (e.key === 'Backspace') {
-      this.backspace();
-      return;
-    }
-    if (e.key === 'Delete') {
-      this.clear();
-      return;
-    }
+    if (e.key === 'Escape') { this.close(); return; }
+    if (e.key >= '0' && e.key <= '9') { this.appendDigit(e.key); return; }
+    if (e.key === '.' || e.key === ',') { this.appendDot(); return; }
+    if (e.key === '+') { this.setOperator('+'); return; }
+    if (e.key === '-') { this.setOperator('−'); return; }
+    if (e.key === '*') { this.setOperator('×'); return; }
+    if (e.key === '/') { this.setOperator('÷'); return; }
+    if (e.key === 'Enter' || e.key === '=') { this.calculate(); return; }
+    if (e.key === 'Backspace') { this.backspace(); return; }
+    if (e.key === 'Delete') { this.clear(); return; }
   }
 
-  /** Agrega un dígito al display. Si se espera el segundo operando, reemplaza el valor actual. */
   appendDigit(d: string): void {
+    if (this.justEvaluated) {
+      this.currentInput = d;
+      this.expressionHistory = '';
+      this.justEvaluated = false;
+      return;
+    }
     if (this.waitingForOperand2) {
-      this.display = d;
+      this.currentInput = d;
       this.waitingForOperand2 = false;
     } else {
-      this.display = this.display === '0' ? d : this.display + d;
+      this.currentInput = this.currentInput === '0' ? d : this.currentInput + d;
     }
-    if (this.display.replace('.', '').replace('-', '').length > 15) {
-      this.display = this.display.slice(0, -1);
+    if (this.currentInput.replace('.', '').replace('-', '').length > 15) {
+      this.currentInput = this.currentInput.slice(0, -1);
     }
   }
 
-  /** Agrega el separador decimal al display si aún no tiene uno. */
   appendDot(): void {
+    if (this.justEvaluated) {
+      this.currentInput = '0.';
+      this.expressionHistory = '';
+      this.justEvaluated = false;
+      return;
+    }
     if (this.waitingForOperand2) {
-      this.display = '0.';
+      this.currentInput = '0.';
       this.waitingForOperand2 = false;
       return;
     }
-    if (!this.display.includes('.')) {
-      this.display += '.';
+    if (!this.currentInput.includes('.')) {
+      this.currentInput += '.';
     }
   }
 
-  /** Elimina el último carácter del display. */
   backspace(): void {
-    if (this.waitingForOperand2) return;
-    this.display = this.display.length > 1 ? this.display.slice(0, -1) : '0';
+    if (this.waitingForOperand2 || this.justEvaluated) return;
+    this.currentInput = this.currentInput.length > 1
+      ? this.currentInput.slice(0, -1)
+      : '0';
   }
 
-  /**
-   * Establece el operador pendiente. Si ya había una operación en curso,
-   * calcula el resultado primero (encadenamiento de operaciones).
-   */
   setOperator(op: string): void {
-    if (this.operator && !this.waitingForOperand2) {
-      this.calculate();
+    if (this.justEvaluated) {
+      this.justEvaluated = false;
     }
-    this.operand1 = this.display;
+
+    if (this.operator && !this.waitingForOperand2) {
+      const result = this.evaluate(
+        parseFloat(this.previousInput),
+        parseFloat(this.currentInput),
+        this.operator,
+      );
+      if (result === null) {
+        this.currentInput = 'Error';
+        this.resetState();
+        return;
+      }
+      this.currentInput = String(result);
+    }
+
+    this.previousInput = this.currentInput;
     this.operator = op;
     this.waitingForOperand2 = true;
+    this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${op}`;
   }
 
-  /**
-   * Ejecuta la operación pendiente y muestra el resultado.
-   * Evita aritmética de punto flotante sucia usando `toPrecision(12)`.
-   */
   calculate(): void {
     if (!this.operator || this.waitingForOperand2) return;
 
-    const a = parseFloat(this.operand1);
-    const b = parseFloat(this.display);
-    let result: number;
+    this.expressionHistory =
+      `${this.fmtNumber(this.previousInput)} ${this.operator} ${this.fmtNumber(this.currentInput)} =`;
 
-    switch (this.operator) {
-      case '+':
-        result = a + b;
-        break;
-      case '−':
-        result = a - b;
-        break;
-      case '×':
-        result = a * b;
-        break;
+    const result = this.evaluate(
+      parseFloat(this.previousInput),
+      parseFloat(this.currentInput),
+      this.operator,
+    );
+
+    if (result === null) {
+      this.currentInput = 'Error';
+      this.resetState();
+      return;
+    }
+
+    this.currentInput = String(result);
+    this.resetState();
+    this.justEvaluated = true;
+  }
+
+  toggleSign(): void {
+    if (this.currentInput === '0' || this.currentInput === 'Error') return;
+    this.currentInput = this.currentInput.startsWith('-')
+      ? this.currentInput.slice(1)
+      : '-' + this.currentInput;
+  }
+
+  percent(): void {
+    const n = parseFloat(this.currentInput);
+    if (isNaN(n)) return;
+    this.currentInput = String(parseFloat((n / 100).toPrecision(12)));
+  }
+
+  clear(): void {
+    this.currentInput = '0';
+    this.previousInput = '';
+    this.operator = '';
+    this.expressionHistory = '';
+    this.waitingForOperand2 = false;
+    this.justEvaluated = false;
+  }
+
+  /** Formatea el display con separador de miles (punto) y decimal (coma) argentino. */
+  get formattedDisplay(): string {
+    if (this.currentInput === 'Error') return 'Error';
+    const parts = this.currentInput.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return parts.join(',');
+  }
+
+  private evaluate(a: number, b: number, op: string): number | null {
+    let result: number;
+    switch (op) {
+      case '+': result = a + b; break;
+      case '−': result = a - b; break;
+      case '×': result = a * b; break;
       case '÷':
-        if (b === 0) {
-          this.display = 'Error';
-          this.reset();
-          return;
-        }
+        if (b === 0) return null;
         result = a / b;
         break;
       default:
-        return;
+        return null;
     }
-
-    const rounded = parseFloat(result.toPrecision(12));
-    this.display = String(rounded);
-    this.reset();
+    return parseFloat(result.toPrecision(12));
   }
 
-  /** Invierte el signo del valor actual en pantalla. */
-  toggleSign(): void {
-    if (this.display === '0' || this.display === 'Error') return;
-    this.display = this.display.startsWith('-')
-      ? this.display.slice(1)
-      : '-' + this.display;
-  }
-
-  /** Convierte el valor actual a su equivalente porcentual (divide por 100). */
-  percent(): void {
-    const n = parseFloat(this.display);
-    if (isNaN(n)) return;
-    this.display = String(parseFloat((n / 100).toPrecision(12)));
-  }
-
-  /** Resetea el display a 0 y limpia el estado interno. */
-  clear(): void {
-    this.display = '0';
-    this.reset();
-  }
-
-  /** Limpia el estado interno de operandos y operador sin tocar el display. */
-  private reset(): void {
-    this.operand1 = '';
+  private resetState(): void {
+    this.previousInput = '';
     this.operator = '';
     this.waitingForOperand2 = false;
   }
 
-  /** Muestra el operador activo en el header para contexto visual. */
-  get activeOperator(): string {
-    return this.operator;
-  }
-
-  /** Formatea el display con separador de miles para facilitar la lectura. */
-  get formattedDisplay(): string {
-    if (this.display === 'Error') return 'Error';
-    const parts = this.display.split('.');
+  /** Formatea un número raw para mostrar en el historial. */
+  private fmtNumber(value: string): string {
+    if (!value || value === 'Error') return value;
+    const parts = value.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return parts.join(',');
   }
