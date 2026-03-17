@@ -23,10 +23,13 @@ export class PosComponent implements OnInit {
   products: Product[] = [];
   cart: PosCartItem[] = [];
   searchQuery = '';
+  customerName = '';
   montoEfectivo = '';
   montoTransferencia = '';
   isLoadingProducts = false;
   isSubmitting = false;
+
+  lastSaleId: string | null = null;
 
   constructor(
     private productsService: ProductsService,
@@ -174,6 +177,11 @@ export class PosComponent implements OnInit {
     this.cart = this.cart.filter((i) => i.productId !== productId);
   }
 
+  /** Cierra el ticket modal de la última venta. */
+  closeTicket(): void {
+    this.lastSaleId = null;
+  }
+
   /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {
     if (value === 0) return '0';
@@ -207,6 +215,9 @@ export class PosComponent implements OnInit {
       })),
       amountCash: this.efectivo,
       amountTransfer: this.transferencia,
+      ...(this.customerName.trim() && {
+        customerName: this.customerName.trim(),
+      }),
     };
 
     const totalStr = this.fmt(this.total);
@@ -216,10 +227,12 @@ export class PosComponent implements OnInit {
       .create(dto)
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
-        next: () => {
+        next: (sale) => {
           this.cart = [];
+          this.customerName = '';
           this.montoEfectivo = '';
           this.montoTransferencia = '';
+          this.lastSaleId = sale.id;
           this.toast.success(
             'Venta confirmada',
             `Se procesó una venta por $${totalStr}`,

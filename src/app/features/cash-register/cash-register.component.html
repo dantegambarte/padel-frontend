@@ -135,7 +135,7 @@
         Arqueo de Caja — Empleado: {{ userName }}
       </h3>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        Verificación de efectivo físico vs sistema
+        {{ jornadaLabel }} · Verificación de efectivo físico vs sistema
       </p>
     </div>
 
@@ -287,7 +287,7 @@
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <p class="font-semibold">
-            Caja cerrada — No se pueden realizar más operaciones del día
+            Caja cerrada — No se pueden realizar más operaciones en esta jornada
           </p>
         </div>
       </ng-template>
@@ -301,10 +301,10 @@
       <h3
         class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
       >
-        Movimientos del Día
+        Movimientos de la Jornada
       </h3>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        Historial de transacciones registradas
+        {{ jornadaLabel }} · Historial de transacciones de la sesión activa
       </p>
     </div>
 
@@ -331,6 +331,9 @@
 
               <div>
                 <p class="font-medium">{{ mov.concepto }}</p>
+                <p *ngIf="mov.customerName" class="text-xs text-muted-foreground">
+                  Cliente: {{ mov.customerName }}
+                </p>
                 <span
                   [ngClass]="
                     mov.tipo === 'Efectivo'
@@ -344,7 +347,23 @@
               </div>
             </div>
 
-            <p class="text-lg font-bold">${{ fmt(mov.monto) }}</p>
+            <div class="flex items-center gap-3">
+              <p class="text-lg font-bold">${{ fmt(mov.monto) }}</p>
+
+              <button
+                *ngIf="mov.movType === 'SALE'"
+                type="button"
+                (click)="openTicket(mov.referenceId)"
+                title="Ver comanda de consumo"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <p
@@ -358,6 +377,11 @@
     </div>
   </div>
 </div>
+
+<app-ticket-modal
+  [saleId]="ticketSaleId"
+  (closeModal)="closeTicket()"
+></app-ticket-modal>
 
 <ng-container *ngIf="isDialogOpen">
   <div

@@ -106,6 +106,32 @@ export class AuthService {
   }
 
   /**
+   * Cambia la contraseña del usuario autenticado.
+   * Requiere la contraseña actual para verificar identidad.
+   * Limpia el flag `mustChangePassword` en el estado local al completar.
+   */
+  changeOwnPassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Observable<{ success: boolean; message: string }> {
+    return this.http
+      .patch<{ success: boolean; message: string }>(`${this.apiUrl}/me/password`, {
+        currentPassword,
+        newPassword,
+      })
+      .pipe(
+        tap(() => {
+          const user = this.currentUserSubject.value;
+          if (user) {
+            const updated = { ...user, mustChangePassword: false };
+            localStorage.setItem(USER_KEY, JSON.stringify(updated));
+            this.currentUserSubject.next(updated);
+          }
+        }),
+      );
+  }
+
+  /**
    * Persiste los tokens de autenticación y los datos del usuario en `localStorage`
    * y actualiza el subject reactivo del usuario.
    */

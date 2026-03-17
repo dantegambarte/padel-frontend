@@ -9,5 +9,6 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
 @NgModule({
   declarations: [LayoutComponent, SidebarComponent, ToolbarComponent],
   imports: [CommonModule, LayoutRoutingModule],
+  providers: [],
 })
 export class LayoutModule {}

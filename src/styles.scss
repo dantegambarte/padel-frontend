@@ -119,6 +119,56 @@ $radius: 0.5rem;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//   @MEDIA PRINT — Comanda de Consumo (ticket térmico 58mm / 80mm)
+//
+//   Estrategia: ocultar el layout explícitamente (sidebar, toolbar, backdrop)
+//   y dejar que .ticket-print-area ocupe la página completa.
+//   NO se usa `body * { visibility: hidden }` porque en Angular destruye
+//   el renderizado de app-root y deja la hoja en blanco.
+//
+//   TODO: Agregar @page con el ancho real del papel de la impresora térmica.
+//   Confirmar si usa 58mm u 80mm y descomentar la regla correspondiente:
+//
+//   @page {
+//     size: 80mm auto;  /* cambiá 80mm por 58mm si corresponde */
+//     margin: 0;
+//   }
+//
+//   Además configurar ese tamaño de papel personalizado en Windows
+//   (Panel de control → Dispositivos e impresoras → Preferencias de impresión).
+// ─────────────────────────────────────────────────────────────────────────────
+@media print {
+  // 1. Ocultar todo el body con visibility (no display:none) para preservar el layout
+  body * {
+    visibility: hidden !important;
+  }
+
+  // 2. Mostrar solo el área del ticket y todo su contenido
+  .ticket-print-area,
+  .ticket-print-area * {
+    visibility: visible !important;
+  }
+
+  // 3. Posicionar el ticket en la esquina superior izquierda de la página
+  .ticket-print-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  // 4. Ocultar botones internos del ticket (Imprimir, Cerrar)
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //   BASE STYLES
 // ─────────────────────────────────────────────────────────────────────────────
 @layer base {

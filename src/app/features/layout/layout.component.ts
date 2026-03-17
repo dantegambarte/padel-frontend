@@ -3,6 +3,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
+import { CashService } from '../../core/services/cash.service';
 import { User } from '../../core/models/user.model';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -14,6 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   reports: 'Reportes',
   users: 'Usuarios',
   settings: 'Configuración',
+  account: 'Mi Cuenta',
 };
 
 @Component({
@@ -25,16 +27,20 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentPageTitle = 'Dashboard';
   isSidebarOpen = false;
 
+  unclosedSessionDate: string | null = null;
+
   private sub = new Subscription();
 
   constructor(
     private authService: AuthService,
+    private cashService: CashService,
     private router: Router,
   ) {}
 
   /**
    * Suscribe al usuario autenticado y actualiza el título de página
    * tanto al cargar como en cada evento de navegación.
+   * Además verifica si existe una sesión de caja abierta de un día anterior.
    */
   ngOnInit(): void {
     this.sub.add(
@@ -54,6 +60,49 @@ export class LayoutComponent implements OnInit, OnDestroy {
         .subscribe((url) => {
           this.currentPageTitle = this.resolveTitleFromUrl(url);
         }),
+    );
+
+    this.checkUnclosedSession();
+  }
+
+  /** Formatea la fecha YYYY-MM-DD a texto legible en español (ej: "lunes 16 de marzo"). */
+  formatUnclosedDate(dateStr: string | null): string {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  }
+
+  /** Navega a Cierre de Caja y cierra el modal de advertencia. */
+  goToCashRegister(): void {
+    this.unclosedSessionDate = null;
+    this.router.navigate(['/app/cash-register']);
+  }
+
+  /**
+   * Consulta la sesión actual y, si está abierta con fecha anterior a hoy,
+   * activa el modal de sesión sin cerrar.
+   */
+  private checkUnclosedSession(): void {
+    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD hora local
+    this.sub.add(
+      this.cashService.getCurrent().subscribe({
+        next: (data) => {
+          if (
+            !data.isClosed &&
+            data.sessionDate &&
+            data.sessionDate < todayStr
+          ) {
+            this.unclosedSessionDate = data.sessionDate;
+          }
+        },
+        error: () => {
+          /* silencioso: no bloquear el layout si la consulta falla */
+        },
+      }),
     );
   }
 

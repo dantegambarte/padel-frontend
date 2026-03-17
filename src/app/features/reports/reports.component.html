@@ -1,12 +1,36 @@
 
 <div class="p-4 md:p-6 space-y-6">
-  
+
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
     <div class="p-6 space-y-4">
 
       <div class="flex flex-wrap gap-2">
+
+        <!-- Botón "Hoy": acceso directo al día actual, activo cuando dateFilterActive + fecha = hoy -->
+        <button
+          type="button"
+          (click)="selectToday()"
+          [ngClass]="
+            isTodayActive
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90 ring-2 ring-accent/40'
+              : 'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground'
+          "
+          class="inline-flex h-10 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          title="Ver datos del día de hoy"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Hoy
+        </button>
+
+        <!-- Separador vertical -->
+        <div class="w-px self-stretch bg-border"></div>
+
         <button
           *ngFor="let period of periods"
           type="button"
@@ -31,7 +55,7 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-        
+
         <svg
           class="h-4 w-4 shrink-0 text-muted-foreground"
           viewBox="0 0 24 24"
@@ -69,7 +93,7 @@
           *ngIf="dateFilterActive"
           class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
         >
-          
+
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
             <polyline points="22 4 12 14.01 9 11.01"/>
@@ -83,7 +107,7 @@
           (click)="clearDateFilter()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-transparent px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          
+
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -95,8 +119,76 @@
     </div>
   </div>
 
+  <!-- ── Banner: estado de la última sesión de caja ────────────────────────── -->
+  <ng-container *ngIf="!cashSessionLoading && cashSession?.sessionId">
+    <div
+      [ngClass]="cashSession!.isClosed
+        ? 'border-border bg-muted/40'
+        : 'border-accent/40 bg-accent/5'"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3"
+    >
+      <!-- Icono + texto principal -->
+      <div class="flex items-center gap-3">
+        <div
+          [ngClass]="cashSession!.isClosed ? 'bg-muted text-muted-foreground' : 'bg-accent/15 text-accent'"
+          class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md"
+        >
+          <!-- Caja abierta: candado abierto / cerrada: candado cerrado -->
+          <ng-container *ngIf="!cashSession!.isClosed; else iconClosed">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+          </ng-container>
+          <ng-template #iconClosed>
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </ng-template>
+        </div>
+
+        <div>
+          <p class="text-sm font-semibold text-foreground">
+            Última Jornada Comercial
+            <span
+              [ngClass]="cashSession!.isClosed
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-accent/15 text-accent'"
+              class="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold"
+            >
+              {{ cashSession!.isClosed ? 'Cerrada' : 'Abierta ●' }}
+            </span>
+          </p>
+          <p class="text-xs text-muted-foreground">
+            Jornada del <strong>{{ cashSession!.sessionDate ?? '—' }}</strong>
+            <ng-container *ngIf="cashSession!.openedAt">
+              · Apertura: {{ cashSession!.openedAt | date:'HH:mm':'America/Argentina/Buenos_Aires' }}
+            </ng-container>
+          </p>
+        </div>
+      </div>
+
+      <!-- CTA: ver hoy si la caja está abierta -->
+      <button
+        *ngIf="!cashSession!.isClosed"
+        type="button"
+        (click)="selectToday()"
+        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-accent/50 bg-accent/10 px-3 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Ver datos de hoy
+        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+  </ng-container>
+
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-    
+
     <ng-container *ngIf="isLoading; else kpiLoaded">
       <div
         *ngFor="let i of [1, 2, 3, 4]"
@@ -105,7 +197,7 @@
     </ng-container>
 
     <ng-template #kpiLoaded>
-      
+
       <div
         class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
       >
@@ -171,7 +263,7 @@
           <h4
             class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
           >
-            
+
             <svg
               class="h-4 w-4"
               viewBox="0 0 24 24"
@@ -230,7 +322,7 @@
   </div>
 
   <div class="grid gap-4 lg:grid-cols-2">
-    
+
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -280,7 +372,7 @@
         ></div>
 
         <ng-container *ngIf="!isLoading">
-          
+
           <div
             class="flex items-center justify-center"
             style="height: 300px; position: relative"
@@ -296,7 +388,7 @@
           <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                
+
                 <div class="h-3 w-3 rounded-full bg-accent"></div>
                 <span class="text-sm">Efectivo</span>
               </div>
@@ -307,7 +399,7 @@
 
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                
+
                 <div class="h-3 w-3 rounded-full bg-primary"></div>
                 <span class="text-sm">Transferencia</span>
               </div>
@@ -335,7 +427,7 @@
       </p>
     </div>
     <div class="px-6 pb-6">
-      
+
       <div class="space-y-3" *ngIf="isLoading">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5, 6]"
@@ -349,7 +441,7 @@
             *ngFor="let product of productRanking; let i = index"
             class="flex items-center gap-4 rounded-lg border border-border p-3"
           >
-            
+
             <div
               class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary"
             >
@@ -365,7 +457,7 @@
 
             <div class="text-right">
               <p class="font-bold">${{ fmt(product.revenue) }}</p>
-              
+
               <span
                 class="mt-1 inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground"
               >
@@ -406,14 +498,13 @@
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
-    
+
     <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <h3
             class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
           >
-            
             <svg
               class="h-5 w-5"
               viewBox="0 0 24 24"
@@ -433,9 +524,33 @@
             </svg>
             Transacciones Recientes
           </h3>
-          <p class="mt-1.5 text-sm text-muted-foreground">
-            Detalle de operaciones financieras del período
-          </p>
+
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <p class="text-sm font-medium text-muted-foreground">
+              {{ periodoLabel }}
+            </p>
+
+            <span
+              *ngIf="dateFilterActive"
+              class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+            >
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Filtro de día activo
+            </span>
+
+            <span
+              *ngIf="!isLoading"
+              class="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+            >
+              {{ transactions.length }} {{ transactions.length === 1 ? 'operación' : 'operaciones' }}
+            </span>
+          </div>
         </div>
 
         <button
@@ -444,7 +559,7 @@
           [disabled]="isExporting"
           class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          
+
           <svg
             class="h-4 w-4"
             viewBox="0 0 24 24"
@@ -464,7 +579,7 @@
     </div>
 
     <div class="px-6 pb-6">
-      
+
       <div *ngIf="isLoading" class="space-y-2">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5]"
@@ -506,7 +621,7 @@
               <td class="p-3 text-sm">{{ tx.date }} {{ tx.time }}</td>
 
               <td class="p-3">
-                
+
                 <span
                   [ngClass]="
                     tx.type === 'booking'
@@ -524,7 +639,7 @@
               </td>
 
               <td class="p-3">
-                
+
                 <span
                   class="inline-flex items-center rounded-full border border-border bg-transparent px-2.5 py-0.5 text-xs font-semibold"
                 >
@@ -557,5 +672,5 @@
       </div>
     </div>
   </div>
-  
+
 </div>

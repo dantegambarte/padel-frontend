@@ -9,6 +9,8 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   createdAt: string;
+  /** Si es `true`, el usuario debe cambiar su contraseña antes de continuar. */
+  mustChangePassword?: boolean;
 }
 
 /** Payload para crear un nuevo usuario. */

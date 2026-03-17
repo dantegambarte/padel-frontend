@@ -1,3 +1,8 @@
+<app-ticket-modal
+  [saleId]="lastSaleId"
+  (closeModal)="closeTicket()"
+></app-ticket-modal>
+
 <div
   class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:h-[calc(100vh-10rem)]"
 >
@@ -235,6 +240,21 @@
       </div>
 
       <div class="space-y-4 border-t border-border pt-4">
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none" for="customerName">
+            Nombre del Cliente
+            <span class="ml-1 text-xs font-normal text-muted-foreground">(Opcional)</span>
+          </label>
+          <input
+            id="customerName"
+            type="text"
+            placeholder="Ej: Juan Pérez"
+            [(ngModel)]="customerName"
+            maxlength="100"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+        </div>
+
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="space-y-2">
             <label class="text-sm font-medium leading-none" for="efectivo">

@@ -137,20 +137,37 @@
         </svg>
       </button>
 
-      <div
-        class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5"
+      <button
+        type="button"
+        (click)="goToAccount()"
+        title="Mi Cuenta"
+        class="relative flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div
-          class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
-        >
-          {{ userInitials }}
+        <div class="relative">
+          <div
+            class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+          >
+            {{ userInitials }}
+          </div>
+          <!-- Badge de contraseña pendiente -->
+          <span
+            *ngIf="currentUser?.mustChangePassword"
+            class="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 ring-2 ring-card"
+            title="Debés cambiar tu contraseña"
+          >
+            <svg class="h-2 w-2 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </span>
         </div>
         <div class="hidden lg:block">
           <p class="text-sm font-medium text-card-foreground">
             {{ currentUser?.fullName }}
           </p>
         </div>
-      </div>
+      </button>
     </div>
   </div>
 </header>

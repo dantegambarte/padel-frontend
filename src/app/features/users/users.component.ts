@@ -27,6 +27,13 @@ export class UsersComponent implements OnInit {
   editFormError = '';
   isEditSubmitting = false;
 
+  /** Estado del modal de restablecimiento de contraseña. */
+  isResetOpen = false;
+  resetTargetUser: User | null = null;
+  resetPassword = '';
+  resetPasswordError = '';
+  isResetSubmitting = false;
+
   deletingId: string | null = null;
 
   form = {
@@ -57,6 +64,7 @@ export class UsersComponent implements OnInit {
   onEscape(): void {
     if (this.isDialogOpen) this.closeDialog();
     if (this.isEditOpen) this.closeEditModal();
+    if (this.isResetOpen) this.closeResetModal();
   }
 
   /** ID del usuario actualmente autenticado. */
@@ -203,6 +211,55 @@ export class UsersComponent implements OnInit {
         this.editFormError = Array.isArray(msg) ? msg.join(', ') : msg;
       },
     });
+  }
+
+  /** Abre el modal de restablecimiento de contraseña para el usuario indicado. */
+  openResetModal(user: User): void {
+    this.resetTargetUser = user;
+    this.resetPassword = '';
+    this.resetPasswordError = '';
+    this.isResetOpen = true;
+  }
+
+  /** Cierra el modal de restablecimiento si no hay una petición en curso. */
+  closeResetModal(): void {
+    if (this.isResetSubmitting) return;
+    this.isResetOpen = false;
+    this.resetTargetUser = null;
+  }
+
+  /** Valida y envía la nueva contraseña al backend para que la hashee y persista. */
+  submitReset(): void {
+    this.resetPasswordError = '';
+
+    if (!this.resetPassword) {
+      this.resetPasswordError = 'La nueva contraseña es obligatoria.';
+      return;
+    }
+    if (this.resetPassword.length < 6) {
+      this.resetPasswordError = 'La contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    this.isResetSubmitting = true;
+    this.usersService
+      .resetPassword(this.resetTargetUser!.id, this.resetPassword)
+      .subscribe({
+        next: () => {
+          this.isResetSubmitting = false;
+          this.isResetOpen = false;
+          this.toast.success(
+            'Contraseña restablecida',
+            `La contraseña de "${this.resetTargetUser!.fullName}" fue actualizada`,
+          );
+          this.resetTargetUser = null;
+        },
+        error: (err) => {
+          this.isResetSubmitting = false;
+          const msg = err?.error?.message ?? 'No se pudo restablecer la contraseña';
+          this.resetPasswordError = Array.isArray(msg) ? msg.join(', ') : msg;
+        },
+      });
   }
 
   /** Solicita confirmación y elimina el usuario indicado. */

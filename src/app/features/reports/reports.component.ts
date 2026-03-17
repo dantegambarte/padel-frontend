@@ -12,6 +12,7 @@ import {
   TransactionExport,
   GroupBy,
 } from '../../core/services/reports.service';
+import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
 
 interface Period {
@@ -45,6 +46,15 @@ export class ReportsComponent implements OnInit {
 
   isLoading = true;
   isExporting = false;
+
+  /** Datos de la última sesión de caja para el banner informativo. */
+  cashSession: {
+    sessionId: string | null;
+    isClosed: boolean;
+    sessionDate: string | null;
+    openedAt: string | null;
+  } | null = null;
+  cashSessionLoading = true;
 
   revenueData: RevenueDay[] = [];
   paymentData: PaymentBreakdown | null = null;
@@ -98,11 +108,13 @@ export class ReportsComponent implements OnInit {
 
   constructor(
     private reportsService: ReportsService,
+    private cashService: CashService,
     private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
     this.loadAll();
+    this.loadCashSession();
   }
 
   /** Suma total de ingresos (alquileres + ventas) del período seleccionado. */
@@ -151,15 +163,27 @@ export class ReportsComponent implements OnInit {
 
   /** Monto total generado por el ranking de productos. */
   get rankingTotalAmount(): number {
-    return this.productRanking.reduce((s, p) => s + (Number(p.revenue) || 0), 0);
+    return this.productRanking.reduce(
+      (s, p) => s + (Number(p.revenue) || 0),
+      0,
+    );
   }
 
   /** Cantidad total de unidades vendidas en el ranking. */
   get rankingTotalUnidades(): number {
-    return this.productRanking.reduce(
-      (s, p) => s + (Number(p.qty) || 0),
-      0,
-    );
+    return this.productRanking.reduce((s, p) => s + (Number(p.qty) || 0), 0);
+  }
+
+  /** True cuando el botón "Hoy" está activo (filtro de día exacto = hoy). */
+  get isTodayActive(): boolean {
+    return this.dateFilterActive && this.selectedDate === this.maxDate;
+  }
+
+  /** Activa el filtro de día exacto con la fecha de hoy y recarga. */
+  selectToday(): void {
+    this.selectedDate = this.maxDate;
+    this.dateFilterActive = true;
+    this.loadAll();
   }
 
   /** Selecciona un período y recarga los datos. Desactiva el filtro de día exacto. */
@@ -195,7 +219,9 @@ export class ReportsComponent implements OnInit {
     this.dateFrom = range.from;
     this.dateTo = range.to;
 
-    const groupBy = this.dateFilterActive ? 'day' : this.getGroupBy(this.selectedPeriod);
+    const groupBy = this.dateFilterActive
+      ? 'day'
+      : this.getGroupBy(this.selectedPeriod);
     const date = this.dateFilterActive ? this.selectedDate : undefined;
 
     this.isLoading = true;
@@ -296,14 +322,40 @@ export class ReportsComponent implements OnInit {
   }
 
   /**
-   * Genera el archivo Excel a partir de las transacciones, aplica formato de moneda
-   * y dispara la descarga en el navegador.
+   * Genera el archivo Excel a partir de las transacciones.
+   * - Hoja encabezada con título documental y período activo.
+   * - Nombre de archivo dinámico que incluye el rango de fechas.
+   * - Formato de moneda aplicado a las columnas numéricas.
    */
   private triggerExcelDownload(transactions: TransactionExport[]): void {
+    const effectiveFrom =
+      this.dateFilterActive && this.selectedDate
+        ? this.selectedDate
+        : this.dateFrom;
+    const effectiveTo =
+      this.dateFilterActive && this.selectedDate
+        ? this.selectedDate
+        : this.dateTo;
+
+    const displayFrom = this.fmtDisplayDate(effectiveFrom);
+    const displayTo = this.fmtDisplayDate(effectiveTo);
+    const generatedAt = new Date().toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     const rows = transactions.map((tx) => ({
       Fecha: tx.date,
       Hora: tx.time,
-      Tipo: tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta mostrador' : tx.type,
+      Tipo:
+        tx.type === 'booking'
+          ? 'Turno'
+          : tx.type === 'sale'
+            ? 'Venta mostrador'
+            : tx.type,
       Concepto: tx.concept,
       Efectivo: Number(tx.cash) || 0,
       Transferencia: Number(tx.transfer) || 0,
@@ -326,7 +378,14 @@ export class ReportsComponent implements OnInit {
       'Registrado por': '',
     });
 
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
+    const headerAoa: (string | number)[][] = [
+      [`Reporte de Transacciones | Periodo: ${displayFrom} al ${displayTo}`],
+      [`Generado el: ${generatedAt}`],
+      [],
+    ];
+
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(headerAoa);
+    XLSX.utils.sheet_add_json(ws, rows, { origin: 'A4' });
 
     ws['!cols'] = [
       { wch: 12 },
@@ -340,25 +399,25 @@ export class ReportsComponent implements OnInit {
     ];
 
     const moneyFmt = '"$"#,##0.00';
-    const totalRows = rows.length + 1;
+    const dataStart = 5;
+    const dataEnd = dataStart + rows.length - 1;
     ['E', 'F', 'G'].forEach((col) => {
-      for (let r = 2; r <= totalRows; r++) {
-        const cellRef = `${col}${r}`;
-        if (ws[cellRef]) {
-          ws[cellRef].z = moneyFmt;
-        }
+      for (let r = dataStart; r <= dataEnd; r++) {
+        const ref = `${col}${r}`;
+        if (ws[ref]) ws[ref].z = moneyFmt;
       }
     });
 
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Reporte Financiero');
 
-    const filename = `Reporte_Financiero_${this.localDateStr(new Date())}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    const fileFrom = effectiveFrom.replace(/-/g, '');
+    const fileTo = effectiveTo.replace(/-/g, '');
+    XLSX.writeFile(wb, `Transacciones_${fileFrom}_al_${fileTo}.xlsx`);
 
     this.toast.success(
       'Reporte Excel descargado',
-      'El archivo .xlsx se ha generado exitosamente',
+      `Período: ${displayFrom} al ${displayTo}`,
     );
   }
 
@@ -423,8 +482,54 @@ export class ReportsComponent implements OnInit {
     }
   }
 
+  /**
+   * Etiqueta legible del período activo para mostrar en la UI y en el Excel.
+   * Ejemplos:
+   *   "Día exacto: 17/03/2026"
+   *   "Esta Semana: 11/03/2026 – 17/03/2026"
+   *   "Este Mes: 01/03/2026 – 17/03/2026"
+   */
+  get periodoLabel(): string {
+    if (this.dateFilterActive && this.selectedDate) {
+      return `Día exacto: ${this.fmtDisplayDate(this.selectedDate)}`;
+    }
+    const nombre =
+      this.periods.find((p) => p.id === this.selectedPeriod)?.label ?? '';
+    return `${nombre}: ${this.fmtDisplayDate(this.dateFrom)} – ${this.fmtDisplayDate(this.dateTo)}`;
+  }
+
   /** Formatea un número como string con el locale argentino. */
   fmt(value: number | string | null | undefined): string {
     return (Number(value) || 0).toLocaleString('es-AR');
+  }
+
+  /** Convierte YYYY-MM-DD → DD/MM/YYYY para mostrar en UI y documentos. */
+  private fmtDisplayDate(iso: string): string {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  /**
+   * Carga el estado de la última sesión de caja para mostrar el banner informativo.
+   * Se ejecuta en paralelo con loadAll() y falla silenciosamente para no bloquear
+   * la carga del reporte en caso de que el endpoint de caja no responda.
+   */
+  private loadCashSession(): void {
+    this.cashSessionLoading = true;
+    this.cashService
+      .getCurrent()
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        this.cashSessionLoading = false;
+        this.cashSession = res
+          ? {
+              sessionId:   res.sessionId,
+              isClosed:    res.isClosed,
+              sessionDate: res.sessionDate,
+              openedAt:    res.openedAt,
+            }
+          : null;
+      });
   }
 }
