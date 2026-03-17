@@ -144,7 +144,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     // usen exactamente la misma anchura para la primera columna, independientemente
     // del texto que contenga ("Horario" vs "09:00hs"). Sin esto, el `auto` de CSS
     // grid calcula el ancho por separado en cada grid → desalineación.
-    return `80px repeat(${this.courts.length}, minmax(0, 1fr))`;
+    // minmax(200px, 1fr): cada columna de cancha tiene mínimo 200 px.
+    // En mobile (390 px) con 2+ canchas el total supera el viewport → el
+    // contenedor overflow-x-auto activa el scroll horizontal interno sin
+    // que el body desborde. En desktop las columnas crecen con 1fr como antes.
+    return `80px repeat(${this.courts.length}, minmax(200px, 1fr))`;
+  }
+
+  /** Solo las columnas de canchas (sin la columna de horas).
+   *  Usado por el panel derecho scrollable en el layout de dos paneles. */
+  get courtColsStyle(): string {
+    return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
   get courtPrice(): number {

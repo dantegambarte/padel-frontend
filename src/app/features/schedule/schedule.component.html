@@ -87,16 +87,43 @@
     </div>
 
     <ng-container *ngIf="!loadError && courts.length > 0">
-      <div class="overflow-x-auto">
-        <div class="min-w-[600px]">
-          <!-- ── HEADER DE LA GRILLA: Horario + Nombres de canchas ── -->
-          <div
-            class="mb-2 grid gap-2"
-            [style.grid-template-columns]="gridColsStyle"
-          >
-            <div class="sticky left-0 z-10 bg-card text-sm font-semibold">
-              Horario
+      <!-- ══════════════════════════════════════════════════════════════════════
+           LAYOUT DOS PANELES — Resuelve MOB-02 (sticky no fiable en CSS Grid/Chromium)
+           ─────────────────────────────────────────────────────────────────────────────
+           • PANEL IZQUIERDO (w-20, flex-none): columna de horas. Nunca hace scroll.
+             Al estar fuera del contenedor overflow-x-auto, el anclaje es 100% fiable
+             en cualquier navegador mobile sin depender de position:sticky.
+           • PANEL DERECHO (flex-1, overflow-x-auto): canchas. Scroll horizontal interno.
+           • Sincronización vertical: ambos paneles usan h-24 + space-y-2, garantizando
+             que cada fila de hora izquierda quede alineada con su fila de canchas.
+           ══════════════════════════════════════════════════════════════════════════ -->
+      <div class="flex pb-4">
+
+        <!-- ── PANEL IZQUIERDO: columna de horas ───────────────────────────── -->
+        <div class="flex-none w-20 z-20 bg-white/95 backdrop-blur-sm border-r border-slate-200 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]">
+          <!-- Header: "Horario" — misma altura que el header del panel derecho (h-7 mb-2) -->
+          <div class="mb-2 h-7 flex items-center text-sm font-semibold">
+            Horario
+          </div>
+          <!-- Filas de hora — h-24 + space-y-2 sincronizado con el panel derecho -->
+          <div class="space-y-2">
+            <div
+              *ngFor="let hour of HOURS; trackBy: trackByHour"
+              class="h-24 flex items-center text-sm font-medium text-muted-foreground pr-2"
+            >
+              {{ hour }}hs
             </div>
+          </div>
+        </div>
+
+        <!-- ── PANEL DERECHO: canchas con scroll horizontal interno ──────────
+             overscroll-x-contain: evita que el scroll se propague al body (iOS/Android) -->
+        <div class="flex-1 overflow-x-auto overscroll-x-contain">
+          <!-- Header: nombres de canchas — h-7 mb-2 alineado con el panel izquierdo -->
+          <div
+            class="mb-2 h-7 grid gap-2 items-center"
+            [style.grid-template-columns]="courtColsStyle"
+          >
             <div
               *ngFor="let court of courts"
               class="text-center text-sm font-semibold"
@@ -111,32 +138,19 @@
                ARQUITECTURA:
                  • CAPA 1 (fondo): grilla punteada con dos mitades clickeables
                    de 48 px. Se renderiza SIEMPRE para todas las horas y canchas.
-                   Sin texto :00/:30 — el hover visual indica que es clickeable.
                  • CAPA 2 (reservas): tarjetas position:absolute renderizadas
-                   SOLO en la fila de inicio de cada reserva. Desbordan hacia
-                   abajo cubriendo la capa de fondo. z-10 + bg-card = opacas.
-                 • Resultado: una reserva de 90 min tapa visualmente las 10:00
-                   completas y la primera mitad de las 11:00, pero la mitad
-                   inferior (11:30) sigue existiendo en el DOM y es clickeable.
+                   SOLO en la fila de inicio de cada reserva. Desbordan hacia abajo.
                INVARIANTES:
-                 • gridColsStyle: 80px fijo + repeat(N, 1fr).
+                 • courtColsStyle: repeat(N, minmax(200px, 1fr)) — sin columna de horas.
                  • Cada fila: h-24 = 96 px, overflow-visible.
                  • space-y-2 = 8 px de gap entre filas.
-                 • height tarjeta = (mins/60)*96 + floor((mins-1)/60)*8 px.
                ═══════════════════════════════════════════════════════════════ -->
           <div class="space-y-2">
             <div
               *ngFor="let hour of HOURS; trackBy: trackByHour"
               class="grid gap-2 h-24 overflow-visible"
-              [style.grid-template-columns]="gridColsStyle"
+              [style.grid-template-columns]="courtColsStyle"
             >
-              <!-- Etiqueta de hora -->
-              <div
-                class="sticky left-0 z-10 bg-card h-24 flex items-center text-sm font-medium text-muted-foreground border-r border-border pr-2"
-              >
-                {{ hour }}hs
-              </div>
-
               <!-- Una columna por cancha -->
               <ng-container *ngFor="let court of courts; trackBy: trackByCourt">
                 <div class="relative h-24 overflow-visible">
@@ -149,6 +163,7 @@
                     <div
                       role="button"
                       tabindex="0"
+                      aria-label="Disponible"
                       (click)="onSlotClick(court, hour, '00')"
                       (keydown.enter)="onSlotClick(court, hour, '00')"
                       class="h-12 rounded-t-lg border-2 border-dashed border-muted-foreground/30
@@ -159,6 +174,7 @@
                     <div
                       role="button"
                       tabindex="0"
+                      aria-label="Disponible"
                       (click)="onSlotClick(court, hour, '30')"
                       (keydown.enter)="onSlotClick(court, hour, '30')"
                       class="h-12 rounded-b-lg border-2 border-t-0 border-dashed border-muted-foreground/30
@@ -528,26 +544,25 @@
      Implementado con overlay fixed + panel fixed centrado (sin dependencias).
      ═══════════════════════════════════════════════════════════════════════ -->
 <ng-container *ngIf="isDialogOpen">
-  <!-- Backdrop principal.
-       Usa bg-black/50 en vez de backdrop-blur-sm porque backdrop-filter: blur()
-       provoca flickering visible al hacer click (el browser re-composita la capa
-       GPU del blur en cada evento de pointer, aún sin cambios en el DOM).
-       El overlay oscuro semi-transparente logra el mismo efecto de separación
-       visual sin artefactos GPU. -->
+  <!-- Wrapper: cubre el viewport completo, centra el panel con flexbox.
+       Al usar inset-0 + flex, el centrado es independiente del containing block
+       del ancestro overflow-hidden, evitando el bug de fixed+overflow en Chromium mobile. -->
   <div
-    class="fixed inset-0 z-40 bg-black/50 cursor-pointer"
-    aria-hidden="true"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
     (click)="closeDialog()"
-  ></div>
-
-  <!-- Panel del diálogo — z-50 (por encima del backdrop pero bajo el confirm) -->
-  <div
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="dialog-title"
-    class="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-[600px] max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95"
-    (click)="$event.stopPropagation()"
   >
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/50 cursor-pointer" aria-hidden="true"></div>
+
+    <!-- Panel del diálogo -->
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialog-title"
+      data-testid="booking-modal"
+      class="relative z-10 w-full max-w-[600px] max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95"
+      (click)="$event.stopPropagation()"
+    >
     <!-- Botón X (cerrar) en esquina superior derecha -->
     <button
       type="button"
@@ -1632,6 +1647,7 @@
       </div>
     </ng-container>
   </div>
+  </div><!-- /flex centering wrapper -->
 
   <!-- ── CONFIRM DIALOG ────────────────────────────────────────────────────────
        Vive DENTRO del mismo ng-container de isDialogOpen para que Angular lo
