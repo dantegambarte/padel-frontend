@@ -243,8 +243,8 @@ export class ReportsComponent implements OnInit {
       datasets: [
         {
           data: [
-            this.paymentData?.efectivo?.amount ?? 0,
-            this.paymentData?.transferencia?.amount ?? 0,
+            this.paymentData?.cash?.total ?? 0,
+            this.paymentData?.transfer?.total ?? 0,
           ],
           backgroundColor: [accentColor, primaryColor],
           hoverOffset: 8,

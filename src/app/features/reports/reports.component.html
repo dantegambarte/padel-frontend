@@ -325,7 +325,7 @@
                 <span class="text-sm">Efectivo</span>
               </div>
               <span class="font-semibold"
-                >${{ fmt(paymentData?.efectivo?.amount ?? 0) }}</span
+                >${{ fmt(paymentData?.cash?.total ?? 0) }}</span
               >
             </div>
 
@@ -336,7 +336,7 @@
                 <span class="text-sm">Transferencia</span>
               </div>
               <span class="font-semibold"
-                >${{ fmt(paymentData?.transferencia?.amount ?? 0) }}</span
+                >${{ fmt(paymentData?.transfer?.total ?? 0) }}</span
               >
             </div>
           </div>
