@@ -1,11 +1,34 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ToastService, ToastMessage } from '../../core/services/toast.service';
+
+/**
+ * Animación de entrada/salida estilo Sileo/iOS:
+ * - Entrada: desliza desde arriba con fade-in (ease-out, 300ms)
+ * - Salida:  sube y desvanece (ease-in, 200ms)
+ */
+export const toastAnimation = trigger('toastState', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(-110%) scale(0.96)' }),
+    animate(
+      '300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+      style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+    ),
+  ]),
+  transition(':leave', [
+    animate(
+      '200ms ease-in',
+      style({ opacity: 0, transform: 'translateY(-60%) scale(0.96)' }),
+    ),
+  ]),
+]);
 
 @Component({
   selector: 'app-toast',
   templateUrl: './toast.component.html',
+  animations: [toastAnimation],
 })
 export class ToastComponent implements OnInit, OnDestroy {
   toasts: ToastMessage[] = [];
@@ -31,18 +54,66 @@ export class ToastComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve las clases CSS del toast según su variante.
-   * Usa colores concretos (no variables CSS) para garantizar contraste independientemente del tema.
+   * Devuelve las clases de acento (icono + borde izquierdo indicador) según variante.
+   * El fondo glassmorphism es compartido para todos; solo cambia el color de acento.
    */
-  toastClass(variant: ToastMessage['variant']): string {
-    const base =
-      'flex items-start gap-3 rounded-lg border p-4 shadow-xl ' +
-      'animate-in slide-in-from-right-full duration-300';
-    const variants: Record<ToastMessage['variant'], string> = {
-      default: `${base} border-gray-200 bg-white text-gray-900`,
-      success: `${base} border-green-200 bg-green-50 text-green-900`,
-      destructive: `${base} border-red-200   bg-red-50   text-red-900`,
+  iconClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'text-slate-500',
+      success: 'text-emerald-500',
+      destructive: 'text-rose-500',
     };
-    return variants[variant];
+    return map[variant];
+  }
+
+  accentBarClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'bg-slate-400',
+      success: 'bg-emerald-400',
+      destructive: 'bg-rose-500',
+    };
+    return map[variant];
+  }
+
+  /** Fondo glassmorphism con tinte de color según variante. */
+  cardBgClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'bg-slate-800/80',
+      success: 'bg-emerald-900/80',
+      destructive: 'bg-rose-900/80',
+    };
+    return map[variant];
+  }
+
+  titleClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'text-slate-100',
+      success: 'text-emerald-100',
+      destructive: 'text-rose-100',
+    };
+    return map[variant];
+  }
+
+  descClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'text-slate-400',
+      success: 'text-emerald-300/80',
+      destructive: 'text-rose-300/80',
+    };
+    return map[variant];
+  }
+
+  closeClass(variant: ToastMessage['variant']): string {
+    const map: Record<ToastMessage['variant'], string> = {
+      default: 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/60',
+      success:
+        'text-emerald-400/70 hover:text-emerald-100 hover:bg-emerald-800/60',
+      destructive: 'text-rose-400/70 hover:text-rose-100 hover:bg-rose-800/60',
+    };
+    return map[variant];
+  }
+
+  trackById(_: number, toast: ToastMessage): number {
+    return toast.id;
   }
 }
