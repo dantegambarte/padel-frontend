@@ -25,6 +25,23 @@ export class SettingsComponent implements OnInit {
   horarioApertura = '09:00';
   horarioCierre = '23:00';
 
+  // Snapshot de los valores al cargar. Se compara contra los actuales para
+  // determinar si el usuario realizó algún cambio (dirty state manual,
+  // ya que el componente no usa ReactiveFormsModule).
+  private savedPrecioBase = '';
+  private savedPrecioProfesor = '';
+  private savedHorarioApertura = '';
+  private savedHorarioCierre = '';
+
+  get isDirty(): boolean {
+    return (
+      this.precioBase       !== this.savedPrecioBase       ||
+      this.precioProfesor   !== this.savedPrecioProfesor   ||
+      this.horarioApertura  !== this.savedHorarioApertura  ||
+      this.horarioCierre    !== this.savedHorarioCierre
+    );
+  }
+
   // ── Canchas ─────────────────────────────────────────────────────────────
   courts: Court[] = [];
 
@@ -78,13 +95,16 @@ export class SettingsComponent implements OnInit {
   private applyConfig(entries: ConfigEntry[]): void {
     if (!Array.isArray(entries)) return;
     const map = new Map(entries.map((e) => [e.key, e.value]));
-    if (map.has('precio_base')) this.precioBase = map.get('precio_base')!;
-    if (map.has('precio_profesor'))
-      this.precioProfesor = map.get('precio_profesor')!;
-    if (map.has('horario_apertura'))
-      this.horarioApertura = map.get('horario_apertura')!;
-    if (map.has('horario_cierre'))
-      this.horarioCierre = map.get('horario_cierre')!;
+    if (map.has('precio_base'))      this.precioBase      = map.get('precio_base')!;
+    if (map.has('precio_profesor'))  this.precioProfesor  = map.get('precio_profesor')!;
+    if (map.has('horario_apertura')) this.horarioApertura = map.get('horario_apertura')!;
+    if (map.has('horario_cierre'))   this.horarioCierre   = map.get('horario_cierre')!;
+
+    // Actualizar snapshot: a partir de aquí el formulario está "limpio"
+    this.savedPrecioBase      = this.precioBase;
+    this.savedPrecioProfesor  = this.precioProfesor;
+    this.savedHorarioApertura = this.horarioApertura;
+    this.savedHorarioCierre   = this.horarioCierre;
   }
 
   get precioBaseNum(): number {
@@ -111,11 +131,17 @@ export class SettingsComponent implements OnInit {
       .updateBulk(entries)
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
-        next: () =>
+        next: () => {
+          // Actualizar snapshot para que el formulario vuelva a estado "limpio"
+          this.savedPrecioBase      = this.precioBase;
+          this.savedPrecioProfesor  = this.precioProfesor;
+          this.savedHorarioApertura = this.horarioApertura;
+          this.savedHorarioCierre   = this.horarioCierre;
           this.toast.success(
             'Configuración guardada',
             'Los cambios se aplicarán de inmediato',
-          ),
+          );
+        },
         error: () =>
           this.toast.error(
             'Error al guardar',
