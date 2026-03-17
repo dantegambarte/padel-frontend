@@ -147,6 +147,7 @@ export class PosComponent implements OnInit {
 
   // ── Formatter ─────────────────────────────────────────────────────────────────
   fmt(value: number): string {
+    if (value === 0) return '0';
     return value.toLocaleString('es-AR');
   }
 
