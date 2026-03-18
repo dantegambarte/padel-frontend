@@ -106,8 +106,8 @@ export class DashboardAdminComponent implements OnInit {
    */
   private buildChart(
     data: RevenueDay[],
-    primaryColor: string,
-    accentColor: string,
+    _primaryColor: string,
+    _accentColor: string,
   ): void {
     this.barChartData = {
       labels: data.map((d) => d.period),
@@ -115,13 +115,15 @@ export class DashboardAdminComponent implements OnInit {
         {
           data: data.map((d) => d.bookings),
           label: 'Alquileres',
-          backgroundColor: primaryColor,
+          backgroundColor: '#06b6d4', // Cyan 500
+          borderColor: '#0891b2',     // Cyan 600
           borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
           data: data.map((d) => d.sales),
           label: 'Productos',
-          backgroundColor: accentColor,
+          backgroundColor: '#f97316', // Orange 500
+          borderColor: '#ea6c0a',     // Orange 600
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],

@@ -1,4 +1,4 @@
-<div class="p-4 md:p-6 space-y-6">
+<div class="space-y-6">
   <div class="rounded-lg border border-border bg-card shadow-md">
     <div class="p-6">
       <h2 class="text-xl font-semibold text-card-foreground">
@@ -401,9 +401,14 @@
               id="edit-password"
               type="password"
               [(ngModel)]="editForm.password"
+              #editPwdField="ngModel"
+              minlength="6"
               placeholder="Dejar vacío para no cambiar"
               class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
+            <p *ngIf="editPwdField.errors?.['minlength'] && editPwdField.touched" class="text-xs text-destructive mt-0.5">
+              * Mínimo 6 caracteres
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -512,9 +517,14 @@
               id="dlg-password"
               type="password"
               [(ngModel)]="form.password"
+              #dlgPwdField="ngModel"
+              minlength="6"
               placeholder="••••••••"
               class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
+            <p *ngIf="dlgPwdField.errors?.['minlength'] && dlgPwdField.touched" class="text-xs text-destructive mt-0.5">
+              * Mínimo 6 caracteres
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">

@@ -61,6 +61,10 @@ export class ReportsComponent implements OnInit {
   productRanking: ProductRanking[] = [];
   transactions: TransactionExport[] = [];
 
+  /** Filtros activos en la tabla de transacciones. */
+  txFilterType: 'all' | 'booking' | 'sale' = 'all';
+  txFilterPayment: 'all' | 'cash' | 'transfer' = 'all';
+
   barChartType = 'bar' as const;
   barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
   barChartOptions: ChartOptions<'bar'> = {
@@ -161,6 +165,33 @@ export class ReportsComponent implements OnInit {
     return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
   }
 
+  /** Transacciones filtradas según los selectores activos de tipo y método de pago. */
+  get filteredTransactions(): TransactionExport[] {
+    return this.transactions.filter((tx) => {
+      const typeOk =
+        this.txFilterType === 'all' || tx.type === this.txFilterType;
+      const paymentOk =
+        this.txFilterPayment === 'all' ||
+        (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
+        (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
+      return typeOk && paymentOk;
+    });
+  }
+
+  /** Total monetario de las transacciones filtradas actualmente. */
+  get filteredTransactionTotal(): number {
+    return this.filteredTransactions.reduce(
+      (s, t) => s + (Number(t.total) || 0),
+      0,
+    );
+  }
+
+  /** Resetea los filtros de la tabla al cargar datos nuevos. */
+  resetTxFilters(): void {
+    this.txFilterType = 'all';
+    this.txFilterPayment = 'all';
+  }
+
   /** Monto total generado por el ranking de productos. */
   get rankingTotalAmount(): number {
     return this.productRanking.reduce(
@@ -192,6 +223,7 @@ export class ReportsComponent implements OnInit {
     this.selectedDate = '';
     if (this.selectedPeriod === id) return;
     this.selectedPeriod = id;
+    this.resetTxFilters();
     this.loadAll();
   }
 
@@ -258,30 +290,49 @@ export class ReportsComponent implements OnInit {
       });
   }
 
-  /** Construye los datasets para el gráfico de barras y el de torta con los colores del tema. */
-  private buildCharts(): void {
-    const style = getComputedStyle(document.documentElement);
-    const primaryColor = style.getPropertyValue('--primary').trim();
-    const accentColor = style.getPropertyValue('--accent').trim();
+  /**
+   * Paleta del gráfico de barras "Ingresos por Categoría".
+   * Ámbar para Alquileres, Violeta para Productos.
+   * Completamente distinta de los colores de métodos de pago.
+   */
+  private static readonly BAR_COLORS = {
+    alquileres: '#06b6d4', // cyan-500
+    productos:  '#f97316', // orange-500
+  } as const;
 
+  /**
+   * Paleta semántica financiera del gráfico de torta "Métodos de Pago".
+   * Verde = dinero físico (efectivo). Índigo = transacción digital (transferencia).
+   */
+  private static readonly PAYMENT_COLORS = {
+    cash:     '#10b981', // emerald-500
+    transfer: '#6366f1', // indigo-500
+  } as const;
+
+  /** Construye los datasets para el gráfico de barras y el de torta. */
+  private buildCharts(): void {
+    // ── Gráfico de barras: Alquileres vs Productos ──────────────────────
     this.barChartData = {
       labels: this.revenueData.map((d) => d.period),
       datasets: [
         {
           data: this.revenueData.map((d) => d.bookings),
           label: 'Alquileres',
-          backgroundColor: primaryColor,
+          backgroundColor: ReportsComponent.BAR_COLORS.alquileres,
+          borderColor: '#0891b2', // cyan-600
           borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
           data: this.revenueData.map((d) => d.sales),
           label: 'Productos',
-          backgroundColor: accentColor,
+          backgroundColor: ReportsComponent.BAR_COLORS.productos,
+          borderColor: '#ea6c0a', // orange-600
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
     };
 
+    // ── Gráfico de torta: Métodos de Pago ───────────────────────────────
     this.pieChartData = {
       labels: ['Efectivo', 'Transferencia'],
       datasets: [
@@ -290,29 +341,48 @@ export class ReportsComponent implements OnInit {
             this.paymentData?.cash?.total ?? 0,
             this.paymentData?.transfer?.total ?? 0,
           ],
-          backgroundColor: [accentColor, primaryColor],
+          backgroundColor: [
+            ReportsComponent.PAYMENT_COLORS.cash,
+            ReportsComponent.PAYMENT_COLORS.transfer,
+          ],
+          borderColor: '#ffffff',
+          borderWidth: 3,
           hoverOffset: 8,
         },
       ],
     };
   }
 
-  /** Exporta las transacciones del período actual a un archivo Excel (.xlsx). */
+  /** Exporta las transacciones aplicando los filtros activos de tipo y método de pago. */
   exportExcel(): void {
     if (this.isExporting) return;
 
     if (this.transactions.length > 0) {
-      this.triggerExcelDownload(this.transactions);
+      this.triggerExcelDownload(this.filteredTransactions);
       return;
     }
 
+    // Si aún no hay datos en memoria, los busca y luego aplica filtros
     this.isExporting = true;
     const date = this.dateFilterActive ? this.selectedDate : undefined;
     this.reportsService
       .getTransactionsExport(this.dateFrom, this.dateTo, date)
       .pipe(finalize(() => (this.isExporting = false)))
       .subscribe({
-        next: (data) => this.triggerExcelDownload(data),
+        next: (data) => {
+          // Aplica los mismos filtros UI a los datos recién cargados
+          const filtered = data.filter((tx) => {
+            const typeOk =
+              this.txFilterType === 'all' || tx.type === this.txFilterType;
+            const paymentOk =
+              this.txFilterPayment === 'all' ||
+              (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
+              (this.txFilterPayment === 'transfer' &&
+                Number(tx.transfer) > 0);
+            return typeOk && paymentOk;
+          });
+          this.triggerExcelDownload(filtered);
+        },
         error: () =>
           this.toast.error(
             'Error al exportar',
@@ -378,8 +448,19 @@ export class ReportsComponent implements OnInit {
       'Registrado por': '',
     });
 
+    const filterParts: string[] = [];
+    if (this.txFilterType !== 'all') {
+      filterParts.push(this.txFilterType === 'booking' ? 'Tipo: Alquileres' : 'Tipo: Ventas');
+    }
+    if (this.txFilterPayment !== 'all') {
+      filterParts.push(this.txFilterPayment === 'cash' ? 'Pago: Efectivo' : 'Pago: Transferencia');
+    }
+    const filterLabel = filterParts.length
+      ? ` | Filtros: ${filterParts.join(' + ')}`
+      : '';
+
     const headerAoa: (string | number)[][] = [
-      [`Reporte de Transacciones | Periodo: ${displayFrom} al ${displayTo}`],
+      [`Reporte de Transacciones | Periodo: ${displayFrom} al ${displayTo}${filterLabel}`],
       [`Generado el: ${generatedAt}`],
       [],
     ];
@@ -412,13 +493,17 @@ export class ReportsComponent implements OnInit {
     XLSX.utils.book_append_sheet(wb, ws, 'Reporte Financiero');
 
     const fileFrom = effectiveFrom.replace(/-/g, '');
-    const fileTo = effectiveTo.replace(/-/g, '');
-    XLSX.writeFile(wb, `Transacciones_${fileFrom}_al_${fileTo}.xlsx`);
+    const fileTo   = effectiveTo.replace(/-/g, '');
+    const fileSuffix = filterParts.length
+      ? `_${filterParts.map((f) => f.replace(/\W+/g, '')).join('_')}`
+      : '';
+    XLSX.writeFile(wb, `Transacciones_${fileFrom}_al_${fileTo}${fileSuffix}.xlsx`);
 
-    this.toast.success(
-      'Reporte Excel descargado',
-      `Período: ${displayFrom} al ${displayTo}`,
-    );
+    const toastDetail = filterParts.length
+      ? `${displayFrom} al ${displayTo} · ${filterParts.join(', ')}`
+      : `Período: ${displayFrom} al ${displayTo}`;
+
+    this.toast.success('Reporte Excel descargado', toastDetail);
   }
 
   /**

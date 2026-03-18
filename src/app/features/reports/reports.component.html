@@ -1,5 +1,5 @@
 
-<div class="p-4 md:p-6 space-y-6">
+<div class="space-y-6">
 
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
@@ -150,18 +150,18 @@
           </ng-template>
         </div>
 
-        <div>
-          <p class="text-sm font-semibold text-foreground">
-            Última Jornada Comercial
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="text-sm font-semibold text-foreground whitespace-nowrap">Última Jornada Comercial</p>
             <span
               [ngClass]="cashSession!.isClosed
                 ? 'bg-muted text-muted-foreground'
                 : 'bg-accent/15 text-accent'"
-              class="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold"
+              class="inline-flex flex-shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-bold"
             >
               {{ cashSession!.isClosed ? 'Cerrada' : 'Abierta ●' }}
             </span>
-          </p>
+          </div>
           <p class="text-xs text-muted-foreground">
             Jornada del <strong>{{ cashSession!.sessionDate ?? '—' }}</strong>
             <ng-container *ngIf="cashSession!.openedAt">
@@ -341,7 +341,7 @@
           *ngIf="isLoading"
           class="h-[300px] animate-pulse rounded-lg bg-muted"
         ></div>
-        <div *ngIf="!isLoading" style="height: 300px; position: relative">
+        <div *ngIf="!isLoading" class="relative h-[300px]">
           <canvas
             baseChart
             [data]="barChartData"
@@ -373,10 +373,7 @@
 
         <ng-container *ngIf="!isLoading">
 
-          <div
-            class="flex items-center justify-center"
-            style="height: 300px; position: relative"
-          >
+          <div class="relative flex h-[300px] items-center justify-center">
             <canvas
               baseChart
               [data]="pieChartData"
@@ -388,8 +385,8 @@
           <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-
-                <div class="h-3 w-3 rounded-full bg-accent"></div>
+                <!-- emerald-500: mismo color que el dataset de Efectivo -->
+                <div class="h-3 w-3 rounded-full" style="background-color: #10b981"></div>
                 <span class="text-sm">Efectivo</span>
               </div>
               <span class="font-semibold"
@@ -399,8 +396,8 @@
 
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-
-                <div class="h-3 w-3 rounded-full bg-primary"></div>
+                <!-- indigo-500: mismo color que el dataset de Transferencia -->
+                <div class="h-3 w-3 rounded-full" style="background-color: #6366f1"></div>
                 <span class="text-sm">Transferencia</span>
               </div>
               <span class="font-semibold"
@@ -500,7 +497,7 @@
   >
 
     <div class="p-6">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h3
             class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
@@ -544,12 +541,114 @@
               Filtro de día activo
             </span>
 
+            <!-- Contador: muestra cuántas filas quedan tras los filtros -->
             <span
               *ngIf="!isLoading"
               class="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
             >
-              {{ transactions.length }} {{ transactions.length === 1 ? 'operación' : 'operaciones' }}
+              {{ filteredTransactions.length }}
+              <ng-container *ngIf="filteredTransactions.length !== transactions.length">
+                / {{ transactions.length }}
+              </ng-container>
+              {{ filteredTransactions.length === 1 ? 'operación' : 'operaciones' }}
             </span>
+          </div>
+
+          <!-- ── Filtros de la tabla ─────────────────────────────────── -->
+          <div *ngIf="!isLoading && transactions.length > 0"
+               class="mt-3 flex flex-wrap gap-2">
+
+            <!-- Filtro Tipo -->
+            <div class="flex rounded-lg border border-border overflow-hidden text-xs font-medium">
+              <button
+                type="button"
+                (click)="txFilterType = 'all'"
+                [class.bg-primary]="txFilterType === 'all'"
+                [class.text-primary-foreground]="txFilterType === 'all'"
+                [class.bg-transparent]="txFilterType !== 'all'"
+                [class.text-muted-foreground]="txFilterType !== 'all'"
+                class="px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                (click)="txFilterType = 'booking'"
+                [class.bg-primary]="txFilterType === 'booking'"
+                [class.text-primary-foreground]="txFilterType === 'booking'"
+                [class.bg-transparent]="txFilterType !== 'booking'"
+                [class.text-muted-foreground]="txFilterType !== 'booking'"
+                class="border-l border-border px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Alquileres
+              </button>
+              <button
+                type="button"
+                (click)="txFilterType = 'sale'"
+                [class.bg-primary]="txFilterType === 'sale'"
+                [class.text-primary-foreground]="txFilterType === 'sale'"
+                [class.bg-transparent]="txFilterType !== 'sale'"
+                [class.text-muted-foreground]="txFilterType !== 'sale'"
+                class="border-l border-border px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Ventas
+              </button>
+            </div>
+
+            <!-- Filtro Método de Pago -->
+            <div class="flex rounded-lg border border-border overflow-hidden text-xs font-medium">
+              <button
+                type="button"
+                (click)="txFilterPayment = 'all'"
+                [class.bg-primary]="txFilterPayment === 'all'"
+                [class.text-primary-foreground]="txFilterPayment === 'all'"
+                [class.bg-transparent]="txFilterPayment !== 'all'"
+                [class.text-muted-foreground]="txFilterPayment !== 'all'"
+                class="px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                (click)="txFilterPayment = 'cash'"
+                [class.bg-primary]="txFilterPayment === 'cash'"
+                [class.text-primary-foreground]="txFilterPayment === 'cash'"
+                [class.bg-transparent]="txFilterPayment !== 'cash'"
+                [class.text-muted-foreground]="txFilterPayment !== 'cash'"
+                class="border-l border-border px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Efectivo
+              </button>
+              <button
+                type="button"
+                (click)="txFilterPayment = 'transfer'"
+                [class.bg-primary]="txFilterPayment === 'transfer'"
+                [class.text-primary-foreground]="txFilterPayment === 'transfer'"
+                [class.bg-transparent]="txFilterPayment !== 'transfer'"
+                [class.text-muted-foreground]="txFilterPayment !== 'transfer'"
+                class="border-l border-border px-3 py-1.5 transition-colors hover:bg-muted"
+              >
+                Transferencia
+              </button>
+            </div>
+
+            <!-- Botón limpiar filtros (solo visible si alguno está activo) -->
+            <button
+              *ngIf="txFilterType !== 'all' || txFilterPayment !== 'all'"
+              type="button"
+              (click)="resetTxFilters()"
+              class="inline-flex items-center gap-1 rounded-lg border border-border
+                     px-3 py-1.5 text-xs font-medium text-muted-foreground
+                     transition-colors hover:bg-muted"
+            >
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+              </svg>
+              Limpiar
+            </button>
+
           </div>
         </div>
 
@@ -557,7 +656,7 @@
           type="button"
           (click)="exportExcel()"
           [disabled]="isExporting"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="inline-flex h-10 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
 
           <svg
@@ -587,41 +686,55 @@
         ></div>
       </div>
 
-      <div *ngIf="!isLoading" class="scroll-hint-x">
+      <div *ngIf="!isLoading">
         <table class="w-full">
-          <thead>
+          <!-- Cabecera: oculta en móvil, visible en desktop -->
+          <thead class="hidden md:table-header-group">
             <tr class="border-b border-border">
-              <th
-                class="p-3 text-left text-sm font-medium text-muted-foreground"
-              >
+              <th class="p-3 text-left text-sm font-medium text-muted-foreground">
                 Fecha
               </th>
-              <th
-                class="p-3 text-left text-sm font-medium text-muted-foreground"
-              >
+              <th class="p-3 text-left text-sm font-medium text-muted-foreground">
                 Tipo
               </th>
-              <th
-                class="p-3 text-right text-sm font-medium text-muted-foreground"
-              >
+              <th class="p-3 text-right text-sm font-medium text-muted-foreground">
                 Monto
               </th>
-              <th
-                class="p-3 text-left text-sm font-medium text-muted-foreground"
-              >
+              <th class="p-3 text-left text-sm font-medium text-muted-foreground">
                 Método de Pago
               </th>
             </tr>
           </thead>
-          <tbody>
+
+          <!-- Cuerpo: tarjetas en móvil, filas en desktop -->
+          <tbody class="block md:table-row-group">
             <tr
-              *ngFor="let tx of transactions"
-              class="border-b border-border last:border-0 hover:bg-muted/50"
+              *ngFor="let tx of filteredTransactions"
+              class="block md:table-row
+                     bg-card md:bg-transparent
+                     border border-border md:border-0 md:border-b
+                     rounded-xl md:rounded-none
+                     shadow-sm md:shadow-none
+                     mb-3 md:mb-0 p-4 md:p-0
+                     last:mb-0 md:hover:bg-muted/50"
             >
-              <td class="p-3 text-sm">{{ tx.date }} {{ tx.time }}</td>
+              <!-- Fecha -->
+              <td class="flex justify-between items-center md:table-cell
+                         border-b border-border md:border-0
+                         py-2 md:py-0 md:p-3 last:border-0">
+                <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                  Fecha
+                </span>
+                <span class="text-sm">{{ tx.date }} {{ tx.time }}</span>
+              </td>
 
-              <td class="p-3">
-
+              <!-- Tipo -->
+              <td class="flex justify-between items-center md:table-cell
+                         border-b border-border md:border-0
+                         py-2 md:py-0 md:p-3 last:border-0">
+                <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                  Tipo
+                </span>
                 <span
                   [ngClass]="
                     tx.type === 'booking'
@@ -634,12 +747,22 @@
                 </span>
               </td>
 
-              <td class="p-3 text-right font-mono font-semibold">
-                ${{ fmt(tx.total) }}
+              <!-- Monto -->
+              <td class="flex justify-between items-center md:table-cell
+                         border-b border-border md:border-0
+                         py-2 md:py-0 md:p-3 md:text-right last:border-0">
+                <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                  Monto
+                </span>
+                <span class="font-mono font-semibold">${{ fmt(tx.total) }}</span>
               </td>
 
-              <td class="p-3">
-
+              <!-- Método de Pago -->
+              <td class="flex justify-between items-center md:table-cell
+                         py-2 md:py-0 md:p-3 last:border-0">
+                <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                  Método de Pago
+                </span>
                 <span
                   class="inline-flex items-center rounded-full border border-border bg-transparent px-2.5 py-0.5 text-xs font-semibold"
                 >
@@ -649,8 +772,9 @@
             </tr>
           </tbody>
 
+          <!-- Pie de tabla: solo visible en desktop -->
           <tfoot
-            class="border-t border-border bg-muted/30"
+            class="hidden md:table-footer-group border-t border-border bg-muted/30"
             *ngIf="transactions.length > 0"
           >
             <tr>
@@ -663,6 +787,38 @@
           </tfoot>
         </table>
 
+        <!-- Total en móvil (reemplaza el tfoot) -->
+        <div
+          *ngIf="filteredTransactions.length > 0"
+          class="md:hidden mt-1 flex items-center justify-between
+                 rounded-xl border border-border bg-muted/30 px-4 py-3"
+        >
+          <span class="font-semibold">Total</span>
+          <span class="font-mono text-lg font-bold">${{ fmt(filteredTransactionTotal) }}</span>
+        </div>
+
+        <!-- Sin resultados tras aplicar filtros -->
+        <div
+          *ngIf="filteredTransactions.length === 0 && transactions.length > 0"
+          class="flex flex-col items-center justify-center py-10 text-center
+                 text-muted-foreground"
+        >
+          <svg class="mb-2 h-10 w-10 opacity-30" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <p class="text-sm font-medium">Ninguna transacción coincide con los filtros</p>
+          <button
+            type="button"
+            (click)="resetTxFilters()"
+            class="mt-2 text-xs text-primary hover:underline"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
+        <!-- Sin datos en el período -->
         <p
           *ngIf="transactions.length === 0"
           class="py-8 text-center text-sm text-muted-foreground"

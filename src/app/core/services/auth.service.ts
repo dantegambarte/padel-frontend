@@ -11,6 +11,8 @@ import {
 
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
+import { CourtsService } from './courts.service';
+import { ProductsService } from './products.service';
 
 const TOKEN_KEY = 'padelsys_access_token';
 const REFRESH_KEY = 'padelsys_refresh_token';
@@ -40,6 +42,8 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private courtsService: CourtsService,
+    private productsService: ProductsService,
   ) {}
 
   /** Devuelve el usuario autenticado actualmente de forma sincrónica, o `null` si no hay sesión. */
@@ -86,12 +90,19 @@ export class AuthService {
       );
   }
 
-  /** Limpia la sesión local y redirige al usuario a la página de login. */
+  /**
+   * Limpia la sesión local, invalida las cachés de datos y redirige al login.
+   * Llamado tanto por el usuario (botón logout) como por el interceptor
+   * ante sesiones expiradas o sobreescritas.
+   */
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
     this.currentUserSubject.next(null);
+    // Invalidar cachés para evitar datos residuales al cambiar de usuario
+    this.courtsService.clearCache();
+    this.productsService.clearCache();
     this.router.navigate(['/auth/login']);
   }
 

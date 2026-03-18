@@ -1,4 +1,4 @@
-<div class="p-4 md:p-6 space-y-6">
+<div class="space-y-6">
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -42,28 +42,70 @@
             </svg>
             Agregar producto
           </button>
-
-          <div class="relative w-full md:w-64">
-            <svg
-              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar productos..."
-              [(ngModel)]="searchQuery"
-              class="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
         </div>
+      </div>
+
+      <!-- Barra de filtros -->
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <!-- Búsqueda por texto -->
+        <div class="relative flex-1 min-w-[160px]">
+          <svg
+            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            [(ngModel)]="searchQuery"
+            class="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+        </div>
+
+        <!-- Filtro por Categoría -->
+        <select
+          [(ngModel)]="filterCategory"
+          class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+        </select>
+
+        <!-- Filtro por Estado de Stock -->
+        <select
+          [(ngModel)]="filterStock"
+          class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <option value="">Todo el stock</option>
+          <option value="low">Stock Bajo (≤ 5)</option>
+          <option value="zero">Sin Stock (= 0)</option>
+        </select>
+
+        <!-- Botón limpiar filtros -->
+        <button
+          *ngIf="hasActiveFilters"
+          type="button"
+          (click)="clearFilters()"
+          title="Limpiar filtros"
+          class="inline-flex h-10 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+          Limpiar
+        </button>
+
+        <!-- Badge con cantidad de resultados cuando hay filtros -->
+        <span
+          *ngIf="hasActiveFilters"
+          class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+        >
+          {{ filteredProducts.length }} resultado{{ filteredProducts.length !== 1 ? 's' : '' }}
+        </span>
       </div>
     </div>
 
@@ -297,42 +339,82 @@
       <!-- Body -->
       <div class="modal-body">
         <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium leading-none" for="prod-nombre">Nombre del Producto</label>
+          <!-- Nombre -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium leading-none" for="prod-nombre">
+              Nombre del Producto <span class="text-destructive">*</span>
+            </label>
             <input
               id="prod-nombre"
               type="text"
               placeholder="Ej: Pelotas Wilson"
               [(ngModel)]="form.name"
               [disabled]="viewMode"
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              (blur)="touchField('name')"
+              [ngClass]="formTouched.name && !form.name.trim() && !viewMode
+                ? 'border-destructive focus-visible:ring-destructive'
+                : 'border-input'"
+              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
+            <p *ngIf="formTouched.name && !form.name.trim() && !viewMode"
+               class="text-xs text-destructive">* Campo requerido</p>
           </div>
 
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium leading-none" for="prod-categoria">Categoría</label>
+          <!-- Categoría -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium leading-none" for="prod-categoria">
+              Categoría <span class="text-destructive">*</span>
+            </label>
             <select
               id="prod-categoria"
               [(ngModel)]="form.category"
               [disabled]="viewMode"
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              (change)="onCategoryChange()"
+              (blur)="touchField('category')"
+              [ngClass]="formTouched.category && !form.category && !viewMode
+                ? 'border-destructive focus-visible:ring-destructive'
+                : 'border-input'"
+              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="" disabled>Seleccione una categoría</option>
               <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
               <option value="__nueva__">+ Nueva categoría...</option>
             </select>
-            <input
-              *ngIf="isNewCategory && !viewMode"
-              type="text"
-              placeholder="Ej: Equipamiento"
-              [(ngModel)]="newCategoryName"
-              class="flex h-10 w-full rounded-md border border-primary bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
+            <p *ngIf="formTouched.category && !form.category && !viewMode"
+               class="text-xs text-destructive">* Campo requerido</p>
+
+            <!-- Nueva categoría -->
+            <ng-container *ngIf="isNewCategory && !viewMode">
+              <p class="text-xs text-muted-foreground">
+                💡 Para servicios retornables (paletas, pelotas) usá la categoría
+                <strong>Alquileres</strong> — el POS no bloqueará la venta por stock.
+              </p>
+              <input
+                type="text"
+                placeholder="Ej: Alquileres"
+                [(ngModel)]="newCategoryName"
+                (input)="onCategoryChange()"
+                class="flex h-10 w-full rounded-md border border-primary bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </ng-container>
+
+            <!-- Badge informativo para categoría Alquileres -->
+            <p *ngIf="isRentalCategory && !viewMode"
+               class="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-md px-2 py-1">
+              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+              </svg>
+              Categoría Alquileres: Precio Costo y Stock se establecen en 0 automáticamente.
+            </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium leading-none" for="prod-costo">Precio Costo</label>
+          <!-- Precio Costo + Precio Venta (Costo oculto para Alquileres) -->
+          <div class="grid gap-4" [ngClass]="isRentalCategory ? 'grid-cols-1' : 'grid-cols-2'">
+            <div *ngIf="!isRentalCategory" class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium leading-none" for="prod-costo">
+                Precio Costo <span class="text-destructive">*</span>
+              </label>
               <input
                 id="prod-costo"
                 type="number"
@@ -340,11 +422,21 @@
                 placeholder="0"
                 [(ngModel)]="form.costPrice"
                 [disabled]="viewMode"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                (blur)="touchField('costPrice')"
+                (focus)="$any($event.target).select()"
+                [ngClass]="formTouched.costPrice && !form.costPrice && !viewMode
+                  ? 'border-destructive focus-visible:ring-destructive'
+                  : 'border-input'"
+                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
+              <p *ngIf="formTouched.costPrice && !form.costPrice && !viewMode"
+                 class="text-xs text-destructive">* Campo requerido</p>
             </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium leading-none" for="prod-venta">Precio Venta</label>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium leading-none" for="prod-venta">
+                Precio Venta <span class="text-destructive">*</span>
+              </label>
               <input
                 id="prod-venta"
                 type="number"
@@ -352,13 +444,23 @@
                 placeholder="0"
                 [(ngModel)]="form.salePrice"
                 [disabled]="viewMode"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                (blur)="touchField('salePrice')"
+                (focus)="$any($event.target).select()"
+                [ngClass]="formTouched.salePrice && !form.salePrice && !viewMode
+                  ? 'border-destructive focus-visible:ring-destructive'
+                  : 'border-input'"
+                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
+              <p *ngIf="formTouched.salePrice && !form.salePrice && !viewMode"
+                 class="text-xs text-destructive">* Campo requerido</p>
             </div>
           </div>
 
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium leading-none" for="prod-stock">Stock Inicial</label>
+          <!-- Stock (oculto para Alquileres) -->
+          <div *ngIf="!isRentalCategory" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium leading-none" for="prod-stock">
+              Stock Inicial <span class="text-destructive">*</span>
+            </label>
             <input
               id="prod-stock"
               type="number"
@@ -366,8 +468,15 @@
               placeholder="0"
               [(ngModel)]="form.stock"
               [disabled]="viewMode"
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              (blur)="touchField('stock')"
+              (focus)="$any($event.target).select()"
+              [ngClass]="formTouched.stock && !form.stock && !viewMode
+                ? 'border-destructive focus-visible:ring-destructive'
+                : 'border-input'"
+              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
+            <p *ngIf="formTouched.stock && !form.stock && !viewMode"
+               class="text-xs text-destructive">* Campo requerido</p>
           </div>
 
           <div class="flex items-center justify-between rounded-lg border border-border p-3">
