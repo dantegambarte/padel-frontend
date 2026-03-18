@@ -110,7 +110,7 @@
           </div>
         </div>
 
-        <div class="flex-1 scroll-hint-x overflow-x-auto snap-x snap-mandatory">
+        <div class="flex-1 scroll-hint-x overflow-x-auto snap-x snap-mandatory" cdkDropListGroup>
           
           <div
             class="mb-2 h-7 grid gap-2 items-center"
@@ -132,7 +132,15 @@
             >
               
               <ng-container *ngFor="let court of courts; trackBy: trackByCourt">
-                <div class="relative h-24 overflow-visible">
+                <div
+                  class="relative h-24 overflow-visible"
+                  cdkDropList
+                  [id]="dropListId(court.id, hour)"
+                  [cdkDropListData]="{ courtId: court.id, hour: hour }"
+                  [cdkDropListConnectedTo]="[]"
+                  cdkDropListSortingDisabled
+                  (cdkDropListDropped)="onBookingDrop($event)"
+                >
 
                   <div class="absolute inset-0 flex flex-col">
                     
@@ -165,8 +173,16 @@
                       <div
                         class="absolute inset-x-0 top-0"
                         [style.height.px]="getBookingBlockHeight(booking)"
+                        cdkDrag
+                        [cdkDragData]="booking"
+                        cdkDragBoundary=".scroll-hint-x"
                       >
-                        
+                        <!-- Preview fantasma durante el drag -->
+                        <div *cdkDragPlaceholder
+                          class="absolute inset-[2px] rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/40"
+                          [style.height.px]="getBookingBlockHeight(booking) - 4"
+                        ></div>
+
                         <div
                           role="button"
                           tabindex="0"
@@ -221,6 +237,21 @@
                               <span class="block text-xs opacity-70">{{ booking.durationMinutes }} min</span>
                             </div>
                           </ng-container>
+                          <!-- Handle de arrastre — solo desktop (hidden en touch) -->
+                          <div
+                            cdkDragHandle
+                            title="Arrastrar para mover"
+                            class="hidden md:flex absolute bottom-1 left-1/2 -translate-x-1/2
+                                   items-center justify-center w-6 h-4 rounded
+                                   opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity
+                                   cursor-grab active:cursor-grabbing text-slate-400"
+                          >
+                            <svg viewBox="0 0 10 16" class="w-2.5 h-4" fill="currentColor">
+                              <circle cx="2" cy="2" r="1.2"/><circle cx="8" cy="2" r="1.2"/>
+                              <circle cx="2" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/>
+                              <circle cx="2" cy="14" r="1.2"/><circle cx="8" cy="14" r="1.2"/>
+                            </svg>
+                          </div>
                           <button
                             *ngIf="isAdmin"
                             type="button"
@@ -1249,6 +1280,22 @@
           </p>
         </div>
 
+        <!-- MOBILE FALLBACK: Mover / Duplicar (booked / playing) -->
+        <button
+          *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'"
+          type="button"
+          (click)="openRescheduleFromModal()"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-lg
+                 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100
+                 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/>
+            <path d="M2 12h20"/><path d="M12 2v20"/>
+          </svg>
+          Mover / Duplicar turno
+        </button>
+
         <!-- TERTIARY: Cancelar Reserva (admin + booked) -->
         <button *ngIf="isAdmin && selectedBooking.status === 'booked'"
           type="button" (click)="onCancelBooking(selectedBooking)"
@@ -1328,5 +1375,109 @@
     </div>
   </div>
   </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     DIÁLOGO: MOVER / DUPLICAR TURNO
+     Usado tanto por drag-drop (desktop) como por el botón del modal (móvil).
+═══════════════════════════════════════════════════════════════════════════ -->
+<div
+  *ngIf="rescheduleDialogOpen"
+  appModalScrollLock
+  class="modal-backdrop"
+  (click)="closeRescheduleDialog(); $event.stopPropagation()"
+>
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="reschedule-title"
+    class="modal-card max-w-sm"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 id="reschedule-title" class="text-base font-bold text-gray-900">Mover / Duplicar Turno</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Elegí el destino y la acción a realizar</p>
+        </div>
+        <button type="button" (click)="closeRescheduleDialog()" aria-label="Cerrar"
+          class="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Body -->
+    <div class="modal-body space-y-4">
+      <!-- Cancha destino -->
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-gray-700">Cancha destino</label>
+        <select [(ngModel)]="rescheduleTargetCourtId"
+          class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <option value="" disabled>Seleccioná una cancha...</option>
+          <option *ngFor="let c of courts" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <!-- Fecha destino -->
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-gray-700">Fecha destino</label>
+        <input type="date" [(ngModel)]="rescheduleTargetDate"
+          class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+      </div>
+      <!-- Hora destino -->
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-gray-700">Hora de inicio</label>
+        <select [(ngModel)]="rescheduleTargetHour"
+          class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <option value="" disabled>Seleccioná un horario...</option>
+          <option *ngFor="let h of HOURS" [value]="h">{{ h }}hs</option>
+        </select>
+      </div>
+    </div><!-- /modal-body -->
+    <!-- Footer con dos acciones -->
+    <div class="modal-footer flex-col sm:flex-row gap-2">
+      <button type="button" (click)="closeRescheduleDialog()"
+        class="w-full sm:w-auto order-last sm:order-first inline-flex items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+        Cancelar
+      </button>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <!-- Duplicar -->
+        <button type="button" (click)="confirmReschedule('duplicate')"
+          [disabled]="isRescheduling || !rescheduleTargetCourtId || !rescheduleTargetDate || !rescheduleTargetHour"
+          class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg
+                 border border-indigo-200 bg-indigo-50 text-indigo-700 px-4 py-2 text-sm font-medium
+                 hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:pointer-events-none">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Duplicar
+        </button>
+        <!-- Mover -->
+        <button type="button" (click)="confirmReschedule('move')"
+          [disabled]="isRescheduling || !rescheduleTargetCourtId || !rescheduleTargetDate || !rescheduleTargetHour"
+          class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg
+                 bg-indigo-600 text-white px-4 py-2 text-sm font-semibold
+                 hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:pointer-events-none">
+          <ng-container *ngIf="isRescheduling; else moverLabel">
+            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </ng-container>
+          <ng-template #moverLabel>
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 9l-3 3 3 3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/>
+            </svg>
+          </ng-template>
+          Mover
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </ng-container>

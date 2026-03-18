@@ -68,3 +68,10 @@ export interface UpdateBookingDto {
   amountTransfer?: number;
   items?: { productId: string; quantity: number }[];
 }
+
+/** Payload compartido para Mover y Duplicar una reserva. */
+export interface RescheduleBookingDto {
+  courtId: string;
+  date: string;
+  hour: string;
+}

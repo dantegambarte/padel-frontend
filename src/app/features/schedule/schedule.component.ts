@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Subscription, forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { CourtsService } from '../../core/services/courts.service';
@@ -18,6 +19,7 @@ import {
   PriceType,
   CreateBookingDto,
   UpdateBookingDto,
+  RescheduleBookingDto,
 } from '../../core/models/booking.model';
 
 interface CartItem {
@@ -110,6 +112,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   confirmDialogTitle = '';
   confirmDialogMessage = '';
   private confirmCallback: (() => void) | null = null;
+
+  // ── Diálogo Mover / Duplicar ──────────────────────────────────────────────
+  /** Turno pendiente de mover/duplicar (drag-drop o botón móvil). */
+  rescheduleDialogOpen = false;
+  /** `true` cuando el diálogo es iniciado desde el botón móvil dentro del modal de detalle. */
+  rescheduleFromModal = false;
+  rescheduleTargetCourtId = '';
+  rescheduleTargetDate = '';
+  rescheduleTargetHour = '';
+  /** ID del turno que se está reposicionando. */
+  private rescheduleSourceId = '';
+  isRescheduling = false;
 
   private savedAmountCash = 0;
   private savedAmountTransfer = 0;
@@ -1171,5 +1185,93 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
   trackByProductId(_: number, item: CartItem): string {
     return item.productId;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DRAG & DROP — Mover / Duplicar turno
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Genera un ID único de `cdkDropList` para cada celda de la grilla.
+   * Formato: `drop-{courtId}-{hour}`.
+   */
+  dropListId(courtId: string, hour: string): string {
+    return `drop-${courtId}-${hour}`;
+  }
+
+  /**
+   * Handler del evento `cdkDropListDropped`.
+   * Solo actúa si el origen y el destino son contenedores distintos.
+   * Abre el diálogo de intención (Mover / Duplicar).
+   */
+  onBookingDrop(event: CdkDragDrop<{ courtId: string; hour: string }>): void {
+    if (event.previousContainer === event.container) return;
+
+    const booking = event.item.data as BookingResponse;
+    const target = event.container.data;
+
+    this.rescheduleSourceId = booking.id;
+    this.rescheduleTargetCourtId = target.courtId;
+    this.rescheduleTargetDate = this.selectedDate;
+    this.rescheduleTargetHour = target.hour;
+    this.rescheduleFromModal = false;
+    this.rescheduleDialogOpen = true;
+  }
+
+  /**
+   * Abre el diálogo Mover/Duplicar desde el botón del modal de detalle (fallback móvil).
+   * Pre-carga los valores actuales del turno para que el usuario solo elija el destino.
+   */
+  openRescheduleFromModal(): void {
+    if (!this.selectedBooking) return;
+    this.rescheduleSourceId = this.selectedBooking.id;
+    this.rescheduleTargetCourtId = this.selectedBooking.court?.id ?? '';
+    this.rescheduleTargetDate = this.selectedDate;
+    this.rescheduleTargetHour = this.selectedBooking.hour;
+    this.rescheduleFromModal = true;
+    this.rescheduleDialogOpen = true;
+  }
+
+  /** Cierra el diálogo sin hacer nada. */
+  closeRescheduleDialog(): void {
+    this.rescheduleDialogOpen = false;
+    this.rescheduleSourceId = '';
+  }
+
+  /** Construye y lanza la petición de mover o duplicar según la acción elegida. */
+  confirmReschedule(action: 'move' | 'duplicate'): void {
+    if (!this.rescheduleTargetCourtId || !this.rescheduleTargetDate || !this.rescheduleTargetHour) {
+      this.toast.error('Datos incompletos', 'Seleccioná la cancha, fecha y hora de destino.');
+      return;
+    }
+
+    const dto: RescheduleBookingDto = {
+      courtId: this.rescheduleTargetCourtId,
+      date: this.rescheduleTargetDate,
+      hour: this.rescheduleTargetHour,
+    };
+
+    this.isRescheduling = true;
+    const request$ = action === 'move'
+      ? this.bookingsService.move(this.rescheduleSourceId, dto)
+      : this.bookingsService.duplicate(this.rescheduleSourceId, dto);
+
+    request$.pipe(finalize(() => (this.isRescheduling = false))).subscribe({
+      next: () => {
+        const label = action === 'move' ? 'Turno movido' : 'Turno duplicado';
+        this.toast.success(label, 'La agenda fue actualizada.');
+        this.closeRescheduleDialog();
+        // Si el diálogo fue desde el modal de detalle, cerrarlo también
+        if (this.rescheduleFromModal) this.forceCloseDialog();
+        this.loadBookings();
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.toast.error('Slot ocupado', 'Ese horario ya tiene un turno reservado.');
+        } else {
+          this.toast.error('Error', 'No se pudo completar la operación. Intentá de nuevo.');
+        }
+      },
+    });
   }
 }

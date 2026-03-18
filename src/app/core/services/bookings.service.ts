@@ -7,6 +7,7 @@ import {
   CreateBookingDto,
   UpdateBookingStatusDto,
   UpdateBookingDto,
+  RescheduleBookingDto,
 } from '../models/booking.model';
 import { environment } from '../../../environments/environment';
 
@@ -69,5 +70,25 @@ export class BookingsService {
    */
   cancel(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
+  }
+
+  /**
+   * Mueve una reserva a otro slot (cancha / fecha / hora).
+   * El backend verifica disponibilidad del destino (anti-overbooking).
+   * @param id  - ID de la reserva a mover.
+   * @param dto - Cancha, fecha y hora de destino.
+   */
+  move(id: string, dto: RescheduleBookingDto): Observable<BookingResponse> {
+    return this.http.post<BookingResponse>(`${this.url}/${id}/move`, dto);
+  }
+
+  /**
+   * Duplica una reserva en otro slot.
+   * El nuevo turno hereda cliente, precio y duración; el pago empieza en $0.
+   * @param id  - ID de la reserva original.
+   * @param dto - Cancha, fecha y hora de destino.
+   */
+  duplicate(id: string, dto: RescheduleBookingDto): Observable<BookingResponse> {
+    return this.http.post<BookingResponse>(`${this.url}/${id}/duplicate`, dto);
   }
 }
