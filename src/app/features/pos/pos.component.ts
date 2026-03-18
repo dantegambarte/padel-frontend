@@ -28,6 +28,14 @@ export class PosComponent implements OnInit {
   montoTransferencia = '';
   isLoadingProducts = false;
   isSubmitting = false;
+  isMobileCartOpen = false;
+  checkoutStep = 1;
+  selectedItemDetail: PosCartItem | null = null;
+  isDetailModalOpen = false;
+
+  touchStartY = 0;
+  touchEndY = 0;
+  readonly swipeThreshold = 50;
 
   lastSaleId: string | null = null;
 
@@ -68,6 +76,48 @@ export class PosComponent implements OnInit {
     if (!this.searchQuery.trim()) return this.products;
     const q = this.searchQuery.toLowerCase();
     return this.products.filter((p) => p.name.toLowerCase().includes(q));
+  }
+
+  /** Suma total de unidades en el carrito. */
+  get totalItems(): number {
+    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartY = event.changedTouches[0].screenY;
+    this.touchEndY = 0;
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    this.touchEndY = event.changedTouches[0].screenY;
+  }
+
+  onTouchEnd(): void {
+    // Solo actúa si hubo movimiento real (touchMove registrado)
+    if (this.touchEndY === 0) return;
+    const deltaY = this.touchEndY - this.touchStartY;
+    if (deltaY > this.swipeThreshold) {
+      this.isMobileCartOpen = false;
+      this.checkoutStep = 1;
+    }
+    this.touchStartY = 0;
+    this.touchEndY = 0;
+  }
+
+  /** Alterna la visibilidad del carrito en móvil. Al abrir, reinicia al paso 1. */
+  toggleMobileCart(): void {
+    this.isMobileCartOpen = !this.isMobileCartOpen;
+    if (this.isMobileCartOpen) this.checkoutStep = 1;
+  }
+
+  /** Avanza al paso 2 del wizard de pago (solo móvil). */
+  nextStep(): void {
+    this.checkoutStep = 2;
+  }
+
+  /** Retrocede al paso 1 del wizard (solo móvil). */
+  prevStep(): void {
+    this.checkoutStep = 1;
   }
 
   /** Total del carrito sumando precio × cantidad de cada ítem. */
@@ -112,15 +162,25 @@ export class PosComponent implements OnInit {
     );
   }
 
+  /** `true` si el producto es de categoría "Alquileres" (servicio retornable sin límite de stock). */
+  private isRental(product: Product | PosCartItem): boolean {
+    const cat =
+      'category' in product && typeof product.category === 'object'
+        ? (product.category as { name?: string })?.name
+        : (product as PosCartItem).category;
+    return (cat ?? '').toLowerCase().includes('alquiler');
+  }
+
   /**
    * Agrega un producto al carrito o incrementa su cantidad si ya existe.
-   * Muestra un error si se supera el stock disponible.
+   * Para productos de categoría "Alquileres" no se valida el stock (es un servicio retornable).
    * @param product - Producto a agregar.
    */
   addToCart(product: Product): void {
     const existing = this.cart.find((i) => i.productId === product.id);
+    const rental = this.isRental(product);
     if (existing) {
-      if (existing.quantity < product.stock) {
+      if (rental || existing.quantity < product.stock) {
         this.cart = this.cart.map((i) =>
           i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
@@ -157,7 +217,7 @@ export class PosComponent implements OnInit {
     const newQty = item.quantity + delta;
     if (newQty <= 0) {
       this.removeFromCart(productId);
-    } else if (newQty <= item.stock) {
+    } else if (this.isRental(item) || newQty <= item.stock) {
       this.cart = this.cart.map((i) =>
         i.productId === productId ? { ...i, quantity: newQty } : i,
       );
@@ -167,6 +227,18 @@ export class PosComponent implements OnInit {
         `Solo hay ${item.stock} unidades disponibles`,
       );
     }
+  }
+
+  /** Abre el modal de detalle para el ítem seleccionado. */
+  showItemDetails(item: PosCartItem): void {
+    this.selectedItemDetail = item;
+    this.isDetailModalOpen = true;
+  }
+
+  /** Cierra el modal de detalle y limpia la selección. */
+  closeDetailModal(): void {
+    this.isDetailModalOpen = false;
+    this.selectedItemDetail = null;
   }
 
   /**
@@ -232,6 +304,8 @@ export class PosComponent implements OnInit {
           this.customerName = '';
           this.montoEfectivo = '';
           this.montoTransferencia = '';
+          this.isMobileCartOpen = false;
+          this.checkoutStep = 1;
           this.lastSaleId = sale.id;
           this.toast.success(
             'Venta confirmada',

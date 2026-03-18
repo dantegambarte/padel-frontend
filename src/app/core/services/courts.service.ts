@@ -35,4 +35,9 @@ export class CourtsService {
   update(id: string, dto: UpdateCourtDto): Observable<Court> {
     return this.http.patch<Court>(`${this.url}/${id}`, dto);
   }
+
+  /** Elimina una cancha por ID. */
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
 }

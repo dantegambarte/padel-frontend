@@ -14,6 +14,18 @@
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//   Z-INDEX OVERRIDE — Notificaciones siempre por encima de modales (z-[9999])
+// ─────────────────────────────────────────────────────────────────────────────
+// Sistema de toasts propio (app-toast, fixed top-3)
+app-toast > div,
+[aria-live="polite"] { z-index: 99999 !important; }
+
+// Librerías de terceros (por si se agregan en el futuro)
+#toast-container          { z-index: 99999 !important; }
+.swal2-container          { z-index: 99999 !important; }
+.ngx-toastr               { z-index: 99999 !important; }
+
+// ─────────────────────────────────────────────────────────────────────────────
 //   MODAL SYSTEM — Flexbox Sandwich Modal estandarizado
 //   Patrón: backdrop → card → [header | body | footer]
 //   - backdrop: fondo oscuro que bloquea scroll y touch en iOS

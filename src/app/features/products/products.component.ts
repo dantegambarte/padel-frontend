@@ -24,6 +24,8 @@ type DialogMode = 'create' | 'edit' | 'view';
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
   searchQuery = '';
+  filterCategory = '';
+  filterStock: '' | 'low' | 'zero' = '';
   isLoading = false;
   isSubmitting = false;
   deletingId: string | null = null;
@@ -34,6 +36,8 @@ export class ProductsComponent implements OnInit {
   form: ProductForm = this.emptyForm();
 
   newCategoryName = '';
+  /** Campos que fueron "tocados" para mostrar errores inline. */
+  formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
 
   /** Lista de categorías únicas extraídas del inventario actual. */
   get categories(): { id: string; name: string }[] {
@@ -49,6 +53,37 @@ export class ProductsComponent implements OnInit {
   /** `true` cuando el usuario seleccionó "Nueva categoría" en el selector. */
   get isNewCategory(): boolean {
     return this.form.category === '__nueva__';
+  }
+
+  /**
+   * `true` cuando la categoría seleccionada (o la nueva ingresada) es "Alquileres".
+   * En ese caso costPrice y stock no son requeridos y se fuerzan a 0.
+   */
+  get isRentalCategory(): boolean {
+    if (this.isNewCategory) {
+      return this.newCategoryName.trim().toLowerCase().includes('alquiler');
+    }
+    const cat = this.categories.find((c) => c.id === this.form.category);
+    return (cat?.name ?? '').toLowerCase().includes('alquiler');
+  }
+
+  /** Llamado desde el template cuando el select de categoría cambia. */
+  onCategoryChange(): void {
+    if (this.isRentalCategory) {
+      this.form.costPrice = '0';
+      this.form.stock = '0';
+    }
+    this.formTouched.category = true;
+  }
+
+  /** Marca un campo como tocado para activar la validación visual. */
+  touchField(field: keyof typeof this.formTouched): void {
+    this.formTouched[field] = true;
+  }
+
+  /** Resetea el estado de touched junto con el formulario. */
+  private resetTouched(): void {
+    this.formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
   }
 
   constructor(
@@ -86,11 +121,38 @@ export class ProductsComponent implements OnInit {
     return this.products.filter((p) => p.isFeatured).length;
   }
 
-  /** Devuelve los productos filtrados por el término de búsqueda actual. */
+  /** Devuelve los productos filtrados por búsqueda, categoría y estado de stock. */
   get filteredProducts(): Product[] {
-    if (!this.searchQuery.trim()) return this.products;
-    const q = this.searchQuery.toLowerCase();
-    return this.products.filter((p) => p.name.toLowerCase().includes(q));
+    let list = this.products;
+
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+
+    if (this.filterCategory) {
+      list = list.filter((p) => p.category?.id === this.filterCategory);
+    }
+
+    if (this.filterStock === 'zero') {
+      list = list.filter((p) => p.stock === 0);
+    } else if (this.filterStock === 'low') {
+      list = list.filter((p) => p.stock > 0 && p.stock <= 5);
+    }
+
+    return list;
+  }
+
+  /** Resetea todos los filtros activos. */
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.filterCategory = '';
+    this.filterStock = '';
+  }
+
+  /** `true` cuando hay al menos un filtro activo distinto del valor por defecto. */
+  get hasActiveFilters(): boolean {
+    return !!this.searchQuery.trim() || !!this.filterCategory || !!this.filterStock;
   }
 
   /** Título del diálogo según el modo activo. */
@@ -139,6 +201,7 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = null;
     this.newCategoryName = '';
     this.form = this.emptyForm();
+    this.resetTouched();
     this.isDialogOpen = true;
   }
 
@@ -184,6 +247,7 @@ export class ProductsComponent implements OnInit {
   closeDialog(): void {
     this.isDialogOpen = false;
     this.newCategoryName = '';
+    this.resetTouched();
   }
 
   @HostListener('document:keydown.escape')
@@ -193,30 +257,41 @@ export class ProductsComponent implements OnInit {
 
   /**
    * Valida el formulario y envía la petición de creación o actualización al servidor.
-   * Si el usuario eligió "Nueva categoría", omite `categoryId` del DTO (es opcional).
+   * Para la categoría "Alquileres", costPrice y stock no son requeridos (se envían como 0).
    */
   saveProduct(): void {
+    // Marcar todos como tocados para mostrar errores inline
+    this.formTouched = { name: true, category: true, salePrice: true, costPrice: true, stock: true };
+
     const categoryValue = this.isNewCategory
       ? this.newCategoryName.trim()
       : this.form.category;
 
+    const rental = this.isRentalCategory;
+
+    // Si es alquiler, forzar 0 en campos opcionales antes de validar
+    if (rental) {
+      this.form.costPrice = this.form.costPrice || '0';
+      this.form.stock = this.form.stock || '0';
+    }
+
     if (
-      !this.form.name ||
+      !this.form.name.trim() ||
       !categoryValue ||
-      !this.form.costPrice ||
       !this.form.salePrice ||
-      !this.form.stock
+      (!rental && !this.form.costPrice) ||
+      (!rental && !this.form.stock)
     ) {
-      this.toast.error('Error', 'Por favor complete todos los campos');
+      this.toast.error('Error', 'Por favor complete todos los campos requeridos');
       return;
     }
 
     const dto: CreateProductDto = {
-      name: this.form.name,
+      name: this.form.name.trim(),
       ...(this.isNewCategory ? {} : { categoryId: categoryValue }),
-      costPrice: parseFloat(this.form.costPrice),
+      costPrice: rental ? 0 : parseFloat(this.form.costPrice),
       salePrice: parseFloat(this.form.salePrice),
-      stock: parseInt(this.form.stock, 10),
+      stock: rental ? 0 : parseInt(this.form.stock, 10),
       isFeatured: this.form.isFeatured,
     };
 

@@ -113,6 +113,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   private savedAmountCash = 0;
   private savedAmountTransfer = 0;
+  /** Contador de pagados al abrir el modal — usado para el dirty check al cerrar. */
+  private initialPaidCount = 0;
+  /** Historial de pagos por jugador en la sesión actual del modal (LIFO para deshacer). */
+  private playerPaymentHistory: { method: 'cash' | 'transfer'; amount: number }[] = [];
+  /** Contadores por método para el deshacer selectivo. */
+  partialCashCount = 0;
+  partialTransferCount = 0;
 
   private sub = new Subscription();
 
@@ -256,6 +263,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Dispara la recarga de reservas al cambiar la fecha seleccionada. */
   onDateChange(): void {
+    this.loadBookings();
+  }
+
+  /** Navega al día anterior y recarga las reservas. */
+  prevDay(): void {
+    const [y, m, d] = this.selectedDate.split('-').map(Number);
+    const date = new Date(y, m - 1, d - 1);
+    this.selectedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    this.loadBookings();
+  }
+
+  /** Navega al día siguiente y recarga las reservas. */
+  nextDay(): void {
+    const [y, m, d] = this.selectedDate.split('-').map(Number);
+    const date = new Date(y, m - 1, d + 1);
+    this.selectedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     this.loadBookings();
   }
 
@@ -423,8 +446,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
-    this.detailAmountCash =
-      (Number(this.detailAmountCash) || 0) + this.perPlayerAmount;
+    const amount = this.perPlayerAmount;
+    this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
+    this.playerPaymentHistory.push({ method: 'cash', amount });
+    this.partialCashCount++;
     this.detailPaidCount++;
   }
 
@@ -435,14 +460,31 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
-    this.detailAmountTransfer =
-      (Number(this.detailAmountTransfer) || 0) + this.perPlayerAmount;
+    const amount = this.perPlayerAmount;
+    this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + amount;
+    this.playerPaymentHistory.push({ method: 'transfer', amount });
+    this.partialTransferCount++;
     this.detailPaidCount++;
   }
 
-  /** Decrementa el contador de jugadores pagados (deshacer). */
-  decPaidCount(): void {
+  /**
+   * Deshace el último pago del método indicado buscando en el historial LIFO.
+   * Revierte el monto y decrementa los contadores correspondientes.
+   */
+  undoPartialPayment(method: 'cash' | 'transfer'): void {
     if (this.detailPaidCount <= 0) return;
+    // Buscar el último entry del método indicado
+    const idx = [...this.playerPaymentHistory].reverse().findIndex(e => e.method === method);
+    if (idx === -1) return;
+    const realIdx = this.playerPaymentHistory.length - 1 - idx;
+    const entry = this.playerPaymentHistory.splice(realIdx, 1)[0];
+    if (method === 'cash') {
+      this.detailAmountCash = Math.max(0, (Number(this.detailAmountCash) || 0) - entry.amount);
+      this.partialCashCount = Math.max(0, this.partialCashCount - 1);
+    } else {
+      this.detailAmountTransfer = Math.max(0, (Number(this.detailAmountTransfer) || 0) - entry.amount);
+      this.partialTransferCount = Math.max(0, this.partialTransferCount - 1);
+    }
     this.detailPaidCount--;
   }
 
@@ -536,7 +578,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isDialogOpen = true;
   }
 
-  /** Inicializa el estado del modo detalle a partir de los datos de la reserva. */
+  /**
+   * Inicializa el estado del modo detalle a partir de los datos de la reserva.
+   * Si ya existe un pago previo, infiere cuántos jugadores pagaron para
+   * restaurar el estado visual y evitar el bug de "jugadores pagados perdidos".
+   */
   private initDetailState(booking: BookingResponse): void {
     this.detailCart = booking.items.map((item) => ({
       productId: item.productId,
@@ -549,7 +595,34 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.savedAmountCash = this.detailAmountCash;
     this.savedAmountTransfer = this.detailAmountTransfer;
     this.detailPlayerCount = 4;
-    this.detailPaidCount = 0;
+
+    // Infiere cuántos jugadores ya pagaron a partir del monto guardado en DB.
+    // Esto restaura el estado visual al reabrir un turno con pago parcial.
+    const savedTotal =
+      Number(booking.payment?.amountCash ?? 0) +
+      Number(booking.payment?.amountTransfer ?? 0);
+    if (savedTotal > 0) {
+      const itemsSubtotal = this.detailCart.reduce(
+        (s, i) => s + i.unitPrice * i.quantity,
+        0,
+      );
+      const totalBooking = Number(booking.priceAmount ?? 0) + itemsSubtotal;
+      const costPerPlayer =
+        this.detailPlayerCount > 0 ? totalBooking / this.detailPlayerCount : 1;
+      this.detailPaidCount = costPerPlayer > 0
+        ? Math.min(
+            Math.round(savedTotal / costPerPlayer),
+            this.detailPlayerCount,
+          )
+        : 0;
+    } else {
+      this.detailPaidCount = 0;
+    }
+
+    this.playerPaymentHistory = [];
+    this.partialCashCount = 0;
+    this.partialTransferCount = 0;
+    this.initialPaidCount = this.detailPaidCount;
     this.detailProductSearch = '';
     this.detailSearchResults = [];
   }
@@ -570,12 +643,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.confirmDialogOpen) return;
 
     if (this.dialogMode === 'detail') {
-      const hasPaid = this.detailPaidCount > 0;
+      const hasPaid = this.detailPaidCount > this.initialPaidCount;
       const hasPayment = this.hasUnsavedPaymentChanges;
 
       if (hasPaid || hasPayment) {
+        const newPaid = this.detailPaidCount - this.initialPaidCount;
         const paidMsg = hasPaid
-          ? `${this.detailPaidCount} jugador${this.detailPaidCount > 1 ? 'es' : ''} marcado${this.detailPaidCount > 1 ? 's' : ''} como pagado${this.detailPaidCount > 1 ? 's' : ''}`
+          ? `${newPaid} jugador${newPaid > 1 ? 'es' : ''} marcado${newPaid > 1 ? 's' : ''} como pagado${newPaid > 1 ? 's' : ''}`
           : '';
         const paymentMsg = hasPayment ? 'montos de pago sin guardar' : '';
         this.confirmDialogTitle = 'Pago sin registrar';
@@ -612,8 +686,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailProductSearch = '';
     this.detailSearchResults = [];
     this.detailPaidCount = 0;
+    this.initialPaidCount = 0;
     this.savedAmountCash = 0;
     this.savedAmountTransfer = 0;
+    this.playerPaymentHistory = [];
+    this.partialCashCount = 0;
+    this.partialTransferCount = 0;
   }
 
   /** Resetea el formulario de creación a sus valores iniciales. */
@@ -714,6 +792,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.savedAmountCash = Number(this.detailAmountCash) || 0;
           this.savedAmountTransfer = Number(this.detailAmountTransfer) || 0;
           this.detailPaidCount = 0;
+          this.playerPaymentHistory = [];
+          this.partialCashCount = 0;
+          this.partialTransferCount = 0;
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;

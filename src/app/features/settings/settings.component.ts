@@ -43,6 +43,7 @@ export class SettingsComponent implements OnInit {
   }
 
   courts: Court[] = [];
+  courtToDelete: Court | null = null;
 
   isCourtModalOpen = false;
   isCourtSubmitting = false;
@@ -64,6 +65,10 @@ export class SettingsComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.courtToDelete) {
+      this.courtToDelete = null;
+      return;
+    }
     if (this.isCourtModalOpen && !this.isCourtSubmitting) {
       this.closeCourtModal();
     }
@@ -248,6 +253,34 @@ export class SettingsComponent implements OnInit {
         },
       });
     }
+  }
+
+  /** Abre el modal de confirmación de eliminación. */
+  confirmDeleteCourt(court: Court): void {
+    this.courtToDelete = court;
+  }
+
+  /** Cancela la eliminación. */
+  cancelDeleteCourt(): void {
+    this.courtToDelete = null;
+  }
+
+  /** Ejecuta la eliminación de la cancha confirmada. */
+  deleteCourt(): void {
+    if (!this.courtToDelete) return;
+    const id = this.courtToDelete.id;
+    const name = this.courtToDelete.name;
+    this.courtToDelete = null;
+    this.courtsService.delete(id).subscribe({
+      next: () => {
+        this.courts = this.courts.filter(c => c.id !== id);
+        this.toast.success('Cancha eliminada', `"${name}" fue eliminada del sistema`);
+      },
+      error: (err) => {
+        const msg = err?.error?.message ?? 'No se pudo eliminar la cancha';
+        this.toast.error('Error al eliminar', Array.isArray(msg) ? msg.join(', ') : msg);
+      },
+    });
   }
 
   /** Formatea un número usando el locale argentino. */

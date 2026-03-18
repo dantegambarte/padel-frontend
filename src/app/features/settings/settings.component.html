@@ -217,7 +217,7 @@
     <div class="rounded-lg border border-border bg-card shadow-md">
       <!-- Header con botón Nueva Cancha -->
       <div class="border-b border-border p-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 class="text-lg font-semibold text-card-foreground">Canchas</h3>
             <p class="mt-1 text-sm text-muted-foreground">
@@ -227,7 +227,7 @@
           <button
             type="button"
             (click)="openCreateCourtModal()"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <svg
               class="h-4 w-4"
@@ -272,10 +272,11 @@
           </p>
         </div>
 
-        <!-- Courts table -->
-        <div *ngIf="courts.length > 0" class="scroll-hint-x">
+        <!-- Courts table: tarjetas en móvil, tabla en desktop -->
+        <div *ngIf="courts.length > 0">
           <table class="w-full text-sm">
-            <thead>
+            <!-- Cabecera: oculta en móvil -->
+            <thead class="hidden md:table-header-group">
               <tr class="border-b border-border">
                 <th class="pb-3 text-left font-medium text-muted-foreground">
                   Cancha
@@ -291,13 +292,22 @@
                 </th>
               </tr>
             </thead>
-            <tbody>
+
+            <!-- Cuerpo: tarjetas en móvil, filas en desktop -->
+            <tbody class="block md:table-row-group">
               <tr
                 *ngFor="let court of courts"
-                class="border-b border-border last:border-0 transition-colors hover:bg-muted/20"
+                class="block md:table-row
+                       bg-card md:bg-transparent
+                       border border-border md:border-0 md:border-b
+                       rounded-xl md:rounded-none
+                       shadow-sm md:shadow-none
+                       mb-3 md:mb-0 p-4 md:p-0
+                       last:mb-0 md:hover:bg-muted/20 md:transition-colors"
               >
-                <!-- Nombre -->
-                <td class="py-3 pr-4">
+                <!-- Nombre de la cancha: fila titular en móvil (sin label) -->
+                <td class="block md:table-cell py-2 md:py-3 md:pr-4
+                           border-b border-border md:border-0 last:border-0">
                   <div class="flex items-center gap-3">
                     <div
                       class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sm font-bold"
@@ -309,19 +319,31 @@
                     >
                       {{ court.name.charAt(0).toUpperCase() }}
                     </div>
-                    <span class="font-medium text-card-foreground">{{
-                      court.name
-                    }}</span>
+                    <span class="font-medium text-card-foreground">
+                      {{ court.name }}
+                    </span>
                   </div>
                 </td>
 
                 <!-- Descripción -->
-                <td class="py-3 pr-4 text-muted-foreground">
-                  {{ court.description || "—" }}
+                <td class="flex justify-between items-center md:table-cell
+                           border-b border-border md:border-0
+                           py-2 md:py-3 md:pr-4 last:border-0">
+                  <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                    Descripción
+                  </span>
+                  <span class="text-muted-foreground">
+                    {{ court.description || "—" }}
+                  </span>
                 </td>
 
-                <!-- Estado badge -->
-                <td class="py-3 text-center">
+                <!-- Estado -->
+                <td class="flex justify-between items-center md:table-cell
+                           md:text-center border-b border-border md:border-0
+                           py-2 md:py-3 last:border-0">
+                  <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                    Estado
+                  </span>
                   <span
                     class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                     [ngClass]="
@@ -334,31 +356,60 @@
                   </span>
                 </td>
 
-                <!-- Botón Editar -->
-                <td class="py-3 text-right">
-                  <button
-                    type="button"
-                    (click)="openEditCourtModal(court)"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <svg
-                      class="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                <!-- Acciones -->
+                <td class="flex justify-between items-center md:table-cell
+                           md:text-right py-2 md:py-3 last:border-0">
+                  <span class="md:hidden text-xs font-semibold text-muted-foreground">
+                    Acciones
+                  </span>
+                  <div class="inline-flex items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="openEditCourtModal(court)"
+                      class="inline-flex items-center gap-1.5 rounded-md border border-border
+                             bg-background px-3 py-1.5 text-xs font-medium text-foreground
+                             shadow-sm transition-colors hover:bg-muted
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <path
-                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                      />
-                      <path
-                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                      />
-                    </svg>
-                    Editar
-                  </button>
+                      <svg
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="confirmDeleteCourt(court)"
+                      class="inline-flex items-center gap-1.5 rounded-md border border-destructive/30
+                             bg-background px-3 py-1.5 text-xs font-medium text-destructive
+                             shadow-sm transition-colors hover:bg-destructive/10
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <svg
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -366,6 +417,70 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Modal: Confirmar Eliminación de Cancha ───────────────────────── -->
+    <ng-container *ngIf="courtToDelete">
+      <div
+        appModalScrollLock
+        class="modal-backdrop"
+        (click)="cancelDeleteCourt()"
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          class="modal-card max-w-sm"
+          (click)="$event.stopPropagation()"
+        >
+          <!-- Header -->
+          <div class="modal-header">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10">
+                <svg class="h-5 w-5 text-destructive" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-card-foreground">Eliminar Cancha</h3>
+                <p class="text-sm text-muted-foreground">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="modal-body">
+            <p class="text-sm text-foreground">
+              ¿Estás seguro de que querés eliminar la cancha
+              <span class="font-semibold">"{{ courtToDelete.name }}"</span>?
+            </p>
+            <p class="mt-2 text-xs text-muted-foreground">
+              Solo se puede eliminar si no tiene turnos asociados. En caso contrario, te recomendamos inactivarla.
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              (click)="cancelDeleteCourt()"
+              class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              (click)="deleteCourt()"
+              class="rounded-md bg-destructive px-5 py-2 text-sm font-semibold text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+            >
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
 
     <!-- ── Modal: Crear / Editar Cancha ──────────────────────────────────── -->
     <ng-container *ngIf="isCourtModalOpen">

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { User } from '../../../core/models/user.model';
@@ -15,6 +15,7 @@ export class ToolbarComponent {
   @Output() toggleMenu = new EventEmitter<void>();
 
   isNotifOpen = false;
+  isUserMenuOpen = false;
 
   constructor(
     public calcService: CalculatorService,
@@ -37,7 +38,31 @@ export class ToolbarComponent {
 
   /** Navega a la página de cuenta del usuario. */
   goToAccount(): void {
+    this.isUserMenuOpen = false;
     this.router.navigate(['/app/account']);
+  }
+
+  /** Alterna el menú desplegable del usuario. */
+  toggleUserMenu(): void {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+    if (this.isUserMenuOpen) this.isNotifOpen = false;
+  }
+
+  /** Cierra el menú desplegable del usuario. */
+  closeUserMenu(): void {
+    this.isUserMenuOpen = false;
+  }
+
+  /** Cierra la sesión del usuario. */
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isUserMenuOpen = false;
+    this.isNotifOpen = false;
   }
 
   /** Alterna la visibilidad del panel de notificaciones. */
