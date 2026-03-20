@@ -52,6 +52,9 @@ export interface TodayKpis {
   cashTotal: number;
   transferTotal: number;
   completedBookings: number;
+  liveBookings: number;
+  canceledBookings: number;
+  totalOperations: number;
   totalSlots: number;
   occupationRate: number;
   cantinaItemsSold: number;
