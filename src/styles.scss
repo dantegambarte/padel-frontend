@@ -14,6 +14,46 @@
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//   ANGULAR CDK DRAG & DROP — overrides globales
+//   El preview se renderiza en el body (fuera del stacking context del grid),
+//   por lo que necesita z-index y sombra explícitos.
+// ─────────────────────────────────────────────────────────────────────────────
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.25),
+    0 8px 10px -6px rgba(0, 0, 0, 0.15);
+  z-index: 99999 !important;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+  border: 2px dashed #94a3b8;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// Drop list resaltado mientras hay un item encima
+.cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// Celda destino resaltada cuando el cursor entra durante el drag
+.cdk-drop-list-receiving {
+  border-radius: 8px;
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  outline: 2px dashed rgba(99, 102, 241, 0.5);
+  outline-offset: -2px;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //   Z-INDEX OVERRIDE — Notificaciones siempre por encima de modales (z-[9999])
 // ─────────────────────────────────────────────────────────────────────────────
 // Sistema de toasts propio (app-toast, fixed top-3)
