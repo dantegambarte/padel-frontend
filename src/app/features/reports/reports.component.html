@@ -652,6 +652,7 @@
           </div>
         </div>
 
+        <div class="flex flex-wrap gap-2">
         <button
           type="button"
           (click)="exportExcel()"
@@ -672,8 +673,25 @@
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          {{ isExporting ? "Exportando..." : "Descargar Reporte Excel" }}
+          {{ isExporting ? "Exportando..." : "Descargar Excel" }}
         </button>
+
+        <button
+          type="button"
+          (click)="exportCSV()"
+          [disabled]="isExporting"
+          class="inline-flex h-10 w-full sm:w-auto items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Descargar CSV
+        </button>
+        </div>
       </div>
     </div>
 
@@ -686,8 +704,8 @@
         ></div>
       </div>
 
-      <div *ngIf="!isLoading">
-        <table class="w-full">
+      <div *ngIf="!isLoading" class="overflow-x-auto w-full">
+        <table class="w-full min-w-[500px] md:min-w-0">
           <!-- Cabecera: oculta en móvil, visible en desktop -->
           <thead class="hidden md:table-header-group">
             <tr class="border-b border-border">

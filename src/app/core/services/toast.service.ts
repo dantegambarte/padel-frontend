@@ -19,12 +19,20 @@ export class ToastService {
 
   /**
    * Muestra un toast durante `duration` milisegundos y luego lo descarta automáticamente.
+   * Previene duplicados: si ya hay un toast visible con el mismo título y descripción,
+   * la llamada se ignora silenciosamente.
    * @param toast    - Datos del mensaje (sin id).
    * @param duration - Tiempo de visibilidad en ms (por defecto 4000).
    */
   show(toast: Omit<ToastMessage, 'id'>, duration = 4000): void {
+    const active = this.toastsSubject.value;
+    const isDuplicate = active.some(
+      (t) => t.title === toast.title && t.description === toast.description,
+    );
+    if (isDuplicate) return;
+
     const id = ++this.nextId;
-    this.toastsSubject.next([...this.toastsSubject.value, { ...toast, id }]);
+    this.toastsSubject.next([...active, { ...toast, id }]);
     setTimeout(() => this.dismiss(id), duration);
   }
 

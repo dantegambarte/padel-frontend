@@ -47,11 +47,42 @@ export interface TransactionExport {
 
 export type GroupBy = 'day' | 'week' | 'month';
 
+export interface TodayKpis {
+  totalRevenue: number;
+  cashTotal: number;
+  transferTotal: number;
+  completedBookings: number;
+  totalSlots: number;
+  occupationRate: number;
+  cantinaItemsSold: number;
+  cantinaRevenue: number;
+  courtsRevenue: number;
+  topProduct: { name: string; quantity: number } | null;
+  averageTicket: number;
+}
+
+export interface DailyRevenue {
+  date: string;
+  cash: number;
+  transfer: number;
+  total: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly url = `${environment.apiUrl}/reports`;
 
   constructor(private http: HttpClient) {}
+
+  /** KPIs del día de hoy para el Dashboard Admin (turnos, ingresos, ocupación, productos). */
+  getTodayKpis(): Observable<TodayKpis> {
+    return this.http.get<TodayKpis>(`${this.url}/today-kpis`);
+  }
+
+  /** Ingresos de los últimos 7 días desglosados en Efectivo y Transferencia. */
+  getLast7DaysRevenue(): Observable<DailyRevenue[]> {
+    return this.http.get<DailyRevenue[]>(`${this.url}/last7days`);
+  }
 
   /** Devuelve el resumen de KPIs del período actual para el Dashboard Admin. */
   getSummary(): Observable<ReportsSummaryResponse> {

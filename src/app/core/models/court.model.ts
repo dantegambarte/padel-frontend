@@ -1,4 +1,4 @@
-/** Entidad de una cancha de pádel. */
+/** Entidad de una cancha de padel. */
 export interface Court {
   id: string;
   name: string;

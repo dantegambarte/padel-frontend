@@ -23,12 +23,16 @@ type DialogMode = 'create' | 'edit' | 'view';
 })
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
+  /** Categorías cargadas desde el backend — no derivadas de los productos. */
+  categories: { id: string; name: string }[] = [];
   searchQuery = '';
   filterCategory = '';
   filterStock: '' | 'low' | 'zero' = '';
   isLoading = false;
   isSubmitting = false;
   deletingId: string | null = null;
+  /** IDs de productos cuyo toggle está siendo procesado (evita doble click). */
+  togglingFeaturedIds = new Set<string>();
 
   isDialogOpen = false;
   dialogMode: DialogMode = 'create';
@@ -38,17 +42,6 @@ export class ProductsComponent implements OnInit {
   newCategoryName = '';
   /** Campos que fueron "tocados" para mostrar errores inline. */
   formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
-
-  /** Lista de categorías únicas extraídas del inventario actual. */
-  get categories(): { id: string; name: string }[] {
-    const seen = new Set<string>();
-    return this.products
-      .map((p) => p.category)
-      .filter(
-        (c): c is { id: string; name: string } =>
-          !!c && !seen.has(c.id) && seen.add(c.id) !== undefined,
-      );
-  }
 
   /** `true` cuando el usuario seleccionó "Nueva categoría" en el selector. */
   get isNewCategory(): boolean {
@@ -77,7 +70,7 @@ export class ProductsComponent implements OnInit {
   }
 
   /** Marca un campo como tocado para activar la validación visual. */
-  touchField(field: keyof typeof this.formTouched): void {
+  touchField(field: 'name' | 'category' | 'salePrice' | 'costPrice' | 'stock'): void {
     this.formTouched[field] = true;
   }
 
@@ -94,6 +87,18 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadCategories();
+  }
+
+  /** Carga las categorías desde el backend independientemente de los productos. */
+  private loadCategories(): void {
+    this.productsService.getCategories().subscribe({
+      next: (cats) => (this.categories = cats),
+      error: () => {
+        // No bloquea la pantalla — el usuario puede escribir categoría nueva
+        this.toast.error('Aviso', 'No se pudieron cargar las categorías');
+      },
+    });
   }
 
   /** `true` cuando el usuario no es administrador y sólo puede ver los productos. */
@@ -257,23 +262,22 @@ export class ProductsComponent implements OnInit {
 
   /**
    * Valida el formulario y envía la petición de creación o actualización al servidor.
+   * Si se ingresó una nueva categoría, la crea primero y obtiene su ID real.
    * Para la categoría "Alquileres", costPrice y stock no son requeridos (se envían como 0).
    */
   saveProduct(): void {
-    // Marcar todos como tocados para mostrar errores inline
     this.formTouched = { name: true, category: true, salePrice: true, costPrice: true, stock: true };
-
-    const categoryValue = this.isNewCategory
-      ? this.newCategoryName.trim()
-      : this.form.category;
 
     const rental = this.isRentalCategory;
 
-    // Si es alquiler, forzar 0 en campos opcionales antes de validar
     if (rental) {
       this.form.costPrice = this.form.costPrice || '0';
       this.form.stock = this.form.stock || '0';
     }
+
+    const categoryValue = this.isNewCategory
+      ? this.newCategoryName.trim()
+      : this.form.category;
 
     if (
       !this.form.name.trim() ||
@@ -286,16 +290,46 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
+    this.isSubmitting = true;
+
+    if (this.isNewCategory) {
+      // Crear la categoría primero y luego guardar el producto con el ID real
+      this.productsService
+        .createCategory(this.newCategoryName.trim())
+        .subscribe({
+          next: (cat) => {
+            // Agregar al listado local si no estaba (idempotente)
+            if (!this.categories.find((c) => c.id === cat.id)) {
+              this.categories = [...this.categories, cat];
+            }
+            const isRental = cat.name.toLowerCase().includes('alquiler');
+            this.doSaveProduct(cat.id, isRental);
+          },
+          error: () => {
+            this.isSubmitting = false;
+            this.toast.error('Error al crear categoría', 'Intente nuevamente');
+          },
+        });
+      return;
+    }
+
+    this.doSaveProduct(this.form.category, rental);
+  }
+
+  /**
+   * Ejecuta la petición HTTP de creación o edición del producto.
+   * Llamado desde `saveProduct()` una vez que el categoryId está resuelto.
+   */
+  private doSaveProduct(categoryId: string, rental: boolean): void {
     const dto: CreateProductDto = {
       name: this.form.name.trim(),
-      ...(this.isNewCategory ? {} : { categoryId: categoryValue }),
+      categoryId: categoryId || undefined,
       costPrice: rental ? 0 : parseFloat(this.form.costPrice),
       salePrice: parseFloat(this.form.salePrice),
       stock: rental ? 0 : parseInt(this.form.stock, 10),
       isFeatured: this.form.isFeatured,
     };
 
-    this.isSubmitting = true;
     const request$ = this.editingProductId
       ? this.productsService.update(this.editingProductId, dto)
       : this.productsService.create(dto);
@@ -306,25 +340,16 @@ export class ProductsComponent implements OnInit {
           this.products = this.products.map((p) =>
             p.id === this.editingProductId ? saved : p,
           );
-          this.toast.success(
-            'Producto actualizado',
-            `${saved.name} se actualizó correctamente`,
-          );
+          this.toast.success('Producto actualizado', `${saved.name} se actualizó correctamente`);
         } else {
           this.products = [...this.products, saved];
-          this.toast.success(
-            'Producto agregado',
-            `${saved.name} se agregó al inventario`,
-          );
+          this.toast.success('Producto agregado', `${saved.name} se agregó al inventario`);
         }
         this.closeDialog();
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error(
-            'Ya existe',
-            'Un producto con ese nombre ya está registrado',
-          );
+          this.toast.error('Ya existe', 'Un producto con ese nombre ya está registrado');
         } else {
           this.toast.error('Error al guardar', 'Intente nuevamente');
         }
@@ -368,6 +393,38 @@ export class ProductsComponent implements OnInit {
   /** Alterna el estado de destacado en el formulario (sólo en modo edición/creación). */
   toggleFeatured(): void {
     if (!this.viewMode) this.form.isFeatured = !this.form.isFeatured;
+  }
+
+  /**
+   * Persiste el cambio de "Destacado" directamente desde la tabla, sin abrir el modal.
+   * Usa actualización optimista: cambia el estado local de inmediato y lo revierte si falla.
+   */
+  persistToggleFeatured(product: Product): void {
+    if (this.isReadOnly || this.togglingFeaturedIds.has(product.id)) return;
+
+    const newValue = !product.isFeatured;
+    // Actualización optimista
+    product.isFeatured = newValue;
+    this.togglingFeaturedIds.add(product.id);
+
+    this.productsService
+      .update(product.id, { isFeatured: newValue })
+      .pipe(finalize(() => this.togglingFeaturedIds.delete(product.id)))
+      .subscribe({
+        next: (saved) => {
+          // Sincronizar con la respuesta real del servidor
+          const idx = this.products.findIndex((p) => p.id === saved.id);
+          if (idx !== -1) this.products[idx] = saved;
+        },
+        error: () => {
+          // Revertir estado visual si la petición falló
+          product.isFeatured = !newValue;
+          this.toast.error(
+            'Error al actualizar',
+            'No se pudo cambiar el estado Destacado. Intente nuevamente.',
+          );
+        },
+      });
   }
 
   /** Devuelve un `ProductForm` vacío para inicializar o resetear el formulario. */
