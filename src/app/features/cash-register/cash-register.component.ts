@@ -4,27 +4,39 @@ import * as XLSX from 'xlsx';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { CashService, CashMovimiento } from '../../core/services/cash.service';
+import { CashService, CashMovimiento, OpenCashDto } from '../../core/services/cash.service';
 
 @Component({
   selector: 'app-cash-register',
   templateUrl: './cash-register.component.html',
 })
 export class CashRegisterComponent implements OnInit {
+  /** null = cargando, true = sesión abierta/cerrada, false = sin sesión */
+  isSessionOpen: boolean | null = null;
   isLoading = true;
   sessionId: string | null = null;
   isClosed = false;
   efectivoEsperado = 0;
   transferenciaTotal = 0;
+  initialBalance = 0;
   movimientos: CashMovimiento[] = [];
-  noSesionActiva = false;
   sessionDate: string | null = null;
   openedAt: string | null = null;
 
+  // ── Apertura de Caja ──
+  fondoInicial = '';
+  notasApertura = '';
+  isOpening = false;
+
+  // ── Cierre Z ──
   efectivoContado = '';
   notas = '';
   isDialogOpen = false;
   isSubmitting = false;
+
+  /** Datos del cierre persistidos (cuando la caja ya fue cerrada). */
+  closedCashCounted: number | null = null;
+  closedDifference: number | null = null;
 
   ticketSaleId: string | null = null;
 
@@ -117,7 +129,7 @@ export class CashRegisterComponent implements OnInit {
 
   /**
    * Carga el resumen de la sesión de caja actual desde el servidor.
-   * Si no hay sesión activa hoy, activa el estado `noSesionActiva`.
+   * Si no hay sesión activa hoy, setea `isSessionOpen = false`.
    */
   private loadCurrentSession(): void {
     this.isLoading = true;
@@ -126,23 +138,66 @@ export class CashRegisterComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (res) => {
-          if (res.sessionId === null) {
-            this.noSesionActiva = true;
+          // Mostrar apertura si: no hay sesión, o la sesión está cerrada.
+          // El dashboard solo se muestra con una sesión explícitamente ABIERTA.
+          if (res.noSession || res.isClosed) {
+            this.isSessionOpen = false;
             return;
           }
+          this.isSessionOpen = true;
           this.sessionId = res.sessionId;
-          this.isClosed = res.isClosed;
+          this.isClosed = false;
           this.efectivoEsperado = res.efectivoEsperado;
           this.transferenciaTotal = res.transferenciaTotal;
+          this.initialBalance = res.initialBalance;
           this.movimientos = res.movimientos;
           this.sessionDate = res.sessionDate;
           this.openedAt = res.openedAt;
+          this.closedCashCounted = null;
+          this.closedDifference = null;
         },
         error: () => {
-          this.toast.error(
-            'Error al cargar la caja',
-            'Intente recargar la página',
-          );
+          // Solo llega aquí si hay error de red (el 404 ya lo absorbe el servicio)
+          this.isSessionOpen = false;
+          this.toast.error('Error de conexión', 'No se pudo contactar al servidor. Intente recargar.');
+        },
+      });
+  }
+
+  /**
+   * Abre la jornada de caja con el fondo inicial declarado por el empleado.
+   * Llama a POST /cash/open y recarga el estado de la sesión.
+   */
+  abrirJornada(): void {
+    const fondo = parseFloat(this.fondoInicial || '0');
+    if (isNaN(fondo) || fondo < 0) {
+      this.toast.error('Error', 'El fondo inicial debe ser un número mayor o igual a 0');
+      return;
+    }
+    this.isOpening = true;
+    const dto: OpenCashDto = {
+      initialBalance: fondo,
+      ...(this.notasApertura ? { notes: this.notasApertura } : {}),
+    };
+    this.cashService
+      .open(dto)
+      .pipe(finalize(() => (this.isOpening = false)))
+      .subscribe({
+        next: () => {
+          this.fondoInicial = '';
+          this.notasApertura = '';
+          this.toast.success('Jornada abierta', `Fondo inicial: $${this.fmt(fondo)}`);
+          this.isSessionOpen = null; // muestra loading mientras recarga
+          this.loadCurrentSession();
+        },
+        error: (err) => {
+          const msg: string = err.error?.message ?? 'Intente nuevamente';
+          if (err.status === 409) {
+            this.toast.error('Conflicto al abrir caja', msg);
+            this.loadCurrentSession();
+          } else {
+            this.toast.error('Error al abrir caja', msg);
+          }
         },
       });
   }
@@ -201,6 +256,8 @@ export class CashRegisterComponent implements OnInit {
 
           this.isDialogOpen = false;
           this.isClosed = true;
+          this.closedCashCounted = this.efectivoReal;
+          this.closedDifference = this.diferencia;
 
           const detalle =
             this.diferencia === 0
@@ -388,21 +445,28 @@ export class CashRegisterComponent implements OnInit {
       { wch: 12 },
     ];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-    XLSX.utils.book_append_sheet(wb, wsRendicion, 'Rendición por Empleado');
-    XLSX.utils.book_append_sheet(wb, wsMovimientos, 'Movimientos');
+    try {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+      XLSX.utils.book_append_sheet(wb, wsRendicion, 'Rendición por Empleado');
+      XLSX.utils.book_append_sheet(wb, wsMovimientos, 'Movimientos');
 
-    const safeName = session.userName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/[^a-zA-Z0-9_]/g, '');
+      const safeName = session.userName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_]/g, '');
 
-    const fecha = session.sessionDate ?? new Date().toLocaleDateString('en-CA');
-    const fileName = `Cierre_Caja_Z_${fecha}_${safeName}.xlsx`;
+      const fecha = session.sessionDate ?? new Date().toLocaleDateString('en-CA');
+      const fileName = `Cierre_Caja_Z_${fecha}_${safeName}.xlsx`;
 
-    XLSX.writeFile(wb, fileName);
+      XLSX.writeFile(wb, fileName);
+    } catch {
+      this.toast.error(
+        'Falla de Exportación',
+        'Error al generar o descargar el archivo Excel. Intente nuevamente.',
+      );
+    }
   }
 
   /** Formatea un número usando el locale argentino. */
