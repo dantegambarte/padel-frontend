@@ -16,6 +16,15 @@ test.describe('Agenda — Mobile (390×844)', () => {
     await expect(page.getByRole('heading', { name: 'Agenda de Canchas' })).toBeVisible({
       timeout: 10_000,
     });
+    // Navigate to a future date (+30 days) with no seed bookings so cdk-drag
+    // booking cards don't intercept pointer events on available slots.
+    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+    const datePicker = page.locator('input[type="date"]').first();
+    await datePicker.fill(futureDate);
+    await datePicker.dispatchEvent('change');
+    await page.waitForLoadState('networkidle');
   });
 
   // ── 1. Sin overflow horizontal en el body ─────────────────────────────────

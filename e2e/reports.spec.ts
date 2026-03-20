@@ -77,7 +77,7 @@ test.describe('Módulo de Reportes', () => {
 
   // RE-09
   test('RE-09: el botón de exportar transacciones existe y es clickeable', async ({ page }) => {
-    const exportBtn = page.getByRole('button', { name: /Exportar|Export|CSV|Excel/i });
+    const exportBtn = page.getByRole('button', { name: /Exportar|Export|CSV|Excel/i }).first();
     if (await exportBtn.isVisible({ timeout: 3000 })) {
       // Solo verificamos que se puede hacer clic (la descarga puede tardar)
       await expect(exportBtn).toBeEnabled();
