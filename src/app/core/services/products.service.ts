@@ -46,6 +46,19 @@ export class ProductsService {
     return this.featuredCache$;
   }
 
+  /** Devuelve todas las categorías disponibles — sin caché (lista relativamente estable). */
+  getCategories(): Observable<{ id: string; name: string }[]> {
+    return this.http.get<{ id: string; name: string }[]>(`${this.url}/categories`);
+  }
+
+  /**
+   * Crea una categoría si no existe (idempotente por nombre).
+   * El backend retorna la categoría existente si ya hay una con ese nombre.
+   */
+  createCategory(name: string): Observable<{ id: string; name: string }> {
+    return this.http.post<{ id: string; name: string }>(`${this.url}/categories`, { name });
+  }
+
   /** Busca productos por nombre en tiempo real — sin caché (query dinámica). */
   search(term: string): Observable<Product[]> {
     const params = new HttpParams().set('search', term);
