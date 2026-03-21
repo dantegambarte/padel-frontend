@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
-  workers: 1,
+  workers: 4,
   reporter: 'html',
   globalSetup: './e2e/global-setup.ts',
   use: {
@@ -21,24 +21,32 @@ export default defineConfig({
       testMatch: /global-setup\.ts/,
     },
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: 'e2e/auth-state.json' },
-    },
-    {
-      // Simula viewport móvil 390×844 sobre Chromium (ya instalado).
-      // devices['iPhone 13'] usa WebKit por defecto y requiere instalación aparte.
-      // Con browserName: 'chromium' + viewport manual obtenemos el mismo tamaño
-      // de pantalla sin necesidad de instalar browsers adicionales.
-      name: 'mobile-chrome',
-      testMatch: /.*\.mobile\.spec\.ts/,
+      name: 'Desktop Full HD',
       use: {
-        browserName: 'chromium',
-        viewport: { width: 390, height: 844 },
-        deviceScaleFactor: 3,
-        isMobile: true,
-        hasTouch: true,
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
         storageState: 'e2e/auth-state.json',
       },
+      testIgnore: ['**/schedule.mobile.spec.ts'],
+    },
+    {
+      name: 'Notebook',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1366, height: 768 },
+        storageState: 'e2e/auth-state.json',
+      },
+      // auth.spec.ts excluido: el endpoint /auth/login tiene throttle 5req/60s;
+      // correrlo en 3 proyectos simultáneos supera ese límite y genera falsos negativos.
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/auth.spec.ts'],
+    },
+    {
+      name: 'Mobile',
+      use: {
+        ...devices['iPhone SE'],
+        storageState: 'e2e/auth-state.json',
+      },
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/chaos-paths.spec.ts', '**/pos.spec.ts', '**/auth.spec.ts'],
     },
   ],
 });

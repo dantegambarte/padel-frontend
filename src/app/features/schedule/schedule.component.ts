@@ -1,12 +1,16 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { Subscription, forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription, forkJoin, timer } from 'rxjs';
+import { finalize, filter, take } from 'rxjs/operators';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { CourtsService } from '../../core/services/courts.service';
 import { BookingsService } from '../../core/services/bookings.service';
 import { ProductsService } from '../../core/services/products.service';
 import { ToastService } from '../../core/services/toast.service';
+import { NotificationService } from '../../core/services/notification.service';
+import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
 
 import { Court } from '../../core/models/court.model';
@@ -18,6 +22,7 @@ import {
   PriceType,
   CreateBookingDto,
   UpdateBookingDto,
+  RescheduleBookingDto,
 } from '../../core/models/booking.model';
 
 interface CartItem {
@@ -25,6 +30,10 @@ interface CartItem {
   name: string;
   unitPrice: number;
   quantity: number;
+  /** `true` cuando este ítem fue incluido en un "Registrar Pago" confirmado. */
+  isPaid?: boolean;
+  /** `true` cuando el cajero marcó este ítem para incluirlo en el cobro actual. */
+  selectedForPayment?: boolean;
 }
 
 @Component({
@@ -65,11 +74,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     '22:00',
   ];
 
-  readonly PRICES: Record<PriceType, number> = {
-    standard: 3000,
-    professor: 2500,
-  };
-
   readonly DURATION_OPTIONS = [
     { value: 30, label: '30 min' },
     { value: 60, label: '1 hora' },
@@ -88,6 +92,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   selectedSlot: { court: Court; hour: string } | null = null;
   selectedBooking: BookingResponse | null = null;
 
+  /** ID de turno pendiente de apertura automática tras la próxima carga de reservas. */
+  private pendingOpenBookingId: string | null = null;
+
   clientName = '';
   priceType: PriceType = 'standard';
   cart: CartItem[] = [];
@@ -105,11 +112,42 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   detailProductSearch = '';
   detailSearchResults: Product[] = [];
   isAutoSavingItems = false;
+  private paymentScrollTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Monto pendiente de los productos tildados, esperando que el cajero elija método de pago. */
+  pendingProductPaymentAmount = 0;
+  showProductPaymentPrompt = false;
+
+  @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
+  @ViewChild('paymentSection') paymentSection!: ElementRef<HTMLDivElement>;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+
+  // ── Drag-to-scroll (escritorio) ───────────────────────────────────────────
+  private isScrollDragging = false;
+  private scrollDragStartX = 0;
+  private scrollDragOriginLeft = 0;
 
   confirmDialogOpen = false;
   confirmDialogTitle = '';
   confirmDialogMessage = '';
   private confirmCallback: (() => void) | null = null;
+
+  // ── Diálogo Mover / Duplicar ──────────────────────────────────────────────
+  /** Turno pendiente de mover/duplicar (drag-drop o botón móvil). */
+  rescheduleDialogOpen = false;
+  /** `true` cuando el diálogo es iniciado desde el botón móvil dentro del modal de detalle. */
+  rescheduleFromModal = false;
+  /**
+   * `true` durante el ciclo completo de un drag (desde cdkDragStarted hasta cdkDragEnded).
+   * Usado para bloquear `onSlotClick` y evitar que el click sintético del drop
+   * abra accidentalmente el modal de crear/ver turno.
+   */
+  isDragging = false;
+  rescheduleTargetCourtId = '';
+  rescheduleTargetDate = '';
+  rescheduleTargetHour = '';
+  /** ID del turno que se está reposicionando. */
+  private rescheduleSourceId = '';
+  isRescheduling = false;
 
   private savedAmountCash = 0;
   private savedAmountTransfer = 0;
@@ -121,6 +159,42 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   partialCashCount = 0;
   partialTransferCount = 0;
 
+  /**
+   * Modo de división: 'court' divide solo el precio de cancha,
+   * 'court+items' divide cancha + consumos pendientes de pago.
+   */
+  splitMode: 'court' | 'court+items' = 'court+items';
+
+  /**
+   * Cambia el modo de división. Si hay pagos parciales de la sesión sin guardar,
+   * los descarta porque sus montos son específicos del modo anterior y serían
+   * inconsistentes al deshacer. Los montos ya persistidos en DB se preservan.
+   */
+  setSplitMode(mode: 'court' | 'court+items'): void {
+    if (this.splitMode === mode) return;
+    if (this.playerPaymentHistory.length > 0) {
+      // Revertir solo los montos sumados por los botones "+1 Efectivo/Transf."
+      // ya que sus valores dependen del modo anterior. Los montos ingresados
+      // manualmente en los inputs se preservan.
+      let cashFromButtons = 0;
+      let transferFromButtons = 0;
+      for (const p of this.playerPaymentHistory) {
+        if (p.method === 'cash') cashFromButtons += p.amount;
+        else transferFromButtons += p.amount;
+      }
+      this.detailAmountCash = Math.max(0, (Number(this.detailAmountCash) || 0) - cashFromButtons);
+      this.detailAmountTransfer = Math.max(0, (Number(this.detailAmountTransfer) || 0) - transferFromButtons);
+      this.playerPaymentHistory = [];
+      this.partialCashCount = 0;
+      this.partialTransferCount = 0;
+      this.detailPaidCount = this.initialPaidCount;
+    }
+    this.splitMode = mode;
+  }
+
+  /** IDs de reservas para las que ya se emitió el recordatorio de inicio tardío. */
+  private notifiedBookingIds = new Set<string>();
+
   private sub = new Subscription();
 
   constructor(
@@ -129,15 +203,139 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     private productsService: ProductsService,
     private toast: ToastService,
+    private notificationService: NotificationService,
     public calcService: CalculatorService,
+    private zone: NgZone,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.startReminderTimer();
+    this.listenToDateQueryParam();
+  }
+
+  /**
+   * Escucha los query params `date` y `openBooking` del Topbar.
+   * - `date` mueve la grilla a esa fecha y recarga los turnos.
+   * - `openBooking` marca un ID de turno para abrirlo automáticamente
+   *   tras la siguiente carga; si la fecha ya está activa, lo abre de inmediato.
+   */
+  private listenToDateQueryParam(): void {
+    this.sub.add(
+      this.route.queryParams
+        .pipe(filter((params) => !!params['date'] || !!params['openBooking']))
+        .subscribe((params) => {
+          const date: string = params['date'];
+          const openBookingId: string | undefined = params['openBooking'];
+
+          if (openBookingId) {
+            this.pendingOpenBookingId = openBookingId;
+          }
+
+          const dateIsNew =
+            date &&
+            /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+            date !== this.selectedDate;
+
+          if (dateIsNew) {
+            this.selectedDate = date;
+            this.loadBookings(); // pendingOpenBookingId será consumido al terminar
+          } else if (openBookingId && !this.isLoading) {
+            // Misma fecha ya cargada: abrir directamente
+            this.tryOpenBookingById(openBookingId);
+            this.pendingOpenBookingId = null;
+          }
+          // Si isLoading === true y la fecha no cambió, el loadBookings() en curso
+          // consumirá pendingOpenBookingId al finalizar.
+        }),
+    );
+  }
+
+  /** Busca un turno en el bookingMap por ID y abre su modal de detalle. */
+  private tryOpenBookingById(id: string): void {
+    for (const booking of this.bookingMap.values()) {
+      if (booking.id === id && booking.court) {
+        this.openDetailDialog(booking.court, booking.hour, booking);
+        return;
+      }
+    }
   }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+  }
+
+  /**
+   * Inicia un timer que evalúa cada 60 s si hay turnos con estado 'booked'
+   * que ya deberían haber comenzado (≥ 5 min de retraso).
+   * La suscripción se agrega a `this.sub` para destruirse en ngOnDestroy.
+   */
+  private startReminderTimer(): void {
+    this.sub.add(
+      timer(0, 60_000).subscribe(() => this.checkBookingReminders()),
+    );
+  }
+
+  /**
+   * Itera el bookingMap buscando reservas en estado 'booked' del día actual
+   * que tienen entre 5 y 120 minutos de retraso (ventana de 2 horas).
+   * Agrupa TODOS los turnos nuevos encontrados en un ÚNICO toast para evitar spam.
+   * Cada reserva se marca en `notifiedBookingIds` para no repetir la alerta.
+   */
+  private checkBookingReminders(): void {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // Solo aplica cuando la grilla muestra el día de hoy
+    if (this.selectedDate !== todayStr) return;
+
+    const nowMin = today.getHours() * 60 + today.getMinutes();
+    const processed = new Set<string>();
+    const newlyLate: string[] = [];           // etiquetas "Cancha X (HH:MM)" de los turnos nuevos
+
+    this.bookingMap.forEach((booking) => {
+      if (processed.has(booking.id)) return;
+      processed.add(booking.id);
+
+      if (booking.status !== 'booked') return;
+      if (this.notifiedBookingIds.has(booking.id)) return;
+
+      const [h, m] = booking.hour.split(':').map(Number);
+      const delayMin = nowMin - (h * 60 + m);
+
+      // Ventana: entre 5 min (ya debería haber arrancado) y 120 min (2 h máximo)
+      if (delayMin >= 5 && delayMin <= 120) {
+        this.notifiedBookingIds.add(booking.id);
+        newlyLate.push(`${booking.court.name} (${booking.hour}hs)`);
+
+        // Emite notificación persistente en la campanita del Topbar
+        this.notificationService.add({
+          id: `delay-${booking.id}`,
+          title: 'Turno con retraso',
+          message: `${booking.clientName} — ${booking.court.name} ${booking.hour}hs sin iniciar`,
+          category: 'TURNOS',
+          actionRoute: ['/app/schedule'],
+          queryParams: { date: todayStr, openBooking: booking.id },
+          entityId: booking.id,
+          createdAt: new Date(),
+        });
+      }
+    });
+
+    if (newlyLate.length === 0) return;
+
+    // Un único toast agrupado para todos los turnos atrasados detectados en este tick
+    const count = newlyLate.length;
+    const detail =
+      count === 1
+        ? newlyLate[0]
+        : `${count} turnos: ${newlyLate.join(', ')}`;
+
+    this.toast.info(
+      `🔔 ${count === 1 ? 'Turno atrasado' : `${count} turnos atrasados`}`,
+      `Sin iniciar — ${detail}`,
+    );
   }
 
   /** `true` si el usuario actual es administrador. */
@@ -158,9 +356,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
-  /** Precio de la cancha según el tipo de precio y la duración seleccionada. */
+  /** Precio de la cancha según la cancha seleccionada y la duración. */
   get courtPrice(): number {
-    return this.PRICES[this.priceType] * (this.durationMinutes / 60);
+    if (!this.selectedSlot) return 0;
+    const c = this.selectedSlot.court;
+    switch (this.durationMinutes) {
+      case 30:  return Number(c.price30)  || 0;
+      case 60:  return Number(c.price60)  || 0;
+      case 90:  return Number(c.price90)  || 0;
+      case 120: return Number(c.price120) || 0;
+      default:  return Number(c.price60)  || 0;
+    }
   }
 
   /** Hora de fin calculada a partir del slot seleccionado y la duración. */
@@ -249,9 +455,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             }
           });
           this.isLoading = false;
+
+          // Deep link: abrir modal si hay un turno pendiente de apertura
+          if (this.pendingOpenBookingId) {
+            this.tryOpenBookingById(this.pendingOpenBookingId);
+            this.pendingOpenBookingId = null;
+          }
         },
         error: () => {
           this.isLoading = false;
+          this.pendingOpenBookingId = null;
           this.toast.error(
             'Error',
             'No se pudieron cargar las reservas del día.',
@@ -385,14 +598,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Suma de los montos de pago ingresados en el modo detalle. */
   get detailTotalPagado(): number {
-    return (
-      (Number(this.detailAmountCash) || 0) +
-      (Number(this.detailAmountTransfer) || 0)
-    );
+    return this.totalPagadoEfectivo + this.totalPagadoTransferencia;
   }
 
-  /** Saldo pendiente en el modo detalle. Nunca negativo; mayor a 0 bloquea el botón "Finalizar". */
+  /**
+   * Saldo pendiente según el modo de división activo.
+   * Se usa para la lógica de división entre jugadores y botones de pago parcial.
+   */
   get detailSaldoPendiente(): number {
+    return Math.max(0, this.splitBase - this.detailTotalPagado);
+  }
+
+  /**
+   * Saldo pendiente REAL: cancha + TODOS los consumos - total pagado.
+   * Se usa para bloquear "Finalizar" y para el resumen general.
+   */
+  get detailSaldoPendienteReal(): number {
     return Math.max(0, this.detailTotalReserva - this.detailTotalPagado);
   }
 
@@ -403,24 +624,58 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return 'bg-destructive/10 text-destructive';
   }
 
+  /** Efectivo total: lo ya guardado en DB + lo ingresado en esta sesión. */
+  get totalPagadoEfectivo(): number {
+    return this.savedAmountCash + (Number(this.detailAmountCash) || 0);
+  }
+
+  /** Transferencia total: lo ya guardado en DB + lo ingresado en esta sesión. */
+  get totalPagadoTransferencia(): number {
+    return this.savedAmountTransfer + (Number(this.detailAmountTransfer) || 0);
+  }
+
+  /**
+   * Vuelto a entregar: diferencia positiva entre lo ingresado y la base del modo activo.
+   * Solo tiene valor cuando el cliente entregó más dinero del necesario.
+   */
+  get vuelto(): number {
+    return Math.max(0, this.detailTotalPagado - this.splitBase);
+  }
+
   /** Texto del badge de balance en el modo detalle. */
   get detailBalanceText(): string {
     if (this.detailSaldoPendiente <= 0) return '✓ Pago Completo';
     return `Falta Pagar: $${this.fmt(this.detailSaldoPendiente)}`;
   }
 
-  /** Monto total dividido en partes iguales entre todos los jugadores. */
-  get detailCostPerPlayer(): number {
-    const n = this.detailPlayerCount || 1;
-    return Math.ceil(this.detailTotalReserva / n);
+  /** Subtotal de consumos pendientes de pago (ítems no marcados como pagados). */
+  get detailUnpaidItemsSubtotal(): number {
+    return this.detailCart
+      .filter((i) => !i.isPaid)
+      .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
 
-  /** Deuda restante dividida entre los jugadores que aún no pagaron. */
+  /**
+   * Base de cálculo para la división entre jugadores según el modo elegido:
+   * - 'court': solo el precio de cancha.
+   * - 'court+items': precio de cancha + consumos pendientes de cobro.
+   */
+  private get splitBase(): number {
+    const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
+    return this.splitMode === 'court'
+      ? courtPrice
+      : courtPrice + this.detailUnpaidItemsSubtotal;
+  }
+
+  /** Monto dividido en partes iguales según el modo de división activo. */
+  get detailCostPerPlayer(): number {
+    const n = this.detailPlayerCount || 1;
+    return Math.ceil(this.splitBase / n);
+  }
+
+  /** Deuda restante (según el modo activo) dividida entre los jugadores que aún no pagaron. */
   get detailDebtPerPlayer(): number {
-    const remaining = Math.max(
-      1,
-      this.detailPlayerCount - this.detailPaidCount,
-    );
+    const remaining = Math.max(1, this.detailPlayerCount - this.detailPaidCount);
     return Math.ceil(this.detailSaldoPendiente / remaining);
   }
 
@@ -547,6 +802,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Los slots de continuación (donde la reserva inició antes) son ignorados.
    */
   onSlotClick(court: Court, hour: string, minutes: '00' | '30' = '00'): void {
+    // Ignorar clicks durante drag o cuando el diálogo de mover/duplicar ya está abierto
+    // (el rAF de onDragEnded resetea isDragging antes que el setTimeout abra el dialog,
+    // por lo que rescheduleDialogOpen es la segunda barrera contra el click sintético del drop)
+    if (this.isDragging || this.rescheduleDialogOpen) return;
+
     const fullHour = minutes === '30' ? `${hour.split(':')[0]}:30` : hour;
     const booking = this.getBooking(court.id, fullHour);
     if (booking && booking.hour === fullHour) {
@@ -584,23 +844,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * restaurar el estado visual y evitar el bug de "jugadores pagados perdidos".
    */
   private initDetailState(booking: BookingResponse): void {
+    // Calcular el total guardado ANTES de mapear el carrito para poder
+    // marcar los ítems como pagados si ya existe un pago en la BD.
+    const savedTotal =
+      Number(booking.payment?.amountCash ?? 0) +
+      Number(booking.payment?.amountTransfer ?? 0);
+
+    // Los ítems siempre empiezan como no pagados al abrir el modal.
+    // Un ítem solo pasa a isPaid=true cuando el cajero lo marca con "selectedForPayment"
+    // y confirma con "Registrar Pago". Así detailUnpaidItemsSubtotal refleja
+    // correctamente lo que aún falta cobrar, evitando el bug de "Saldo Completo $0"
+    // cuando solo se había registrado un pago parcial de cancha.
     this.detailCart = booking.items.map((item) => ({
       productId: item.productId,
       name: item.product.name,
       unitPrice: Number(item.unitPrice),
       quantity: item.quantity,
+      isPaid: false,
+      selectedForPayment: false,
     }));
-    this.detailAmountCash = Number(booking.payment?.amountCash ?? 0);
-    this.detailAmountTransfer = Number(booking.payment?.amountTransfer ?? 0);
-    this.savedAmountCash = this.detailAmountCash;
-    this.savedAmountTransfer = this.detailAmountTransfer;
+
+    // savedAmount* = acumulado ya persistido en DB (solo lectura para cálculo de saldo).
+    // detailAmount* = lo que el cajero ingresa en ESTA sesión (empieza en 0).
+    this.savedAmountCash = Number(booking.payment?.amountCash ?? 0);
+    this.savedAmountTransfer = Number(booking.payment?.amountTransfer ?? 0);
+    this.detailAmountCash = 0;
+    this.detailAmountTransfer = 0;
     this.detailPlayerCount = 4;
 
     // Infiere cuántos jugadores ya pagaron a partir del monto guardado en DB.
-    // Esto restaura el estado visual al reabrir un turno con pago parcial.
-    const savedTotal =
-      Number(booking.payment?.amountCash ?? 0) +
-      Number(booking.payment?.amountTransfer ?? 0);
+    // Esto restaura el estado visual (puntos verdes) al reabrir un turno con pago parcial.
     if (savedTotal > 0) {
       const itemsSubtotal = this.detailCart.reduce(
         (s, i) => s + i.unitPrice * i.quantity,
@@ -622,16 +895,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.playerPaymentHistory = [];
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
+    this.splitMode = 'court+items';
     this.initialPaidCount = this.detailPaidCount;
     this.detailProductSearch = '';
     this.detailSearchResults = [];
   }
 
-  /** `true` si los montos de pago actuales difieren del snapshot guardado en DB. */
+  /** `true` si hay montos de pago ingresados en esta sesión que aún no se guardaron. */
   get hasUnsavedPaymentChanges(): boolean {
     return (
-      Number(this.detailAmountCash) !== this.savedAmountCash ||
-      Number(this.detailAmountTransfer) !== this.savedAmountTransfer
+      (Number(this.detailAmountCash) || 0) !== 0 ||
+      (Number(this.detailAmountTransfer) || 0) !== 0
     );
   }
 
@@ -680,6 +954,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Cierra el diálogo sin validaciones, limpiando todo el estado temporal. */
   private forceCloseDialog(): void {
     this.isDialogOpen = false;
+    if (this.paymentScrollTimer) {
+      clearTimeout(this.paymentScrollTimer);
+      this.paymentScrollTimer = null;
+    }
     this.productSearch = '';
     this.searchResults = [];
     this.detailCart = [];
@@ -692,6 +970,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.playerPaymentHistory = [];
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
+    this.splitMode = 'court+items';
+    this.showProductPaymentPrompt = false;
+    this.pendingProductPaymentAmount = 0;
   }
 
   /** Resetea el formulario de creación a sus valores iniciales. */
@@ -754,11 +1035,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
               'Ese horario ya fue reservado. Actualizando grilla...',
             );
             this.loadBookings();
-          } else if (err.status === 503) {
-            this.toast.error(
-              'Caja cerrada',
-              'La caja del día ya fue cerrada. No se aceptan nuevas operaciones.',
-            );
+          } else if (err.error?.errorCode === 'CAJA_CERRADA') {
+            Swal.fire({
+              icon: 'error',
+              title: 'Caja Cerrada',
+              text: 'Por favor, ve al módulo de Caja y realiza la apertura de tu turno para poder cobrar.',
+            });
           } else if (err.status === 400) {
             this.toast.error(
               'Stock insuficiente',
@@ -781,32 +1063,61 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isSavingDetail = true;
 
     const dto: UpdateBookingDto = {
-      amountCash: Math.max(0, Number(this.detailAmountCash) || 0),
-      amountTransfer: Math.max(0, Number(this.detailAmountTransfer) || 0),
+      amountCash: Math.max(0, this.totalPagadoEfectivo),
+      amountTransfer: Math.max(0, this.totalPagadoTransferencia),
     };
 
     this.sub.add(
       this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
         next: (updated) => {
           this.isSavingDetail = false;
-          this.savedAmountCash = Number(this.detailAmountCash) || 0;
-          this.savedAmountTransfer = Number(this.detailAmountTransfer) || 0;
-          this.detailPaidCount = 0;
+
+          // Solo marcar como pagados los ítems que el cajero seleccionó para este cobro.
+          // El resto queda pendiente para el siguiente "Registrar Pago".
+          this.detailCart = this.detailCart.map((i) => ({
+            ...i,
+            isPaid: i.isPaid || (i.selectedForPayment === true),
+            selectedForPayment: false,
+          }));
+
+          // Limpiar el historial de pagos parciales de esta sesión
           this.playerPaymentHistory = [];
           this.partialCashCount = 0;
           this.partialTransferCount = 0;
+
+          // Actualizar booking desde la respuesta del servidor
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          const cash = Number(updated.payment?.amountCash ?? 0);
-          const transfer = Number(updated.payment?.amountTransfer ?? 0);
-          this.detailAmountCash = cash;
-          this.detailAmountTransfer = transfer;
-          this.savedAmountCash = cash;
-          this.savedAmountTransfer = transfer;
+
+          // Recalcular cuántos jugadores pagaron para que los puntos verdes persistan.
+          // Usamos el acumulado total guardado en la BD (updated.payment), no los inputs.
+          const dbCash = Number(updated.payment?.amountCash ?? 0);
+          const dbTransfer = Number(updated.payment?.amountTransfer ?? 0);
+
+          // Anclar savedAmount* al total persistido en DB; limpiar los inputs de sesión.
+          // Así el saldo muestra el acumulado real y hasUnsavedPaymentChanges vuelve a false.
+          this.savedAmountCash = dbCash;
+          this.savedAmountTransfer = dbTransfer;
+          this.detailAmountCash = 0;
+          this.detailAmountTransfer = 0;
+          const dbTotal = dbCash + dbTransfer;
+          const costPerPlayer =
+            this.detailPlayerCount > 0
+              ? this.detailTotalReserva / this.detailPlayerCount
+              : 1;
+          this.detailPaidCount =
+            costPerPlayer > 0
+              ? Math.min(
+                  Math.round(dbTotal / costPerPlayer),
+                  this.detailPlayerCount,
+                )
+              : 0;
+          this.initialPaidCount = this.detailPaidCount;
+
           this.toast.success(
             'Pago registrado',
-            `Pagaron ${this.detailPaidCount === 0 ? 'todos' : 'algunos'} los jugadores.`,
+            `Pagaron ${this.detailPaidCount}/${this.detailPlayerCount} jugadores.`,
           );
         },
         error: (err) => {
@@ -820,16 +1131,81 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Llamado cuando se tilda/destilda un producto para incluirlo en el cobro.
+   * Reinicia un timer de 5s; al expirar, hace scroll a la sección de pago
+   * y autocompleta el monto con los productos seleccionados.
+   */
+  onProductCheckChange(): void {
+    // Reiniciar timer con cada tilde
+    if (this.paymentScrollTimer) {
+      clearTimeout(this.paymentScrollTimer);
+    }
+
+    const selectedItems = this.detailCart.filter(i => !i.isPaid && i.selectedForPayment);
+    if (selectedItems.length === 0) {
+      this.paymentScrollTimer = null;
+      return;
+    }
+
+    this.paymentScrollTimer = setTimeout(() => {
+      this.paymentScrollTimer = null;
+
+      // Calcular el total de los productos tildados
+      const selectedTotal = selectedItems.reduce(
+        (sum, i) => sum + Number(i.unitPrice) * Number(i.quantity), 0
+      );
+
+      // Mostrar prompt preguntando método de pago
+      this.pendingProductPaymentAmount = selectedTotal;
+      this.showProductPaymentPrompt = true;
+
+      // Esperar un tick para que Angular renderice el prompt, luego hacer scroll
+      setTimeout(() => {
+        if (this.paymentSection?.nativeElement) {
+          this.paymentSection.nativeElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }
+      });
+    }, 2500);
+  }
+
+  /** El cajero eligió pagar los productos tildados con un método específico. */
+  applyProductPayment(method: 'cash' | 'transfer'): void {
+    if (method === 'cash') {
+      this.detailAmountCash = (Number(this.detailAmountCash) || 0) + this.pendingProductPaymentAmount;
+    } else {
+      this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + this.pendingProductPaymentAmount;
+    }
+    this.showProductPaymentPrompt = false;
+    this.pendingProductPaymentAmount = 0;
+
+    // Scroll de vuelta a la sección de división de cuenta
+    if (this.dialogScrollBody?.nativeElement) {
+      this.dialogScrollBody.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  /** Cancela el prompt de método de pago de productos. */
+  dismissProductPaymentPrompt(): void {
+    this.showProductPaymentPrompt = false;
+    this.pendingProductPaymentAmount = 0;
+  }
+
   /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */
   private autoSaveItems(): void {
     if (!this.selectedBooking || this.isAutoSavingItems) return;
     this.isAutoSavingItems = true;
 
+    // Agrupar por productId ya que puede haber entradas separadas (pagado + pendiente)
+    const grouped = new Map<string, number>();
+    for (const i of this.detailCart) {
+      grouped.set(i.productId, (grouped.get(i.productId) ?? 0) + i.quantity);
+    }
     const dto: UpdateBookingDto = {
-      items: this.detailCart.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-      })),
+      items: Array.from(grouped, ([productId, quantity]) => ({ productId, quantity })),
     };
 
     this.sub.add(
@@ -839,12 +1215,38 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          this.detailCart = updated.items.map((item) => ({
-            productId: item.productId,
-            name: item.product.name,
-            unitPrice: Number(item.unitPrice),
-            quantity: item.quantity,
-          }));
+          // Preservar la separación paid/unpaid al recargar del servidor.
+          // El servidor agrupa por productId, pero localmente podemos tener
+          // un ítem pagado y otro pendiente del mismo producto.
+          const prevItems = this.detailCart;
+          const newCart: CartItem[] = [];
+          for (const serverItem of updated.items) {
+            const localPaid = prevItems.filter(i => i.productId === serverItem.productId && i.isPaid);
+            const localUnpaid = prevItems.filter(i => i.productId === serverItem.productId && !i.isPaid);
+            const paidQty = localPaid.reduce((s, i) => s + i.quantity, 0);
+            const unpaidQty = serverItem.quantity - paidQty;
+            if (paidQty > 0) {
+              newCart.push({
+                productId: serverItem.productId,
+                name: serverItem.product.name,
+                unitPrice: Number(serverItem.unitPrice),
+                quantity: paidQty,
+                isPaid: true,
+                selectedForPayment: false,
+              });
+            }
+            if (unpaidQty > 0) {
+              newCart.push({
+                productId: serverItem.productId,
+                name: serverItem.product.name,
+                unitPrice: Number(serverItem.unitPrice),
+                quantity: unpaidQty,
+                isPaid: false,
+                selectedForPayment: localUnpaid[0]?.selectedForPayment ?? false,
+              });
+            }
+          }
+          this.detailCart = newCart;
         },
         error: (err) => {
           this.isAutoSavingItems = false;
@@ -872,6 +1274,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
+          // Auto-limpieza: elimina la alerta de retraso si estaba activa
+          this.notificationService.removeByEntityId(booking.id);
           this.toast.success(
             'Partido iniciado',
             `${booking.clientName} está jugando.`,
@@ -894,8 +1298,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     const dto: UpdateBookingDto = {
       status: 'completed',
-      amountCash: Number(this.detailAmountCash) || 0,
-      amountTransfer: Number(this.detailAmountTransfer) || 0,
+      amountCash: Math.max(0, this.totalPagadoEfectivo),
+      amountTransfer: Math.max(0, this.totalPagadoTransferencia),
     };
 
     this.sub.add(
@@ -905,6 +1309,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
+          // El backend descontó stock al finalizar — invalidar caché para que
+          // la próxima carga de productos muestre los valores reales.
+          this.productsService.clearCache();
           this.toast.success(
             'Turno finalizado',
             `Turno de ${booking.clientName} completado.`,
@@ -1003,24 +1410,46 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Filtra los productos disponibles según el término de búsqueda del formulario de creación. */
+  /** Elimina diacríticos para comparación insensible a tildes. */
+  private normalize(s: string): string {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  /** Filtra los productos disponibles según el término de búsqueda del formulario de creación (ignora tildes). */
   onSearchChange(): void {
-    const term = this.productSearch.trim().toLowerCase();
+    const term = this.normalize(this.productSearch.trim());
     if (!term) {
       this.searchResults = [];
       return;
     }
     this.searchResults = this.allProducts.filter((p) =>
-      p.name.toLowerCase().includes(term),
+      this.normalize(p.name).includes(term),
     );
   }
 
   /** Agrega un producto al carrito de detalle y dispara el auto-guardado. */
   addToDetailCart(product: Product): void {
-    const idx = this.detailCart.findIndex((i) => i.productId === product.id);
-    if (idx >= 0) {
-      this.detailCart = this.detailCart.map((i) =>
-        i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+    // Calcular la cantidad total de este producto ya en el carrito (pagado + pendiente)
+    const totalInCart = this.detailCart
+      .filter(i => i.productId === product.id)
+      .reduce((s, i) => s + i.quantity, 0);
+
+    if (totalInCart >= product.stock) {
+      this.toast.info(
+        'Stock máximo alcanzado',
+        `"${product.name}" tiene ${product.stock} unidades disponibles.`,
+      );
+      return;
+    }
+
+    // Buscar un ítem pendiente (no pagado) del mismo producto para incrementar.
+    // Los ítems ya pagados se mantienen separados.
+    const unpaidIdx = this.detailCart.findIndex(
+      (i) => i.productId === product.id && !i.isPaid,
+    );
+    if (unpaidIdx >= 0) {
+      this.detailCart = this.detailCart.map((i, idx) =>
+        idx === unpaidIdx ? { ...i, quantity: i.quantity + 1 } : i,
       );
     } else {
       this.detailCart = [
@@ -1030,6 +1459,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           name: product.name,
           unitPrice: product.salePrice,
           quantity: 1,
+          isPaid: false,
+          selectedForPayment: false,
         },
       ];
     }
@@ -1038,35 +1469,51 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.autoSaveItems();
   }
 
-  /** Elimina un ítem del carrito de detalle y dispara el auto-guardado. */
-  removeFromDetailCart(productId: string): void {
-    this.detailCart = this.detailCart.filter((i) => i.productId !== productId);
+  /** Elimina un ítem del carrito de detalle por índice y dispara el auto-guardado. */
+  removeFromDetailCartByIndex(index: number): void {
+    this.detailCart = this.detailCart.filter((_, i) => i !== index);
     this.autoSaveItems();
   }
 
-  /** Actualiza la cantidad de un ítem del carrito de detalle y dispara el auto-guardado. */
-  updateDetailQty(productId: string, qty: number): void {
+  /** Actualiza la cantidad de un ítem del carrito por índice y dispara el auto-guardado. */
+  updateDetailQtyByIndex(index: number, qty: number): void {
     if (qty <= 0) {
-      this.detailCart = this.detailCart.filter(
-        (i) => i.productId !== productId,
-      );
+      this.detailCart = this.detailCart.filter((_, i) => i !== index);
     } else {
-      this.detailCart = this.detailCart.map((i) =>
-        i.productId === productId ? { ...i, quantity: qty } : i,
-      );
+      const item = this.detailCart[index];
+      if (item) {
+        // Limitar al stock disponible considerando otras entradas del mismo producto
+        const product = this.allProducts.find(p => p.id === item.productId);
+        if (product) {
+          const otherQty = this.detailCart
+            .filter((it, i) => i !== index && it.productId === item.productId)
+            .reduce((s, it) => s + it.quantity, 0);
+          const maxAllowed = product.stock - otherQty;
+          if (qty > maxAllowed) {
+            qty = Math.max(1, maxAllowed);
+            this.toast.info(
+              'Stock máximo alcanzado',
+              `"${product.name}" tiene ${product.stock} unidades disponibles.`,
+            );
+          }
+        }
+        this.detailCart = this.detailCart.map((it, i) =>
+          i === index ? { ...it, quantity: qty } : it,
+        );
+      }
     }
     this.autoSaveItems();
   }
 
-  /** Filtra los productos disponibles según el término de búsqueda del formulario de detalle. */
+  /** Filtra los productos disponibles según el término de búsqueda del formulario de detalle (ignora tildes). */
   onDetailSearchChange(): void {
-    const term = this.detailProductSearch.trim().toLowerCase();
+    const term = this.normalize(this.detailProductSearch.trim());
     if (!term) {
       this.detailSearchResults = [];
       return;
     }
     this.detailSearchResults = this.allProducts.filter((p) =>
-      p.name.toLowerCase().includes(term),
+      this.normalize(p.name).includes(term),
     );
   }
 
@@ -1171,5 +1618,144 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
   trackByProductId(_: number, item: CartItem): string {
     return item.productId;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DRAG-TO-SCROLL (escritorio) — arrastar la grilla con el mouse
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Inicia el drag-to-scroll solo si el click NO fue sobre una tarjeta
+   * de reserva (cdk-drag). De lo contrario, el cdkDrag toma el control.
+   */
+  onScrollMouseDown(event: MouseEvent): void {
+    if ((event.target as Element).closest('.cdk-drag')) return;
+
+    const el = this.scrollContainer.nativeElement;
+    this.isScrollDragging = true;
+    this.scrollDragStartX = event.pageX - el.getBoundingClientRect().left;
+    this.scrollDragOriginLeft = el.scrollLeft;
+  }
+
+  onScrollMouseLeave(): void {
+    this.isScrollDragging = false;
+  }
+
+  onScrollMouseUp(): void {
+    this.isScrollDragging = false;
+  }
+
+  /**
+   * Desplaza el contenedor en proporción al movimiento del mouse.
+   * El multiplicador 1.5 da velocidad de scroll más natural en pantallas grandes.
+   */
+  onScrollMouseMove(event: MouseEvent): void {
+    if (!this.isScrollDragging) return;
+    event.preventDefault();
+
+    const el = this.scrollContainer.nativeElement;
+    const x = event.pageX - el.getBoundingClientRect().left;
+    const walk = (x - this.scrollDragStartX) * 1.5;
+    el.scrollLeft = this.scrollDragOriginLeft - walk;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DRAG & DROP — Mover / Duplicar turno
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Marca inicio de arrastre — bloquea clicks accidentales en slots. */
+  onDragStarted(): void {
+    this.isDragging = true;
+  }
+
+  /**
+   * Marca fin de arrastre.
+   * Se usa un microtask delay para asegurarse de que el click sintético del
+   * browser (disparado en el mismo tick que el pointerup) ya haya sido
+   * procesado por `onSlotClick` — y bloqueado — antes de resetear el flag.
+   */
+  onDragEnded(): void {
+    requestAnimationFrame(() => {
+      this.isDragging = false;
+    });
+  }
+
+  /**
+   * Handler del evento `cdkDropListDropped`.
+   * Solo actúa si el origen y el destino son contenedores distintos.
+   * Abre el diálogo de intención (Mover / Duplicar).
+   */
+  onBookingDrop(event: CdkDragDrop<{ courtId: string; hour: string }>): void {
+    if (event.previousContainer === event.container) return;
+
+    const booking = event.item.data as BookingResponse;
+    const target = event.container.data;
+
+    this.rescheduleSourceId = booking.id;
+    this.rescheduleTargetCourtId = target.courtId;
+    this.rescheduleTargetDate = this.selectedDate;
+    this.rescheduleTargetHour = target.hour;
+    this.rescheduleFromModal = false;
+
+    setTimeout(() => {
+      this.zone.run(() => { this.rescheduleDialogOpen = true; });
+    });
+  }
+
+  /**
+   * Abre el diálogo Mover/Duplicar desde el botón del modal de detalle (fallback móvil).
+   * Pre-carga los valores actuales del turno para que el usuario solo elija el destino.
+   */
+  openRescheduleFromModal(): void {
+    if (!this.selectedBooking) return;
+    this.rescheduleSourceId = this.selectedBooking.id;
+    this.rescheduleTargetCourtId = this.selectedBooking.court?.id ?? '';
+    this.rescheduleTargetDate = this.selectedDate;
+    this.rescheduleTargetHour = this.selectedBooking.hour;
+    this.rescheduleFromModal = true;
+    this.rescheduleDialogOpen = true;
+  }
+
+  /** Cierra el diálogo sin hacer nada. */
+  closeRescheduleDialog(): void {
+    this.rescheduleDialogOpen = false;
+    this.rescheduleSourceId = '';
+  }
+
+  /** Construye y lanza la petición de mover o duplicar según la acción elegida. */
+  confirmReschedule(action: 'move' | 'duplicate'): void {
+    if (!this.rescheduleTargetCourtId || !this.rescheduleTargetDate || !this.rescheduleTargetHour) {
+      this.toast.error('Datos incompletos', 'Seleccioná la cancha, fecha y hora de destino.');
+      return;
+    }
+
+    const dto: RescheduleBookingDto = {
+      courtId: this.rescheduleTargetCourtId,
+      date: this.rescheduleTargetDate,
+      hour: this.rescheduleTargetHour,
+    };
+
+    this.isRescheduling = true;
+    const request$ = action === 'move'
+      ? this.bookingsService.move(this.rescheduleSourceId, dto)
+      : this.bookingsService.duplicate(this.rescheduleSourceId, dto);
+
+    request$.pipe(finalize(() => (this.isRescheduling = false))).subscribe({
+      next: () => {
+        const label = action === 'move' ? 'Turno movido' : 'Turno duplicado';
+        this.toast.success(label, 'La agenda fue actualizada.');
+        this.closeRescheduleDialog();
+        // Si el diálogo fue desde el modal de detalle, cerrarlo también
+        if (this.rescheduleFromModal) this.forceCloseDialog();
+        this.loadBookings();
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.toast.error('Slot ocupado', 'Ese horario ya tiene un turno reservado.');
+        } else {
+          this.toast.error('Error', 'No se pudo completar la operación. Intentá de nuevo.');
+        }
+      },
+    });
   }
 }

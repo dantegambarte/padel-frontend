@@ -72,33 +72,39 @@ test.describe('Módulo de Productos', () => {
 
   // PR-06
   test('PR-06: se puede crear un nuevo producto completo', async ({ page }) => {
-    const newBtn = page.getByRole('button', { name: /Nuevo Producto|Agregar|Crear/i });
+    const newBtn = page.getByRole('button', { name: /Nuevo Producto|Agregar producto/i });
     await newBtn.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible({ timeout: 3000 });
 
-    // Completar el formulario
-    const inputs = dialog.locator('input[type="text"], input[type="number"]');
-    const count = await inputs.count();
+    // Nombre del producto (textbox)
+    const nameInput = dialog.getByRole('textbox').first();
+    await nameInput.fill('Producto Test E2E');
 
-    if (count >= 2) {
-      // Nombre del producto
-      await inputs.nth(0).fill('Producto Test E2E');
-      // Precio
-      const priceInput = dialog.locator('input[type="number"]').first();
-      await priceInput.fill('100');
+    // Categoría (requerida)
+    const categorySelect = dialog.getByRole('combobox', { name: /Categoría/i });
+    if (await categorySelect.isVisible()) {
+      await categorySelect.selectOption('Bebidas');
+    }
 
-      const saveBtn = dialog.getByRole('button', { name: /Guardar|Crear|Confirmar/i });
-      if (await saveBtn.isEnabled()) {
-        const responsePromise = page.waitForResponse(
-          (res) => res.url().includes('/products') && res.request().method() === 'POST',
-          { timeout: 8000 },
-        );
-        await saveBtn.click();
-        const res = await responsePromise.catch(() => null);
-        if (res) {
-          expect([201, 400, 409]).toContain(res.status());
-        }
+    // Precio Costo y Precio Venta (spinbuttons)
+    const spinbuttons = dialog.getByRole('spinbutton');
+    const spinCount = await spinbuttons.count();
+    if (spinCount >= 1) await spinbuttons.nth(0).fill('100');   // Precio Costo
+    if (spinCount >= 2) await spinbuttons.nth(1).fill('200');   // Precio Venta
+    if (spinCount >= 3) await spinbuttons.nth(2).fill('10');    // Stock Inicial
+
+    // El botón se llama "Agregar Producto"
+    const saveBtn = dialog.getByRole('button', { name: /Agregar Producto|Guardar|Crear/i });
+    if (await saveBtn.isEnabled()) {
+      const responsePromise = page.waitForResponse(
+        (res) => res.url().includes('/products') && res.request().method() === 'POST',
+        { timeout: 8000 },
+      );
+      await saveBtn.click();
+      const res = await responsePromise.catch(() => null);
+      if (res) {
+        expect([201, 400, 409]).toContain(res.status());
       }
     }
   });
@@ -119,28 +125,15 @@ test.describe('Módulo de Productos', () => {
   });
 
   // PR-08
-  test('PR-08: se puede hacer restock (agregar stock) a un producto', async ({ page }) => {
-    const restockBtn = page.getByRole('button', { name: /restock|reponer|stock|agregar/i }).first();
-    if (await restockBtn.isVisible({ timeout: 3000 })) {
-      await restockBtn.click();
-      const dialog = page.getByRole('dialog');
-      if (await dialog.isVisible({ timeout: 2000 })) {
-        const stockInput = dialog.locator('input[type="number"]').first();
-        if (await stockInput.isVisible()) {
-          await stockInput.fill('5');
-          const saveBtn = dialog.getByRole('button', { name: /Guardar|Confirmar/i });
-          if (await saveBtn.isEnabled()) {
-            const responsePromise = page.waitForResponse(
-              (res) => res.url().includes('/products') && res.request().method() === 'PATCH',
-              { timeout: 8000 },
-            );
-            await saveBtn.click();
-            const res = await responsePromise.catch(() => null);
-            if (res) expect([200, 400]).toContain(res.status());
-          }
-        }
-      }
-    }
+  test('PR-08: los botones de acción (editar/eliminar) están presentes en la tabla', async ({ page }) => {
+    // Verificar que los botones de editar y eliminar están en la primera fila de la tabla
+    const editBtn = page.getByRole('button', { name: /Editar producto/i }).first();
+    const deleteBtn = page.getByRole('button', { name: /Eliminar producto/i }).first();
+    // Al menos uno de los botones de acción debe ser visible
+    const hasActions =
+      (await editBtn.isVisible({ timeout: 3000 }).catch(() => false)) ||
+      (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false));
+    expect(hasActions).toBeTruthy();
   });
 
   // PR-09

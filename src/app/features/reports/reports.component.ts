@@ -391,6 +391,69 @@ export class ReportsComponent implements OnInit {
       });
   }
 
+  /** Exporta las transacciones filtradas como archivo CSV (Blob download). */
+  exportCSV(): void {
+    if (this.isExporting) return;
+
+    const data = this.filteredTransactions.length > 0
+      ? this.filteredTransactions
+      : this.transactions;
+
+    if (data.length === 0) {
+      this.toast.error('Sin datos', 'No hay transacciones para exportar en el período seleccionado');
+      return;
+    }
+
+    this.triggerCsvDownload(data);
+  }
+
+  private triggerCsvDownload(transactions: TransactionExport[]): void {
+    const effectiveFrom = this.dateFilterActive && this.selectedDate ? this.selectedDate : this.dateFrom;
+    const effectiveTo   = this.dateFilterActive && this.selectedDate ? this.selectedDate : this.dateTo;
+
+    const header = ['Fecha', 'Hora', 'Tipo', 'Concepto', 'Efectivo', 'Transferencia', 'Total', 'Registrado por'];
+
+    const escape = (v: string | number) => {
+      const s = String(v ?? '');
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
+    const rows = transactions.map((tx) => [
+      tx.date,
+      tx.time,
+      tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta mostrador' : tx.type,
+      tx.concept,
+      Number(tx.cash) || 0,
+      Number(tx.transfer) || 0,
+      Number(tx.total) || 0,
+      tx.createdBy,
+    ]);
+
+    // Totales al final
+    const totalEf = transactions.reduce((s, t) => s + (Number(t.cash) || 0), 0);
+    const totalTr = transactions.reduce((s, t) => s + (Number(t.transfer) || 0), 0);
+    const totalGe = transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
+    rows.push(['TOTAL', '', '', '', totalEf, totalTr, totalGe, '']);
+
+    const csv = [
+      header.map(escape).join(','),
+      ...rows.map((r) => r.map(escape).join(',')),
+    ].join('\r\n');
+
+    const bom = '\uFEFF'; // UTF-8 BOM para Excel
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Transacciones_${effectiveFrom.replace(/-/g, '')}_al_${effectiveTo.replace(/-/g, '')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    this.toast.success('CSV descargado', `Período: ${this.fmtDisplayDate(effectiveFrom)} al ${this.fmtDisplayDate(effectiveTo)}`);
+  }
+
   /**
    * Genera el archivo Excel a partir de las transacciones.
    * - Hoja encabezada con título documental y período activo.

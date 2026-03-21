@@ -6,7 +6,7 @@ import { Court, CreateCourtDto, UpdateCourtDto } from '../models/court.model';
 import { environment } from '../../../environments/environment';
 
 /**
- * Servicio para gestionar canchas de pádel mediante la API REST.
+ * Servicio para gestionar canchas de padel mediante la API REST.
  *
  * `findAll()` usa caché en memoria (`shareReplay(1)`) para evitar
  * peticiones repetidas cuando los datos no cambian.

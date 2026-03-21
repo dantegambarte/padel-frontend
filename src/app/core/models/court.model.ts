@@ -1,9 +1,13 @@
-/** Entidad de una cancha de pádel. */
+/** Entidad de una cancha de padel. */
 export interface Court {
   id: string;
   name: string;
   description: string;
   isActive: boolean;
+  price30: number;
+  price60: number;
+  price90: number;
+  price120: number;
 }
 
 /** Payload para crear una nueva cancha. */

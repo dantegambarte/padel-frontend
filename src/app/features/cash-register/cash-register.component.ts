@@ -1,30 +1,47 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 import * as XLSX from 'xlsx';
+import Swal from 'sweetalert2';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { CashService, CashMovimiento } from '../../core/services/cash.service';
+import { CashService, CashMovimiento, OpenCashDto } from '../../core/services/cash.service';
 
 @Component({
   selector: 'app-cash-register',
   templateUrl: './cash-register.component.html',
 })
 export class CashRegisterComponent implements OnInit {
+  /** null = cargando, true = sesión abierta/cerrada, false = sin sesión */
+  isSessionOpen: boolean | null = null;
   isLoading = true;
   sessionId: string | null = null;
   isClosed = false;
   efectivoEsperado = 0;
   transferenciaTotal = 0;
+  initialBalance = 0;
   movimientos: CashMovimiento[] = [];
-  noSesionActiva = false;
   sessionDate: string | null = null;
   openedAt: string | null = null;
 
-  efectivoContado = '';
+  // ── Apertura de Caja ──
+  fondoInicial = '';
+  notasApertura = '';
+  isOpening = false;
+
+  // ── Cierre Z ──
+  /** null = el empleado aún no ingresó nada; 0 = ingresó explícitamente cero. */
+  efectivoContado: number | null = null;
   notas = '';
   isDialogOpen = false;
   isSubmitting = false;
+
+  /** true cuando la sesión abierta pertenece a una jornada comercial anterior. */
+  staleSession = false;
+
+  /** Datos del cierre persistidos (cuando la caja ya fue cerrada). */
+  closedCashCounted: number | null = null;
+  closedDifference: number | null = null;
 
   ticketSaleId: string | null = null;
 
@@ -44,23 +61,20 @@ export class CashRegisterComponent implements OnInit {
   }
 
   /**
-   * Etiqueta de la jornada. Si la sesión fue abierta en un día diferente al calendario
-   * actual (escenario de madrugada), muestra "Jornada del [fecha apertura]".
-   * En el caso normal muestra "Jornada de hoy".
+   * Etiqueta de la jornada comercial de la sesión activa.
+   * Siempre muestra la fecha real de la sesión (nunca "Jornada de hoy"),
+   * evitando confusión cuando la jornada abarca pasada la medianoche.
+   * Ej: sesión del Viernes abierta a la 01:42 AM del Sábado → "Jornada del viernes 20 de marzo".
    */
   get jornadaLabel(): string {
     if (!this.sessionDate) return 'Jornada de hoy';
     const [year, month, day] = this.sessionDate.split('-').map(Number);
     const sessionDay = new Date(year, month - 1, day);
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    if (this.sessionDate !== todayStr) {
-      return `Jornada del ${sessionDay.toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      })}`;
-    }
-    return 'Jornada de hoy';
+    return `Jornada del ${sessionDay.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })}`;
   }
 
   /** Suma de efectivo esperado y total de transferencias. */
@@ -68,9 +82,9 @@ export class CashRegisterComponent implements OnInit {
     return this.efectivoEsperado + this.transferenciaTotal;
   }
 
-  /** Convierte el string del input de efectivo contado a número. */
+  /** Valor numérico del efectivo contado. Retorna 0 mientras el empleado no ingresa nada. */
   get efectivoReal(): number {
-    return parseFloat(this.efectivoContado || '0');
+    return this.efectivoContado ?? 0;
   }
 
   /** Diferencia entre el efectivo real contado y el esperado por el sistema. */
@@ -83,9 +97,9 @@ export class CashRegisterComponent implements OnInit {
     return Math.abs(this.diferencia);
   }
 
-  /** Indica si se debe mostrar el resumen de diferencia en la UI. */
+  /** Muestra el panel de diferencia en cuanto el empleado ingresa algún valor (incluso 0). */
   get showDiferencia(): boolean {
-    return !!this.efectivoContado && this.efectivoContado !== '';
+    return this.efectivoContado !== null;
   }
 
   /** Clase CSS para colorear la diferencia según su signo. */
@@ -117,7 +131,7 @@ export class CashRegisterComponent implements OnInit {
 
   /**
    * Carga el resumen de la sesión de caja actual desde el servidor.
-   * Si no hay sesión activa hoy, activa el estado `noSesionActiva`.
+   * Si no hay sesión activa hoy, setea `isSessionOpen = false`.
    */
   private loadCurrentSession(): void {
     this.isLoading = true;
@@ -126,33 +140,81 @@ export class CashRegisterComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (res) => {
-          if (res.sessionId === null) {
-            this.noSesionActiva = true;
+          // Mostrar apertura si: no hay sesión, o la sesión está cerrada.
+          // El dashboard solo se muestra con una sesión explícitamente ABIERTA.
+          if (res.noSession || res.isClosed) {
+            this.isSessionOpen = false;
             return;
           }
+          this.isSessionOpen = true;
           this.sessionId = res.sessionId;
-          this.isClosed = res.isClosed;
+          this.isClosed = false;
           this.efectivoEsperado = res.efectivoEsperado;
           this.transferenciaTotal = res.transferenciaTotal;
+          this.initialBalance = res.initialBalance;
           this.movimientos = res.movimientos;
           this.sessionDate = res.sessionDate;
           this.openedAt = res.openedAt;
+          this.closedCashCounted = null;
+          this.closedDifference = null;
+          this.staleSession = res.staleSession ?? false;
+
+          if (this.staleSession) {
+            this.checkStaleSession();
+          }
         },
         error: () => {
-          this.toast.error(
-            'Error al cargar la caja',
-            'Intente recargar la página',
-          );
+          // Solo llega aquí si hay error de red (el 404 ya lo absorbe el servicio)
+          this.isSessionOpen = false;
+          this.toast.error('Error de conexión', 'No se pudo contactar al servidor. Intente recargar.');
+        },
+      });
+  }
+
+  /**
+   * Abre la jornada de caja con el fondo inicial declarado por el empleado.
+   * Llama a POST /cash/open y recarga el estado de la sesión.
+   */
+  abrirJornada(): void {
+    const fondo = parseFloat(this.fondoInicial || '0');
+    if (isNaN(fondo) || fondo < 0) {
+      this.toast.error('Error', 'El fondo inicial debe ser un número mayor o igual a 0');
+      return;
+    }
+    this.isOpening = true;
+    const dto: OpenCashDto = {
+      initialBalance: fondo,
+      ...(this.notasApertura ? { notes: this.notasApertura } : {}),
+    };
+    this.cashService
+      .open(dto)
+      .pipe(finalize(() => (this.isOpening = false)))
+      .subscribe({
+        next: () => {
+          this.fondoInicial = '';
+          this.notasApertura = '';
+          this.toast.success('Jornada abierta', `Fondo inicial: $${this.fmt(fondo)}`);
+          this.isSessionOpen = null; // muestra loading mientras recarga
+          this.loadCurrentSession();
+        },
+        error: (err) => {
+          const msg: string = err.error?.message ?? 'Intente nuevamente';
+          if (err.status === 409) {
+            this.toast.error('Conflicto al abrir caja', msg);
+            this.loadCurrentSession();
+          } else {
+            this.toast.error('Error al abrir caja', msg);
+          }
         },
       });
   }
 
   /**
    * Abre el diálogo de confirmación de cierre.
-   * Requiere que el efectivo contado esté ingresado.
+   * Requiere que el empleado haya ingresado el efectivo contado (incluido $0).
    */
   openConfirmDialog(): void {
-    if (!this.efectivoContado) {
+    if (this.efectivoContado === null) {
       this.toast.error('Error', 'Por favor ingrese el efectivo contado');
       return;
     }
@@ -201,6 +263,9 @@ export class CashRegisterComponent implements OnInit {
 
           this.isDialogOpen = false;
           this.isClosed = true;
+          this.staleSession = false;
+          this.closedCashCounted = this.efectivoReal;
+          this.closedDifference = this.diferencia;
 
           const detalle =
             this.diferencia === 0
@@ -234,6 +299,82 @@ export class CashRegisterComponent implements OnInit {
   /** Cierra la comanda de consumo. */
   closeTicket(): void {
     this.ticketSaleId = null;
+  }
+
+  /**
+   * Muestra una alerta cuando la sesión activa pertenece a una jornada anterior.
+   * - Sin movimientos → ofrece cerrarla automáticamente con $0.
+   * - Con movimientos → advierte que el empleado debe hacer el Cierre Z manualmente.
+   */
+  private checkStaleSession(): void {
+    const [y, m, d] = (this.sessionDate ?? '').split('-').map(Number);
+    const fecha =
+      this.sessionDate && y
+        ? new Date(y, m - 1, d).toLocaleDateString('es-AR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })
+        : 'un día anterior';
+
+    if (this.movimientos.length === 0) {
+      Swal.fire({
+        title: 'Caja de jornada anterior abierta',
+        html:
+          `La caja fue abierta el <strong>${fecha}</strong> y no registró movimientos.<br>` +
+          `¿Deseás cerrarla automáticamente para iniciar la jornada de hoy?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, cerrarla',
+        cancelButtonText: 'No por ahora',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#6b7280',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.autoCloseStaleSession();
+        }
+      });
+    } else {
+      Swal.fire({
+        title: 'Jornada anterior sin cerrar',
+        html:
+          `La caja activa corresponde al <strong>${fecha}</strong> y tiene <strong>${this.movimientos.length}</strong> movimiento(s) registrado(s).<br><br>` +
+          `Por favor, realizá el <strong>Cierre Z</strong> de esa jornada antes de comenzar las operaciones de hoy.`,
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#d97706',
+      });
+    }
+  }
+
+  /**
+   * Cierra automáticamente la sesión atrasada con $0 contado (jornada sin movimientos).
+   * Tras el cierre recarga la vista para mostrar la pantalla de Apertura.
+   */
+  private autoCloseStaleSession(): void {
+    this.isLoading = true;
+    this.cashService
+      .close({
+        efectivoContado: 0,
+        notas: 'Cierre automático — jornada sin movimientos',
+      })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success(
+            'Jornada cerrada',
+            'La jornada anterior fue cerrada automáticamente. Podés abrir la jornada de hoy.',
+          );
+          this.isSessionOpen = null;
+          this.loadCurrentSession();
+        },
+        error: () => {
+          this.toast.error(
+            'Error al cerrar',
+            'No se pudo cerrar la jornada anterior. Intente el Cierre Z manualmente.',
+          );
+        },
+      });
   }
 
   /**
@@ -388,21 +529,28 @@ export class CashRegisterComponent implements OnInit {
       { wch: 12 },
     ];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-    XLSX.utils.book_append_sheet(wb, wsRendicion, 'Rendición por Empleado');
-    XLSX.utils.book_append_sheet(wb, wsMovimientos, 'Movimientos');
+    try {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+      XLSX.utils.book_append_sheet(wb, wsRendicion, 'Rendición por Empleado');
+      XLSX.utils.book_append_sheet(wb, wsMovimientos, 'Movimientos');
 
-    const safeName = session.userName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/[^a-zA-Z0-9_]/g, '');
+      const safeName = session.userName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_]/g, '');
 
-    const fecha = session.sessionDate ?? new Date().toLocaleDateString('en-CA');
-    const fileName = `Cierre_Caja_Z_${fecha}_${safeName}.xlsx`;
+      const fecha = session.sessionDate ?? new Date().toLocaleDateString('en-CA');
+      const fileName = `Cierre_Caja_Z_${fecha}_${safeName}.xlsx`;
 
-    XLSX.writeFile(wb, fileName);
+      XLSX.writeFile(wb, fileName);
+    } catch {
+      this.toast.error(
+        'Falla de Exportación',
+        'Error al generar o descargar el archivo Excel. Intente nuevamente.',
+      );
+    }
   }
 
   /** Formatea un número usando el locale argentino. */

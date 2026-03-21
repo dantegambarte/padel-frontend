@@ -203,15 +203,27 @@
                 <!-- Celda 6: Destacado -->
                 <td class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 last:border-0 md:text-center">
                   <span class="text-sm font-medium text-muted-foreground md:hidden">Destacado</span>
-                  <div
-                    class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors"
-                    [ngClass]="product.isFeatured ? 'bg-primary' : 'bg-input'"
+                  <button
+                    type="button"
+                    role="switch"
+                    [attr.aria-checked]="product.isFeatured"
+                    [disabled]="isReadOnly || togglingFeaturedIds.has(product.id)"
+                    (click)="persistToggleFeatured(product)"
+                    [title]="product.isFeatured ? 'Quitar de destacados' : 'Marcar como destacado'"
+                    class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                    [ngClass]="{
+                      'bg-primary': product.isFeatured,
+                      'bg-input': !product.isFeatured,
+                      'cursor-pointer': !isReadOnly,
+                      'cursor-default': isReadOnly,
+                      'animate-pulse': togglingFeaturedIds.has(product.id)
+                    }"
                   >
                     <span
                       class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg transition-transform"
                       [ngClass]="product.isFeatured ? 'translate-x-4' : 'translate-x-0'"
                     ></span>
-                  </div>
+                  </button>
                 </td>
 
                 <!-- Celda 7: Acciones -->
@@ -325,6 +337,8 @@
     (click)="closeDialog()"
   >
     <div
+      role="dialog"
+      aria-modal="true"
       class="modal-card"
       (click)="$event.stopPropagation()"
     >

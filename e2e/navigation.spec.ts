@@ -1,9 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/** En mobile el sidebar está colapsado — abrirlo antes de clickear nav items. */
+async function openSidebarIfNeeded(page: Page) {
+  const hamburger = page.getByRole('button', { name: 'Open menu' });
+  if (await hamburger.isVisible({ timeout: 500 }).catch(() => false)) {
+    await hamburger.click();
+    await page.waitForTimeout(300);
+  }
+}
 
 test.describe('Navegación', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/app/dashboard');
     await expect(page).toHaveURL('/app/dashboard', { timeout: 10000 });
+    await openSidebarIfNeeded(page);
   });
 
   test('navega a Agenda de Turnos', async ({ page }) => {
@@ -50,6 +60,8 @@ test.describe('Navegación', () => {
   test('navega de vuelta al Inicio desde otra sección', async ({ page }) => {
     await page.getByRole('navigation').getByRole('button', { name: 'Agenda de Turnos' }).click();
     await expect(page).toHaveURL('/app/schedule');
+    // En mobile el sidebar se cierra al navegar — reabrirlo
+    await openSidebarIfNeeded(page);
     await page.getByRole('navigation').getByRole('button', { name: 'Inicio' }).click();
     await expect(page).toHaveURL('/app/dashboard');
   });

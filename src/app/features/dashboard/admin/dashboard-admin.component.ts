@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { ChartData, ChartOptions, ChartType } from 'chart.js';
+import { ChartData, ChartOptions } from 'chart.js';
 
 import {
   ReportsService,
-  ReportsSummaryResponse,
-  RevenueDay,
+  TodayKpis,
+  DailyRevenue,
 } from '../../../core/services/reports.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -17,27 +17,11 @@ import { ToastService } from '../../../core/services/toast.service';
 export class DashboardAdminComponent implements OnInit {
   isLoading = true;
 
-  summary: ReportsSummaryResponse | null = null;
+  kpis: TodayKpis | null = null;
 
   barChartType = 'bar' as const;
 
-  barChartData: ChartData<'bar'> = {
-    labels: [],
-    datasets: [
-      {
-        data: [],
-        label: 'Alquileres',
-        backgroundColor: '',
-        borderRadius: { topLeft: 4, topRight: 4 },
-      },
-      {
-        data: [],
-        label: 'Productos',
-        backgroundColor: '',
-        borderRadius: { topLeft: 4, topRight: 4 },
-      },
-    ],
-  };
+  barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
 
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
@@ -47,15 +31,24 @@ export class DashboardAdminComponent implements OnInit {
       tooltip: {
         callbacks: {
           label: (ctx: any) => ` $${ctx.parsed.y.toLocaleString('es-AR')}`,
+          footer: (items: any[]) => {
+            const total = items.reduce((s, i) => s + i.parsed.y, 0);
+            return `Total: $${total.toLocaleString('es-AR')}`;
+          },
         },
       },
     },
     scales: {
-      x: { grid: { display: false } },
+      x: {
+        stacked: true,
+        grid: { display: false },
+        ticks: { font: { size: 11 } },
+      },
       y: {
+        stacked: true,
         beginAtZero: true,
         ticks: {
-          callback: (value: any) => `$${Number(value).toLocaleString('es-AR')}`,
+          callback: (v: any) => `$${Number(v).toLocaleString('es-AR')}`,
         },
       },
     },
@@ -66,28 +59,17 @@ export class DashboardAdminComponent implements OnInit {
     private toast: ToastService,
   ) {}
 
-  /**
-   * Carga en paralelo el resumen de KPIs y los ingresos de la semana actual.
-   * Lee los colores del tema desde las CSS custom properties de Tailwind v4
-   * y los inyecta en el gráfico de barras.
-   */
   ngOnInit(): void {
-    const style = getComputedStyle(document.documentElement);
-    const primaryColor = style.getPropertyValue('--primary').trim();
-    const accentColor = style.getPropertyValue('--accent').trim();
-
-    const { from, to } = this.getCurrentWeekRange();
-
     this.isLoading = true;
     forkJoin({
-      summary: this.reportsService.getSummary(),
-      revenue: this.reportsService.getRevenue(from, to, 'day'),
+      kpis: this.reportsService.getTodayKpis(),
+      chart: this.reportsService.getLast7DaysRevenue(),
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: ({ summary, revenue }) => {
-          this.summary = summary;
-          this.buildChart(revenue, primaryColor, accentColor);
+        next: ({ kpis, chart }) => {
+          this.kpis = kpis;
+          this.buildChart(chart);
         },
         error: () => {
           this.toast.error(
@@ -99,31 +81,30 @@ export class DashboardAdminComponent implements OnInit {
   }
 
   /**
-   * Construye los datasets del gráfico de barras con los datos de ingresos semanales.
-   * @param data         - Array de períodos con bookings y sales.
-   * @param primaryColor - Color CSS para alquileres.
-   * @param accentColor  - Color CSS para productos.
+   * Construye el gráfico de barras apiladas: Efectivo (verde) + Transferencia (índigo).
+   * Las etiquetas del eje X muestran el día en formato DD/MM.
    */
-  private buildChart(
-    data: RevenueDay[],
-    _primaryColor: string,
-    _accentColor: string,
-  ): void {
+  private buildChart(data: DailyRevenue[]): void {
+    const labels = data.map((d) => {
+      const [, m, day] = d.date.split('-');
+      return `${day}/${m}`;
+    });
+
     this.barChartData = {
-      labels: data.map((d) => d.period),
+      labels,
       datasets: [
         {
-          data: data.map((d) => d.bookings),
-          label: 'Alquileres',
-          backgroundColor: '#06b6d4', // Cyan 500
-          borderColor: '#0891b2',     // Cyan 600
-          borderRadius: { topLeft: 4, topRight: 4 },
+          data: data.map((d) => d.cash),
+          label: 'Efectivo',
+          backgroundColor: '#10b981', // emerald-500
+          borderColor: '#059669',
+          borderRadius: { topLeft: 0, topRight: 0 },
         },
         {
-          data: data.map((d) => d.sales),
-          label: 'Productos',
-          backgroundColor: '#f97316', // Orange 500
-          borderColor: '#ea6c0a',     // Orange 600
+          data: data.map((d) => d.transfer),
+          label: 'Transferencia',
+          backgroundColor: '#6366f1', // indigo-500
+          borderColor: '#4f46e5',
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
@@ -131,26 +112,7 @@ export class DashboardAdminComponent implements OnInit {
   }
 
   /** Formatea un número usando el locale argentino. */
-  fmt(value: number): string {
-    return value.toLocaleString('es-AR');
-  }
-
-  /** Devuelve el rango lunes–domingo de la semana actual en formato YYYY-MM-DD. */
-  private getCurrentWeekRange(): { from: string; to: string } {
-    const now = new Date();
-    const day = now.getDay();
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diffToMonday);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const localStr = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-    return {
-      from: localStr(monday),
-      to: localStr(sunday),
-    };
+  fmt(value: number | null | undefined): string {
+    return (Number(value) || 0).toLocaleString('es-AR');
   }
 }
