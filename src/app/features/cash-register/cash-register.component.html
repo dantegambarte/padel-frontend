@@ -346,7 +346,7 @@
         <button
           type="button"
           (click)="openConfirmDialog()"
-          [disabled]="!efectivoContado"
+          [disabled]="efectivoContado === null"
           class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent px-8 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Cerrar Caja Z

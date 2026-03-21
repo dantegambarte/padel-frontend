@@ -39,6 +39,8 @@ export interface CashCurrentResponse {
   difference: number | null;
   /** Notas del cierre. */
   closedNotes: string | null;
+  /** true cuando la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
+  staleSession: boolean;
 }
 
 /** Estructura cruda devuelta por el endpoint `GET /cash/current` del backend. */
@@ -70,6 +72,8 @@ interface CashApiResponse {
     createdByUsername?: string | null;
   }[];
   isOpen: boolean;
+  /** true si la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
+  staleSession: boolean;
 }
 
 /** Payload para abrir una nueva sesión de caja. */
@@ -120,6 +124,7 @@ export class CashService {
       cashCounted: null,
       difference: null,
       closedNotes: null,
+      staleSession: false,
     };
 
     return this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
@@ -135,6 +140,7 @@ export class CashService {
         cashCounted: res.session?.cashCounted != null ? Number(res.session.cashCounted) : null,
         difference: res.session?.difference != null ? Number(res.session.difference) : null,
         closedNotes: res.session?.notes ?? null,
+        staleSession: res.staleSession ?? false,
         movimientos: (res.transactions ?? []).map((t) => ({
           id: t.id,
           hora: this.formatHora(t.createdAt),
