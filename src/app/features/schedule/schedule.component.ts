@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription, forkJoin, timer } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, filter, take } from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -8,6 +9,7 @@ import { CourtsService } from '../../core/services/courts.service';
 import { BookingsService } from '../../core/services/bookings.service';
 import { ProductsService } from '../../core/services/products.service';
 import { ToastService } from '../../core/services/toast.service';
+import { NotificationService } from '../../core/services/notification.service';
 import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
 
@@ -72,11 +74,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     '22:00',
   ];
 
-  readonly PRICES: Record<PriceType, number> = {
-    standard: 3000,
-    professor: 2500,
-  };
-
   readonly DURATION_OPTIONS = [
     { value: 30, label: '30 min' },
     { value: 60, label: '1 hora' },
@@ -94,6 +91,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   selectedSlot: { court: Court; hour: string } | null = null;
   selectedBooking: BookingResponse | null = null;
+
+  /** ID de turno pendiente de apertura automática tras la próxima carga de reservas. */
+  private pendingOpenBookingId: string | null = null;
 
   clientName = '';
   priceType: PriceType = 'standard';
@@ -119,6 +119,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
   @ViewChild('paymentSection') paymentSection!: ElementRef<HTMLDivElement>;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+
+  // ── Drag-to-scroll (escritorio) ───────────────────────────────────────────
+  private isScrollDragging = false;
+  private scrollDragStartX = 0;
+  private scrollDragOriginLeft = 0;
 
   confirmDialogOpen = false;
   confirmDialogTitle = '';
@@ -197,13 +203,63 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     private productsService: ProductsService,
     private toast: ToastService,
+    private notificationService: NotificationService,
     public calcService: CalculatorService,
     private zone: NgZone,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
     this.startReminderTimer();
+    this.listenToDateQueryParam();
+  }
+
+  /**
+   * Escucha los query params `date` y `openBooking` del Topbar.
+   * - `date` mueve la grilla a esa fecha y recarga los turnos.
+   * - `openBooking` marca un ID de turno para abrirlo automáticamente
+   *   tras la siguiente carga; si la fecha ya está activa, lo abre de inmediato.
+   */
+  private listenToDateQueryParam(): void {
+    this.sub.add(
+      this.route.queryParams
+        .pipe(filter((params) => !!params['date'] || !!params['openBooking']))
+        .subscribe((params) => {
+          const date: string = params['date'];
+          const openBookingId: string | undefined = params['openBooking'];
+
+          if (openBookingId) {
+            this.pendingOpenBookingId = openBookingId;
+          }
+
+          const dateIsNew =
+            date &&
+            /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+            date !== this.selectedDate;
+
+          if (dateIsNew) {
+            this.selectedDate = date;
+            this.loadBookings(); // pendingOpenBookingId será consumido al terminar
+          } else if (openBookingId && !this.isLoading) {
+            // Misma fecha ya cargada: abrir directamente
+            this.tryOpenBookingById(openBookingId);
+            this.pendingOpenBookingId = null;
+          }
+          // Si isLoading === true y la fecha no cambió, el loadBookings() en curso
+          // consumirá pendingOpenBookingId al finalizar.
+        }),
+    );
+  }
+
+  /** Busca un turno en el bookingMap por ID y abre su modal de detalle. */
+  private tryOpenBookingById(id: string): void {
+    for (const booking of this.bookingMap.values()) {
+      if (booking.id === id && booking.court) {
+        this.openDetailDialog(booking.court, booking.hour, booking);
+        return;
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -252,6 +308,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       if (delayMin >= 5 && delayMin <= 120) {
         this.notifiedBookingIds.add(booking.id);
         newlyLate.push(`${booking.court.name} (${booking.hour}hs)`);
+
+        // Emite notificación persistente en la campanita del Topbar
+        this.notificationService.add({
+          id: `delay-${booking.id}`,
+          title: 'Turno con retraso',
+          message: `${booking.clientName} — ${booking.court.name} ${booking.hour}hs sin iniciar`,
+          category: 'TURNOS',
+          actionRoute: ['/app/schedule'],
+          queryParams: { date: todayStr, openBooking: booking.id },
+          entityId: booking.id,
+          createdAt: new Date(),
+        });
       }
     });
 
@@ -288,9 +356,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
-  /** Precio de la cancha según el tipo de precio y la duración seleccionada. */
+  /** Precio de la cancha según la cancha seleccionada y la duración. */
   get courtPrice(): number {
-    return this.PRICES[this.priceType] * (this.durationMinutes / 60);
+    if (!this.selectedSlot) return 0;
+    const c = this.selectedSlot.court;
+    switch (this.durationMinutes) {
+      case 30:  return Number(c.price30)  || 0;
+      case 60:  return Number(c.price60)  || 0;
+      case 90:  return Number(c.price90)  || 0;
+      case 120: return Number(c.price120) || 0;
+      default:  return Number(c.price60)  || 0;
+    }
   }
 
   /** Hora de fin calculada a partir del slot seleccionado y la duración. */
@@ -379,9 +455,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             }
           });
           this.isLoading = false;
+
+          // Deep link: abrir modal si hay un turno pendiente de apertura
+          if (this.pendingOpenBookingId) {
+            this.tryOpenBookingById(this.pendingOpenBookingId);
+            this.pendingOpenBookingId = null;
+          }
         },
         error: () => {
           this.isLoading = false;
+          this.pendingOpenBookingId = null;
           this.toast.error(
             'Error',
             'No se pudieron cargar las reservas del día.',
@@ -1191,6 +1274,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
+          // Auto-limpieza: elimina la alerta de retraso si estaba activa
+          this.notificationService.removeByEntityId(booking.id);
           this.toast.success(
             'Partido iniciado',
             `${booking.clientName} está jugando.`,
@@ -1533,6 +1618,45 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
   trackByProductId(_: number, item: CartItem): string {
     return item.productId;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DRAG-TO-SCROLL (escritorio) — arrastar la grilla con el mouse
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Inicia el drag-to-scroll solo si el click NO fue sobre una tarjeta
+   * de reserva (cdk-drag). De lo contrario, el cdkDrag toma el control.
+   */
+  onScrollMouseDown(event: MouseEvent): void {
+    if ((event.target as Element).closest('.cdk-drag')) return;
+
+    const el = this.scrollContainer.nativeElement;
+    this.isScrollDragging = true;
+    this.scrollDragStartX = event.pageX - el.getBoundingClientRect().left;
+    this.scrollDragOriginLeft = el.scrollLeft;
+  }
+
+  onScrollMouseLeave(): void {
+    this.isScrollDragging = false;
+  }
+
+  onScrollMouseUp(): void {
+    this.isScrollDragging = false;
+  }
+
+  /**
+   * Desplaza el contenedor en proporción al movimiento del mouse.
+   * El multiplicador 1.5 da velocidad de scroll más natural en pantallas grandes.
+   */
+  onScrollMouseMove(event: MouseEvent): void {
+    if (!this.isScrollDragging) return;
+    event.preventDefault();
+
+    const el = this.scrollContainer.nativeElement;
+    const x = event.pageX - el.getBoundingClientRect().left;
+    const walk = (x - this.scrollDragStartX) * 1.5;
+    el.scrollLeft = this.scrollDragOriginLeft - walk;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
