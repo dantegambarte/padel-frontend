@@ -5,6 +5,20 @@
 @tailwind components;
 @tailwind utilities;
 
+// Barra de progreso de navegación (Router Transition Loader).
+// Simula un progreso indeterminado: crece rápido hasta ~70% y luego
+// se detiene en 90% — cuando NavigationEnd llega, el *ngIf la elimina.
+@keyframes router-progress {
+  0%   { transform: scaleX(0);   opacity: 1; }
+  20%  { transform: scaleX(0.4); }
+  60%  { transform: scaleX(0.7); }
+  100% { transform: scaleX(0.9); opacity: 1; }
+}
+
+.animate-router-progress {
+  animation: router-progress 8s cubic-bezier(0.1, 0.05, 0, 1) forwards;
+}
+
 // ── Calculadora: botón base (aplicado con @apply para reutilizar en el grid) ──
 @layer components {
   .calc-btn {
@@ -276,39 +290,35 @@ $radius: 0.5rem;
     overscroll-behavior-y: contain;
   }
 
-  // Affordance visual para contenedores con scroll horizontal.
-  // Sombras fuertes (rgba 0.25, 24px) pensadas para iOS donde Safari oculta
-  // las scrollbars personalizadas. En Android/Desktop la scrollbar refuerza.
+  // Scroll horizontal para la grilla de la Agenda.
+  // • Móvil (touch): overscroll-behavior-x contiene el scroll sin
+  //   propagar al body. -webkit-overflow-scrolling activa el momentum iOS.
+  // • Desktop: barra webkit personalizada — delgada, redondeada y sutil
+  //   para no competir con el contenido operativo de la grilla.
   .scroll-hint-x {
-    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
 
-    background-color: white;
-    background-image:
-      // Capas que "tapan" la sombra cuando se llega al borde (local)
-      linear-gradient(to right, white 30%, rgba(255,255,255,0)),
-      linear-gradient(to left, white 30%, rgba(255,255,255,0)),
-      // Sombras oscuras de fondo visibles solo cuando hay desborde (scroll)
-      linear-gradient(to right, rgba(0,0,0,0.25), rgba(0,0,0,0)),
-      linear-gradient(to left, rgba(0,0,0,0.25), rgba(0,0,0,0));
-    background-position: left center, right center, left center, right center;
-    background-repeat: no-repeat;
-    background-size: 40px 100%, 40px 100%, 24px 100%, 24px 100%;
-    background-attachment: local, local, scroll, scroll;
-
-    // Scrollbar visible para Android/Desktop (iOS la ignora)
+    // Barra sutil para desktop Webkit (Chrome, Edge, Safari).
+    // En Firefox se controla con scrollbar-width/color (ver abajo).
     &::-webkit-scrollbar {
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 4px;
+      background: #f1f5f9; // slate-100
+      border-radius: 999px;
     }
     &::-webkit-scrollbar-thumb {
-      background: #94a3b8;
-      border-radius: 4px;
+      background: #94a3b8; // slate-400
+      border-radius: 999px;
+      &:hover {
+        background: #64748b; // slate-500
+      }
     }
+
+    // Firefox
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 #f1f5f9;
   }
 }
 
