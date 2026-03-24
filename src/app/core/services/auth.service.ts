@@ -13,10 +13,13 @@ import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 import { CourtsService } from './courts.service';
 import { ProductsService } from './products.service';
+import { NotificationService } from './notification.service';
 
 const TOKEN_KEY = 'padelsys_access_token';
 const REFRESH_KEY = 'padelsys_refresh_token';
 const USER_KEY = 'padelsys_user';
+/** Clave de notificaciones persistidas. Debe limpiarse al cerrar sesión. */
+const NOTIFICATIONS_KEY = 'caldera_notifications';
 
 /**
  * Servicio responsable de la gestión del estado de autenticación.
@@ -44,6 +47,7 @@ export class AuthService {
     private router: Router,
     private courtsService: CourtsService,
     private productsService: ProductsService,
+    private notificationService: NotificationService,
   ) {}
 
   /** Devuelve el usuario autenticado actualmente de forma sincrónica, o `null` si no hay sesión. */
@@ -54,6 +58,25 @@ export class AuthService {
   /** Devuelve `true` cuando hay una sesión de usuario activa. */
   get isLoggedIn(): boolean {
     return !!this.currentUserSubject.value;
+  }
+
+  /**
+   * Devuelve `true` cuando el access token JWT almacenado ya expiró o es inválido.
+   * Decodifica el payload base64 del JWT sin dependencias externas y compara
+   * el campo `exp` (en segundos) contra el timestamp actual.
+   * Un token ausente o malformado se trata siempre como expirado.
+   */
+  isTokenExpired(): boolean {
+    const token = this.getAccessToken();
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return typeof payload.exp === 'number'
+        ? payload.exp * 1000 < Date.now()
+        : true;
+    } catch {
+      return true;
+    }
   }
 
   /** Devuelve `true` cuando el usuario actual tiene el rol `admin`. */
@@ -94,15 +117,32 @@ export class AuthService {
    * Limpia la sesión local, invalida las cachés de datos y redirige al login.
    * Llamado tanto por el usuario (botón logout) como por el interceptor
    * ante sesiones expiradas o sobreescritas.
+   *
+   * IMPORTANTE: limpiar TODAS las claves de localStorage para evitar que datos
+   * de la sesión anterior (notificaciones, estado de caja, etc.) reaparezcan
+   * al recargar o cuando otro usuario inicie sesión en el mismo dispositivo.
+   * Esta operación es idempotente: llamarla varias veces es seguro.
    */
   logout(): void {
+    // ── Tokens y perfil ──────────────────────────────────────────────────────
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
+    // ── Estado persistido de otras features ──────────────────────────────────
+    // Notificaciones: pueden contener alertas de turnos retrasados del cajero
+    // anterior que no son relevantes para el próximo usuario en este dispositivo.
+    localStorage.removeItem(NOTIFICATIONS_KEY);
+
+    // ── Memoria reactiva en el BehaviorSubject ───────────────────────────────
     this.currentUserSubject.next(null);
-    // Invalidar cachés para evitar datos residuales al cambiar de usuario
+
+    // ── Cachés en memoria ────────────────────────────────────────────────────
+    // Evita que datos de canchas/productos de la sesión anterior sean servidos
+    // a un usuario diferente antes de que la caché se invalide sola.
     this.courtsService.clearCache();
     this.productsService.clearCache();
+    this.notificationService.clearAllNotifications();
+
     this.router.navigate(['/auth/login']);
   }
 
@@ -155,12 +195,29 @@ export class AuthService {
 
   /**
    * Intenta leer el objeto usuario desde `localStorage`.
-   * Devuelve `null` cuando el valor almacenado está ausente o tiene formato inválido.
+   * Devuelve `null` cuando:
+   * - el valor almacenado está ausente o tiene formato inválido.
+   * - el access token JWT ya expiró al momento de iniciar la app.
+   *   En ese caso también limpia todas las claves de sesión para evitar
+   *   que el guard vea un usuario válido con un token muerto.
    */
   private loadUserFromStorage(): User | null {
     try {
       const raw = localStorage.getItem(USER_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
+      if (!raw) return null;
+
+      // Verificar expiración del token ANTES de restaurar el estado.
+      // Evita el bug "vista muerta": la sesión persiste en storage pero
+      // el token expiró → el guard pasaría, el componente carga sin datos.
+      if (this.isTokenExpired()) {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(NOTIFICATIONS_KEY);
+        return null;
+      }
+
+      return JSON.parse(raw) as User;
     } catch {
       return null;
     }
