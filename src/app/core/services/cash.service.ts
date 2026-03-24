@@ -5,6 +5,14 @@ import { map, catchError } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 
+/** Detalle de un ítem de producto dentro de un turno o venta. */
+export interface ItemDetail {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
 /** Un movimiento de caja individual que se muestra en la lista de transacciones del día. */
 export interface CashMovimiento {
   id: string;
@@ -18,6 +26,17 @@ export interface CashMovimiento {
   movType: 'SALE' | 'BOOKING';
   customerName?: string | null;
   userName: string;
+  /** Datos estructurados del turno (solo cuando movType === 'BOOKING'). */
+  bookingClientName?: string | null;
+  bookingHour?: string | null;
+  bookingCourtName?: string | null;
+  bookingPriceAmount?: number | null;
+  /** Ítems de productos del turno (booking_items). */
+  bookingItems?: ItemDetail[] | null;
+  /** Total de la venta (solo cuando movType === 'SALE'). */
+  saleTotal?: number | null;
+  /** Ítems de productos de la venta (sale_items). */
+  saleItems?: ItemDetail[] | null;
 }
 
 /** Estructura normalizada consumida por el componente de caja. */
@@ -33,6 +52,8 @@ export interface CashCurrentResponse {
   movimientos: CashMovimiento[];
   sessionDate: string | null;
   openedAt: string | null;
+  /** Nombre completo del cajero que abrió este turno. */
+  openedByName: string | null;
   /** Efectivo contado al cerrar (null si la caja sigue abierta). */
   cashCounted: number | null;
   /** Descuadre: contado - esperado (null si la caja sigue abierta). */
@@ -41,6 +62,32 @@ export interface CashCurrentResponse {
   closedNotes: string | null;
   /** true cuando la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
   staleSession: boolean;
+}
+
+// ── Interfaces para el endpoint daily-summary ──────────────────────────────
+
+/** Detalle de un turno individual dentro del consolidado diario. */
+export interface DailySummaryShift {
+  sessionId: string;
+  openedByName: string;
+  openedAt: string;
+  closedAt: string | null;
+  status: 'open' | 'closed';
+  cashExpected: number;
+  transferTotal: number;
+  dayTotal: number;
+  cashCounted: number | null;
+  difference: number | null;
+}
+
+/** Respuesta del endpoint GET /cash/daily-summary. */
+export interface DailySummaryResponse {
+  date: string;
+  /** Suma de efectivo + transferencias de todos los turnos del día. */
+  totalExpected: number;
+  /** Suma del efectivo físico contado. null si algún turno sigue abierto. */
+  totalCounted: number | null;
+  sessions: DailySummaryShift[];
 }
 
 /** Estructura cruda devuelta por el endpoint `GET /cash/current` del backend. */
@@ -54,6 +101,7 @@ interface CashApiResponse {
     cashCounted?: number | null;
     difference?: number | null;
     notes?: string | null;
+    openedByUser?: { fullName?: string; username?: string } | null;
   } | null;
   cashExpected: number;
   transferTotal: number;
@@ -70,6 +118,13 @@ interface CashApiResponse {
     customerName?: string | null;
     createdByFullName?: string | null;
     createdByUsername?: string | null;
+    bookingClientName?: string | null;
+    bookingHour?: string | null;
+    bookingCourtName?: string | null;
+    bookingPriceAmount?: number | null;
+    saleTotal?: number | null;
+    bookingItems?: ItemDetail[] | null;
+    saleItems?: ItemDetail[] | null;
   }[];
   isOpen: boolean;
   /** true si la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
@@ -121,6 +176,7 @@ export class CashService {
       movimientos: [],
       sessionDate: null,
       openedAt: null,
+      openedByName: null,
       cashCounted: null,
       difference: null,
       closedNotes: null,
@@ -137,6 +193,7 @@ export class CashService {
         initialBalance: Number(res.initialBalance) || 0,
         sessionDate: res.session?.date ?? null,
         openedAt: res.session?.openedAt ?? null,
+        openedByName: res.session?.openedByUser?.fullName ?? res.session?.openedByUser?.username ?? null,
         cashCounted: res.session?.cashCounted != null ? Number(res.session.cashCounted) : null,
         difference: res.session?.difference != null ? Number(res.session.difference) : null,
         closedNotes: res.session?.notes ?? null,
@@ -153,6 +210,13 @@ export class CashService {
           movType: t.type.toUpperCase() as 'SALE' | 'BOOKING',
           customerName: t.customerName ?? null,
           userName: t.createdByFullName ?? t.createdByUsername ?? 'Desconocido',
+          bookingClientName: t.bookingClientName ?? null,
+          bookingHour: t.bookingHour ?? null,
+          bookingCourtName: t.bookingCourtName ?? null,
+          bookingPriceAmount: t.bookingPriceAmount != null ? Number(t.bookingPriceAmount) : null,
+          bookingItems: t.bookingItems ?? null,
+          saleTotal: t.saleTotal != null ? Number(t.saleTotal) : null,
+          saleItems: t.saleItems ?? null,
         })),
       })),
       // 404 = no hay sesión para este día → equivale a noSession: true.
@@ -173,6 +237,37 @@ export class CashService {
       `${this.url}/open`,
       { initialBalance: dto.initialBalance, ...(dto.notes ? { notes: dto.notes } : {}) },
     );
+  }
+
+  /**
+   * Obtiene el consolidado diario de todos los turnos del día comercial indicado.
+   * Solo accesible por administradores (el backend devuelve 403 para empleados).
+   */
+  getDailySummary(date: string): Observable<DailySummaryResponse> {
+    return this.http.get<DailySummaryResponse>(`${this.url}/daily-summary`, {
+      params: { date },
+    });
+  }
+
+  /**
+   * Descarga el Excel de Cierre X de un turno específico (Blob).
+   * Requiere responseType: 'blob' para que Angular no parsee el binario como JSON.
+   */
+  exportSession(sessionId: string): Observable<Blob> {
+    return this.http.get(`${this.url}/export/session/${sessionId}`, {
+      responseType: 'blob',
+    });
+  }
+
+  /**
+   * Descarga el Excel consolidado de Cierre Z de toda la jornada (Blob).
+   * Requiere responseType: 'blob' para que Angular no parsee el binario como JSON.
+   */
+  exportDaily(date: string): Observable<Blob> {
+    return this.http.get(`${this.url}/export/daily`, {
+      params: { date },
+      responseType: 'blob',
+    });
   }
 
   /**
