@@ -40,6 +40,12 @@ export interface BookingResponse {
   items: BookingItem[];
   payment: BookingPayment | null;
   createdAt: string;
+  /** ID del turno fijo que generó esta reserva. null si fue creada manualmente. */
+  fixedBookingId: string | null;
+  /** true si el turno fijo asociado tiene seña registrada. */
+  hasDeposit: boolean;
+  /** Datos del turno fijo asociado (solo phoneNumber necesario para el botón WA). */
+  fixedBooking: { phoneNumber: string | null } | null;
 }
 
 /** Payload para crear una nueva reserva. */
