@@ -19,13 +19,9 @@ export class SettingsComponent implements OnInit {
   isLoading = true;
   isSubmitting = false;
 
-  precioBase = '3000';
-  precioProfesor = '2500';
   horarioApertura = '09:00';
   horarioCierre = '23:00';
 
-  private savedPrecioBase = '';
-  private savedPrecioProfesor = '';
   private savedHorarioApertura = '';
   private savedHorarioCierre = '';
 
@@ -35,12 +31,26 @@ export class SettingsComponent implements OnInit {
    */
   get isDirty(): boolean {
     return (
-      this.precioBase       !== this.savedPrecioBase       ||
-      this.precioProfesor   !== this.savedPrecioProfesor   ||
       this.horarioApertura  !== this.savedHorarioApertura  ||
       this.horarioCierre    !== this.savedHorarioCierre
     );
   }
+
+  /** Modo unificado: un único set de precios se aplica a todas las canchas. */
+  unifiedPricing = true;
+
+  /** Precios globales usados cuando `unifiedPricing` es true. */
+  globalPrice30       = 0;
+  globalPrice60       = 0;
+  globalPrice90       = 0;
+  globalPrice120      = 0;
+  globalTeacherPrice  = 0;
+
+  /** `true` mientras el guardado unificado está en curso. */
+  savingUnifiedPrices = false;
+
+  /** ID de la cancha cuyo guardado individual de precios está en curso, o null. */
+  savingPriceCourtId: string | null = null;
 
   courts: Court[] = [];
   courtToDelete: Court | null = null;
@@ -51,7 +61,7 @@ export class SettingsComponent implements OnInit {
   editingCourtId: string | null = null;
   courtFormError = '';
 
-  courtForm = { name: '', description: '', isActive: true };
+  courtForm = { name: '', description: '', isActive: true, price30: 0, price60: 0, price90: 0, price120: 0, teacherPrice: 0 };
 
   constructor(
     private configService: ConfigService,
@@ -85,6 +95,7 @@ export class SettingsComponent implements OnInit {
         this.isLoading = false;
         this.courts = courts as Court[];
         this.applyConfig(config as ConfigEntry[]);
+        this.initGlobalPrices();
       },
       error: () => {
         this.isLoading = false;
@@ -103,37 +114,68 @@ export class SettingsComponent implements OnInit {
   private applyConfig(entries: ConfigEntry[]): void {
     if (!Array.isArray(entries)) return;
     const map = new Map(entries.map((e) => [e.key, e.value]));
-    if (map.has('precio_base'))      this.precioBase      = map.get('precio_base')!;
-    if (map.has('precio_profesor'))  this.precioProfesor  = map.get('precio_profesor')!;
-    if (map.has('horario_apertura')) this.horarioApertura = map.get('horario_apertura')!;
-    if (map.has('horario_cierre'))   this.horarioCierre   = map.get('horario_cierre')!;
+    if (map.has('hora_apertura')) this.horarioApertura = map.get('hora_apertura')!;
+    if (map.has('hora_cierre'))   this.horarioCierre   = map.get('hora_cierre')!;
 
-    this.savedPrecioBase      = this.precioBase;
-    this.savedPrecioProfesor  = this.precioProfesor;
     this.savedHorarioApertura = this.horarioApertura;
     this.savedHorarioCierre   = this.horarioCierre;
   }
 
-  /** Precio base convertido a número. */
-  get precioBaseNum(): number {
-    return parseInt(this.precioBase || '0', 10) || 0;
+  /**
+   * Pre-carga los precios globales desde la primera cancha disponible,
+   * así el usuario tiene un punto de partida al activar el modo unificado.
+   */
+  private initGlobalPrices(): void {
+    if (!this.courts.length) return;
+    const first = this.courts[0];
+    this.globalPrice30      = first.price30       ?? 0;
+    this.globalPrice60      = first.price60       ?? 0;
+    this.globalPrice90      = first.price90       ?? 0;
+    this.globalPrice120     = first.price120      ?? 0;
+    this.globalTeacherPrice = first.teacherPrice  ?? 0;
   }
 
-  /** Precio profesor convertido a número. */
-  get precioProfesorNum(): number {
-    return parseInt(this.precioProfesor || '0', 10) || 0;
+  /** Guarda el mismo set de precios en todas las canchas con una sola petición. */
+  saveUnifiedPrices(): void {
+    if (this.savingUnifiedPrices || !this.courts.length) return;
+    this.savingUnifiedPrices = true;
+
+    const payload = {
+      courtIds:     this.courts.map((c) => c.id),
+      price30:      Number(this.globalPrice30)      || 0,
+      price60:      Number(this.globalPrice60)      || 0,
+      price90:      Number(this.globalPrice90)      || 0,
+      price120:     Number(this.globalPrice120)     || 0,
+      teacherPrice: Number(this.globalTeacherPrice) || 0,
+    };
+
+    this.courtsService
+      .bulkUpdatePrices(payload)
+      .pipe(finalize(() => (this.savingUnifiedPrices = false)))
+      .subscribe({
+        next: (updated) => {
+          const map = new Map(updated.map((c) => [c.id, c]));
+          this.courts = this.courts.map((c) => map.get(c.id) ?? c);
+          this.toast.success(
+            'Precios actualizados',
+            `Precios aplicados a ${updated.length} ${updated.length === 1 ? 'cancha' : 'canchas'}`,
+          );
+        },
+        error: (err) => {
+          const msg = err?.error?.message ?? 'No se pudieron guardar los precios';
+          this.toast.error('Error al guardar', Array.isArray(msg) ? msg.join(', ') : msg);
+        },
+      });
   }
 
-  /** Guarda la configuración de precios y horarios y actualiza el snapshot. */
+  /** Guarda la configuración de horarios y actualiza el snapshot. */
   save(): void {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
 
     const entries: ConfigEntry[] = [
-      { key: 'precio_base', value: this.precioBase },
-      { key: 'precio_profesor', value: this.precioProfesor },
-      { key: 'horario_apertura', value: this.horarioApertura },
-      { key: 'horario_cierre', value: this.horarioCierre },
+      { key: 'hora_apertura', value: this.horarioApertura },
+      { key: 'hora_cierre', value: this.horarioCierre },
     ];
 
     this.configService
@@ -141,8 +183,6 @@ export class SettingsComponent implements OnInit {
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: () => {
-          this.savedPrecioBase      = this.precioBase;
-          this.savedPrecioProfesor  = this.precioProfesor;
           this.savedHorarioApertura = this.horarioApertura;
           this.savedHorarioCierre   = this.horarioCierre;
           this.toast.success(
@@ -158,6 +198,34 @@ export class SettingsComponent implements OnInit {
       });
   }
 
+  /** Guarda los precios de una cancha específica. */
+  saveCourtPrices(court: Court): void {
+    if (this.savingPriceCourtId) return;
+    this.savingPriceCourtId = court.id;
+
+    const dto = {
+      price30:      Number(court.price30)       || 0,
+      price60:      Number(court.price60)       || 0,
+      price90:      Number(court.price90)       || 0,
+      price120:     Number(court.price120)      || 0,
+      teacherPrice: Number(court.teacherPrice)  || 0,
+    };
+
+    this.courtsService
+      .update(court.id, dto)
+      .pipe(finalize(() => (this.savingPriceCourtId = null)))
+      .subscribe({
+        next: (updated) => {
+          this.courts = this.courts.map((c) => (c.id === updated.id ? updated : c));
+          this.toast.success('Precios actualizados', `Precios de "${court.name}" guardados`);
+        },
+        error: (err) => {
+          const msg = err?.error?.message ?? 'No se pudieron guardar los precios';
+          this.toast.error('Error al guardar', Array.isArray(msg) ? msg.join(', ') : msg);
+        },
+      });
+  }
+
   /** Descarta los cambios pendientes recargando la configuración desde el servidor. */
   cancel(): void {
     this.loadAll();
@@ -168,7 +236,7 @@ export class SettingsComponent implements OnInit {
     this.courtModalMode = 'create';
     this.editingCourtId = null;
     this.courtFormError = '';
-    this.courtForm = { name: '', description: '', isActive: true };
+    this.courtForm = { name: '', description: '', isActive: true, price30: 0, price60: 0, price90: 0, price120: 0, teacherPrice: 0 };
     this.isCourtModalOpen = true;
   }
 
@@ -181,6 +249,11 @@ export class SettingsComponent implements OnInit {
       name: court.name,
       description: court.description ?? '',
       isActive: court.isActive,
+      price30:      court.price30       ?? 0,
+      price60:      court.price60       ?? 0,
+      price90:      court.price90       ?? 0,
+      price120:     court.price120      ?? 0,
+      teacherPrice: court.teacherPrice  ?? 0,
     };
     this.isCourtModalOpen = true;
   }
@@ -207,6 +280,11 @@ export class SettingsComponent implements OnInit {
         name: this.courtForm.name.trim(),
         description: this.courtForm.description.trim() || undefined,
         isActive: this.courtForm.isActive,
+        price30:      this.courtForm.price30,
+        price60:      this.courtForm.price60,
+        price90:      this.courtForm.price90,
+        price120:     this.courtForm.price120,
+        teacherPrice: this.courtForm.teacherPrice,
       };
 
       this.courtsService.create(dto).subscribe({
@@ -232,6 +310,11 @@ export class SettingsComponent implements OnInit {
         name: this.courtForm.name.trim(),
         description: this.courtForm.description.trim() || undefined,
         isActive: this.courtForm.isActive,
+        price30:      this.courtForm.price30,
+        price60:      this.courtForm.price60,
+        price90:      this.courtForm.price90,
+        price120:     this.courtForm.price120,
+        teacherPrice: this.courtForm.teacherPrice,
       };
 
       this.courtsService.update(this.editingCourtId!, dto).subscribe({
@@ -283,8 +366,4 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  /** Formatea un número usando el locale argentino. */
-  fmt(value: number): string {
-    return value.toLocaleString('es-AR');
-  }
 }
