@@ -110,6 +110,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** `true` cuando la ruta activa es la agenda de turnos. */
+  get isSchedulePage(): boolean {
+    return this.router.url.includes('/schedule');
+  }
+
   /** Alterna la visibilidad del sidebar en mobile. */
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
