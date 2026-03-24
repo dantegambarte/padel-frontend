@@ -1,7 +1,7 @@
 
 
 <div
-  class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+  class="rounded-lg border border-border bg-card text-card-foreground shadow-md flex flex-col h-full"
 >
   
   <div class="flex flex-col space-y-1.5 p-6 pb-3">
@@ -58,10 +58,7 @@
     </div>
   </div>
 
-  <!-- min-w-0 fuerza al wrapper a respetar el ancho del card y no
-       expandirse con el contenido, garantizando que el grid interior
-       genere scrollbar en lugar de empujar el layout hacia afuera. -->
-  <div class="p-6 pt-0 min-w-0 overflow-x-hidden">
+  <div class="px-6 pb-6 min-w-0 flex-1 min-h-0 flex flex-col">
     
     <div
       *ngIf="loadError"
@@ -86,7 +83,7 @@
     <!-- ── Spinner de carga ─────────────────────────────────────────────── -->
     <div
       *ngIf="isLoading && !loadError"
-      class="flex flex-col items-center justify-center h-[calc(100vh-12rem)] w-full gap-4 text-center"
+      class="flex flex-col items-center justify-center flex-1 w-full gap-4 text-center"
     >
       <div class="relative">
         <div class="h-14 w-14 rounded-full border-4 border-muted"></div>
@@ -98,7 +95,8 @@
       </div>
     </div>
 
-    <ng-container *ngIf="!isLoading && !loadError && courts.length > 0">
+    <div *ngIf="!isLoading && !loadError && courts.length > 0" class="flex-1 min-h-0 flex flex-col">
+    <div class="flex-1 min-h-0 overflow-y-auto">
 
       <!--
         ═══════════════════════════════════════════════════════════════════
@@ -142,13 +140,15 @@
           <div class="h-8 mb-2 flex items-end pb-1 pl-1">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">hs</span>
           </div>
-          <!-- Labels de hora: misma altura y espaciado que los slots -->
+          <!-- Labels de hora: una fila de 48px por cada slot de 30 min -->
           <div class="space-y-2">
             <div
               *ngFor="let hour of HOURS; trackBy: trackByHour"
-              class="h-24 flex items-start pt-1.5 pr-1.5 pl-1"
+              [id]="'time-row-' + hour"
+              class="h-12 flex items-start pt-1.5 pr-1.5 pl-1"
             >
-              <span class="text-[11px] font-semibold text-muted-foreground leading-none tabular-nums">
+              <span *ngIf="!hour.endsWith(':30')"
+                class="text-[11px] font-semibold text-muted-foreground leading-none tabular-nums">
                 {{ hour }}
               </span>
             </div>
@@ -165,9 +165,9 @@
         -->
         <div
           *ngFor="let court of courts; trackBy: trackByCourt"
-          class="flex-none flex-shrink-0 snap-start flex flex-col px-1
+          class="flex-none snap-start flex flex-col px-1
                  w-[calc(100%-4rem)]
-                 md:w-[300px] md:min-w-[300px]"
+                 md:flex-1 md:w-auto md:min-w-[220px]"
         >
           <!-- Header de cancha — misma altura que el spacer de tiempo (h-8 mb-2) -->
           <div class="h-8 mb-2 flex items-center justify-center">
@@ -176,42 +176,32 @@
             </span>
           </div>
 
-          <!-- ── Filas de slots (una por hora) ──────────────────────── -->
+          <!-- ── Filas de slots (una por cada 30 min) ───────────────── -->
           <div class="space-y-2">
             <div
               *ngFor="let hour of HOURS; trackBy: trackByHour"
-              class="relative h-24 overflow-visible"
+              class="relative h-12 overflow-visible"
               cdkDropList
               [cdkDropListData]="{ courtId: court.id, hour: hour }"
               cdkDropListSortingDisabled
               (cdkDropListDropped)="onBookingDrop($event)"
             >
 
-              <!-- Fondo: dos medias horas clickeables (slot :00 y :30) -->
-              <div class="absolute inset-0 flex flex-col">
+              <!-- Slot libre -->
+              <ng-container *ngIf="!getBooking(court.id, hour)">
                 <div
                   role="button"
                   tabindex="0"
                   aria-label="Disponible"
-                  (click)="onSlotClick(court, hour, '00')"
-                  (keydown.enter)="onSlotClick(court, hour, '00')"
-                  class="h-12 rounded-t-lg border-2 border-dashed border-muted-foreground/30
+                  (click)="onSlotClick(court, hour)"
+                  (keydown.enter)="onSlotClick(court, hour)"
+                  class="absolute inset-0 rounded-lg border-2 border-dashed border-muted-foreground/30
                          cursor-pointer transition-colors
                          hover:bg-slate-100 hover:border-primary/50"
                 ></div>
-                <div
-                  role="button"
-                  tabindex="0"
-                  aria-label="Disponible"
-                  (click)="onSlotClick(court, hour, '30')"
-                  (keydown.enter)="onSlotClick(court, hour, '30')"
-                  class="h-12 rounded-b-lg border-2 border-t-0 border-dashed border-muted-foreground/30
-                         cursor-pointer transition-colors
-                         hover:bg-slate-100 hover:border-primary/50"
-                ></div>
-              </div>
+              </ng-container>
 
-              <!-- ── Bloque reserva que empieza en :00 ──────────────── -->
+              <!-- Slot de inicio: tarjeta de reserva -->
               <ng-container *ngIf="isStartSlot(court.id, hour)">
                 <ng-container *ngIf="getBooking(court.id, hour) as booking">
                   <div
@@ -232,8 +222,8 @@
                     <div
                       role="button"
                       tabindex="0"
-                      (click)="onSlotClick(court, hour, '00')"
-                      (keydown.enter)="onSlotClick(court, hour, '00')"
+                      (click)="onSlotClick(court, hour)"
+                      (keydown.enter)="onSlotClick(court, hour)"
                       [ngClass]="[getSlotClass(court.id, hour), booking.durationMinutes <= 30 ? 'px-2 py-1' : 'p-3']"
                       class="peer/b00 absolute inset-[2px] z-10 rounded-lg border-2 text-left bg-card
                              overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
@@ -249,6 +239,11 @@
                             class="inline-flex items-center rounded-full px-1.5 font-medium shrink-0 whitespace-nowrap"
                             style="font-size:9px; padding-top:1px; padding-bottom:1px"
                           >{{ getStatusLabel(booking.status) }}</span>
+                          <span *ngIf="booking.fixedBookingId"
+                                class="shrink-0 whitespace-nowrap"
+                                style="font-size:9px; color:#92400e;">
+                            ⭐ {{ booking.hasDeposit ? 'Fijo (Seña)' : 'Fijo' }}
+                          </span>
                           <span class="text-muted-foreground shrink-0 whitespace-nowrap" style="font-size:9px">
                             {{ booking.durationMinutes }}m
                           </span>
@@ -260,11 +255,16 @@
                           <p class="text-sm font-semibold leading-tight truncate">
                             {{ booking.clientName }}
                           </p>
-                          <div class="flex items-center gap-1.5">
+                          <div class="flex items-center flex-wrap gap-1.5">
                             <span
                               [ngClass]="getStatusBadgeClass(booking.status)"
                               class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                             >{{ getStatusLabel(booking.status) }}</span>
+                            <span *ngIf="booking.fixedBookingId"
+                                  class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold"
+                                  style="font-size:10px;">
+                              ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                            </span>
                             <span class="text-xs text-muted-foreground">· {{ booking.durationMinutes }} min</span>
                           </div>
                         </div>
@@ -279,6 +279,11 @@
                             [ngClass]="getStatusBadgeClass(booking.status)"
                             class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                           >{{ getStatusLabel(booking.status) }}</span>
+                          <span *ngIf="booking.fixedBookingId"
+                                class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold ml-1"
+                                style="font-size:10px;">
+                            ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                          </span>
                           <span class="block text-xs opacity-70">{{ booking.durationMinutes }} min</span>
                         </div>
                       </ng-container>
@@ -323,10 +328,17 @@
                                 text-slate-800">
                       <div class="flex items-start justify-between gap-2 mb-2">
                         <p class="text-sm font-bold leading-tight">{{ booking.clientName }}</p>
-                        <span
-                          [ngClass]="getStatusBadgeClass(booking.status)"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium shrink-0"
-                        >{{ getStatusLabel(booking.status) }}</span>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                          <span
+                            [ngClass]="getStatusBadgeClass(booking.status)"
+                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          >{{ getStatusLabel(booking.status) }}</span>
+                          <span *ngIf="booking.fixedBookingId"
+                                class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold whitespace-nowrap"
+                                style="font-size:10px;">
+                            ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                          </span>
+                        </div>
                       </div>
                       <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
                         <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
@@ -373,141 +385,7 @@
                 </ng-container>
               </ng-container>
 
-              <!-- ── Bloque reserva que empieza en :30 ──────────────── -->
-              <ng-container *ngIf="getBookingAtHalf(court.id, hour) as halfBooking">
-                <div
-                  class="absolute inset-x-0"
-                  style="top: 48px"
-                  [style.height.px]="getBookingBlockHeight(halfBooking)"
-                >
-                  <div
-                    role="button"
-                    tabindex="0"
-                    (click)="onSlotClick(court, hour, '30')"
-                    (keydown.enter)="onSlotClick(court, hour, '30')"
-                    [ngClass]="[getSlotClass(court.id, halfBooking.hour), halfBooking.durationMinutes <= 30 ? 'px-2 py-1' : 'p-3']"
-                    class="peer/b30 absolute inset-[2px] z-20 rounded-lg border-2 text-left bg-card
-                           overflow-hidden transition-shadow hover:shadow-md group cursor-pointer"
-                  >
-                    <ng-container *ngIf="halfBooking.durationMinutes <= 30">
-                      <div class="flex items-center gap-1 min-w-0 pr-5 h-full">
-                        <p class="text-xs font-semibold leading-none truncate min-w-0 shrink">
-                          {{ halfBooking.clientName }}
-                        </p>
-                        <span class="text-muted-foreground shrink-0 leading-none" style="font-size:9px">·</span>
-                        <span
-                          [ngClass]="getStatusBadgeClass(halfBooking.status)"
-                          class="inline-flex items-center rounded-full px-1.5 font-medium shrink-0 whitespace-nowrap"
-                          style="font-size:9px; padding-top:1px; padding-bottom:1px"
-                        >{{ getStatusLabel(halfBooking.status) }}</span>
-                        <span class="text-muted-foreground shrink-0 whitespace-nowrap" style="font-size:9px">
-                          {{ halfBooking.durationMinutes }}m
-                        </span>
-                      </div>
-                    </ng-container>
-
-                    <ng-container *ngIf="halfBooking.durationMinutes > 30 && halfBooking.durationMinutes <= 60">
-                      <div class="flex flex-col gap-1 pr-6">
-                        <p class="text-sm font-semibold leading-tight truncate">
-                          {{ halfBooking.clientName }}
-                        </p>
-                        <div class="flex items-center gap-1.5">
-                          <span
-                            [ngClass]="getStatusBadgeClass(halfBooking.status)"
-                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                          >{{ getStatusLabel(halfBooking.status) }}</span>
-                          <span class="text-xs text-muted-foreground">· {{ halfBooking.durationMinutes }} min</span>
-                        </div>
-                      </div>
-                    </ng-container>
-
-                    <ng-container *ngIf="halfBooking.durationMinutes > 60">
-                      <div class="space-y-1 pr-6">
-                        <p class="text-sm font-semibold leading-tight truncate">
-                          {{ halfBooking.clientName }}
-                        </p>
-                        <span
-                          [ngClass]="getStatusBadgeClass(halfBooking.status)"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                        >{{ getStatusLabel(halfBooking.status) }}</span>
-                        <span class="block text-xs opacity-70">{{ halfBooking.durationMinutes }} min</span>
-                      </div>
-                    </ng-container>
-
-                    <button
-                      *ngIf="isAdmin"
-                      type="button"
-                      (click)="onDeleteFromGrid(halfBooking, $event)"
-                      title="Cancelar reserva"
-                      class="absolute top-1 right-1 h-6 w-6 flex items-center justify-center rounded
-                             opacity-0 group-hover:opacity-100 transition-opacity
-                             bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                      </svg>
-                    </button>
-                  </div>
-
-                  <!-- Tooltip hover (escritorio) -->
-                  <div class="pointer-events-none opacity-0 peer-hover/b30:opacity-100
-                              transition-opacity duration-150 delay-200
-                              flex flex-col absolute z-[100] top-full mt-1 left-0
-                              w-56 bg-white rounded-lg shadow-lg border border-slate-200 p-2.5
-                              text-slate-800">
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                      <p class="text-sm font-bold leading-tight">{{ halfBooking.clientName }}</p>
-                      <span
-                        [ngClass]="getStatusBadgeClass(halfBooking.status)"
-                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium shrink-0"
-                      >{{ getStatusLabel(halfBooking.status) }}</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
-                      <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                      </svg>
-                      <span class="font-medium text-slate-700">
-                        {{ halfBooking.hour }}hs – {{ getBookingEndHour(halfBooking) }}hs
-                      </span>
-                      <span class="text-slate-400">· {{ halfBooking.durationMinutes }} min</span>
-                    </div>
-                    <div class="border-t border-slate-100 pt-2 space-y-1">
-                      <div class="flex justify-between text-xs text-slate-500">
-                        <span>Cancha</span>
-                        <span class="font-medium text-slate-700">${{ fmt(halfBooking.priceAmount) }}</span>
-                      </div>
-                      <div *ngIf="getBookingItemsTotal(halfBooking) > 0"
-                           class="flex justify-between text-xs text-slate-500">
-                        <span>Consumos</span>
-                        <span class="font-medium text-slate-700">${{ fmt(getBookingItemsTotal(halfBooking)) }}</span>
-                      </div>
-                      <div class="flex justify-between text-xs font-semibold border-t border-slate-100 pt-1">
-                        <span>Total</span>
-                        <span>${{ fmt(getBookingTotal(halfBooking)) }}</span>
-                      </div>
-                      <div
-                        class="flex items-center justify-between text-xs rounded-md px-2 py-1.5 mt-1"
-                        [ngClass]="getBookingPending(halfBooking) <= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'"
-                      >
-                        <div class="flex items-center gap-1">
-                          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
-                               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>
-                          </svg>
-                          <span>{{ getBookingPending(halfBooking) <= 0 ? 'Pagado' : 'Pendiente' }}</span>
-                        </div>
-                        <span class="font-semibold">
-                          {{ getBookingPending(halfBooking) <= 0 ? '✓' : '$' + fmt(getBookingPending(halfBooking)) }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-
+              <!-- Slot de continuación: cubierto visualmente por la tarjeta del inicio -->
             </div>
           </div>
           <!-- /slots -->
@@ -518,35 +396,30 @@
       </div>
       <!-- /grid container -->
 
-      <div class="mt-6 flex flex-wrap gap-4 border-t border-border pt-4">
-        <div class="flex items-center gap-2">
-          <div
-            class="h-4 w-4 rounded border border-dashed border-muted-foreground/30"
-          ></div>
-          <span class="text-sm">Disponible</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div
-            class="h-4 w-4 rounded border-2 border-primary bg-primary/10"
-          ></div>
-          <span class="text-sm">Reservado</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div
-            class="h-4 w-4 rounded border-2 border-green-500 bg-green-50"
-          ></div>
-          <span class="text-sm">Jugando</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div
-            class="h-4 w-4 rounded border-2 border-slate-400 bg-slate-100"
-          ></div>
-          <span class="text-sm">Completado</span>
-        </div>
+    </div><!-- /overflow-y-auto -->
+
+    <!-- Leyenda — siempre visible al pie de la grilla -->
+    <div class="shrink-0 flex flex-wrap gap-4 border-t border-border pt-3 mt-3">
+      <div class="flex items-center gap-2">
+        <div class="h-4 w-4 rounded border border-dashed border-muted-foreground/30"></div>
+        <span class="text-sm">Disponible</span>
       </div>
-    </ng-container>
-  </div>
-</div>
+      <div class="flex items-center gap-2">
+        <div class="h-4 w-4 rounded border-2 border-primary bg-primary/10"></div>
+        <span class="text-sm">Reservado</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-4 w-4 rounded border-2 border-green-500 bg-green-50"></div>
+        <span class="text-sm">Jugando</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-4 w-4 rounded border-2 border-slate-400 bg-slate-100"></div>
+        <span class="text-sm">Completado</span>
+      </div>
+    </div>
+    </div><!-- /flex-col wrapper -->
+  </div><!-- /card body -->
+</div><!-- /card -->
 
 <ng-container *ngIf="isDialogOpen">
 
@@ -858,6 +731,14 @@
             <span [ngClass]="getStatusBadgeClass(selectedBooking.status)" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
               {{ getStatusLabel(selectedBooking.status) }}
             </span>
+            <span *ngIf="selectedBooking.fixedBookingId"
+                  class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                <path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+              Turno Fijo
+            </span>
           </div>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -892,9 +773,20 @@
         <!-- Booking info -->
         <div class="rounded-lg border border-border bg-white divide-y divide-border">
 
-          <div class="flex justify-between px-4 py-3 text-sm">
+          <div class="flex justify-between items-center px-4 py-3 text-sm">
             <span class="text-muted-foreground">Cliente</span>
-            <span class="font-semibold">{{ selectedBooking.clientName }}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-semibold">{{ selectedBooking.clientName }}</span>
+              <button *ngIf="selectedBooking.fixedBookingId"
+                      type="button"
+                      (click)="confirmFixedBookingWhatsApp()"
+                      title="Confirmar asistencia por WhatsApp"
+                      class="flex items-center justify-center h-7 w-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="flex justify-between px-4 py-3 text-sm">
             <span class="text-muted-foreground">Tipo de precio</span>

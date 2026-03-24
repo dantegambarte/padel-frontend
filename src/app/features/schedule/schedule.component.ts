@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin, timer } from 'rxjs';
-import { finalize, filter, take } from 'rxjs/operators';
+import { Subscription, forkJoin, timer, of } from 'rxjs';
+import { finalize, filter, take, catchError } from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
+import { ConfigService } from '../../core/services/config.service';
 import { CourtsService } from '../../core/services/courts.service';
 import { BookingsService } from '../../core/services/bookings.service';
 import { ProductsService } from '../../core/services/products.service';
@@ -43,6 +44,9 @@ interface CartItem {
 export class ScheduleComponent implements OnInit, OnDestroy {
   selectedDate = (() => {
     const d = new Date();
+    if(d.getHours() < 2) {
+      d.setDate(d.getDate() - 1);
+    }
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   })();
   courts: Court[] = [];
@@ -57,22 +61,30 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   bookingMap = new Map<string, BookingResponse>();
 
-  readonly HOURS = [
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-    '20:00',
-    '21:00',
-    '22:00',
-  ];
+  horarioApertura = '09:00';
+  horarioCierre   = '23:00';
+
+  /** Slots de 30 minutos generados dinámicamente según horario de apertura/cierre. */
+  HOURS: string[] = this.buildHoursFromRange('09:00', '23:00');
+
+  /** Genera slots de 30 min desde apertura hasta (sin incluir) cierre, con soporte post-medianoche. */
+  private buildHoursFromRange(apertura: string, cierre: string): string[] {
+    const [oh, om] = apertura.split(':').map(Number);
+    const [ch, cm] = cierre.split(':').map(Number);
+    const openMin  = oh * 60 + om;
+    const closeMin = ch * 60 + cm;
+    const totalMin = closeMin > openMin
+      ? closeMin - openMin
+      : (24 * 60 - openMin) + closeMin;
+    const slots: string[] = [];
+    for (let i = 0; i < totalMin; i += 30) {
+      const abs = (openMin + i) % (24 * 60);
+      const h   = Math.floor(abs / 60);
+      const m   = abs % 60;
+      slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    }
+    return slots;
+  }
 
   readonly DURATION_OPTIONS = [
     { value: 30, label: '30 min' },
@@ -202,6 +214,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private courtsService: CourtsService,
     private bookingsService: BookingsService,
     private productsService: ProductsService,
+    private configService: ConfigService,
     private toast: ToastService,
     private notificationService: NotificationService,
     public calcService: CalculatorService,
@@ -417,17 +430,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `Vuelto: $${fmt(Math.abs(this.saldoPendiente))}`;
   }
 
-  /** Carga canchas y productos en paralelo, luego dispara la carga de reservas del día. */
+  /** Carga canchas, productos y config en paralelo, luego dispara la carga de reservas del día. */
   private loadInitialData(): void {
     this.isLoading = true;
     this.loadError = '';
 
     this.sub.add(
       forkJoin({
-        courts: this.courtsService.findAll(),
+        courts:   this.courtsService.findAll(),
         products: this.productsService.findAll(),
+        config:   this.configService.getAll().pipe(catchError(() => of([]))),
       }).subscribe({
-        next: ({ courts, products }) => {
+        next: ({ courts, products, config }) => {
+          const cfgMap = new Map(config.map((e) => [e.key, e.value]));
+          if (cfgMap.has('hora_apertura')) this.horarioApertura = cfgMap.get('hora_apertura')!;
+          if (cfgMap.has('hora_cierre'))   this.horarioCierre   = cfgMap.get('hora_cierre')!;
+          this.HOURS = this.buildHoursFromRange(this.horarioApertura, this.horarioCierre);
+
           this.courts = courts.filter((c) => c.isActive);
           this.allProducts = products.filter((p) => p.isActive);
           this.loadBookings();
@@ -455,6 +474,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             }
           });
           this.isLoading = false;
+          this.scrollToCurrentTime();
 
           // Deep link: abrir modal si hay un turno pendiente de apertura
           if (this.pendingOpenBookingId) {
@@ -477,6 +497,51 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Dispara la recarga de reservas al cambiar la fecha seleccionada. */
   onDateChange(): void {
     this.loadBookings();
+  }
+
+  /**
+   * Hace scroll suave hasta la fila de la hora actual cuando la fecha
+   * seleccionada corresponde a la jornada activa.
+   * Incluye un setTimeout interno de 150ms para garantizar que Angular
+   * haya terminado el ciclo de render del *ngFor antes de buscar el elemento.
+   */
+  scrollToCurrentTime(): void {
+    const now = new Date();
+    const businessDay = new Date(now);
+    if (now.getHours() < 2) {
+      businessDay.setDate(businessDay.getDate() - 1);
+    }
+
+    const y = businessDay.getFullYear();
+    const m = String(businessDay.getMonth() + 1).padStart(2, '0');
+    const d = String(businessDay.getDate()).padStart(2, '0');
+    const businessDayStr = `${y}-${m}-${d}`;
+
+    if (this.selectedDate !== businessDayStr) {
+      console.log(`[AutoScroll] Omitido: fecha seleccionada (${this.selectedDate}) ≠ hoy (${businessDayStr}).`);
+      return;
+    }
+
+    const h = now.getHours();
+    const min = now.getMinutes();
+    const slot = min < 30 ? '00' : '30';
+    const targetId = `time-row-${h.toString().padStart(2, '0')}:${slot}`;
+    const fallbackId = `time-row-${this.horarioApertura}`;
+
+    // 150ms da margen suficiente al render cycle de Angular
+    setTimeout(() => {
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        console.log(`[AutoScroll] Scrolleando a ${targetId}`);
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        const fallbackElement = document.getElementById(fallbackId);
+        if (fallbackElement) {
+          console.log(`[AutoScroll] Fuera de horario. Scrolleando a apertura: ${fallbackId}`);
+          fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 150);
   }
 
   /** Navega al día anterior y recarga las reservas. */
@@ -512,40 +577,27 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return b != null && b.hour !== hour;
   }
 
-  /** True si este slot es la última fila de continuación de una reserva multi-hora. */
+  /** True si este slot es la última fila de continuación de una reserva (en slots de 30 min). */
   isLastContinuationSlot(courtId: string, hour: string): boolean {
     const b = this.getBooking(courtId, hour);
     if (!b || b.hour === hour) return false;
     const [bh, bm] = b.hour.split(':').map(Number);
     const endMin = bh * 60 + bm + (b.durationMinutes ?? 60);
-    const lastContinuationH = Math.floor((endMin - 1) / 60);
-    const lastContinuationHour = `${lastContinuationH.toString().padStart(2, '0')}:00`;
-    return hour === lastContinuationHour;
-  }
-
-  /**
-   * Devuelve la reserva que inicia a HH:30 dentro de la fila de hora entera indicada.
-   * Ejemplo: `getBookingAtHalf(courtId, '14:00')` busca la clave `courtId-14:30`.
-   */
-  getBookingAtHalf(courtId: string, hour: string): BookingResponse | undefined {
-    const hh = hour.split(':')[0];
-    return this.bookingMap.get(`${courtId}-${hh}:30`);
-  }
-
-  /** Offset superior en px para la tarjeta de reserva: 48 px si inicia a :30, 0 si a :00. */
-  getBookingTopOffset(booking: BookingResponse): number {
-    const minutes = parseInt(booking.hour.split(':')[1], 10);
-    return minutes === 30 ? 48 : 0;
+    const lastSlotMin = endMin - 30;
+    const lH = Math.floor(lastSlotMin / 60);
+    const lM = lastSlotMin % 60;
+    const lastSlot = `${lH.toString().padStart(2, '0')}:${lM.toString().padStart(2, '0')}`;
+    return hour === lastSlot;
   }
 
   /**
    * Devuelve clases Tailwind de borde y redondeo para conectar visualmente los slots
-   * de una reserva multi-hora en un bloque continuo.
+   * de una reserva multi-slot en un bloque continuo (slots de 30 min).
    */
   getSlotConnectClass(courtId: string, hour: string): string {
     const b = this.getBooking(courtId, hour);
     if (!b) return 'rounded-lg border-2';
-    const slots = Math.ceil((b.durationMinutes ?? 60) / 60);
+    const slots = (b.durationMinutes ?? 60) / 30;
     if (slots <= 1) return 'rounded-lg border-2';
     if (b.hour === hour)
       return 'rounded-t-lg rounded-b-none border-t-2 border-l-2 border-r-2';
@@ -555,16 +607,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Altura en píxeles de la tarjeta de reserva, proporcional a `durationMinutes`.
+   * Altura en píxeles de la tarjeta de reserva.
    *
-   * FÓRMULA: `(mins / 60) * 96 + floor((mins - 1) / 60) * 8`
-   * donde 96 px es la altura de cada fila y 8 px es el gap entre filas (space-y-2).
+   * FÓRMULA: `numSlots * 48 + (numSlots - 1) * 8`
+   * donde 48 px es la altura de cada fila (h-12) y 8 px es el gap (space-y-2).
+   * Ejemplo: 60 min = 2 slots → 2*48 + 1*8 = 104 px.
    */
   getBookingBlockHeight(booking: BookingResponse): number {
-    const mins = booking.durationMinutes ?? 60;
-    const baseHeight = (mins / 60) * 96;
-    const gaps = Math.floor((mins - 1) / 60) * 8;
-    return baseHeight + gaps;
+    const numSlots = (booking.durationMinutes ?? 60) / 30;
+    return numSlots * 48 + (numSlots - 1) * 8;
   }
 
   /** Devuelve las clases CSS del slot según su estado (disponible, reservado, jugando, completado). */
@@ -801,18 +852,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Si hay una reserva iniciando en ese slot, abre el detalle; si está libre, abre el formulario de creación.
    * Los slots de continuación (donde la reserva inició antes) son ignorados.
    */
-  onSlotClick(court: Court, hour: string, minutes: '00' | '30' = '00'): void {
-    // Ignorar clicks durante drag o cuando el diálogo de mover/duplicar ya está abierto
-    // (el rAF de onDragEnded resetea isDragging antes que el setTimeout abra el dialog,
-    // por lo que rescheduleDialogOpen es la segunda barrera contra el click sintético del drop)
+  onSlotClick(court: Court, hour: string): void {
+    // Ignorar clicks durante drag o cuando el diálogo de mover/duplicar ya está abierto.
     if (this.isDragging || this.rescheduleDialogOpen) return;
 
-    const fullHour = minutes === '30' ? `${hour.split(':')[0]}:30` : hour;
-    const booking = this.getBooking(court.id, fullHour);
-    if (booking && booking.hour === fullHour) {
-      this.openDetailDialog(court, fullHour, booking);
+    const booking = this.getBooking(court.id, hour);
+    if (booking && booking.hour === hour) {
+      this.openDetailDialog(court, hour, booking);
     } else if (!booking) {
-      this.openCreateDialog(court, fullHour);
+      this.openCreateDialog(court, hour);
     }
   }
 
@@ -913,6 +961,25 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Cierra el diálogo. Si hay pagos sin guardar o jugadores marcados como pagados,
    * muestra un diálogo de confirmación antes de cerrar.
    */
+  /**
+   * Abre WhatsApp con un mensaje de confirmación de asistencia para el turno fijo.
+   * Requiere que el `FixedBooking` tenga un número de teléfono registrado.
+   */
+  confirmFixedBookingWhatsApp(): void {
+    const booking = this.selectedBooking;
+    if (!booking) return;
+
+    const phone = booking.fixedBooking?.phoneNumber?.replace(/\D/g, '');
+    if (!phone) {
+      this.toast.info('Sin número registrado', 'Este turno fijo no tiene un teléfono registrado.');
+      return;
+    }
+
+    const courtName = booking.court?.name ?? 'la cancha';
+    const message = `Hola *${booking.clientName}*, te escribimos del club para confirmar tu turno fijo de hoy a las *${booking.hour}*hs en *${courtName}*. ¿Nos confirmás tu asistencia?`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
   closeDialog(): void {
     if (this.confirmDialogOpen) return;
 
@@ -1527,11 +1594,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Registra una reserva en el bookingMap para su slot de inicio y todas las filas
-   * de continuación de hora entera que cubre.
-   *
-   * Soporta turnos que inician a :30; las continuaciones son las filas HH:00
-   * cuyo inicio en minutos cae dentro del rango `[startMin, endMin)`.
+   * Registra una reserva en el bookingMap para su slot de inicio y todos los slots
+   * de continuación de 30 min que cubre.
    */
   private addToBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
@@ -1541,18 +1605,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.bookingMap.set(`${booking.courtId}-${booking.hour}`, booking);
 
-    const firstContinuationMin = Math.ceil(startMin / 60) * 60;
-    for (let minMark = firstContinuationMin; minMark < endMin; minMark += 60) {
+    for (let minMark = startMin + 30; minMark < endMin; minMark += 30) {
       const rH = Math.floor(minMark / 60) % 24;
-      const slotHour = `${rH.toString().padStart(2, '0')}:00`;
+      const rM = minMark % 60;
+      const slotHour = `${rH.toString().padStart(2, '0')}:${rM.toString().padStart(2, '0')}`;
       const key = `${booking.courtId}-${slotHour}`;
-      if (slotHour === booking.hour) continue;
       if (this.bookingMap.has(key)) continue;
       this.bookingMap.set(key, booking);
     }
   }
 
-  /** Elimina una reserva del bookingMap para su slot de inicio y todas sus continuaciones. */
+  /** Elimina una reserva del bookingMap para su slot de inicio y todas sus continuaciones (30 min). */
   private removeFromBookingMap(booking: BookingResponse): void {
     const duration = booking.durationMinutes ?? 60;
     const [h, m] = booking.hour.split(':').map(Number);
@@ -1561,11 +1624,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.bookingMap.delete(`${booking.courtId}-${booking.hour}`);
 
-    const firstContinuationMin = Math.ceil(startMin / 60) * 60;
-    for (let minMark = firstContinuationMin; minMark < endMin; minMark += 60) {
+    for (let minMark = startMin + 30; minMark < endMin; minMark += 30) {
       const rH = Math.floor(minMark / 60) % 24;
-      const slotHour = `${rH.toString().padStart(2, '0')}:00`;
-      if (slotHour === booking.hour) continue;
+      const rM = minMark % 60;
+      const slotHour = `${rH.toString().padStart(2, '0')}:${rM.toString().padStart(2, '0')}`;
       this.bookingMap.delete(`${booking.courtId}-${slotHour}`);
     }
   }
