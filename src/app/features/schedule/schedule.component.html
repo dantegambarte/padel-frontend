@@ -95,27 +95,30 @@
       </div>
     </div>
 
-    <div *ngIf="!isLoading && !loadError && courts.length > 0" class="flex-1 min-h-0 flex flex-col">
-    <div class="flex-1 min-h-0 overflow-y-auto">
+    <div *ngIf="!isLoading && !loadError && courts.length > 0" class="flex-1 min-h-0 flex flex-col overflow-hidden">
 
-      <!--
-        ═══════════════════════════════════════════════════════════════════
-        GRILLA MODULAR — arquitectura columnar para N canchas
-        ───────────────────────────────────────────────────────────────────
-        Estructura: [columna sticky de tiempo] + [N columnas de cancha]
-        dentro de un único contenedor flex con scroll horizontal.
+      <!-- ── Header row fija: nombres de canchas siempre visibles ────────────
+           Vive FUERA del scroll vertical; se sincroniza horizontalmente
+           con #scrollContainer via syncHeaderScroll().
+      ──────────────────────────────────────────────────────────────────── -->
+      <div #headerRow
+           class="flex flex-nowrap flex-shrink-0 overflow-hidden z-20 bg-card
+                  border-b border-slate-200 pb-2 select-none cursor-default">
+        <!-- Spacer alineado con la columna de tiempo -->
+        <div class="flex-none w-16 bg-card border-r border-slate-200
+                    flex items-end pb-1 pl-1 h-8">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">hs</span>
+        </div>
+        <!-- Nombre de cada cancha -->
+        <div *ngFor="let court of courts; trackBy: trackByCourt"
+             class="flex-none px-1 w-[calc(100%-4rem)]
+                    md:flex-1 md:w-auto md:min-w-[220px]
+                    h-8 flex items-center justify-center shadow-sm">
+          <span class="text-sm font-semibold text-card-foreground truncate px-1">{{ court.name }}</span>
+        </div>
+      </div>
 
-        Por qué escala a N canchas:
-        • La columna de tiempo es sticky left-0: siempre visible al scrollear.
-        • Cada cancha es flex-none con ancho fijo: NUNCA se comprime; si no
-          caben, el contenedor habilita la barra de scroll horizontal.
-        • Móvil: snap-x snap-mandatory para swipe táctil de cancha en cancha.
-        • Desktop (md+): snap-none — scroll libre con rueda del mouse o
-          trackpad sin el "tirón" del snap obligatorio.
-        • scroll-padding-left: 4rem compensa la columna sticky en el snap
-          táctil para que el borde izquierdo de la cancha quede alineado.
-        ═══════════════════════════════════════════════════════════════════
-      -->
+      <div class="flex-1 min-h-0 overflow-y-auto">
       <div
         #scrollContainer
         class="relative w-full overflow-x-auto flex flex-nowrap
@@ -128,6 +131,7 @@
         (mouseleave)="onScrollMouseLeave()"
         (mouseup)="onScrollMouseUp()"
         (mousemove)="onScrollMouseMove($event)"
+        (scroll)="syncHeaderScroll()"
       >
 
         <!-- ── Columna sticky de horarios ──────────────────────────────── -->
@@ -136,10 +140,6 @@
                  bg-card border-r border-slate-200
                  shadow-[2px_0_8px_-2px_rgba(0,0,0,0.10)]"
         >
-          <!-- Spacer alineado con el header de cada cancha -->
-          <div class="h-8 mb-2 flex items-end pb-1 pl-1">
-            <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">hs</span>
-          </div>
           <!-- Labels de hora: una fila de 48px por cada slot de 30 min -->
           <div class="space-y-2">
             <div
@@ -169,13 +169,6 @@
                  w-[calc(100%-4rem)]
                  md:flex-1 md:w-auto md:min-w-[220px]"
         >
-          <!-- Header de cancha — misma altura que el spacer de tiempo (h-8 mb-2) -->
-          <div class="h-8 mb-2 flex items-center justify-center">
-            <span class="text-sm font-semibold text-card-foreground truncate px-1">
-              {{ court.name }}
-            </span>
-          </div>
-
           <!-- ── Filas de slots (una por cada 30 min) ───────────────── -->
           <div class="space-y-2">
             <div
@@ -192,13 +185,19 @@
                 <div
                   role="button"
                   tabindex="0"
-                  aria-label="Disponible"
+                  [attr.aria-label]="'Disponible ' + hour"
                   (click)="onSlotClick(court, hour)"
                   (keydown.enter)="onSlotClick(court, hour)"
-                  class="absolute inset-0 rounded-lg border-2 border-dashed border-muted-foreground/30
+                  class="group absolute inset-0 rounded-lg border-2 border-dashed border-muted-foreground/30
                          cursor-pointer transition-colors
                          hover:bg-slate-100 hover:border-primary/50"
-                ></div>
+                >
+                  <span class="absolute inset-0 flex items-center justify-center
+                               opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                               text-xs font-semibold text-primary/70 pointer-events-none select-none">
+                    {{ hour }}hs
+                  </span>
+                </div>
               </ng-container>
 
               <!-- Slot de inicio: tarjeta de reserva -->
@@ -242,7 +241,7 @@
                           <span *ngIf="booking.fixedBookingId"
                                 class="shrink-0 whitespace-nowrap"
                                 style="font-size:9px; color:#92400e;">
-                            ⭐ {{ booking.hasDeposit ? 'Fijo (Seña)' : 'Fijo' }}
+                            ⭐ Fijo
                           </span>
                           <span class="text-muted-foreground shrink-0 whitespace-nowrap" style="font-size:9px">
                             {{ booking.durationMinutes }}m
@@ -263,7 +262,7 @@
                             <span *ngIf="booking.fixedBookingId"
                                   class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold"
                                   style="font-size:10px;">
-                              ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                              ⭐ Fijo
                             </span>
                             <span class="text-xs text-muted-foreground">· {{ booking.durationMinutes }} min</span>
                           </div>
@@ -282,7 +281,7 @@
                           <span *ngIf="booking.fixedBookingId"
                                 class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold ml-1"
                                 style="font-size:10px;">
-                            ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                            ⭐ Fijo
                           </span>
                           <span class="block text-xs opacity-70">{{ booking.durationMinutes }} min</span>
                         </div>
@@ -336,7 +335,7 @@
                           <span *ngIf="booking.fixedBookingId"
                                 class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold whitespace-nowrap"
                                 style="font-size:10px;">
-                            ⭐ {{ booking.hasDeposit ? 'Fijo (Con Seña)' : 'Fijo' }}
+                            ⭐ Fijo
                           </span>
                         </div>
                       </div>
@@ -396,7 +395,7 @@
       </div>
       <!-- /grid container -->
 
-    </div><!-- /overflow-y-auto -->
+      </div><!-- /overflow-y-auto -->
 
     <!-- Leyenda — siempre visible al pie de la grilla -->
     <div class="shrink-0 flex flex-wrap gap-4 border-t border-border pt-3 mt-3">
@@ -472,6 +471,20 @@
           />
         </div>
 
+        <div *ngIf="isFixedBookingMode" class="space-y-2">
+          <label for="phoneNumber" class="text-sm font-medium leading-none">
+            Teléfono (WhatsApp) <span class="text-destructive">*</span>
+          </label>
+          <input
+            id="phoneNumber"
+            type="tel"
+            [(ngModel)]="phoneNumber"
+            placeholder="Ej: 1145678901"
+            autocomplete="off"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+        </div>
+
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none"
             >Duración del turno</label
@@ -498,6 +511,65 @@
           </p>
         </div>
 
+        <!-- Turno de Profesor (solo admin) -->
+        <div *ngIf="isAdmin && teachers.length > 0" class="rounded-lg border border-border p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium leading-none">¿Es turno de Profesor?</p>
+              <p class="text-xs text-muted-foreground mt-1">Se aplicará precio de profesor automáticamente</p>
+            </div>
+            <label class="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                class="peer sr-only"
+                [(ngModel)]="isTeacherBooking"
+                (ngModelChange)="!$event && (selectedTeacherId = null)"
+              />
+              <div
+                class="h-6 w-11 rounded-full border-2 border-input bg-input transition-colors
+                       peer-checked:bg-primary peer-checked:border-primary
+                       after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5
+                       after:rounded-full after:bg-white after:shadow after:transition-all
+                       peer-checked:after:translate-x-5"
+              ></div>
+            </label>
+          </div>
+          <div *ngIf="isTeacherBooking">
+            <label class="text-xs font-medium text-muted-foreground mb-1 block">Profesor (opcional)</label>
+            <select
+              [(ngModel)]="selectedTeacherId"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option [value]="null">— Sin asignar —</option>
+              <option *ngFor="let t of teachers" [value]="t.id">{{ t.fullName }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Turno Fijo (solo admin) -->
+        <div *ngIf="isAdmin" class="rounded-lg border border-border p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium leading-none">Crear como Turno Fijo</p>
+              <p class="text-xs text-muted-foreground mt-1">Se generarán reservas para las próximas 8 semanas</p>
+            </div>
+            <label class="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                class="peer sr-only"
+                [(ngModel)]="isFixedBookingMode"
+              />
+              <div
+                class="h-6 w-11 rounded-full border-2 border-input bg-input transition-colors
+                       peer-checked:bg-primary peer-checked:border-primary
+                       after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5
+                       after:rounded-full after:bg-white after:shadow after:transition-all
+                       peer-checked:after:translate-x-5"
+              ></div>
+            </label>
+          </div>
+
+        </div>
 
         <!-- Productos solo disponibles cuando el turno está en juego (dialogMode=detail) -->
         <div *ngIf="false" class="space-y-3 rounded-lg border border-border p-4">
@@ -713,7 +785,7 @@
             </svg>
             Guardando...
           </ng-container>
-          <ng-template #guardarLabel2>Guardar Reserva</ng-template>
+          <ng-template #guardarLabel2>{{ isFixedBookingMode ? 'Crear Turno Fijo' : 'Guardar Reserva' }}</ng-template>
         </button>
       </div><!-- /modal-footer -->
     </ng-container><!-- /create mode -->
@@ -743,7 +815,7 @@
         </div>
         <div class="flex items-center gap-2 flex-shrink-0 ml-4">
           <button type="button" (click)="calcService.toggle()" title="Abrir calculadora" aria-label="Abrir calculadora"
-            class="bg-indigo-50 text-indigo-600 p-2.5 rounded-full hover:bg-indigo-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            class="bg-orange-50 text-orange-500 p-2.5 rounded-full hover:bg-orange-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="2" width="16" height="20" rx="2"/>
               <line x1="8" y1="6" x2="16" y2="6"/>
@@ -777,15 +849,42 @@
             <span class="text-muted-foreground">Cliente</span>
             <div class="flex items-center gap-2">
               <span class="font-semibold">{{ selectedBooking.clientName }}</span>
+              <!-- Botón WhatsApp (solo si tiene teléfono) -->
               <button *ngIf="selectedBooking.fixedBookingId"
                       type="button"
                       (click)="confirmFixedBookingWhatsApp()"
-                      title="Confirmar asistencia por WhatsApp"
+                      title="Enviar WhatsApp de confirmación"
                       class="flex items-center justify-center h-7 w-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
                 </svg>
               </button>
+
+              <!-- Botón confirmar asistencia (solo cuando aún no fue confirmado) -->
+              <button *ngIf="selectedBooking.fixedBookingId && !selectedBooking.isConfirmed"
+                      type="button"
+                      (click)="confirmBooking()"
+                      [disabled]="isConfirmingBooking"
+                      title="Marcar asistencia como confirmada"
+                      class="flex items-center gap-1 px-2 h-7 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors text-xs font-semibold disabled:opacity-50">
+                <svg *ngIf="!isConfirmingBooking" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <svg *ngIf="isConfirmingBooking" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Confirmar
+              </button>
+
+              <!-- Badge "Confirmado" (cuando ya fue confirmado) -->
+              <span *ngIf="selectedBooking.fixedBookingId && selectedBooking.isConfirmed"
+                    class="flex items-center gap-1 px-2 h-7 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Confirmado
+              </span>
             </div>
           </div>
           <div class="flex justify-between px-4 py-3 text-sm">
@@ -802,7 +901,7 @@
         <ng-container *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'">
 
           <!-- Products section -->
-          <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-3">
+          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-3">
             <div class="flex items-center justify-between">
               <p class="text-sm font-semibold text-gray-700">Productos (Consumos)</p>
               <span
@@ -818,7 +917,7 @@
             </div>
 
             <!-- Agregar productos: solo disponible cuando el partido está EN CURSO -->
-            <ng-container *ngIf="selectedBooking.status === 'playing'; else productosLocked">
+            <ng-container *ngIf="selectedBooking.status === 'playing'">
 
               <div class="flex flex-wrap gap-2">
                 <button
@@ -867,17 +966,6 @@
               </div>
 
             </ng-container>
-
-            <!-- Empty state: partido aún no iniciado -->
-            <ng-template #productosLocked>
-              <div class="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 py-5 px-4 text-center">
-                <svg class="h-7 w-7 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <p class="text-sm font-medium text-gray-500">🔒 Debés <strong>"Iniciar Partido"</strong> para agregar consumos</p>
-              </div>
-            </ng-template>
 
             <div
               *ngIf="detailCart.length > 0"
@@ -958,11 +1046,13 @@
           </div>
 
           <!-- SECCIÓN A1: División de Cuenta — info de jugadores -->
-          <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
+          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <p class="text-sm font-semibold text-gray-700">División de Cuenta</p>
-              <!-- Toggle: qué se divide entre los jugadores -->
-              <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-medium">
+            </div>
+
+            <!-- Toggle: qué se divide entre los jugadores -->
+            <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-medium">
                 <button type="button"
                   (click)="setSplitMode('court')"
                   [ngClass]="splitMode === 'court'
@@ -980,53 +1070,53 @@
                   Cancha + consumos
                 </button>
               </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <!-- Jugadores en cancha -->
-              <div class="space-y-1.5">
-                <p class="text-xs font-medium text-muted-foreground">Jugadores en cancha</p>
-                <div class="flex items-center gap-2">
-                  <button type="button"
-                    (click)="detailPlayerCount = detailPlayerCount > 1 ? detailPlayerCount - 1 : 1"
-                    [disabled]="detailPlayerCount <= detailPaidCount"
-                    class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0 disabled:pointer-events-none disabled:opacity-40">−</button>
-                  <span class="w-6 text-center font-bold text-sm">{{ detailPlayerCount }}</span>
-                  <button type="button"
-                    (click)="detailPlayerCount = detailPlayerCount < MAX_PLAYERS ? detailPlayerCount + 1 : MAX_PLAYERS"
-                    class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0">+</button>
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Jugadores en cancha -->
+                <div class="space-y-1.5">
+                  <p class="text-xs font-medium text-muted-foreground">Jugadores en cancha</p>
+                  <div class="flex items-center gap-2">
+                    <button type="button"
+                      (click)="detailPlayerCount = detailPlayerCount > 1 ? detailPlayerCount - 1 : 1"
+                      [disabled]="detailPlayerCount <= detailPaidCount"
+                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0 disabled:pointer-events-none disabled:opacity-40">−</button>
+                    <span class="w-6 text-center font-bold text-sm">{{ detailPlayerCount }}</span>
+                    <button type="button"
+                      (click)="detailPlayerCount = detailPlayerCount < MAX_PLAYERS ? detailPlayerCount + 1 : MAX_PLAYERS"
+                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0">+</button>
+                  </div>
+                </div>
+                <!-- Pagaron -->
+                <div class="space-y-1.5">
+                  <p class="text-xs font-medium text-muted-foreground">
+                    Pagaron
+                    <span class="ml-1 font-bold" [ngClass]="detailPaidCount >= detailPlayerCount ? 'text-green-700' : 'text-foreground'">
+                      {{ detailPaidCount }}/{{ detailPlayerCount }}
+                    </span>
+                  </p>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <ng-container *ngFor="let i of [].constructor(detailPlayerCount); let idx = index">
+                      <div class="h-4 w-4 rounded-full border-2 transition-colors"
+                        [ngClass]="idx < detailPaidCount ? 'bg-green-500 border-green-500' : 'bg-background border-muted-foreground/30'"></div>
+                    </ng-container>
+                  </div>
                 </div>
               </div>
-              <!-- Pagaron -->
-              <div class="space-y-1.5">
-                <p class="text-xs font-medium text-muted-foreground">
-                  Pagaron
-                  <span class="ml-1 font-bold" [ngClass]="detailPaidCount >= detailPlayerCount ? 'text-green-700' : 'text-foreground'">
-                    {{ detailPaidCount }}/{{ detailPlayerCount }}
-                  </span>
-                </p>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <ng-container *ngFor="let i of [].constructor(detailPlayerCount); let idx = index">
-                    <div class="h-4 w-4 rounded-full border-2 transition-colors"
-                      [ngClass]="idx < detailPaidCount ? 'bg-green-500 border-green-500' : 'bg-background border-muted-foreground/30'"></div>
-                  </ng-container>
+              <!-- Total por jugador — blue-50 box -->
+              <div class="rounded-md bg-blue-50 px-3 py-2 text-xs space-y-0.5">
+                <div class="flex justify-between">
+                  <span class="text-blue-700 font-medium">Total por jugador:</span>
+                  <span class="font-bold text-blue-900">${{ fmt(detailCostPerPlayer) }} c/u</span>
+                </div>
+                <div *ngIf="hasPriorPayment && detailSaldoPendiente > 0" class="flex justify-between">
+                  <span class="text-blue-600">Deuda restante por jugador:</span>
+                  <span class="font-semibold text-destructive">${{ fmt(detailDebtPerPlayer) }} c/u</span>
                 </div>
               </div>
-            </div>
-            <!-- Total por jugador — blue-50 box -->
-            <div class="rounded-md bg-blue-50 px-3 py-2 text-xs space-y-0.5">
-              <div class="flex justify-between">
-                <span class="text-blue-700 font-medium">Total por jugador:</span>
-                <span class="font-bold text-blue-900">${{ fmt(detailCostPerPlayer) }} c/u</span>
-              </div>
-              <div *ngIf="hasPriorPayment && detailSaldoPendiente > 0" class="flex justify-between">
-                <span class="text-blue-600">Deuda restante por jugador:</span>
-                <span class="font-semibold text-destructive">${{ fmt(detailDebtPerPlayer) }} c/u</span>
-              </div>
-            </div>
+
           </div><!-- /SECCIÓN A1 -->
 
-          <!-- SECCIÓN A2: Botones de pago por jugador -->
-          <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4">
+          <!-- SECCIÓN A2: Botones de pago por jugador — solo visible con partido activo -->
+          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 animate-in fade-in duration-300">
             <div class="flex flex-col items-center gap-2 w-full">
               <!-- Título guía para el cajero -->
               <p class="text-sm font-semibold text-gray-700 mb-2 w-full">Registrar pago de 1 jugador:</p>
@@ -1082,7 +1172,7 @@
           </div>
 
           <!-- SECCIÓN B: Ingreso de Dinero -->
-          <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
+          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
             <p class="text-sm font-semibold text-gray-700">Ingreso de Dinero</p>
             <div class="grid gap-3 md:grid-cols-2">
               <div class="space-y-2">
@@ -1112,8 +1202,8 @@
             </div>
           </div><!-- /SECCIÓN B -->
 
-          <!-- SECCIÓN C: Resumen -->
-          <div class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          <!-- SECCIÓN C: Resumen — visible al jugar/finalizar, o si hay seña registrada -->
+          <div *ngIf="canSplitAccount || totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
             <div class="px-4 pt-3 pb-2">
               <p class="text-sm font-semibold text-gray-700">Resumen</p>
             </div>
@@ -1182,8 +1272,8 @@
       <!-- STICKY FOOTER -->
       <div class="flex-shrink-0 bg-white border-t border-gray-100 px-6 py-4 flex flex-col gap-2.5 rounded-b-2xl">
 
-        <!-- PRIMARY: Registrar Pago (booked / playing) -->
-        <button *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'"
+        <!-- PRIMARY: Registrar Pago (solo cuando el partido está en curso o finalizado) -->
+        <button *ngIf="canSplitAccount"
           type="button" (click)="saveDetailChanges()"
           [disabled]="isSavingDetail || isAutoSavingItems"
           class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
@@ -1259,7 +1349,7 @@
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
           </svg>
-          Cancelar Reserva
+          {{ selectedBooking.fixedBookingId ? 'Cancelar turno por esta semana' : 'Cancelar Reserva' }}
         </button>
 
       </div><!-- /sticky footer -->

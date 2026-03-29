@@ -11,11 +11,14 @@ import { BookingsService } from '../../core/services/bookings.service';
 import { ProductsService } from '../../core/services/products.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { FixedBookingsService } from '../../core/services/fixed-bookings.service';
+import { TeachersService } from '../../core/services/teachers.service';
 import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
 
 import { Court } from '../../core/models/court.model';
 import { Product } from '../../core/models/product.model';
+import { Teacher } from '../../core/models/teacher.model';
 import {
   BookingResponse,
   BookingPayment,
@@ -51,6 +54,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   })();
   courts: Court[] = [];
   allProducts: Product[] = [];
+  teachers: Teacher[] = [];
+  isTeacherBooking = false;
+  selectedTeacherId: string | null = null;
 
   /** Productos marcados como destacados, disponibles para agregar rápidamente. */
   get featuredProducts(): Product[] {
@@ -98,17 +104,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   isDialogOpen = false;
   isSaving = false;
   isSavingDetail = false;
+  isConfirmingBooking = false;
 
   dialogMode: 'create' | 'detail' = 'create';
 
   selectedSlot: { court: Court; hour: string } | null = null;
   selectedBooking: BookingResponse | null = null;
 
-  /** ID de turno pendiente de apertura automática tras la próxima carga de reservas. */
-  private pendingOpenBookingId: string | null = null;
+
 
   clientName = '';
+  phoneNumber = '';
   priceType: PriceType = 'standard';
+  isFixedBookingMode = false;
   cart: CartItem[] = [];
   pagoEfectivo = 0;
   pagoTransferencia = 0;
@@ -132,6 +140,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
   @ViewChild('paymentSection') paymentSection!: ElementRef<HTMLDivElement>;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('headerRow') headerRow!: ElementRef<HTMLDivElement>;
 
   // ── Drag-to-scroll (escritorio) ───────────────────────────────────────────
   private isScrollDragging = false;
@@ -220,6 +229,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     public calcService: CalculatorService,
     private zone: NgZone,
     private route: ActivatedRoute,
+    private fixedBookingsService: FixedBookingsService,
+    private teachersService: TeachersService,
   ) {}
 
   ngOnInit(): void {
@@ -242,37 +253,49 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           const date: string = params['date'];
           const openBookingId: string | undefined = params['openBooking'];
 
-          if (openBookingId) {
-            this.pendingOpenBookingId = openBookingId;
-          }
-
-          const dateIsNew =
-            date &&
-            /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-            date !== this.selectedDate;
-
-          if (dateIsNew) {
+          // Actualizar fecha seleccionada si el param es válido
+          if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
             this.selectedDate = date;
-            this.loadBookings(); // pendingOpenBookingId será consumido al terminar
-          } else if (openBookingId && !this.isLoading) {
-            // Misma fecha ya cargada: abrir directamente
-            this.tryOpenBookingById(openBookingId);
-            this.pendingOpenBookingId = null;
           }
-          // Si isLoading === true y la fecha no cambió, el loadBookings() en curso
-          // consumirá pendingOpenBookingId al finalizar.
+
+          // Siempre recargar y abrir el modal en el callback.
+          // Esto garantiza que funcione tanto cuando el componente acaba de
+          // montarse como cuando ya estaba activo (navegación con _t).
+          this.loadBookings(() => {
+            if (openBookingId) {
+              this.tryOpenBookingById(openBookingId);
+            }
+          });
         }),
     );
   }
 
-  /** Busca un turno en el bookingMap por ID y abre su modal de detalle. */
+  /** Busca un turno en el bookingMap por ID, abre su modal y hace scroll hacia su fila. */
   private tryOpenBookingById(id: string): void {
     for (const booking of this.bookingMap.values()) {
       if (booking.id === id && booking.court) {
         this.openDetailDialog(booking.court, booking.hour, booking);
+        this.scrollToTime(booking.hour);
         return;
       }
     }
+  }
+
+  /** Hace scroll suave hacia la fila de la hora indicada en la grilla.
+   *  Si el elemento aún no está en el DOM (canchas todavía cargando),
+   *  reintenta automáticamente hasta 8 veces con 400 ms de intervalo. */
+  scrollToTime(timeStr: string, attempt = 0): void {
+    if (!timeStr) return;
+    const cleanTime = timeStr.replace('hs', '').trim();
+    const targetId = `time-row-${cleanTime}`;
+    setTimeout(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (attempt < 8) {
+        this.scrollToTime(timeStr, attempt + 1);
+      }
+    }, attempt === 0 ? 300 : 400);
   }
 
   ngOnDestroy(): void {
@@ -440,8 +463,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         courts:   this.courtsService.findAll(),
         products: this.productsService.findAll(),
         config:   this.configService.getAll().pipe(catchError(() => of([]))),
+        teachers: this.teachersService.findAll().pipe(catchError(() => of([]))),
       }).subscribe({
-        next: ({ courts, products, config }) => {
+        next: ({ courts, products, config, teachers }) => {
           const cfgMap = new Map(config.map((e) => [e.key, e.value]));
           if (cfgMap.has('hora_apertura')) this.horarioApertura = cfgMap.get('hora_apertura')!;
           if (cfgMap.has('hora_cierre'))   this.horarioCierre   = cfgMap.get('hora_cierre')!;
@@ -449,6 +473,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
           this.courts = courts.filter((c) => c.isActive);
           this.allProducts = products.filter((p) => p.isActive);
+          this.teachers = teachers.filter((t: Teacher) => t.isActive);
           this.loadBookings();
         },
         error: () => {
@@ -462,7 +487,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /** Recarga las reservas del día seleccionado y actualiza el bookingMap. */
-  loadBookings(): void {
+  loadBookings(onLoaded?: () => void): void {
     this.isLoading = true;
     this.sub.add(
       this.bookingsService.findByDate(this.selectedDate).subscribe({
@@ -475,16 +500,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           });
           this.isLoading = false;
           this.scrollToCurrentTime();
-
-          // Deep link: abrir modal si hay un turno pendiente de apertura
-          if (this.pendingOpenBookingId) {
-            this.tryOpenBookingById(this.pendingOpenBookingId);
-            this.pendingOpenBookingId = null;
-          }
+          onLoaded?.();
         },
         error: () => {
           this.isLoading = false;
-          this.pendingOpenBookingId = null;
           this.toast.error(
             'Error',
             'No se pudieron cargar las reservas del día.',
@@ -518,7 +537,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const businessDayStr = `${y}-${m}-${d}`;
 
     if (this.selectedDate !== businessDayStr) {
-      console.log(`[AutoScroll] Omitido: fecha seleccionada (${this.selectedDate}) ≠ hoy (${businessDayStr}).`);
       return;
     }
 
@@ -532,12 +550,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       const targetElement = document.getElementById(targetId);
       if (targetElement) {
-        console.log(`[AutoScroll] Scrolleando a ${targetId}`);
         targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         const fallbackElement = document.getElementById(fallbackId);
         if (fallbackElement) {
-          console.log(`[AutoScroll] Fuera de horario. Scrolleando a apertura: ${fallbackId}`);
           fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
@@ -711,6 +727,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * - 'court': solo el precio de cancha.
    * - 'court+items': precio de cancha + consumos pendientes de cobro.
    */
+  /** División de cuenta habilitada solo cuando el partido está en curso o finalizado. */
+  get canSplitAccount(): boolean {
+    const status = this.selectedBooking?.status;
+    return status === 'playing' || status === 'completed';
+  }
+
   private get splitBase(): number {
     const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
     return this.splitMode === 'court'
@@ -976,8 +998,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
 
     const courtName = booking.court?.name ?? 'la cancha';
-    const message = `Hola *${booking.clientName}*, te escribimos del club para confirmar tu turno fijo de hoy a las *${booking.hour}*hs en *${courtName}*. ¿Nos confirmás tu asistencia?`;
+    const message = `Hola *${booking.clientName}*, te escribimos desde la Caldera Padel para confirmar tu turno fijo de hoy a las *${booking.hour}*hs en la *${courtName}*. ¿Nos confirmás tu asistencia?`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
+  /**
+   * Marca el turno fijo como confirmado (isConfirmed = true).
+   * Limpia la notificación de recordatorio y el flag de WA del localStorage.
+   */
+  confirmBooking(): void {
+    const booking = this.selectedBooking;
+    if (!booking || this.isConfirmingBooking) return;
+
+    this.isConfirmingBooking = true;
+    this.bookingsService.confirm(booking.id).subscribe({
+      next: (updated) => {
+        this.isConfirmingBooking = false;
+        // Actualizar el turno en el modal y en el mapa
+        this.selectedBooking = { ...booking, isConfirmed: true };
+        this.addToBookingMap({ ...booking, isConfirmed: true });
+        // Limpiar notificación y flag de WA del localStorage
+        this.notificationService.removeByEntityId(booking.id);
+        localStorage.removeItem(`wa_clicked_reminder-today-${booking.id}`);
+        localStorage.removeItem(`wa_clicked_reminder-tomorrow-${booking.id}`);
+        this.toast.success('Asistencia confirmada', `${booking.clientName} confirmó su turno.`);
+      },
+      error: () => {
+        this.isConfirmingBooking = false;
+        this.toast.error('Error', 'No se pudo confirmar la asistencia.');
+      },
+    });
   }
 
   closeDialog(): void {
@@ -1045,6 +1095,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Resetea el formulario de creación a sus valores iniciales. */
   private resetForm(): void {
     this.clientName = '';
+    this.phoneNumber = '';
     this.priceType = 'standard';
     this.durationMinutes = 60;
     this.cart = [];
@@ -1052,28 +1103,71 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.pagoTransferencia = 0;
     this.productSearch = '';
     this.searchResults = [];
+    this.isFixedBookingMode = false;
+    this.isTeacherBooking = false;
+    this.selectedTeacherId = null;
   }
 
-  /** Valida el formulario y envía la petición de creación de reserva al servidor. */
+  /** Valida el formulario y envía la petición de creación al servidor. */
   saveBooking(): void {
     if (!this.selectedSlot || this.isSaving) return;
 
     if (!this.clientName.trim()) {
-      this.toast.error(
-        'Campo requerido',
-        'Por favor ingresá el nombre del cliente.',
-      );
+      this.toast.error('Campo requerido', 'Por favor ingresá el nombre del cliente.');
+      return;
+    }
+
+    if (this.isFixedBookingMode && !this.phoneNumber.trim()) {
+      this.toast.error('Teléfono requerido', 'El número de WhatsApp es obligatorio para turnos fijos.');
       return;
     }
 
     this.isSaving = true;
 
+    // ── Modo Turno Fijo ──────────────────────────────────────────────────────
+    if (this.isFixedBookingMode) {
+      // Calcular dayOfWeek ISO (1=Lun…7=Dom) a partir de selectedDate
+      const [y, mo, dy] = this.selectedDate.split('-').map(Number);
+      const jsDay = new Date(y, mo - 1, dy).getDay(); // 0=Dom…6=Sáb
+      const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+      this.sub.add(
+        this.fixedBookingsService.create({
+          clientName: this.clientName.trim(),
+          phoneNumber: this.phoneNumber.trim(),
+          dayOfWeek,
+          hour: this.selectedSlot.hour,
+          durationMinutes: this.durationMinutes,
+          courtId: this.selectedSlot.court.id,
+          startDate: this.selectedDate,
+          teacherId: this.isTeacherBooking ? (this.selectedTeacherId || null) : null,
+        }).subscribe({
+          next: () => {
+            this.isSaving = false;
+            this.toast.success(
+              '⭐ Turno Fijo creado',
+              `${this.clientName.trim()} — ${this.selectedSlot!.court.name} los ${this.selectedDate} a las ${this.selectedSlot!.hour}hs y todas las semanas.`,
+            );
+            this.closeDialog();
+            this.loadBookings();
+          },
+          error: (err) => {
+            this.isSaving = false;
+            const msg = err?.error?.message;
+            this.toast.error('Error al crear turno fijo', Array.isArray(msg) ? msg.join(' ') : (msg ?? 'Intente nuevamente.'));
+          },
+        }),
+      );
+      return;
+    }
+
+    // ── Modo Reserva Normal ──────────────────────────────────────────────────
     const dto: CreateBookingDto = {
       courtId: this.selectedSlot.court.id,
       date: this.selectedDate,
       hour: this.selectedSlot.hour,
       clientName: this.clientName.trim(),
-      priceType: this.priceType,
+      priceType: this.isTeacherBooking ? 'professor' : this.priceType,
       durationMinutes: this.durationMinutes,
       amountCash: Number(this.pagoEfectivo) || 0,
       amountTransfer: Number(this.pagoTransferencia) || 0,
@@ -1081,6 +1175,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         productId: i.productId,
         quantity: i.quantity,
       })),
+      teacherId: this.isTeacherBooking ? (this.selectedTeacherId || null) : null,
     };
 
     this.sub.add(
@@ -1097,10 +1192,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.isSaving = false;
           if (err.status === 409) {
-            this.toast.error(
-              'Turno ocupado',
-              'Ese horario ya fue reservado. Actualizando grilla...',
-            );
+            this.toast.error('Turno ocupado', 'Ese horario ya fue reservado. Actualizando grilla...');
             this.loadBookings();
           } else if (err.error?.errorCode === 'CAJA_CERRADA') {
             Swal.fire({
@@ -1109,15 +1201,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
               text: 'Por favor, ve al módulo de Caja y realiza la apertura de tu turno para poder cobrar.',
             });
           } else if (err.status === 400) {
-            this.toast.error(
-              'Stock insuficiente',
-              err.error?.message ?? 'Verificá el stock de productos.',
-            );
+            this.toast.error('Stock insuficiente', err.error?.message ?? 'Verificá el stock de productos.');
           } else {
-            this.toast.error(
-              'Error',
-              err.error?.message ?? 'No se pudo guardar la reserva.',
-            );
+            this.toast.error('Error', err.error?.message ?? 'No se pudo guardar la reserva.');
           }
         },
       }),
@@ -1415,10 +1501,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       ).subscribe({
         next: () => {
           this.removeFromBookingMap(booking);
-          this.toast.info(
-            'Reserva cancelada',
-            `Turno de ${booking.clientName} cancelado.`,
-          );
+
+          // Si era un turno fijo, limpiar la notificación pendiente de la campanita
+          // y el flag de WA del localStorage para cerrar el ciclo de confirmación.
+          if (booking.fixedBookingId) {
+            this.notificationService.removeByEntityId(booking.id);
+            localStorage.removeItem(`wa_clicked_reminder-today-${booking.id}`);
+            localStorage.removeItem(`wa_clicked_reminder-tomorrow-${booking.id}`);
+          }
+
+          const label = booking.fixedBookingId ? 'Turno de esta semana cancelado' : 'Reserva cancelada';
+          this.toast.info(label, `Turno de ${booking.clientName} cancelado.`);
           this.forceCloseDialog();
         },
         error: (err) => {
@@ -1719,6 +1812,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const x = event.pageX - el.getBoundingClientRect().left;
     const walk = (x - this.scrollDragStartX) * 1.5;
     el.scrollLeft = this.scrollDragOriginLeft - walk;
+  }
+
+  /** Sincroniza el scroll horizontal del header row con el grid. */
+  syncHeaderScroll(): void {
+    if (this.headerRow && this.scrollContainer) {
+      this.headerRow.nativeElement.scrollLeft = this.scrollContainer.nativeElement.scrollLeft;
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
