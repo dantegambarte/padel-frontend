@@ -526,6 +526,7 @@
       <div *ngIf="teachers.length > 0">
         <label class="block text-xs font-semibold text-gray-600 mb-1">Profesor (opcional)</label>
         <select [(ngModel)]="form.teacherId" name="teacherId"
+                (ngModelChange)="onTeacherSelectChange($event)"
                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <option value="">— Sin asignar —</option>
           <option *ngFor="let t of teachers" [value]="t.id">{{ t.fullName }}</option>
