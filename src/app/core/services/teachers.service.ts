@@ -1,50 +1,54 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay, tap } from 'rxjs';
 
 import { Teacher, CreateTeacherDto, UpdateTeacherDto } from '../models/teacher.model';
 import { environment } from '../../../environments/environment';
 
 /**
- * Servicio de profesores con caché en memoria para `findAll()` y `findAllIncludingInactive()`.
+ * Servicio de profesores con caché en memoria.
  *
  * Estrategia:
- * - Ambas listas se cachean con `shareReplay(1)`.
+ * - `findAll(false)` (activos) y `findAll(true)` (todos) se cachean por separado
+ *   con `shareReplay(1)` para que cada llamada concurrent reciba la misma respuesta.
  * - Cualquier mutación (create / update / deactivate) invalida ambas cachés.
- * - `clearCache()` es llamado también desde `AuthService.logout()` para
- *   evitar datos residuales al cambiar de usuario.
+ * - `clearCache()` es llamado también desde `AuthService.logout()`.
+ *
+ * Endpoint unificado: `GET /teachers?includeInactive=true` (RESTful, sin sub-recursos `/all`).
  */
 @Injectable({ providedIn: 'root' })
 export class TeachersService {
   private readonly base = `${environment.apiUrl}/teachers`;
 
+  private activeCache$: Observable<Teacher[]> | null = null;
   private allCache$: Observable<Teacher[]> | null = null;
-  private allIncludingInactiveCache$: Observable<Teacher[]> | null = null;
 
   constructor(private http: HttpClient) {}
 
-  /** Lista solo profesores activos (para selects en agenda, etc.). */
-  findAll(): Observable<Teacher[]> {
-    if (!this.allCache$) {
-      this.allCache$ = this.http.get<Teacher[]>(this.base).pipe(shareReplay(1));
+  /**
+   * Obtiene la lista de profesores.
+   * @param includeInactive `false` (por defecto) → solo activos.
+   *                        `true` → activos + inactivos (requiere rol admin).
+   */
+  findAll(includeInactive = false): Observable<Teacher[]> {
+    if (includeInactive) {
+      if (!this.allCache$) {
+        const params = new HttpParams().set('includeInactive', 'true');
+        this.allCache$ = this.http.get<Teacher[]>(this.base, { params }).pipe(shareReplay(1));
+      }
+      return this.allCache$;
     }
-    return this.allCache$;
-  }
 
-  /** Lista todos los profesores incluyendo inactivos (panel admin). */
-  findAllIncludingInactive(): Observable<Teacher[]> {
-    if (!this.allIncludingInactiveCache$) {
-      this.allIncludingInactiveCache$ = this.http
-        .get<Teacher[]>(`${this.base}/all`)
-        .pipe(shareReplay(1));
+    if (!this.activeCache$) {
+      this.activeCache$ = this.http.get<Teacher[]>(this.base).pipe(shareReplay(1));
     }
-    return this.allIncludingInactiveCache$;
+    return this.activeCache$;
   }
 
   /** Invalida ambas cachés de profesores. */
   clearCache(): void {
+    this.activeCache$ = null;
     this.allCache$ = null;
-    this.allIncludingInactiveCache$ = null;
   }
 
   create(dto: CreateTeacherDto): Observable<Teacher> {
