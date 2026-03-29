@@ -4,6 +4,8 @@ import { Subscription, filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { CashService } from '../../core/services/cash.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { RemindersApiService } from '../../core/services/reminders-api.service';
 import { User } from '../../core/models/user.model';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -16,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   users: 'Usuarios',
   settings: 'Configuración',
   account: 'Mi Cuenta',
+  'fixed-bookings': 'Turnos Fijos',
 };
 
 @Component({
@@ -35,6 +38,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private cashService: CashService,
     private router: Router,
+    private notificationService: NotificationService,
+    private remindersApiService: RemindersApiService,
   ) {}
 
   /**
@@ -46,6 +51,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
         this.currentUser = user;
+        if (user?.role === 'admin') {
+          this.loadFixedBookingReminders();
+        }
       }),
     );
 
@@ -86,6 +94,68 @@ export class LayoutComponent implements OnInit, OnDestroy {
    * Consulta la sesión actual y, si está abierta con fecha anterior a hoy,
    * activa el modal de sesión sin cerrar.
    */
+  /**
+   * Consulta los turnos fijos de hoy y mañana e inyecta notificaciones
+   * en la campanita para que el admin recuerde enviar los recordatorios por WA.
+   * Usa deduplicación por ID para que no se dupliquen si el layout se recarga.
+   */
+  private loadFixedBookingReminders(): void {
+    this.sub.add(
+      this.remindersApiService.getUpcoming().subscribe({
+        next: ({ today, tomorrow }) => {
+          for (const item of today) {
+            // Eliminar AMBAS variantes (today y tomorrow) antes de re-agregar.
+            // Garantiza unicidad cuando el turno transiciona de "mañana" a "hoy":
+            // la notificación vieja de mañana queda huérfana si no se limpia aquí.
+            this.notificationService.removeById(`reminder-today-${item.bookingId}`);
+            this.notificationService.removeById(`reminder-tomorrow-${item.bookingId}`);
+            this.notificationService.add({
+              id: `reminder-today-${item.bookingId}`,
+              title: 'Turno Fijo Hoy',
+              message: `Hoy juega ${item.clientName} a las ${item.hour}hs en ${item.courtName}.`,
+              category: 'TURNOS',
+              actionRoute: ['/app/schedule'],
+              queryParams: { date: item.date, openBooking: item.bookingId },
+              whatsappUrl: this.buildWhatsappUrl(item, 'today'),
+              entityId: item.bookingId,
+              createdAt: new Date(),
+            });
+          }
+          for (const item of tomorrow) {
+            // Ídem: limpiar ambas variantes para evitar duplicados.
+            this.notificationService.removeById(`reminder-tomorrow-${item.bookingId}`);
+            this.notificationService.removeById(`reminder-today-${item.bookingId}`);
+            this.notificationService.add({
+              id: `reminder-tomorrow-${item.bookingId}`,
+              title: 'Confirmar Turno Fijo',
+              message: `Mañana juega ${item.clientName} a las ${item.hour}hs en ${item.courtName}.`,
+              category: 'TURNOS',
+              actionRoute: ['/app/schedule'],
+              queryParams: { date: item.date, openBooking: item.bookingId },
+              whatsappUrl: this.buildWhatsappUrl(item, 'tomorrow'),
+              entityId: item.bookingId,
+              createdAt: new Date(),
+            });
+          }
+        },
+        error: () => { /* silencioso: no bloquear el layout */ },
+      }),
+    );
+  }
+
+  private buildWhatsappUrl(
+    item: { clientName: string; phoneNumber: string | null; hour: string; courtName: string },
+    type: 'today' | 'tomorrow',
+  ): string | undefined {
+    if (!item.phoneNumber) return undefined;
+    const phone = item.phoneNumber.replace(/\D/g, '');
+    const when = type === 'today' ? 'hoy' : 'mañana';
+    const text = encodeURIComponent(
+      `Hola ${item.clientName}! Te recordamos tu turno fijo de ${when} a las ${item.hour}hs en ${item.courtName}. ¿Vas a poder asistir? ¡Gracias!`,
+    );
+    return `https://wa.me/${phone}?text=${text}`;
+  }
+
   private checkUnclosedSession(): void {
     const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD hora local
     this.sub.add(

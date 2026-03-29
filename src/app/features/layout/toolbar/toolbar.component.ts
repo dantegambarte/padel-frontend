@@ -190,6 +190,11 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   // ── Notificaciones ───────────────────────────────────────────────────────
 
+  /** `true` si el admin ya abrió WhatsApp para esta notificación (1er clic realizado). */
+  hasClickedWA(notifId: string): boolean {
+    return localStorage.getItem(`wa_clicked_${notifId}`) === 'true';
+  }
+
   toggleNotif(): void {
     this.isNotifOpen = !this.isNotifOpen;
     if (this.isNotifOpen) {
@@ -214,6 +219,29 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   navigateFromNotification(notif: AppNotification): void {
     this.isNotifOpen = false;
+
+    if (notif.whatsappUrl) {
+      const clickedKey = `wa_clicked_${notif.id}`;
+      const alreadyClicked = localStorage.getItem(clickedKey) === 'true';
+
+      if (!alreadyClicked) {
+        // 1er clic: abrir WhatsApp y marcar. La notificación persiste
+        // hasta que el admin confirme la asistencia desde el modal.
+        localStorage.setItem(clickedKey, 'true');
+        window.open(notif.whatsappUrl, '_blank');
+        return;
+      }
+
+      // 2do+ clic: navegar al turno para confirmar asistencia.
+      // Se inyecta _t para forzar una nueva emisión del Router aunque los
+      // queryParams base sean idénticos a la navegación anterior.
+      this.router.navigate(
+        notif.actionRoute,
+        { queryParams: { ...notif.queryParams, _t: Date.now() } },
+      );
+      return;
+    }
+
     this.router.navigate(
       notif.actionRoute,
       notif.queryParams ? { queryParams: notif.queryParams } : undefined,
