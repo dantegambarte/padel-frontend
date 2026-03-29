@@ -11,11 +11,13 @@ import {
 
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
+import { CashService } from './cash.service';
 import { ConfigService } from './config.service';
 import { CourtsService } from './courts.service';
 import { FixedBookingsService } from './fixed-bookings.service';
 import { NotificationService } from './notification.service';
 import { ProductsService } from './products.service';
+import { ReportsService } from './reports.service';
 import { TeachersService } from './teachers.service';
 import { UsersService } from './users.service';
 
@@ -49,11 +51,13 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private cashService: CashService,
     private configService: ConfigService,
     private courtsService: CourtsService,
     private fixedBookingsService: FixedBookingsService,
     private notificationService: NotificationService,
     private productsService: ProductsService,
+    private reportsService: ReportsService,
     private teachersService: TeachersService,
     private usersService: UsersService,
   ) {}
@@ -147,10 +151,12 @@ export class AuthService {
     // ── Cachés en memoria ────────────────────────────────────────────────────
     // Evita que datos de la sesión anterior sean servidos a un usuario diferente
     // antes de que cada caché se invalide sola por mutación.
+    this.cashService.clearCurrentCache();
     this.configService.clearCache();
     this.courtsService.clearCache();
     this.fixedBookingsService.clearCache();
     this.productsService.clearCache();
+    this.reportsService.clearCache();
     this.teachersService.clearCache();
     this.usersService.clearCache();
     this.notificationService.clearAllNotifications();
