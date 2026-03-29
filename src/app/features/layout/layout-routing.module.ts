@@ -72,6 +72,12 @@ const routes: Routes = [
         data: { title: 'Turnos Fijos' },
       },
       {
+        path: 'teachers',
+        loadChildren: () =>
+          import('../teachers/teachers.module').then((m) => m.TeachersModule),
+        data: { title: 'Profesores' },
+      },
+      {
         path: 'account',
         loadChildren: () =>
           import('../account/account.module').then((m) => m.AccountModule),
