@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -75,16 +75,41 @@ export interface DailyRevenue {
 export class ReportsService {
   private readonly url = `${environment.apiUrl}/reports`;
 
+  /**
+   * Cachés con TTL para los endpoints de Dashboard.
+   * Deduplicación de llamadas simultáneas (DashboardAdmin monta varios widgets
+   * en paralelo que llaman al mismo endpoint en el mismo ciclo).
+   *
+   * TTL 30 s para KPIs del día (cifras en movimiento continuo).
+   * TTL 60 s para los últimos 7 días (datos históricos, cambian con menor frecuencia).
+   */
+  private kpisCache$: Observable<TodayKpis> | null = null;
+  private last7DaysCache$: Observable<DailyRevenue[]> | null = null;
+  private readonly KPIS_TTL_MS     = 30_000;
+  private readonly LAST7DAYS_TTL_MS = 60_000;
+
   constructor(private http: HttpClient) {}
 
   /** KPIs del día de hoy para el Dashboard Admin (turnos, ingresos, ocupación, productos). */
   getTodayKpis(): Observable<TodayKpis> {
-    return this.http.get<TodayKpis>(`${this.url}/today-kpis`);
+    if (this.kpisCache$) return this.kpisCache$;
+    this.kpisCache$ = this.http.get<TodayKpis>(`${this.url}/today-kpis`).pipe(shareReplay(1));
+    setTimeout(() => { this.kpisCache$ = null; }, this.KPIS_TTL_MS);
+    return this.kpisCache$;
   }
 
   /** Ingresos de los últimos 7 días desglosados en Efectivo y Transferencia. */
   getLast7DaysRevenue(): Observable<DailyRevenue[]> {
-    return this.http.get<DailyRevenue[]>(`${this.url}/last7days`);
+    if (this.last7DaysCache$) return this.last7DaysCache$;
+    this.last7DaysCache$ = this.http.get<DailyRevenue[]>(`${this.url}/last7days`).pipe(shareReplay(1));
+    setTimeout(() => { this.last7DaysCache$ = null; }, this.LAST7DAYS_TTL_MS);
+    return this.last7DaysCache$;
+  }
+
+  /** Invalida ambas cachés de dashboard (útil tras logout o navegación forzada). */
+  clearCache(): void {
+    this.kpisCache$ = null;
+    this.last7DaysCache$ = null;
   }
 
   /** Devuelve el resumen de KPIs del período actual para el Dashboard Admin. */
