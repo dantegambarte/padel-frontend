@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import { TeachersService } from '../../core/services/teachers.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Teacher, CreateTeacherDto } from '../../core/models/teacher.model';
+import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
 
 type FormState = {
   fullName: string;
@@ -21,7 +22,7 @@ const EMPTY_FORM = (): FormState => ({
   selector: 'app-teachers',
   templateUrl: './teachers.component.html',
 })
-export class TeachersComponent implements OnInit {
+export class TeachersComponent implements OnInit, CanComponentDeactivate {
   teachers: Teacher[] = [];
   isLoading = true;
   isSubmitting = false;
@@ -31,6 +32,9 @@ export class TeachersComponent implements OnInit {
   editingId: string | null = null;
   form: FormState = EMPTY_FORM();
   formError = '';
+
+  /** Snapshot del formulario en el momento de abrir el diálogo. */
+  private initialForm: FormState | null = null;
 
   searchTerm = '';
 
@@ -66,6 +70,7 @@ export class TeachersComponent implements OnInit {
   openCreateDialog(): void {
     this.editingId = null;
     this.form = EMPTY_FORM();
+    this.initialForm = EMPTY_FORM();
     this.formError = '';
     this.isDialogOpen = true;
   }
@@ -77,6 +82,7 @@ export class TeachersComponent implements OnInit {
       phoneNumber: teacher.phoneNumber ?? '',
       email:       teacher.email       ?? '',
     };
+    this.initialForm = { ...this.form };
     this.formError = '';
     this.isDialogOpen = true;
   }
@@ -84,6 +90,7 @@ export class TeachersComponent implements OnInit {
   closeDialog(): void {
     this.isDialogOpen = false;
     this.editingId = null;
+    this.initialForm = null;
   }
 
   submitForm(): void {
@@ -180,7 +187,7 @@ export class TeachersComponent implements OnInit {
 
   private loadAll(): void {
     this.isLoading = true;
-    this.teachersSvc.findAllIncludingInactive().subscribe({
+    this.teachersSvc.findAll(true).subscribe({
       next: (data) => {
         this.teachers = data;
         this.isLoading = false;
@@ -190,5 +197,23 @@ export class TeachersComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  /**
+   * Requerido por CanComponentDeactivate.
+   * Retorna `false` si el diálogo está abierto con cambios no guardados,
+   * lo que dispara el modal de confirmación del UnsavedChangesGuard.
+   */
+  canDeactivate(): boolean {
+    return !this.isDialogFormDirty();
+  }
+
+  private isDialogFormDirty(): boolean {
+    if (!this.isDialogOpen || !this.initialForm) return false;
+    return (
+      this.form.fullName    !== this.initialForm.fullName    ||
+      this.form.phoneNumber !== this.initialForm.phoneNumber ||
+      this.form.email       !== this.initialForm.email
+    );
   }
 }
