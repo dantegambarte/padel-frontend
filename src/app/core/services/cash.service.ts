@@ -260,7 +260,7 @@ export class CashService {
   }
 
   /**
-   * Descarga el Excel consolidado de Cierre Z de toda la jornada (Blob).
+   * Descarga el Excel consolidado de Cierre del Turno de toda la jornada (Blob).
    * Requiere responseType: 'blob' para que Angular no parsee el binario como JSON.
    */
   exportDaily(date: string): Observable<Blob> {
@@ -268,6 +268,15 @@ export class CashService {
       params: { date },
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Cierre de Jornada Completa: valida que no haya turnos abiertos y
+   * devuelve el consolidado del día comercial actual.
+   * Lanza 409 si hay algún turno OPEN.
+   */
+  closeDay(): Observable<DailySummaryResponse> {
+    return this.http.post<DailySummaryResponse>(`${this.url}/close-day`, {});
   }
 
   /**

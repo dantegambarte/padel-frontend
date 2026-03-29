@@ -50,6 +50,8 @@ export interface GroupedMovimiento {
 })
 export class CashRegisterComponent implements OnInit {
   activeTab: 'turno' | 'historial' = 'turno';
+  /** Sub-pestaña dentro de "Mi Turno": movimientos del turno o cierre. */
+  turnoTab: 'movimientos' | 'cierre' = 'movimientos';
 
   isSessionOpen: boolean | null = null;
   isLoading = true;
@@ -81,6 +83,7 @@ export class CashRegisterComponent implements OnInit {
 
   exportingSessionId: string | null = null;
   exportingDaily = false;
+  isClosingDay = false;
 
   historialDate = '';
   historialLoading = false;
@@ -239,13 +242,14 @@ export class CashRegisterComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (res) => {
-          if (res.noSession || res.isClosed) {
+          if (res.noSession) {
+            // No existe ninguna sesión para el día comercial actual → pantalla de apertura.
             this.isSessionOpen = false;
             return;
           }
+          // Hay sesión (abierta o cerrada) → mostrar el dashboard.
           this.isSessionOpen = true;
           this.sessionId = res.sessionId;
-          this.isClosed = false;
           this.efectivoEsperado = res.efectivoEsperado;
           this.transferenciaTotal = res.transferenciaTotal;
           this.initialBalance = res.initialBalance;
@@ -253,9 +257,20 @@ export class CashRegisterComponent implements OnInit {
           this.sessionDate = res.sessionDate;
           this.openedAt = res.openedAt;
           this.openedByName = res.openedByName;
-          this.closedCashCounted = null;
-          this.closedDifference = null;
           this.staleSession = false;
+
+          if (res.isClosed) {
+            // Turno cerrado pero jornada aún no finalizada → mostrar estado cerrado con
+            // botón "Cerrar Jornada (Día Completo)" para admins.
+            this.isClosed = true;
+            this.closedCashCounted = res.cashCounted;
+            this.closedDifference = res.difference;
+            this.turnoTab = 'cierre';
+          } else {
+            this.isClosed = false;
+            this.closedCashCounted = null;
+            this.closedDifference = null;
+          }
         },
         error: () => {
           this.isSessionOpen = false;
@@ -293,7 +308,7 @@ export class CashRegisterComponent implements OnInit {
           this.fondoInicial = '';
           this.notasApertura = '';
           this.toast.success(
-            'Jornada abierta',
+            'Turno abierto',
             `Fondo inicial: $${this.fmt(fondo)}`,
           );
           this.isSessionOpen = null; // muestra loadingnu
@@ -334,7 +349,7 @@ export class CashRegisterComponent implements OnInit {
   }
 
   /**
-   * Ejecuta el cierre Z de caja enviando el efectivo contado al servidor.
+   * Ejecuta el cierre del turno de caja enviando el efectivo contado al servidor.
    * Muestra un toast con el resultado y actualiza el estado local.
    */
   confirmarCierre(): void {
@@ -368,6 +383,7 @@ export class CashRegisterComponent implements OnInit {
           this.staleSession = false;
           this.closedCashCounted = this.efectivoReal;
           this.closedDifference = this.diferencia;
+          this.turnoTab = 'cierre';
 
           const detalle =
             this.diferencia === 0
@@ -376,7 +392,7 @@ export class CashRegisterComponent implements OnInit {
 
           this.toast.success(
             'Caja cerrada exitosamente',
-            `Cierre Z realizado por ${this.userName}. ${detalle}`,
+            `Cierre de Turno realizado por ${this.userName}. ${detalle}`,
           );
         },
         error: (err) => {
@@ -579,7 +595,7 @@ export class CashRegisterComponent implements OnInit {
             ${group.totalCash > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;"><span style="color:#6b7280;">Efectivo</span><span style="font-weight:600;">${cur(group.totalCash)}</span></div>` : ''}
             ${group.totalTransfer > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;"><span style="color:#6b7280;">Transferencia</span><span style="font-weight:600;">${cur(group.totalTransfer)}</span></div>` : ''}
             <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">
-              <span style="color:#6b7280;">Cambio</span>
+              <span style="color:#6b7280;">Vuelto</span>
               <span style="font-weight:600;color:#374151;">${cur(cambio)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#059669;margin-top:6px;">
@@ -715,7 +731,7 @@ export class CashRegisterComponent implements OnInit {
         ${itemsHtml}
         <h3>Cobros</h3>
         ${payLines}
-        <p class="cambio">Cambio: ${cur(cambio)}</p>
+        <p class="cambio">Vuelto: ${cur(cambio)}</p>
         <p class="total">TOTAL: ${cur(group.totalMonto)}</p>`;
     } else {
       const method =
@@ -733,7 +749,7 @@ export class CashRegisterComponent implements OnInit {
         <p><b>Hora:</b> ${group.firstHora}hs</p>
         ${itemsHtml}
         <p><b>Método de pago:</b> ${method}</p>
-        <p class="cambio">Cambio: ${cur(cambioSale)}</p>
+        <p class="cambio">Vuelto: ${cur(cambioSale)}</p>
         <p class="total">TOTAL: ${cur(group.totalMonto)}</p>`;
     }
 
@@ -804,7 +820,7 @@ export class CashRegisterComponent implements OnInit {
   /**
    * Muestra una alerta cuando la sesión activa pertenece a una jornada anterior.
    * - Sin movimientos → ofrece cerrarla automáticamente con $0.
-   * - Con movimientos → advierte que el empleado debe hacer el Cierre Z manualmente.
+   * - Con movimientos → advierte que el empleado debe hacer el Cierre del turno manualmente.
    */
   private checkStaleSession(): void {
     const [y, m, d] = (this.sessionDate ?? '').split('-').map(Number);
@@ -839,7 +855,7 @@ export class CashRegisterComponent implements OnInit {
         title: 'Jornada anterior sin cerrar',
         html:
           `La caja activa corresponde al <strong>${fecha}</strong> y tiene <strong>${this.movimientos.length}</strong> movimiento(s) registrado(s).<br><br>` +
-          `Por favor, realizá el <strong>Cierre Z</strong> de esa jornada antes de comenzar las operaciones de hoy.`,
+          `Por favor, realizá el <strong>Cierre del turno</strong> de esa jornada antes de comenzar las operaciones de hoy.`,
         icon: 'warning',
         confirmButtonText: 'Entendido',
         confirmButtonColor: '#d97706',
@@ -871,14 +887,14 @@ export class CashRegisterComponent implements OnInit {
         error: () => {
           this.toast.error(
             'Error al cerrar',
-            'No se pudo cerrar la jornada anterior. Intente el Cierre Z manualmente.',
+            'No se pudo cerrar la jornada anterior. Intente el Cierre del turno manualmente.',
           );
         },
       });
   }
 
   /**
-   * Genera y descarga automáticamente el Excel de Cierre Z.
+   * Genera y descarga automáticamente el Excel de Cierre del turno.
    * Hoja 1 "Resumen": datos financieros de la jornada.
    * Hoja 2 "Movimientos": detalle de cada transacción.
    */
@@ -1104,6 +1120,58 @@ export class CashRegisterComponent implements OnInit {
             'Error de exportación',
             'No se pudo generar el Excel de la jornada.',
           ),
+      });
+  }
+
+  /**
+   * Cierre de Jornada Completa — solo Admin.
+   * Pide confirmación con Swal, llama al backend (que valida que no haya turno abierto)
+   * y muestra el consolidado del día. Si hay turno abierto, el backend responde 409.
+   */
+  async closeDaySession(): Promise<void> {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: '¿Cerrar Jornada Completa?',
+      html:
+        'Esta acción confirma el <strong>Cierre de Jornada</strong> del día de hoy.<br>' +
+        'Se verificará que todos los turnos estén cerrados.',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cerrar jornada',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ef4444',
+    });
+
+    if (!result.isConfirmed) return;
+
+    this.isClosingDay = true;
+    this.cashService
+      .closeDay()
+      .pipe(finalize(() => (this.isClosingDay = false)))
+      .subscribe({
+        next: (summary) => {
+          const totalStr = summary.totalExpected.toLocaleString('es-AR');
+          Swal.fire({
+            icon: 'success',
+            title: 'Jornada cerrada',
+            html:
+              `Día <strong>${summary.date}</strong><br>` +
+              `Total recaudado: <strong>$${totalStr}</strong><br>` +
+              `Turnos: ${summary.sessions.length}`,
+          });
+          // Transicionar a pantalla de apertura: la jornada está finalizada.
+          this.isSessionOpen = false;
+          this.isClosed = false;
+        },
+        error: (err) => {
+          if (err.status === 409) {
+            this.toast.error(
+              'Hay un turno abierto',
+              'Cerrá el turno activo antes de realizar el Cierre de Jornada.',
+            );
+          } else {
+            this.toast.error('Error al cerrar jornada', 'Intente nuevamente.');
+          }
+        },
       });
   }
 
