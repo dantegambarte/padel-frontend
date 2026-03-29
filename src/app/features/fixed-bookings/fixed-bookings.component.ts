@@ -262,6 +262,12 @@ export class FixedBookingsComponent implements OnInit {
     this.editingId = null;
   }
 
+  /** Al seleccionar un profesor, autocompleta el nombre del cliente. */
+  onTeacherSelectChange(teacherId: string): void {
+    const teacher = this.teachers.find((t) => t.id === teacherId);
+    this.form.clientName = teacher ? `Clase - ${teacher.fullName}` : '';
+  }
+
   submitForm(): void {
     if (!this.form.clientName.trim()) {
       this.formError = 'El nombre del cliente es obligatorio.';

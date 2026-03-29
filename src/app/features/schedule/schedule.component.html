@@ -490,19 +490,21 @@
             >Duración del turno</label
           >
           <div class="flex flex-wrap gap-2">
-            <button
-              *ngFor="let opt of DURATION_OPTIONS"
-              type="button"
-              (click)="durationMinutes = opt.value"
-              [ngClass]="
-                durationMinutes === opt.value
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground'
-              "
-              class="flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {{ opt.label }}
-            </button>
+            <ng-container *ngFor="let opt of DURATION_OPTIONS">
+              <button
+                *ngIf="!isTeacherBooking || opt.value === 60"
+                type="button"
+                (click)="durationMinutes = opt.value"
+                [ngClass]="
+                  durationMinutes === opt.value
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground'
+                "
+                class="flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {{ opt.label }}
+              </button>
+            </ng-container>
           </div>
           <p class="text-xs text-muted-foreground">
             De <span class="font-semibold">{{ selectedSlot?.hour }}hs</span> a
@@ -523,7 +525,7 @@
                 type="checkbox"
                 class="peer sr-only"
                 [(ngModel)]="isTeacherBooking"
-                (ngModelChange)="!$event && (selectedTeacherId = null)"
+                (ngModelChange)="onTeacherToggleChange()"
               />
               <div
                 class="h-6 w-11 rounded-full border-2 border-input bg-input transition-colors
@@ -538,6 +540,7 @@
             <label class="text-xs font-medium text-muted-foreground mb-1 block">Profesor (opcional)</label>
             <select
               [(ngModel)]="selectedTeacherId"
+              (ngModelChange)="onTeacherSelectChange($event)"
               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option [value]="null">— Sin asignar —</option>
@@ -1045,8 +1048,8 @@
             </div>
           </div>
 
-          <!-- SECCIÓN A1: División de Cuenta — info de jugadores -->
-          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
+          <!-- SECCIÓN A1: División de Cuenta — info de jugadores (oculto en turnos de profesor) -->
+          <div *ngIf="canSplitAccount && selectedBooking?.priceType !== 'professor'" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <p class="text-sm font-semibold text-gray-700">División de Cuenta</p>
             </div>
@@ -1115,8 +1118,8 @@
 
           </div><!-- /SECCIÓN A1 -->
 
-          <!-- SECCIÓN A2: Botones de pago por jugador — solo visible con partido activo -->
-          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 animate-in fade-in duration-300">
+          <!-- SECCIÓN A2: Botones de pago por jugador — solo visible con partido activo (oculto en turnos de profesor) -->
+          <div *ngIf="canSplitAccount && selectedBooking?.priceType !== 'professor'" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 animate-in fade-in duration-300">
             <div class="flex flex-col items-center gap-2 w-full">
               <!-- Título guía para el cajero -->
               <p class="text-sm font-semibold text-gray-700 mb-2 w-full">Registrar pago de 1 jugador:</p>
