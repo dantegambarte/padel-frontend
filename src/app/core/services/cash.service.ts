@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of, throwError, shareReplay } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 
@@ -157,6 +157,15 @@ export interface CloseCashResponse {
 export class CashService {
   private readonly url = `${environment.apiUrl}/cash`;
 
+  /**
+   * Caché de corta duración para `getCurrent()`.
+   * Previene peticiones duplicadas cuando varios componentes (Layout, CashRegister,
+   * DashboardEmployee) se montan en el mismo ciclo de navegación.
+   * Se invalida automáticamente tras TTL o ante cualquier mutación (open/close).
+   */
+  private currentCache$: Observable<CashCurrentResponse> | null = null;
+  private readonly CURRENT_CACHE_TTL_MS = 10_000;
+
   constructor(private http: HttpClient) {}
 
   /**
@@ -164,8 +173,13 @@ export class CashService {
    * - session: null + noSession: true → mostrar pantalla de Apertura de Caja.
    * - session existe + isClosed: false → jornada abierta (dashboard normal).
    * - session existe + isClosed: true → jornada cerrada (modo solo lectura).
+   *
+   * Implementa caché con TTL de 10 s para deduplicar las llamadas simultáneas
+   * que disparan Layout, CashRegister y DashboardEmployee al montar en el mismo ciclo.
    */
   getCurrent(): Observable<CashCurrentResponse> {
+    if (this.currentCache$) return this.currentCache$;
+
     const noSessionResponse: CashCurrentResponse = {
       sessionId: null,
       noSession: true,
@@ -183,7 +197,7 @@ export class CashService {
       staleSession: false,
     };
 
-    return this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
+    this.currentCache$ = this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
       map((res): CashCurrentResponse => ({
         sessionId: res.session?.id ?? null,
         noSession: res.session === null,
@@ -222,11 +236,25 @@ export class CashService {
       // 404 = no hay sesión para este día → equivale a noSession: true.
       // Cualquier otro error (500, 0, CORS, etc.) se relanza para que la UI
       // muestre un cartel de falla de conexión y NO la pantalla de Apertura.
+      // En caso de error de red limpiamos la caché para permitir reintentos inmediatos.
       catchError((err) => {
         if (err.status === 404) return of(noSessionResponse);
+        this.clearCurrentCache();
         return throwError(() => err);
       }),
+      shareReplay(1),
     );
+
+    // Invalida la caché tras el TTL para que el próximo llamador fuera de la
+    // ventana de deduplicación siempre obtenga datos frescos del servidor.
+    setTimeout(() => this.clearCurrentCache(), this.CURRENT_CACHE_TTL_MS);
+
+    return this.currentCache$;
+  }
+
+  /** Invalida la caché de `getCurrent()`. Llamar tras cualquier mutación de caja. */
+  clearCurrentCache(): void {
+    this.currentCache$ = null;
   }
 
   /**
@@ -236,7 +264,7 @@ export class CashService {
     return this.http.post<{ id: string; date: string; status: string }>(
       `${this.url}/open`,
       { initialBalance: dto.initialBalance, ...(dto.notes ? { notes: dto.notes } : {}) },
-    );
+    ).pipe(tap(() => this.clearCurrentCache()));
   }
 
   /**
@@ -276,7 +304,9 @@ export class CashService {
    * Lanza 409 si hay algún turno OPEN.
    */
   closeDay(): Observable<DailySummaryResponse> {
-    return this.http.post<DailySummaryResponse>(`${this.url}/close-day`, {});
+    return this.http.post<DailySummaryResponse>(`${this.url}/close-day`, {}).pipe(
+      tap(() => this.clearCurrentCache()),
+    );
   }
 
   /**
@@ -287,7 +317,9 @@ export class CashService {
       cashCounted: Number(dto.efectivoContado),
       ...(dto.notas !== undefined && dto.notas !== '' ? { notes: dto.notas } : {}),
     };
-    return this.http.post<CloseCashResponse>(`${this.url}/close`, payload);
+    return this.http.post<CloseCashResponse>(`${this.url}/close`, payload).pipe(
+      tap(() => this.clearCurrentCache()),
+    );
   }
 
   /**
