@@ -396,6 +396,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get courtPrice(): number {
     if (!this.selectedSlot) return 0;
     const c = this.selectedSlot.court;
+    if (this.isTeacherBooking) return Number(c.teacherPrice) || 0;
     switch (this.durationMinutes) {
       case 30:  return Number(c.price30)  || 0;
       case 60:  return Number(c.price60)  || 0;
@@ -1108,6 +1109,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.selectedTeacherId = null;
   }
 
+  /**
+   * Maneja el cambio del toggle "¿Es turno de Profesor?".
+   * Al activarlo fuerza la duración a 60 min (único bloque válido para profesores).
+   * Al desactivarlo limpia el profesor seleccionado.
+   */
+  onTeacherToggleChange(): void {
+    if (this.isTeacherBooking) {
+      this.durationMinutes = 60;
+    } else {
+      this.selectedTeacherId = null;
+      if (this.clientName.startsWith('Clase - ')) {
+        this.clientName = '';
+      }
+    }
+  }
+
+  /** Al seleccionar un profesor, autocompleta el nombre del cliente para evitar entrada manual. */
+  onTeacherSelectChange(teacherId: string | null): void {
+    const teacher = this.teachers.find((t) => t.id === teacherId);
+    this.clientName = teacher ? `Clase - ${teacher.fullName}` : '';
+  }
+
   /** Valida el formulario y envía la petición de creación al servidor. */
   saveBooking(): void {
     if (!this.selectedSlot || this.isSaving) return;
@@ -1175,8 +1198,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         productId: i.productId,
         quantity: i.quantity,
       })),
-      teacherId: this.isTeacherBooking ? (this.selectedTeacherId || null) : null,
     };
+    // Solo incluir teacherId en el payload cuando realmente es un turno de profesor,
+    // para evitar el error 400 "property teacherId should not exist" del ValidationPipe.
+    if (this.isTeacherBooking && this.selectedTeacherId) {
+      dto.teacherId = this.selectedTeacherId;
+    }
 
     this.sub.add(
       this.bookingsService.create(dto).subscribe({
