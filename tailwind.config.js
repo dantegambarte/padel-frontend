@@ -67,6 +67,15 @@ module.exports = {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
+      keyframes: {
+        fadeInUp: {
+          '0%':   { opacity: '0', transform: 'translateX(-50%) translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateX(-50%) translateY(0)' },
+        },
+      },
+      animation: {
+        'fadeInUp': 'fadeInUp 0.2s ease-out',
+      },
     },
   },
   plugins: [

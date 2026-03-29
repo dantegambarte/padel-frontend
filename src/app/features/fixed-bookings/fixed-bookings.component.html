@@ -1,0 +1,609 @@
+<div class="p-4 sm:p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Turnos Fijos</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Reservas recurrentes semanales</p>
+    </div>
+    <button
+      type="button"
+      (click)="openCreateDialog()"
+      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+    >
+      <!-- Plus icon -->
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/><path d="M12 5v14"/>
+      </svg>
+      Nuevo Turno Fijo
+    </button>
+  </div>
+
+  <!-- ── Selector de vista ── -->
+  <div class="flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1 w-fit">
+    <button type="button"
+            (click)="activeTab = 'lista'"
+            [ngClass]="activeTab === 'lista' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-700 font-medium'"
+            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      Lista
+    </button>
+    <button type="button"
+            (click)="activeTab = 'grilla'"
+            [ngClass]="activeTab === 'grilla' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-700 font-medium'"
+            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      Grilla Semanal
+    </button>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="isLoading" class="space-y-3">
+    <div *ngFor="let _ of [1,2,3]" class="h-20 rounded-xl bg-gray-100 animate-pulse"></div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!isLoading && fixedBookings.length === 0 && activeTab === 'lista'"
+       class="flex flex-col items-center justify-center py-16 text-center">
+    <svg class="h-12 w-12 text-gray-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 2v4"/><path d="M16 2v4"/>
+      <rect width="18" height="18" x="3" y="4" rx="2"/>
+      <path d="M3 10h18"/>
+      <path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>
+    </svg>
+    <p class="text-gray-500 font-medium">No hay turnos fijos registrados</p>
+    <p class="text-sm text-gray-400 mt-1">Creá el primero con el botón de arriba</p>
+  </div>
+
+  <!-- Filtros -->
+  <div *ngIf="!isLoading && fixedBookings.length > 0 && activeTab === 'lista'"
+       class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+      <!-- Buscador -->
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text"
+               [(ngModel)]="searchTerm"
+               name="searchTerm"
+               placeholder="Buscar por nombre o teléfono..."
+               class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Filtro día -->
+      <select [(ngModel)]="filterDay" name="filterDay"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Todos los días</option>
+        <option *ngFor="let d of DAYS" [value]="d">{{ dayLabel(d) }}</option>
+      </select>
+
+      <!-- Filtro cancha -->
+      <select [(ngModel)]="filterCourt" name="filterCourt"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Todas las canchas</option>
+        <option *ngFor="let c of courts" [value]="c.id">{{ c.name }}</option>
+      </select>
+
+    </div>
+  </div>
+
+  <!-- Table (desktop) / Cards (mobile) -->
+  <div *ngIf="!isLoading && fixedBookings.length > 0 && activeTab === 'lista'">
+
+    <!-- Desktop table -->
+    <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th class="px-4 py-3">Cliente</th>
+            <th class="px-4 py-3">Día / Hora</th>
+            <th class="px-4 py-3">Cancha</th>
+            <th class="px-4 py-3">Duración</th>
+            <th class="px-4 py-3">Estado</th>
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngIf="filteredBookings.length === 0">
+            <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-500">
+              No se encontraron turnos fijos con esos filtros.
+            </td>
+          </tr>
+          <tr *ngFor="let item of filteredBookings"
+              [ngClass]="item.isActive ? '' : 'opacity-50'"
+              class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3">
+              <p class="font-semibold text-gray-900">{{ item.clientName }}</p>
+              <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 mt-0.5">{{ item.phoneNumber }}</p>
+            </td>
+            <td class="px-4 py-3">
+              <span class="font-medium text-gray-700">{{ dayLabel(item.dayOfWeek) }}</span>
+              <span class="text-gray-400"> — {{ item.hour }}hs</span>
+            </td>
+            <td class="px-4 py-3 text-gray-700">{{ item?.court?.name }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ item.durationMinutes }} min</td>
+            <td class="px-4 py-3">
+              <span *ngIf="item.isActive"
+                    class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                Activo
+              </span>
+              <span *ngIf="!item.isActive"
+                    class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-500">
+                Inactivo
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-2">
+                <!-- WhatsApp -->
+                <button *ngIf="item.phoneNumber"
+                        type="button"
+                        (click)="whatsapp(item)"
+                        title="Enviar WhatsApp"
+                        class="rounded-md p-1.5 text-green-600 hover:bg-green-50 transition-colors">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                </button>
+                <!-- Generate next -->
+                <button *ngIf="item.isActive"
+                        type="button"
+                        (click)="generateNext(item)"
+                        [disabled]="generatingId === item.id"
+                        title="Generar próximas semanas"
+                        class="rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                  </svg>
+                </button>
+                <!-- Edit -->
+                <button type="button"
+                        (click)="openEditDialog(item)"
+                        title="Editar"
+                        class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 transition-colors">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <!-- Borrar en cascada -->
+                <button type="button"
+                        (click)="deleteCascade(item)"
+                        [disabled]="deletingId === item.id"
+                        title="Borrar turno fijo"
+                        class="rounded-md p-1.5 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="md:hidden space-y-3">
+      <div *ngIf="filteredBookings.length === 0"
+           class="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+        No se encontraron turnos fijos con esos filtros.
+      </div>
+      <div *ngFor="let item of filteredBookings"
+           [ngClass]="item.isActive ? '' : 'opacity-50'"
+           class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 truncate">{{ item.clientName }}</p>
+            <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 mt-0.5">{{ item.phoneNumber }}</p>
+          </div>
+          <span *ngIf="item.isActive"
+                class="shrink-0 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+            Activo
+          </span>
+          <span *ngIf="!item.isActive"
+                class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
+            Inactivo
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+          <span><span class="font-medium text-gray-700">{{ dayLabel(item.dayOfWeek) }}</span> — {{ item.hour }}hs</span>
+          <span>{{ item?.court?.name }}</span>
+          <span>{{ item.durationMinutes }} min</span>
+        </div>
+        <div class="flex items-center justify-end pt-2 border-t border-gray-100">
+          <div class="flex items-center gap-2">
+            <button *ngIf="item.phoneNumber" type="button" (click)="whatsapp(item)"
+                    title="WhatsApp" class="rounded-md p-1.5 text-green-600 hover:bg-green-50">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </button>
+            <button *ngIf="item.isActive" type="button" (click)="generateNext(item)"
+                    [disabled]="generatingId === item.id" title="Generar turnos"
+                    class="rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 disabled:opacity-40">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+            </button>
+            <button type="button" (click)="openEditDialog(item)" title="Editar"
+                    class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <button type="button" (click)="deleteCascade(item)"
+                    [disabled]="deletingId === item.id" title="Borrar turno fijo"
+                    class="rounded-md p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-40">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VISTA GRILLA SEMANAL ──────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && activeTab === 'grilla'"
+       class="overflow-auto rounded-xl border border-gray-200 bg-white shadow-sm"
+       style="max-height: calc(100vh - 13rem)">
+
+    <!--
+      Grid explícito: cada celda usa grid-column/grid-row para que los turnos largos
+      puedan usar "span N" sin desalinear el resto. Fila 1 = cabecera; filas 2..N+1
+      = slots de 30 min a 52 px c/u.
+    -->
+    <div class="min-w-[640px]"
+         style="display:grid; grid-template-columns: 3.5rem repeat(7, minmax(0,1fr))"
+         [style.gridTemplateRows]="'auto repeat(' + validHours.length + ', 52px)'">
+
+      <!-- Esquina -->
+      <div class="sticky top-0 left-0 z-20 bg-gray-50 border-b border-r border-gray-200"
+           style="grid-column:1; grid-row:1"></div>
+
+      <!-- Encabezado días (sticky top) -->
+      <div *ngFor="let d of DAYS; let di = index"
+           class="sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 px-1 py-2.5 text-center"
+           [style.gridColumn]="di + 2" style="grid-row:1">
+        <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide leading-none hidden sm:block">
+          {{ DAY_LABELS[d] }}
+        </p>
+        <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide leading-none sm:hidden">
+          {{ DAY_LABELS[d] | slice:0:3 }}
+        </p>
+      </div>
+
+      <!-- Etiquetas de hora (sticky left, columna 1) -->
+      <div *ngFor="let hour of validHours; let hi = index"
+           class="sticky left-0 z-10 bg-white border-b border-r border-gray-100 flex items-center justify-center px-1"
+           style="grid-column:1" [style.gridRow]="hi + 2">
+        <span class="text-[10px] font-semibold text-gray-400 tabular-nums">{{ hour }}</span>
+      </div>
+
+      <!-- Celdas (columnas 2-8): por día → por hora con placement explícito -->
+      <ng-container *ngFor="let d of DAYS; let di = index">
+        <ng-container *ngFor="let hour of validHours; let hi = index">
+
+          <!-- INICIO DE TURNO → se renderiza con row-span -->
+          <ng-container *ngIf="getSlotData(d, hour) as slot">
+            <div *ngIf="slot.isStart"
+                 class="p-1 border-r border-gray-100 cursor-pointer group"
+                 [style.gridColumn]="di + 2"
+                 [style.gridRow]="(hi + 2) + ' / span ' + slot.rowSpan"
+                 (click)="openDetail(slot.booking)">
+              <div class="h-full rounded border-l-4 px-1.5 py-1 shadow-sm flex flex-col justify-start gap-px overflow-hidden"
+                   [ngClass]="courtColorClass(slot.booking.courtId)">
+                <p class="text-[10px] font-bold leading-tight truncate">{{ slot.booking.clientName }}</p>
+                <p class="text-[9px] opacity-60 truncate leading-tight">{{ slot.booking.court.name }}</p>
+                <p *ngIf="slot.rowSpan > 1" class="text-[9px] opacity-50 leading-tight mt-auto">
+                  {{ slot.booking.durationMinutes }} min
+                </p>
+              </div>
+            </div>
+            <!-- isStart === false: cubierta por span → no se renderiza nada -->
+          </ng-container>
+
+          <!-- CELDA LIBRE -->
+          <div *ngIf="!getSlotData(d, hour)"
+               class="border-b border-r border-gray-100 relative group transition-colors hover:bg-emerald-50 cursor-pointer"
+               [style.gridColumn]="di + 2"
+               [style.gridRow]="hi + 2"
+               (click)="openCreateFromGrid(d, hour)">
+            <div class="hidden group-hover:flex absolute inset-1 items-center justify-center rounded border border-dashed border-emerald-300 bg-emerald-50/50 pointer-events-none">
+              <span class="text-[10px] font-bold text-emerald-600">+ Nuevo</span>
+            </div>
+          </div>
+
+        </ng-container>
+      </ng-container>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Detail Panel ───────────────────────────────────────────────────────── -->
+<div *ngIf="selectedFixedBooking"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+     (click)="closeDetail()">
+  <div class="relative w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden"
+       (click)="$event.stopPropagation()">
+
+    <!-- Cabecera coloreada según cancha -->
+    <div class="px-5 py-4 flex items-start justify-between gap-3"
+         [ngClass]="courtColorClass(selectedFixedBooking.courtId)">
+      <div class="min-w-0">
+        <p class="text-[10px] font-semibold uppercase tracking-widest opacity-60 mb-0.5">Turno Fijo</p>
+        <h2 class="text-lg font-bold leading-tight truncate">{{ selectedFixedBooking.clientName }}</h2>
+      </div>
+      <button type="button" (click)="closeDetail()"
+              class="shrink-0 rounded-full p-1 hover:bg-black/10 transition-colors mt-0.5">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Cuerpo con datos del turno -->
+    <div class="px-5 py-4 space-y-3 border-b border-gray-100">
+
+      <!-- Cancha -->
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="12" y1="3" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Cancha</p>
+          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.court.name }}</p>
+        </div>
+      </div>
+
+      <!-- Horario -->
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Horario</p>
+          <p class="text-sm font-semibold text-gray-800">
+            {{ DAY_LABELS[selectedFixedBooking.dayOfWeek] }} —
+            {{ selectedFixedBooking.hour }} a {{ getEndHour(selectedFixedBooking) }}hs
+          </p>
+          <p class="text-xs text-gray-400">{{ selectedFixedBooking.durationMinutes }} minutos</p>
+        </div>
+      </div>
+
+      <!-- Teléfono -->
+      <div *ngIf="selectedFixedBooking.phoneNumber" class="flex items-center gap-3">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.93-8.2A2 2 0 0 1 4.68 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Teléfono</p>
+          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.phoneNumber }}</p>
+        </div>
+      </div>
+
+      <!-- Profesor -->
+      <div *ngIf="selectedFixedBooking.teacher" class="flex items-center gap-3">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Profesor</p>
+          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.teacher.fullName }}</p>
+        </div>
+      </div>
+
+      <!-- Precio -->
+      <div *ngIf="getBookingPrice(selectedFixedBooking) !== null" class="flex items-center gap-3">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Valor del turno</p>
+          <p class="text-sm font-bold text-gray-800">$ {{ getBookingPrice(selectedFixedBooking) | number:'1.0-0' }}</p>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div *ngIf="selectedFixedBooking.notes"
+           class="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+        <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-0.5">Notas</p>
+        <p class="text-sm text-gray-700">{{ selectedFixedBooking.notes }}</p>
+      </div>
+
+    </div>
+
+    <!-- Pie: acciones -->
+    <div class="px-5 py-4 flex items-center gap-2">
+      <!-- WhatsApp (prominente) -->
+      <button *ngIf="selectedFixedBooking.phoneNumber"
+              type="button"
+              (click)="whatsapp(selectedFixedBooking)"
+              class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-sm">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Enviar WhatsApp
+      </button>
+      <!-- Editar -->
+      <button type="button"
+              (click)="openEditDialog(selectedFixedBooking); closeDetail()"
+              class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Editar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Create / Edit Dialog ───────────────────────────────────────────────── -->
+<div *ngIf="isDialogOpen"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+     (click)="closeDialog()">
+  <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-xl"
+       (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+      <h2 class="text-lg font-semibold text-gray-900">{{ dialogTitle }}</h2>
+      <button type="button" (click)="closeDialog()"
+              class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form (ngSubmit)="submitForm()" class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+      <!-- Error alert -->
+      <div *ngIf="formError"
+           class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        {{ formError }}
+      </div>
+
+      <!-- Cliente -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">
+          Nombre del cliente <span class="text-red-500">*</span>
+        </label>
+        <input type="text" [(ngModel)]="form.clientName" name="clientName"
+               placeholder="Ej: Rodrigo Pérez"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Teléfono -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Teléfono (WhatsApp)</label>
+        <input type="text" [(ngModel)]="form.phoneNumber" name="phoneNumber"
+               placeholder="Ej: +5491155556666"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Profesor (opcional) -->
+      <div *ngIf="teachers.length > 0">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Profesor (opcional)</label>
+        <select [(ngModel)]="form.teacherId" name="teacherId"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">— Sin asignar —</option>
+          <option *ngFor="let t of teachers" [value]="t.id">{{ t.fullName }}</option>
+        </select>
+      </div>
+
+      <!-- Día + Hora -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">
+            Día de la semana <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="form.dayOfWeek" name="dayOfWeek"
+                  (ngModelChange)="onDayOfWeekChange()"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option *ngFor="let d of DAYS" [value]="d">{{ dayLabel(d) }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">
+            Hora <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="form.hour" name="hour"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option *ngFor="let h of validHours" [value]="h">{{ h }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Cancha + Duración -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">
+            Cancha <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="form.courtId" name="courtId"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="" disabled>Seleccionar...</option>
+            <option *ngFor="let c of courts" [value]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Duración</label>
+          <select [(ngModel)]="form.durationMinutes" name="durationMinutes"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option *ngFor="let d of DURATION_OPTIONS" [value]="d.value">{{ d.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fecha de inicio -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">
+          Inicio <span class="text-red-500">*</span>
+        </label>
+        <input type="date" [(ngModel)]="form.startDate" name="startDate"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Notas -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Notas</label>
+        <textarea [(ngModel)]="form.notes" name="notes" rows="2"
+                  placeholder="Observaciones sobre el cliente o el turno..."
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+    </form>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+      <button type="button" (click)="closeDialog()"
+              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      <button type="button" (click)="submitForm()" [disabled]="isSubmitting"
+              class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+        {{ isSubmitting ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear turno fijo') }}
+      </button>
+    </div>
+  </div>
+</div>

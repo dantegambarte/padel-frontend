@@ -91,4 +91,12 @@ export class BookingsService {
   duplicate(id: string, dto: RescheduleBookingDto): Observable<BookingResponse> {
     return this.http.post<BookingResponse>(`${this.url}/${id}/duplicate`, dto);
   }
+
+  /**
+   * Confirma la asistencia del cliente a un turno fijo (isConfirmed = true).
+   * @param id - ID de la reserva.
+   */
+  confirm(id: string): Observable<BookingResponse> {
+    return this.http.patch<BookingResponse>(`${this.url}/${id}/confirm`, {});
+  }
 }

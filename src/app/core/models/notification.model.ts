@@ -13,6 +13,11 @@ export interface AppNotification {
   actionRoute: string[];
   /** Query params opcionales para deep linking (ej: `{ date, openBooking }`). */
   queryParams?: Record<string, string>;
+  /**
+   * URL de WhatsApp pre-armada. Si está presente, el clic abre WhatsApp
+   * directamente en lugar de navegar con el Router de Angular.
+   */
+  whatsappUrl?: string;
   /** ID de la entidad vinculada (turno, producto, etc.) para sincronizar auto-limpieza. */
   entityId: string;
   createdAt: Date;

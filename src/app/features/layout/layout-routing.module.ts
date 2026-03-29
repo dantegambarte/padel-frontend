@@ -64,6 +64,20 @@ const routes: Routes = [
         data: { title: 'Settings' },
       },
       {
+        path: 'fixed-bookings',
+        loadChildren: () =>
+          import('../fixed-bookings/fixed-bookings.module').then(
+            (m) => m.FixedBookingsModule,
+          ),
+        data: { title: 'Turnos Fijos' },
+      },
+      {
+        path: 'teachers',
+        loadChildren: () =>
+          import('../teachers/teachers.module').then((m) => m.TeachersModule),
+        data: { title: 'Profesores' },
+      },
+      {
         path: 'account',
         loadChildren: () =>
           import('../account/account.module').then((m) => m.AccountModule),

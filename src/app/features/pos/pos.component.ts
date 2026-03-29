@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { Product } from '../../core/models/product.model';
@@ -36,11 +36,16 @@ export class PosComponent implements OnInit, AfterViewInit {
   selectedItemDetail: PosCartItem | null = null;
   isDetailModalOpen = false;
 
+  @ViewChildren('cartScrollContainer') private cartScrollContainers!: QueryList<ElementRef>;
+
   touchStartY = 0;
   touchEndY = 0;
   readonly swipeThreshold = 50;
 
   lastSaleId: string | null = null;
+
+  toastMessage: string | null = null;
+  private toastTimeout: any;
 
   constructor(
     private productsService: ProductsService,
@@ -240,11 +245,14 @@ export class PosComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (existing) {
-      if (rental || existing.quantity < product.stock) {
-        this.cart = this.cart.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-        );
+    const existingIndex = this.cart.findIndex((i) => i.productId === product.id);
+
+    if (existingIndex !== -1) {
+      if (rental || this.cart[existingIndex].quantity < product.stock) {
+        // Extrae el ítem, incrementa cantidad y lo reinserta al final
+        const item = this.cart.splice(existingIndex, 1)[0];
+        item.quantity += 1;
+        this.cart.push(item);
       } else {
         this.toast.error(
           'Stock insuficiente',
@@ -252,18 +260,29 @@ export class PosComponent implements OnInit, AfterViewInit {
         );
       }
     } else {
-      this.cart = [
-        ...this.cart,
-        {
-          productId: product.id,
-          name: product.name,
-          salePrice: product.salePrice,
-          stock: product.stock,
-          category: product.category?.name ?? '',
-          quantity: 1,
-        },
-      ];
+      this.cart.push({
+        productId: product.id,
+        name: product.name,
+        salePrice: product.salePrice,
+        stock: product.stock,
+        category: product.category?.name ?? '',
+        quantity: 1,
+      });
     }
+
+    // Micro-feedback visual para mobile
+    this.toastMessage = `+1 ${product.name}`;
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => { this.toastMessage = null; }, 1500);
+
+    setTimeout(() => this.scrollCartsToBottom(), 0);
+  }
+
+  private scrollCartsToBottom(): void {
+    this.cartScrollContainers.forEach((ref) => {
+      const el = ref.nativeElement as HTMLElement;
+      el.scrollTop = el.scrollHeight;
+    });
   }
 
   /**
@@ -375,6 +394,8 @@ export class PosComponent implements OnInit, AfterViewInit {
           this.checkoutStep = 1;
           this.desktopStep = 1;
           this.lastSaleId = sale.id;
+          this.productsService.clearCache();
+          this.loadProducts();
           this.toast.success(
             'Venta confirmada',
             `Se procesó una venta por $${totalStr}`,

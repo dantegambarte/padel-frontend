@@ -40,6 +40,12 @@ export interface BookingResponse {
   items: BookingItem[];
   payment: BookingPayment | null;
   createdAt: string;
+  /** ID del turno fijo que generó esta reserva. null si fue creada manualmente. */
+  fixedBookingId: string | null;
+  /** Datos del turno fijo asociado (solo phoneNumber necesario para el botón WA). */
+  fixedBooking: { phoneNumber: string | null } | null;
+  /** true cuando el cliente confirmó su asistencia al turno fijo. */
+  isConfirmed: boolean;
 }
 
 /** Payload para crear una nueva reserva. */
@@ -53,6 +59,7 @@ export interface CreateBookingDto {
   amountCash: number;
   amountTransfer: number;
   items: { productId: string; quantity: number }[];
+  teacherId?: string | null;
 }
 
 /** Payload para transicionar el estado de una reserva. */

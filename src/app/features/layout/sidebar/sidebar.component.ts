@@ -52,6 +52,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
       roles: ['admin', 'employee'],
     },
     {
+      id: 'fixed-bookings',
+      label: 'Turnos Fijos',
+      icon: 'repeat',
+      route: '/app/fixed-bookings',
+      roles: ['admin'],
+    },
+    {
+      id: 'teachers',
+      label: 'Profesores',
+      icon: 'graduation-cap',
+      route: '/app/teachers',
+      roles: ['admin'],
+    },
+    {
       id: 'cash-register',
       label: 'Cierre de Caja',
       icon: 'credit-card',

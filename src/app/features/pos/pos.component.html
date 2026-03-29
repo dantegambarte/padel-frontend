@@ -3,6 +3,26 @@
   (closeModal)="closeTicket()"
 ></app-ticket-modal>
 
+<!-- Micro-toast de feedback al agregar al carrito (mobile) -->
+<div
+  *ngIf="toastMessage"
+  class="fixed bottom-28 left-1/2 -translate-x-1/2 z-50
+         flex items-center gap-2 rounded-full
+         bg-gray-900 text-white text-sm font-semibold
+         px-5 py-2.5 shadow-lg
+         pointer-events-none
+         animate-[fadeInUp_0.2s_ease-out]
+         md:hidden"
+>
+  <svg class="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <path d="M16 10a4 4 0 0 1-8 0"/>
+  </svg>
+  {{ toastMessage }}
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════
      SHARED TEMPLATES — sin DOM propio, reutilizados por desktop y móvil
 ════════════════════════════════════════════════════════════════════ -->
@@ -212,7 +232,7 @@
         </ng-container>
         <ng-template #cambioBlock>
           <div class="flex justify-between text-sm text-accent">
-            <span>Cambio:</span>
+            <span>Vuelto:</span>
             <span class="font-mono font-bold">${{ fmt(-faltante) }}</span>
           </div>
         </ng-template>
@@ -262,13 +282,13 @@
      Móvil  : grid de 1 columna. El catálogo full-screen con barra.
      Desktop: grid de 12 columnas. Ambas columnas siempre visibles.
 ════════════════════════════════════════════════════════════════════ -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="flex flex-col md:flex-row md:items-start gap-6">
 
   <!-- ══════════════════════════════════════════════════════════════
        CATÁLOGO DE PRODUCTOS
   ═══════════════════════════════════════════════════════════════ -->
   <div
-    class="col-span-1 md:col-span-7 lg:col-span-8
+    class="w-full md:flex-1 md:min-w-0
            flex flex-col pb-20 md:pb-0
            rounded-lg border border-border bg-card text-card-foreground shadow-md"
   >
@@ -384,8 +404,8 @@
   ═══════════════════════════════════════════════════════════════ -->
   <div
     class="hidden md:flex md:flex-col
-           md:col-span-5 lg:col-span-4
-           md:sticky md:top-4 md:h-[calc(100vh-2rem)]
+           md:w-80 lg:w-96 md:flex-shrink-0
+           md:sticky md:top-4 md:h-[calc(100vh-7rem)]
            rounded-2xl border border-border bg-card text-card-foreground
            shadow-lg overflow-hidden"
   >
@@ -453,7 +473,7 @@
     </div>
 
     <!-- ── Body scrolleable ── -->
-    <div class="flex-1 overflow-y-auto p-4">
+    <div #cartScrollContainer class="flex-1 overflow-y-auto scroll-smooth p-4">
 
       <!-- Paso 1: lista de ítems -->
       <div *ngIf="desktopStep === 1">
@@ -741,7 +761,7 @@
   </div><!-- /zona de swipe -->
 
   <!-- Body del wizard: scrolleable, alterna entre pasos -->
-  <div class="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3">
+  <div #cartScrollContainer class="flex-1 overflow-y-auto overscroll-contain scroll-smooth p-4 space-y-3">
 
     <!-- Paso 1: lista de ítems -->
     <div *ngIf="checkoutStep === 1">

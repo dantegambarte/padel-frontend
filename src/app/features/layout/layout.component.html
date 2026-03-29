@@ -44,8 +44,9 @@
   <div class="flex flex-col flex-1 min-w-0">
     <app-toolbar [title]="currentPageTitle" [currentUser]="currentUser" (toggleMenu)="toggleSidebar()"></app-toolbar>
 
-    <main class="flex-1 overflow-y-auto scroll-smooth-mobile p-4 md:p-6">
-      <div class="mx-auto max-w-7xl">
+    <main class="flex-1 p-4 md:p-6"
+          [ngClass]="isSchedulePage ? 'overflow-hidden' : 'overflow-y-auto scroll-smooth-mobile'">
+      <div [ngClass]="isSchedulePage ? 'h-full' : 'mx-auto max-w-7xl'">
         <router-outlet></router-outlet>
       </div>
     </main>
