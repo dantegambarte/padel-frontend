@@ -10,12 +10,13 @@ import {
   UpdateCourtDto,
 } from '../../core/models/court.model';
 import { ToastService } from '../../core/services/toast.service';
+import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, CanComponentDeactivate {
   isLoading = true;
   isSubmitting = false;
 
@@ -45,6 +46,25 @@ export class SettingsComponent implements OnInit {
   globalPrice90       = 0;
   globalPrice120      = 0;
   globalTeacherPrice  = 0;
+
+  /** Snapshots de precios globales para detectar cambios no guardados. */
+  private savedGlobalPrice30      = 0;
+  private savedGlobalPrice60      = 0;
+  private savedGlobalPrice90      = 0;
+  private savedGlobalPrice120     = 0;
+  private savedGlobalTeacherPrice = 0;
+
+  /** `true` si los precios globales difieren del snapshot guardado. */
+  get isGlobalPricesDirty(): boolean {
+    if (!this.unifiedPricing) return false;
+    return (
+      this.globalPrice30      !== this.savedGlobalPrice30      ||
+      this.globalPrice60      !== this.savedGlobalPrice60      ||
+      this.globalPrice90      !== this.savedGlobalPrice90      ||
+      this.globalPrice120     !== this.savedGlobalPrice120     ||
+      this.globalTeacherPrice !== this.savedGlobalTeacherPrice
+    );
+  }
 
   /** `true` mientras el guardado unificado está en curso. */
   savingUnifiedPrices = false;
@@ -133,6 +153,12 @@ export class SettingsComponent implements OnInit {
     this.globalPrice90      = first.price90       ?? 0;
     this.globalPrice120     = first.price120      ?? 0;
     this.globalTeacherPrice = first.teacherPrice  ?? 0;
+    // Sincronizar snapshots para que el formulario inicie limpio
+    this.savedGlobalPrice30      = this.globalPrice30;
+    this.savedGlobalPrice60      = this.globalPrice60;
+    this.savedGlobalPrice90      = this.globalPrice90;
+    this.savedGlobalPrice120     = this.globalPrice120;
+    this.savedGlobalTeacherPrice = this.globalTeacherPrice;
   }
 
   /** Guarda el mismo set de precios en todas las canchas con una sola petición. */
@@ -156,6 +182,12 @@ export class SettingsComponent implements OnInit {
         next: (updated) => {
           const map = new Map(updated.map((c) => [c.id, c]));
           this.courts = this.courts.map((c) => map.get(c.id) ?? c);
+          // Actualizar snapshots → el formulario queda limpio tras guardar
+          this.savedGlobalPrice30      = this.globalPrice30;
+          this.savedGlobalPrice60      = this.globalPrice60;
+          this.savedGlobalPrice90      = this.globalPrice90;
+          this.savedGlobalPrice120     = this.globalPrice120;
+          this.savedGlobalTeacherPrice = this.globalTeacherPrice;
           this.toast.success(
             'Precios actualizados',
             `Precios aplicados a ${updated.length} ${updated.length === 1 ? 'cancha' : 'canchas'}`,
@@ -364,6 +396,15 @@ export class SettingsComponent implements OnInit {
         this.toast.error('Error al eliminar', Array.isArray(msg) ? msg.join(', ') : msg);
       },
     });
+  }
+
+  /**
+   * Requerido por CanComponentDeactivate.
+   * Retorna `false` si hay cambios en horarios O en precios globales sin guardar,
+   * lo que dispara el modal de confirmación del UnsavedChangesGuard.
+   */
+  canDeactivate(): boolean {
+    return !this.isDirty && !this.isGlobalPricesDirty;
   }
 
 }
