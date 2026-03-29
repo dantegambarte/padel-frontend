@@ -1,4 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
+import Swal from 'sweetalert2';
 
 import {
   FixedBookingsService,
@@ -7,7 +8,18 @@ import {
 } from '../../core/services/fixed-bookings.service';
 import { CourtsService } from '../../core/services/courts.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TeachersService } from '../../core/services/teachers.service';
 import { Court } from '../../core/models/court.model';
+import { Teacher } from '../../core/models/teacher.model';
+
+/** Dato de una celda de la grilla semanal. */
+type SlotData = {
+  booking: FixedBooking;
+  /** true = aquí empieza el turno (se renderiza); false = cubierta por span */
+  isStart: boolean;
+  /** Cantidad de filas de 30 min que debe abarcar la celda. */
+  rowSpan: number;
+};
 
 type FormState = {
   clientName: string;
@@ -16,9 +28,9 @@ type FormState = {
   hour: string;
   durationMinutes: number;
   courtId: string;
-  hasDeposit: boolean;
   startDate: string;
   notes: string;
+  teacherId: string;
 };
 
 const EMPTY_FORM = (): FormState => ({
@@ -28,9 +40,9 @@ const EMPTY_FORM = (): FormState => ({
   hour: '09:00',
   durationMinutes: 60,
   courtId: '',
-  hasDeposit: false,
   startDate: new Date().toISOString().slice(0, 10),
   notes: '',
+  teacherId: '',
 });
 
 @Component({
@@ -40,10 +52,11 @@ const EMPTY_FORM = (): FormState => ({
 export class FixedBookingsComponent implements OnInit {
   fixedBookings: FixedBooking[] = [];
   courts: Court[] = [];
+  teachers: Teacher[] = [];
   isLoading = true;
   isSubmitting = false;
   generatingId: string | null = null;
-  deactivatingId: string | null = null;
+  deletingId: string | null = null;
 
   isDialogOpen = false;
   editingId: string | null = null;
@@ -54,6 +67,21 @@ export class FixedBookingsComponent implements OnInit {
   searchTerm = '';
   filterDay = '';
   filterCourt = '';
+
+  // ── Vista ─────────────────────────────────────────────
+  activeTab: 'lista' | 'grilla' = 'lista';
+  private slotMap = new Map<string, SlotData>();
+  selectedFixedBooking: FixedBooking | null = null;
+
+  /** Paleta de colores por cancha (clases completas para que Tailwind las incluya). */
+  readonly COURT_COLORS: string[] = [
+    'bg-indigo-50 border-indigo-400 text-indigo-900',
+    'bg-violet-50 border-violet-400 text-violet-900',
+    'bg-sky-50 border-sky-400 text-sky-900',
+    'bg-teal-50 border-teal-400 text-teal-900',
+    'bg-amber-50 border-amber-400 text-amber-900',
+    'bg-rose-50 border-rose-400 text-rose-900',
+  ];
 
   readonly DAY_LABELS: Record<number, string> = {
     1: 'Lunes',
@@ -74,13 +102,17 @@ export class FixedBookingsComponent implements OnInit {
     { value: 120, label: '120 min' },
   ];
 
-  /** Slots válidos de 30 minutos entre 09:00 y 22:30. */
+  /** Slots válidos de 30 minutos: 09:00 → 23:30, luego 00:00 → 01:00 (madrugada). */
   readonly validHours: string[] = (() => {
     const slots: string[] = [];
-    for (let h = 9; h < 23; h++) {
+    for (let h = 9; h < 24; h++) {
       slots.push(`${String(h).padStart(2, '0')}:00`);
       slots.push(`${String(h).padStart(2, '0')}:30`);
     }
+    // Madrugada
+    slots.push('00:00');
+    slots.push('00:30');
+    slots.push('01:00');
     return slots;
   })();
 
@@ -102,10 +134,59 @@ export class FixedBookingsComponent implements OnInit {
     });
   }
 
+  /** Devuelve la clase CSS de color asignada a una cancha, rotando la paleta. */
+  courtColorClass(courtId: string): string {
+    const idx = this.courts.findIndex(c => c.id === courtId);
+    return this.COURT_COLORS[Math.max(0, idx) % this.COURT_COLORS.length];
+  }
+
+  /** Devuelve el dato de la celda (inicio o cobertura de span) o undefined si está libre. */
+  getSlotData(day: number, hour: string): SlotData | undefined {
+    return this.slotMap.get(`${day}-${hour}`);
+  }
+
+  /** Hora de fin calculada a partir de la hora de inicio y duración. */
+  getEndHour(booking: FixedBooking): string {
+    const [h, m] = booking.hour.split(':').map(Number);
+    const total = h * 60 + m + booking.durationMinutes;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  }
+
+  /** Precio del turno según la cancha y la duración. */
+  getBookingPrice(booking: FixedBooking): number | null {
+    const court = this.courts.find(c => c.id === booking.courtId);
+    if (!court) return null;
+    const map: Record<number, number> = {
+      30: court.price30, 60: court.price60,
+      90: court.price90, 120: court.price120,
+    };
+    return map[booking.durationMinutes] ?? null;
+  }
+
+  openDetail(booking: FixedBooking): void {
+    this.selectedFixedBooking = booking;
+  }
+
+  closeDetail(): void {
+    this.selectedFixedBooking = null;
+  }
+
+  /** Abre el diálogo de creación pre-poblado con día y hora desde la grilla. */
+  openCreateFromGrid(day: number, hour: string): void {
+    this.editingId = null;
+    this.form = EMPTY_FORM();
+    this.form.dayOfWeek = day;
+    this.form.hour = hour;
+    this.onDayOfWeekChange();
+    this.formError = '';
+    this.isDialogOpen = true;
+  }
+
   constructor(
     private fixedSvc: FixedBookingsService,
     private courtsSvc: CourtsService,
     private toast: ToastService,
+    private teachersSvc: TeachersService,
   ) {}
 
   ngOnInit(): void {
@@ -114,6 +195,7 @@ export class FixedBookingsComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.selectedFixedBooking) { this.closeDetail(); return; }
     if (this.isDialogOpen) this.closeDialog();
   }
 
@@ -167,9 +249,9 @@ export class FixedBookingsComponent implements OnInit {
       hour: item.hour,
       durationMinutes: item.durationMinutes,
       courtId: item.courtId,
-      hasDeposit: item.hasDeposit,
       startDate: item.startDate,
       notes: item.notes ?? '',
+      teacherId: item.teacherId ?? '',
     };
     this.formError = '';
     this.isDialogOpen = true;
@@ -204,9 +286,9 @@ export class FixedBookingsComponent implements OnInit {
       hour: this.form.hour,
       durationMinutes: this.form.durationMinutes,
       courtId: this.form.courtId,
-      hasDeposit: this.form.hasDeposit,
       startDate: this.form.startDate,
       notes: this.form.notes.trim() || undefined,
+      teacherId: this.form.teacherId || null,
     };
 
     const op = this.editingId
@@ -250,30 +332,39 @@ export class FixedBookingsComponent implements OnInit {
     });
   }
 
-  deactivate(item: FixedBooking): void {
-    this.deactivatingId = item.id;
-    this.fixedSvc.deactivate(item.id).subscribe({
-      next: () => {
-        this.toast.success('Turno fijo desactivado', item.clientName);
-        this.deactivatingId = null;
-        this.loadAll();
-      },
-      error: () => {
-        this.toast.error('Error', 'No se pudo desactivar el turno fijo.');
-        this.deactivatingId = null;
-      },
-    });
-  }
+  deleteCascade(item: FixedBooking): void {
+    Swal.fire({
+      title: '¡Advertencia! Borrado Permanente',
+      html: `Estás a punto de borrar el turno fijo de <strong>${item.clientName}</strong>.<br><br>
+             Esto eliminará <strong>todas</strong> las reservas individuales asociadas
+             a este turno fijo desde hoy en adelante.<br><br>
+             <span style="color:#dc2626;">Esta operación no se puede deshacer.</span>
+             ¿Deseas continuar?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, borrar permanentemente',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-  reactivate(item: FixedBooking): void {
-    this.fixedSvc.update(item.id, { isActive: true }).subscribe({
-      next: () => {
-        this.toast.success('Turno fijo reactivado', item.clientName);
-        this.loadAll();
-      },
-      error: () => {
-        this.toast.error('Error', 'No se pudo reactivar el turno fijo.');
-      },
+      this.deletingId = item.id;
+      this.fixedSvc.deleteFixedBookingCascade(item.id).subscribe({
+        next: (res) => {
+          this.toast.success(
+            'Turno fijo eliminado',
+            `${item.clientName} — ${res.deleted} reserva(s) futura(s) borrada(s).`,
+          );
+          this.deletingId = null;
+          this.loadAll();
+        },
+        error: () => {
+          this.toast.error('Error', 'No se pudo eliminar el turno fijo.');
+          this.deletingId = null;
+        },
+      });
     });
   }
 
@@ -281,9 +372,33 @@ export class FixedBookingsComponent implements OnInit {
     if (!item.phoneNumber) return;
     const phone = item.phoneNumber.replace(/\D/g, '');
     const text = encodeURIComponent(
-      `Hola ${item.clientName}! Te recordamos tu turno fijo los días ${this.dayLabel(item.dayOfWeek)} a las ${item.hour}hs en La Caldera. Queriamos saber si van a poder asistir esta semana. ¡Gracias!`,
+      `Hola ${item.clientName}! Te recordamos tu turno fijo los días *${this.dayLabel(item.dayOfWeek)}* a las *${item.hour}hs* en La Caldera Padel. Queriamos saber si van a poder asistir esta semana. ¡Gracias!`,
     );
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  }
+
+  private buildGrid(): void {
+    this.slotMap.clear();
+    for (const b of this.fixedBookings) {
+      if (!b.isActive) continue;
+      const startIdx = this.validHours.indexOf(b.hour);
+      if (startIdx === -1) continue;
+
+      const rowSpan = Math.ceil(b.durationMinutes / 30);
+
+      // Celda de inicio: se renderiza con span
+      this.slotMap.set(`${b.dayOfWeek}-${b.hour}`, { booking: b, isStart: true, rowSpan });
+
+      // Celdas cubiertas: se omiten en la grilla para no romper el layout
+      for (let i = 1; i < rowSpan; i++) {
+        const coveredIdx = startIdx + i;
+        if (coveredIdx < this.validHours.length) {
+          this.slotMap.set(`${b.dayOfWeek}-${this.validHours[coveredIdx]}`, {
+            booking: b, isStart: false, rowSpan: 0,
+          });
+        }
+      }
+    }
   }
 
   private loadAll(): void {
@@ -291,6 +406,7 @@ export class FixedBookingsComponent implements OnInit {
     this.fixedSvc.findAll().subscribe({
       next: (data) => {
         this.fixedBookings = data;
+        this.buildGrid();
         this.isLoading = false;
       },
       error: () => {
@@ -301,6 +417,11 @@ export class FixedBookingsComponent implements OnInit {
 
     this.courtsSvc.findAll().subscribe({
       next: (data) => (this.courts = data.filter((c) => c.isActive)),
+      error: () => {},
+    });
+
+    this.teachersSvc.findAll().subscribe({
+      next: (data) => (this.teachers = data),
       error: () => {},
     });
   }
