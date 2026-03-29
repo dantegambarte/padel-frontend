@@ -22,11 +22,12 @@ import { SessionAlertService } from '../services/session-alert.service';
 /**
  * Interceptor HTTP que:
  * 1. Adjunta el Bearer token a cada request saliente.
- * 2. Detecta errores 401/403 y los clasifica:
+ * 2. Detecta errores 401 y los clasifica:
  *    - SESSION_OVERRIDDEN → logout inmediato + alerta de dispositivo.
  *    - TOKEN_EXPIRED / refresh fallido → logout inmediato + alerta de expiración.
- *    - 403 Forbidden → logout inmediato + alerta de sesión.
  *    - 401 genérico → intenta renovar el token silenciosamente (refresh flow).
+ *    - 403 Forbidden → NO dispara logout. El usuario no tiene permiso pero su sesión
+ *      es válida. El error se propaga para que el componente lo maneje.
  *
  * COMPORTAMIENTO CLAVE: ante sesión inválida confirmada se llama a `authService.logout()`
  * de forma inmediata (antes de mostrar la alerta) para que el Router navegue al login
@@ -65,13 +66,8 @@ export class JwtInterceptor implements HttpInterceptor {
           return this.handle401Error(request, next, error);
         }
 
-        // 403 en rutas protegidas: sesión inválida o permisos caducos.
-        // Se fuerza logout inmediato en lugar de dejar la UI en estado indeterminado.
-        if (error.status === 403 && !isAuthEndpoint) {
-          this.forceLogout('TOKEN_EXPIRED');
-          return throwError(() => error);
-        }
-
+        // 403 en rutas protegidas: el usuario no tiene permisos pero su sesión ES válida.
+        // NO se dispara logout — propagar el error para que el componente lo maneje.
         return throwError(() => error);
       }),
     );

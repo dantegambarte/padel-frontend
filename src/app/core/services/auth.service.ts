@@ -11,9 +11,13 @@ import {
 
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 import { CourtsService } from './courts.service';
-import { ProductsService } from './products.service';
+import { FixedBookingsService } from './fixed-bookings.service';
 import { NotificationService } from './notification.service';
+import { ProductsService } from './products.service';
+import { TeachersService } from './teachers.service';
+import { UsersService } from './users.service';
 
 const TOKEN_KEY = 'padelsys_access_token';
 const REFRESH_KEY = 'padelsys_refresh_token';
@@ -45,9 +49,13 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private configService: ConfigService,
     private courtsService: CourtsService,
-    private productsService: ProductsService,
+    private fixedBookingsService: FixedBookingsService,
     private notificationService: NotificationService,
+    private productsService: ProductsService,
+    private teachersService: TeachersService,
+    private usersService: UsersService,
   ) {}
 
   /** Devuelve el usuario autenticado actualmente de forma sincrónica, o `null` si no hay sesión. */
@@ -137,10 +145,14 @@ export class AuthService {
     this.currentUserSubject.next(null);
 
     // ── Cachés en memoria ────────────────────────────────────────────────────
-    // Evita que datos de canchas/productos de la sesión anterior sean servidos
-    // a un usuario diferente antes de que la caché se invalide sola.
+    // Evita que datos de la sesión anterior sean servidos a un usuario diferente
+    // antes de que cada caché se invalide sola por mutación.
+    this.configService.clearCache();
     this.courtsService.clearCache();
+    this.fixedBookingsService.clearCache();
     this.productsService.clearCache();
+    this.teachersService.clearCache();
+    this.usersService.clearCache();
     this.notificationService.clearAllNotifications();
 
     this.router.navigate(['/auth/login']);
