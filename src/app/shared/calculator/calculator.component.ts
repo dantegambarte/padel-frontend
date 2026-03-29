@@ -106,10 +106,34 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   }
 
   backspace(): void {
-    if (this.waitingForOperand2 || this.justEvaluated) return;
-    this.currentInput = this.currentInput.length > 1
-      ? this.currentInput.slice(0, -1)
-      : '0';
+    if (this.justEvaluated) return;
+
+    // Operador recién ingresado, aún no se escribió el segundo número → deshace el operador.
+    if (this.waitingForOperand2) {
+      this.currentInput = this.previousInput || '0';
+      this.operator = '';
+      this.previousInput = '';
+      this.waitingForOperand2 = false;
+      this.expressionHistory = '';
+      return;
+    }
+
+    if (this.currentInput.length > 1) {
+      const sliced = this.currentInput.slice(0, -1);
+      // Evitar dejar solo '-' o '.' como estado inválido.
+      this.currentInput = (sliced === '-' || sliced === '.') ? '0' : sliced;
+      return;
+    }
+
+    // Queda un solo dígito y hay operador pendiente → transiciona a espera de operando 2,
+    // para que el siguiente backspace borre el operador (comportamiento calculadora de teléfono).
+    if (this.operator) {
+      this.currentInput = '0';
+      this.waitingForOperand2 = true;
+      this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${this.operator}`;
+    } else {
+      this.currentInput = '0';
+    }
   }
 
   setOperator(op: string): void {

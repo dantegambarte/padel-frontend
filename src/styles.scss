@@ -331,6 +331,13 @@ $radius: 0.5rem;
     outline-color: var(--ring);
   }
 
+  // Grilla de agenda: todos los descendientes heredan el cursor del contenedor
+  // (cursor-grab / cursor-grabbing). Está en @layer base para que las utility
+  // classes de Tailwind (cursor-pointer en tarjetas, botones, slots) lo sobreescriban.
+  .scroll-hint-x * {
+    cursor: inherit;
+  }
+
   html {
     overflow: hidden;
     height: 100vh;
