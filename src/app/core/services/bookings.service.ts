@@ -79,7 +79,7 @@ export class BookingsService {
    * @param dto - Cancha, fecha y hora de destino.
    */
   move(id: string, dto: RescheduleBookingDto): Observable<BookingResponse> {
-    return this.http.post<BookingResponse>(`${this.url}/${id}/move`, dto);
+    return this.http.patch<BookingResponse>(`${this.url}/${id}`, dto);
   }
 
   /**
@@ -89,7 +89,7 @@ export class BookingsService {
    * @param dto - Cancha, fecha y hora de destino.
    */
   duplicate(id: string, dto: RescheduleBookingDto): Observable<BookingResponse> {
-    return this.http.post<BookingResponse>(`${this.url}/${id}/duplicate`, dto);
+    return this.http.post<BookingResponse>(this.url, { ...dto, sourceId: id });
   }
 
   /**
@@ -97,6 +97,6 @@ export class BookingsService {
    * @param id - ID de la reserva.
    */
   confirm(id: string): Observable<BookingResponse> {
-    return this.http.patch<BookingResponse>(`${this.url}/${id}/confirm`, {});
+    return this.http.patch<BookingResponse>(`${this.url}/${id}`, { isConfirmed: true });
   }
 }

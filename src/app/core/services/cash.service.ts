@@ -262,7 +262,7 @@ export class CashService {
    */
   open(dto: OpenCashDto): Observable<{ id: string; date: string; status: string }> {
     return this.http.post<{ id: string; date: string; status: string }>(
-      `${this.url}/open`,
+      `${this.url}/sessions`,
       { initialBalance: dto.initialBalance, ...(dto.notes ? { notes: dto.notes } : {}) },
     ).pipe(tap(() => this.clearCurrentCache()));
   }
@@ -304,7 +304,7 @@ export class CashService {
    * Lanza 409 si hay algún turno OPEN.
    */
   closeDay(): Observable<DailySummaryResponse> {
-    return this.http.post<DailySummaryResponse>(`${this.url}/close-day`, {}).pipe(
+    return this.http.post<DailySummaryResponse>(`${this.url}/daily-closures`, {}).pipe(
       tap(() => this.clearCurrentCache()),
     );
   }
@@ -317,7 +317,7 @@ export class CashService {
       cashCounted: Number(dto.efectivoContado),
       ...(dto.notas !== undefined && dto.notas !== '' ? { notes: dto.notas } : {}),
     };
-    return this.http.post<CloseCashResponse>(`${this.url}/close`, payload).pipe(
+    return this.http.patch<CloseCashResponse>(`${this.url}/sessions/current`, payload).pipe(
       tap(() => this.clearCurrentCache()),
     );
   }

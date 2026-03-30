@@ -90,18 +90,20 @@ export class ReportsService {
 
   constructor(private http: HttpClient) {}
 
-  /** KPIs del día de hoy para el Dashboard Admin (turnos, ingresos, ocupación, productos). */
-  getTodayKpis(): Observable<TodayKpis> {
+  /** KPIs de la sesión de caja activa para el Dashboard Admin (turnos, ingresos, ocupación, productos). */
+  getTodayKpis(date?: string): Observable<TodayKpis> {
     if (this.kpisCache$) return this.kpisCache$;
-    this.kpisCache$ = this.http.get<TodayKpis>(`${this.url}/today-kpis`).pipe(shareReplay(1));
+    const params = date ? new HttpParams().set('date', date) : undefined;
+    this.kpisCache$ = this.http.get<TodayKpis>(`${this.url}/kpis`, { params }).pipe(shareReplay(1));
     setTimeout(() => { this.kpisCache$ = null; }, this.KPIS_TTL_MS);
     return this.kpisCache$;
   }
 
-  /** Ingresos de los últimos 7 días desglosados en Efectivo y Transferencia. */
-  getLast7DaysRevenue(): Observable<DailyRevenue[]> {
+  /** Ingresos de los últimos N días desglosados en Efectivo y Transferencia. */
+  getLast7DaysRevenue(days = 7): Observable<DailyRevenue[]> {
     if (this.last7DaysCache$) return this.last7DaysCache$;
-    this.last7DaysCache$ = this.http.get<DailyRevenue[]>(`${this.url}/last7days`).pipe(shareReplay(1));
+    const params = new HttpParams().set('days', days.toString());
+    this.last7DaysCache$ = this.http.get<DailyRevenue[]>(`${this.url}/revenue/trend`, { params }).pipe(shareReplay(1));
     setTimeout(() => { this.last7DaysCache$ = null; }, this.LAST7DAYS_TTL_MS);
     return this.last7DaysCache$;
   }
@@ -206,7 +208,7 @@ export class ReportsService {
       ? this.buildParams({ date })
       : this.buildParams({ dateFrom, dateTo });
     return this.http.get<TransactionExport[]>(
-      `${this.url}/transactions/export`,
+      `${this.url}/transactions`,
       { params },
     );
   }
