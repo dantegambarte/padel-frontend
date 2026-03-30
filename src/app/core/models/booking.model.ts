@@ -53,13 +53,15 @@ export interface CreateBookingDto {
   courtId: string;
   date: string;
   hour: string;
-  clientName: string;
-  priceType: PriceType;
-  durationMinutes: number;
-  amountCash: number;
-  amountTransfer: number;
-  items: { productId: string; quantity: number }[];
+  clientName?: string;
+  priceType?: PriceType;
+  durationMinutes?: number;
+  amountCash?: number;
+  amountTransfer?: number;
+  items?: { productId: string; quantity: number }[];
   teacherId?: string | null;
+  /** ID del turno origen para duplicación. Cuando se envía, clientName/priceType/durationMinutes/items se heredan. */
+  sourceId?: string;
 }
 
 /** Payload para transicionar el estado de una reserva. */
@@ -67,13 +69,21 @@ export interface UpdateBookingStatusDto {
   status: BookingStatus;
 }
 
-/** Payload para actualizar el pago, los ítems o el estado de una reserva existente. */
+/** Payload para actualizar el pago, los ítems, el estado, la posición o la confirmación de una reserva. */
 export interface UpdateBookingDto {
   status?: BookingStatus;
   clientName?: string;
   amountCash?: number;
   amountTransfer?: number;
   items?: { productId: string; quantity: number }[];
+  /** Mover turno: cancha destino */
+  courtId?: string;
+  /** Mover turno: fecha destino (YYYY-MM-DD) */
+  date?: string;
+  /** Mover turno: hora destino (HH:MM) */
+  hour?: string;
+  /** Confirmar asistencia de turno fijo */
+  isConfirmed?: boolean;
 }
 
 /** Payload compartido para Mover y Duplicar una reserva. */
