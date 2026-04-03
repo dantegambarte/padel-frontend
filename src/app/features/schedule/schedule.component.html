@@ -208,6 +208,7 @@
                     [style.height.px]="getBookingBlockHeight(booking)"
                     cdkDrag
                     [cdkDragData]="booking"
+                    [cdkDragDisabled]="booking.status === 'completed'"
                     (cdkDragStarted)="onDragStarted()"
                     (cdkDragEnded)="onDragEnded()"
                   >
@@ -287,8 +288,9 @@
                         </div>
                       </ng-container>
 
-                      <!-- Handle drag — solo desktop -->
+                      <!-- Handle drag — solo desktop, oculto para turnos completados -->
                       <div
+                        *ngIf="booking.status !== 'completed'"
                         cdkDragHandle
                         title="Arrastrar para mover"
                         class="hidden md:flex absolute bottom-1 left-1/2 -translate-x-1/2
@@ -508,7 +510,9 @@
           </div>
           <p class="text-xs text-muted-foreground">
             De <span class="font-semibold">{{ selectedSlot?.hour }}hs</span> a
-            <span class="font-semibold">{{ endHour }}hs</span> — Precio cancha:
+            <span class="font-semibold">{{ endHour }}hs</span> —
+            <span *ngIf="activeShift" class="text-primary font-medium">{{ activeShift.name }}</span>
+            <span *ngIf="!activeShift">Precio base</span>:
             <span class="font-semibold">${{ fmt(courtPrice) }}</span>
           </p>
         </div>
@@ -715,10 +719,48 @@
           </div>
         </div>
 
-        <div
-          class="space-y-4 rounded-lg border border-accent/50 bg-accent/5 p-4"
-        >
-          
+        <!-- ── Alerta: sin tarifa configurada para este horario ──────── -->
+        <div *ngIf="isTariffMissing"
+             class="flex flex-col gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4
+                    dark:border-yellow-700/50 dark:bg-yellow-950/20">
+          <div class="flex items-start gap-3">
+            <svg class="h-5 w-5 shrink-0 text-yellow-600 mt-0.5" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-yellow-800 dark:text-yellow-300">
+                Sin tarifa configurada para este horario
+              </p>
+              <p class="mt-0.5 text-xs text-yellow-700 dark:text-yellow-400">
+                No existe ninguna franja horaria activa que cubra
+                <strong>{{ selectedSlot?.hour }}hs</strong> del día seleccionado.
+                No se puede registrar la reserva sin un precio validado por el motor de tarifas.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="goToTariffsConfig()"
+            class="inline-flex items-center justify-center gap-2 self-start rounded-md border border-yellow-400
+                   bg-white px-3 py-1.5 text-xs font-semibold text-yellow-800 shadow-sm transition-colors
+                   hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400
+                   dark:border-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21.54 10H22a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-.46a10 10 0 0 1-2.47 5.07l.33.33a2 2 0 0 1 0 2.83v0a2 2 0 0 1-2.83 0l-.33-.33A10 10 0 0 1 14 21.54V22a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2v-.46a10 10 0 0 1-5.07-2.47l-.33.33a2 2 0 0 1-2.83 0v0a2 2 0 0 1 0-2.83l.33-.33A10 10 0 0 1 2.46 14H2a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2h.46a10 10 0 0 1 2.47-5.07l-.33-.33a2 2 0 0 1 0-2.83v0a2 2 0 0 1 2.83 0l.33.33A10 10 0 0 1 10 2.46V2a2 2 0 0 1 2-2v0a2 2 0 0 1 2 2v.46a10 10 0 0 1 5.07 2.47l.33-.33a2 2 0 0 1 2.83 0v0a2 2 0 0 1 0 2.83l-.33.33z"/>
+            </svg>
+            Ir a configurar Tarifas
+          </button>
+        </div>
+
+        <!-- ── Sección de pago (oculta si no hay tarifa) ──────────── -->
+        <div *ngIf="!isTariffMissing"
+             class="space-y-4 rounded-lg border border-accent/50 bg-accent/5 p-4">
+
           <div class="flex items-center justify-between text-lg font-bold">
             <span>Total a Pagar:</span>
             <span>${{ fmt(totalReserva) }}</span>
@@ -740,10 +782,7 @@
               />
             </div>
             <div class="space-y-2">
-              <label
-                for="transferencia"
-                class="text-sm font-medium leading-none"
-              >
+              <label for="transferencia" class="text-sm font-medium leading-none">
                 Monto por Transferencia
               </label>
               <input
@@ -758,10 +797,7 @@
             </div>
           </div>
 
-          <div
-            [ngClass]="balanceClass"
-            class="rounded-lg p-3 text-center text-sm font-semibold"
-          >
+          <div [ngClass]="balanceClass" class="rounded-lg p-3 text-center text-sm font-semibold">
             {{ balanceText }}
           </div>
         </div>
@@ -771,14 +807,14 @@
         <button
           type="button"
           (click)="closeDialog()"
-          class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Cancelar
         </button>
         <button
           type="button"
           (click)="saveBooking()"
-          [disabled]="isSaving"
+          [disabled]="isSaving || isTariffMissing"
           class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
           <ng-container *ngIf="isSaving; else guardarLabel2">
@@ -1279,7 +1315,10 @@
         <button *ngIf="canSplitAccount"
           type="button" (click)="saveDetailChanges()"
           [disabled]="isSavingDetail || isAutoSavingItems"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+          [ngClass]="isCashRegisterOpen
+            ? 'bg-indigo-600 hover:bg-indigo-700'
+            : 'bg-amber-600 hover:bg-amber-700'"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-lg text-white px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
           <ng-container *ngIf="isSavingDetail; else registrarLabel">
             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -1291,7 +1330,7 @@
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
-            Registrar Pago
+            {{ isCashRegisterOpen ? 'Registrar Pago' : 'Caja Cerrada (Clic para abrir)' }}
           </ng-template>
         </button>
 
@@ -1408,7 +1447,7 @@
       <button
         type="button"
         (click)="confirmDialogCancel(); $event.stopPropagation()"
-        class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Volver
       </button>

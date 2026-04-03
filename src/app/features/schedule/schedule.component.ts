@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, forkJoin, timer, of } from 'rxjs';
 import { finalize, filter, take, catchError } from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -13,8 +13,11 @@ import { ToastService } from '../../core/services/toast.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { FixedBookingsService } from '../../core/services/fixed-bookings.service';
 import { TeachersService } from '../../core/services/teachers.service';
+import { CashService } from '../../core/services/cash.service';
 import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
+import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
+import { PricingShift } from '../../core/models/pricing-shift.model';
 
 import { Court } from '../../core/models/court.model';
 import { Product } from '../../core/models/product.model';
@@ -55,6 +58,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   courts: Court[] = [];
   allProducts: Product[] = [];
   teachers: Teacher[] = [];
+  pricingShifts: PricingShift[] = [];
   isTeacherBooking = false;
   selectedTeacherId: string | null = null;
 
@@ -218,6 +222,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   private sub = new Subscription();
 
+  /**
+   * Estado de la caja en tiempo real.
+   * Default `true` (optimista) para no bloquear el panel si la red tarda.
+   * Se actualiza en `ngOnInit` con la respuesta real del servidor.
+   */
+  isCashRegisterOpen = true;
+
   constructor(
     private authService: AuthService,
     private courtsService: CourtsService,
@@ -231,12 +242,33 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fixedBookingsService: FixedBookingsService,
     private teachersService: TeachersService,
+    private cashService: CashService,
+    private router: Router,
+    private pricingShiftsService: PricingShiftsService,
   ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
     this.startReminderTimer();
     this.listenToDateQueryParam();
+    this.checkCashStatus();
+  }
+
+  /**
+   * Consulta el estado de la caja al montar el componente.
+   * Reutiliza el caché de 10 s de CashService para no generar peticiones extras.
+   */
+  private checkCashStatus(): void {
+    this.sub.add(
+      this.cashService.getCurrent().subscribe({
+        next: (cash) => {
+          this.isCashRegisterOpen = !cash.isClosed && !cash.noSession;
+        },
+        error: () => {
+          this.isCashRegisterOpen = true;
+        },
+      }),
+    );
   }
 
   /**
@@ -392,18 +424,69 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
   }
 
-  /** Precio de la cancha según la cancha seleccionada y la duración. */
+  /** Convierte una hora 'HH:mm' a minutos totales desde medianoche. */
+  private timeToMinutes(time: string): number {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  /**
+   * Franja horaria activa que coincide con la fecha, hora y duración seleccionadas.
+   * Devuelve `null` si no hay franja configurada (fallback a precios de cancha).
+   */
+  get activeShift(): PricingShift | null {
+    if (!this.selectedSlot || !this.pricingShifts.length) return null;
+    const [year, month, day] = this.selectedDate.split('-').map(Number);
+    const dayOfWeek = new Date(year, month - 1, day).getDay();
+    const bookingMin = this.timeToMinutes(this.selectedSlot.hour);
+    return (
+      this.pricingShifts.find((s) => {
+        const days = (s.daysOfWeek as number[]).map(Number);
+        if (!days.includes(dayOfWeek)) return false;
+        const startMin = this.timeToMinutes(s.startTime);
+        const endMin   = this.timeToMinutes(s.endTime);
+        // Franja normal (mismo día) vs. franja que cruza medianoche
+        return startMin <= endMin
+          ? bookingMin >= startMin && bookingMin < endMin
+          : bookingMin >= startMin || bookingMin < endMin;
+      }) ?? null
+    );
+  }
+
+  /**
+   * True cuando hay un slot seleccionado pero ninguna franja cubre ese día/hora.
+   * Indica que no hay precio válido configurado y el guardado debe bloquearse.
+   */
+  get isTariffMissing(): boolean {
+    return !!this.selectedSlot && this.activeShift === null;
+  }
+
+  /**
+   * Cierra el modal y navega a la pantalla de configuración de tarifas.
+   * Permite al operador resolver la ausencia de franja sin perder contexto.
+   */
+  goToTariffsConfig(): void {
+    this.closeDialog();
+    this.router.navigate(['/app/pricing-shifts']);
+  }
+
+  /** Precio de la cancha según franja dinámica activa, con fallback a precios estáticos. */
   get courtPrice(): number {
     if (!this.selectedSlot) return 0;
-    const c = this.selectedSlot.court;
-    if (this.isTeacherBooking) return Number(c.teacherPrice) || 0;
-    switch (this.durationMinutes) {
-      case 30:  return Number(c.price30)  || 0;
-      case 60:  return Number(c.price60)  || 0;
-      case 90:  return Number(c.price90)  || 0;
-      case 120: return Number(c.price120) || 0;
-      default:  return Number(c.price60)  || 0;
+    const shift = this.activeShift;
+    if (shift) {
+      if (this.isTeacherBooking) {
+        return Number(shift.teacherPricePerHour) * (this.durationMinutes / 60);
+      }
+      switch (this.durationMinutes) {
+        case 30:  return Number(shift.price30min)  || 0;
+        case 90:  return Number(shift.price90min)  || 0;
+        case 120: return Number(shift.price120min) || 0;
+        default:  return Number(shift.price60min)  || 0;
+      }
     }
+    // Sin franja horaria activa → precio 0 (el operador deberá ajustarlo).
+    return 0;
   }
 
   /** Hora de fin calculada a partir del slot seleccionado y la duración. */
@@ -461,12 +544,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       forkJoin({
-        courts:   this.courtsService.findAll(),
-        products: this.productsService.findAll(),
-        config:   this.configService.getAll().pipe(catchError(() => of([]))),
-        teachers: this.teachersService.findAll().pipe(catchError(() => of([]))),
+        courts:        this.courtsService.findAll(),
+        products:      this.productsService.findAll(),
+        config:        this.configService.getAll().pipe(catchError(() => of([]))),
+        teachers:      this.teachersService.findAll().pipe(catchError(() => of([]))),
+        pricingShifts: this.pricingShiftsService.getActive().pipe(catchError(() => of([]))),
       }).subscribe({
-        next: ({ courts, products, config, teachers }) => {
+        next: ({ courts, products, config, teachers, pricingShifts }) => {
           const cfgMap = new Map(config.map((e) => [e.key, e.value]));
           if (cfgMap.has('hora_apertura')) this.horarioApertura = cfgMap.get('hora_apertura')!;
           if (cfgMap.has('hora_cierre'))   this.horarioCierre   = cfgMap.get('hora_cierre')!;
@@ -475,6 +559,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.courts = courts.filter((c) => c.isActive);
           this.allProducts = products.filter((p) => p.isActive);
           this.teachers = teachers.filter((t: Teacher) => t.isActive);
+          this.pricingShifts = pricingShifts as PricingShift[];
           this.loadBookings();
         },
         error: () => {
@@ -1145,6 +1230,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.isCashRegisterOpen) {
+      Swal.fire({
+        title: '¡Caja Cerrada!',
+        text: 'Necesitas abrir un turno en la caja para poder registrar cobros.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Abrir Caja',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4f46e5',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/app/cash-register']);
+        }
+      });
+      return;
+    }
+
     this.isSaving = true;
 
     // ── Modo Turno Fijo ──────────────────────────────────────────────────────
@@ -1223,9 +1325,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             this.loadBookings();
           } else if (err.error?.errorCode === 'CAJA_CERRADA') {
             Swal.fire({
-              icon: 'error',
-              title: 'Caja Cerrada',
-              text: 'Por favor, ve al módulo de Caja y realiza la apertura de tu turno para poder cobrar.',
+              icon: 'warning',
+              title: '¡Caja Cerrada!',
+              text: 'Necesitas abrir un turno en la caja para poder registrar cobros.',
+              showCancelButton: true,
+              confirmButtonText: 'Ir a Abrir Caja',
+              cancelButtonText: 'Cancelar',
+              confirmButtonColor: '#4f46e5',
+            }).then((result) => {
+              if (result.isConfirmed) {
+                this.router.navigate(['/app/cash-register']);
+              }
             });
           } else if (err.status === 400) {
             this.toast.error('Stock insuficiente', err.error?.message ?? 'Verificá el stock de productos.');
@@ -1239,6 +1349,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Registra el pago (efectivo/transferencia) SIN cambiar estado ni items. */
   saveDetailChanges(): void {
+    if (!this.isCashRegisterOpen) {
+      Swal.fire({
+        title: '¡Caja Cerrada!',
+        text: 'Necesitas abrir un turno en la caja para poder registrar pagos.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Abrir Caja',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4f46e5',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/app/cash-register']);
+        }
+      });
+      return;
+    }
+
     if (!this.selectedBooking || this.isSavingDetail) return;
     this.isSavingDetail = true;
 
@@ -1878,6 +2005,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (event.previousContainer === event.container) return;
 
     const booking = event.item.data as BookingResponse;
+    if (booking.status === 'completed') return;
     const target = event.container.data;
 
     this.rescheduleSourceId = booking.id;
