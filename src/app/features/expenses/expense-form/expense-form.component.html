@@ -1,0 +1,173 @@
+<!-- Backdrop -->
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+  (click)="onCancel()"
+>
+  <!-- Panel del modal (detiene propagación para no cerrar al hacer click dentro) -->
+  <div
+    class="relative w-full max-w-md rounded-lg border bg-background shadow-xl"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h2 class="text-lg font-semibold">
+        {{ isEditMode ? 'Editar Egreso' : 'Nuevo Egreso' }}
+      </h2>
+      <button
+        type="button"
+        (click)="onCancel()"
+        class="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        aria-label="Cerrar"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Formulario -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="px-6 py-5 space-y-4">
+
+      <!-- Monto -->
+      <div class="space-y-1">
+        <label for="amount" class="block text-sm font-medium">Monto <span class="text-destructive">*</span></label>
+        <input
+          id="amount"
+          type="number"
+          step="0.01"
+          min="0.01"
+          formControlName="amount"
+          placeholder="0.00"
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          [class.border-destructive]="hasError('amount', 'required') || hasError('amount', 'min')"
+        />
+        <p *ngIf="hasError('amount', 'required')" class="text-xs text-destructive">El monto es obligatorio.</p>
+        <p *ngIf="hasError('amount', 'min')"      class="text-xs text-destructive">El monto debe ser mayor a cero.</p>
+      </div>
+
+      <!-- Descripción -->
+      <div class="space-y-1">
+        <label for="description" class="block text-sm font-medium">Descripción <span class="text-destructive">*</span></label>
+        <input
+          id="description"
+          type="text"
+          formControlName="description"
+          placeholder="Ej: Compra de pelotas"
+          maxlength="255"
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          [class.border-destructive]="hasError('description', 'required')"
+        />
+        <p *ngIf="hasError('description', 'required')" class="text-xs text-destructive">La descripción es obligatoria.</p>
+      </div>
+
+      <!-- Categoría -->
+      <div class="space-y-1">
+        <label for="category" class="block text-sm font-medium">Categoría <span class="text-destructive">*</span></label>
+        <select
+          id="category"
+          formControlName="category"
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <!-- Método de pago -->
+      <div class="space-y-1">
+        <label for="paymentMethod" class="block text-sm font-medium">Método de pago <span class="text-destructive">*</span></label>
+        <select
+          id="paymentMethod"
+          formControlName="paymentMethod"
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option *ngFor="let m of paymentMethods" [value]="m">{{ m }}</option>
+        </select>
+        <p class="text-xs text-muted-foreground">
+          Si el método es <strong>Efectivo</strong>, el egreso se vinculará a la caja activa e impactará en el Cierre Z.
+        </p>
+      </div>
+
+      <!-- Fecha -->
+      <div class="space-y-1">
+        <label for="date" class="block text-sm font-medium">Fecha <span class="text-destructive">*</span></label>
+        <input
+          id="date"
+          type="date"
+          formControlName="date"
+          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          [class.border-destructive]="hasError('date', 'required')"
+        />
+        <p *ngIf="hasError('date', 'required')" class="text-xs text-destructive">La fecha es obligatoria.</p>
+      </div>
+
+      <!-- Error genérico del servidor -->
+      <div *ngIf="serverError" class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        {{ serverError }}
+      </div>
+
+      <!-- Acciones principales -->
+      <div class="flex gap-3 pt-2">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="flex-1 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="submitting || showOpenCashPanel"
+          class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg *ngIf="submitting" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          {{ submitting ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Registrar Egreso') }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal: Caja Cerrada ── -->
+<div
+  *ngIf="showOpenCashPanel"
+  class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+>
+  <div class="relative w-full max-w-sm rounded-xl bg-background shadow-xl p-6 space-y-4 text-center">
+
+    <!-- Ícono -->
+    <div class="flex justify-center">
+      <div class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-400 text-amber-500">
+        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+    </div>
+
+    <h3 class="text-lg font-semibold">¡Caja Cerrada!</h3>
+    <p class="text-sm text-muted-foreground">
+      Necesitás abrir un turno en la caja para poder registrar egresos en efectivo.
+    </p>
+
+    <!-- Botones -->
+    <div class="flex gap-3 pt-2">
+      <button
+        type="button"
+        (click)="cancelarAperturaCaja()"
+        class="flex-1 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="irAbrirCaja()"
+        class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+      >
+        Ir a Abrir Caja
+      </button>
+    </div>
+
+  </div>
+</div>
