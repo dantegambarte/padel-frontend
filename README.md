@@ -1,4 +1,4 @@
-# La Caldera — Sistema de Gestión de Canchas de Padel
+# PadelSys — Sistema de Gestión de Canchas de Padel
 
 Frontend desarrollado en **Angular 15** con **TailwindCSS** para la gestión integral de un club de padel: reservas de canchas, punto de venta, cierre de caja, inventario, reportes y administración de usuarios.
 
