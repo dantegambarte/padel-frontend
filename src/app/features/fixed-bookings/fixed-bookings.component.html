@@ -9,7 +9,7 @@
     <button
       type="button"
       (click)="openCreateDialog()"
-      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+      class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
     >
       <!-- Plus icon -->
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -598,11 +598,11 @@
     <!-- Footer -->
     <div class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
       <button type="button" (click)="closeDialog()"
-              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              class="rounded-lg border border-input bg-transparent px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors">
         Cancelar
       </button>
       <button type="button" (click)="submitForm()" [disabled]="isSubmitting"
-              class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors">
         {{ isSubmitting ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear turno fijo') }}
       </button>
     </div>
