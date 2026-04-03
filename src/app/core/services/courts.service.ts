@@ -57,15 +57,6 @@ export class CourtsService {
     );
   }
 
-  /**
-   * Actualiza los precios de múltiples canchas en una sola petición e invalida la caché.
-   */
-  bulkUpdatePrices(payload: { courtIds: string[]; price30: number; price60: number; price90: number; price120: number }): Observable<Court[]> {
-    return this.http.patch<Court[]>(`${this.url}/bulk-prices`, payload).pipe(
-      tap(() => this.clearCache()),
-    );
-  }
-
   /** Elimina una cancha por ID e invalida la caché. */
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`).pipe(
