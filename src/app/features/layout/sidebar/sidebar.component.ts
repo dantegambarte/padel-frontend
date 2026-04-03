@@ -101,6 +101,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
       roles: ['admin'],
     },
     {
+      id: 'expenses',
+      label: 'Egresos',
+      icon: 'money-off',
+      route: '/app/expenses',
+      roles: ['admin'],   // CAPA 1 VISUAL: solo visible para administradores
+    },
+    {
+      id: 'pricing-shifts',
+      label: 'Tarifas',
+      icon: 'tag',
+      route: '/app/pricing-shifts',
+      roles: ['admin'],
+    },
+    {
       id: 'settings',
       label: 'Configuración',
       icon: 'settings',
