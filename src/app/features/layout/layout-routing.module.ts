@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { LayoutComponent } from './layout.component';
+import { AdminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
   {
@@ -82,6 +83,26 @@ const routes: Routes = [
         loadChildren: () =>
           import('../account/account.module').then((m) => m.AccountModule),
         data: { title: 'Mi Cuenta' },
+      },
+
+      // ── Egresos — Solo Administrador (CAPA 2: Guard de ruta) ──────────────
+      {
+        path: 'expenses',
+        loadChildren: () =>
+          import('../expenses/expenses.module').then((m) => m.ExpensesModule),
+        canActivate: [AdminGuard],
+        data: { title: 'Egresos' },
+      },
+
+      // ── Franjas Horarias de Precios — Solo Administrador ─────────────────
+      {
+        path: 'pricing-shifts',
+        loadChildren: () =>
+          import('../pricing-shifts/pricing-shifts.module').then(
+            (m) => m.PricingShiftsModule,
+          ),
+        canActivate: [AdminGuard],
+        data: { title: 'Franjas Horarias' },
       },
     ],
   },

@@ -13,7 +13,34 @@ interface ProductForm {
   salePrice: string;
   stock: string;
   isFeatured: boolean;
+  icon: string;
 }
+
+const ICON_OPTIONS = [
+  { value: 'water_bottle',  label: 'Bebidas / Gatorade' },
+  { value: 'lunch_dining',  label: 'Comida / Sándwiches' },
+  { value: 'sports_tennis', label: 'Paletas / Deporte' },
+  { value: 'apparel',       label: 'Indumentaria' },
+  { value: 'inventory_2',   label: 'Otro / Genérico' },
+];
+
+/** Devuelve el icono sugerido según palabras clave del nombre de categoría. */
+function iconForCategory(categoryName: string): string {
+  const n = categoryName.toLowerCase();
+  if (/bebida|agua|gatorade|jugo|isotónico|isotonico|refresco|energizante|soda/.test(n)) return 'water_bottle';
+  if (/comida|sandwich|sándwich|snack|lunch|alimento|food/.test(n))                      return 'lunch_dining';
+  if (/paleta|raqueta|alquiler|pelota|deporte|sport|equipo/.test(n))                     return 'sports_tennis';
+  if (/ropa|indumentaria|remera|camiseta|short|calzado|apparel/.test(n))                 return 'apparel';
+  return 'inventory_2';
+}
+
+const ICON_COLORS: Record<string, { bg: string; text: string }> = {
+  water_bottle:  { bg: 'bg-sky-100',     text: 'text-sky-600'     },
+  lunch_dining:  { bg: 'bg-amber-100',   text: 'text-amber-600'   },
+  sports_tennis: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+  apparel:       { bg: 'bg-violet-100',  text: 'text-violet-600'  },
+  inventory_2:   { bg: 'bg-slate-100',   text: 'text-slate-500'   },
+};
 
 type DialogMode = 'create' | 'edit' | 'view';
 
@@ -40,6 +67,10 @@ export class ProductsComponent implements OnInit {
   form: ProductForm = this.emptyForm();
 
   newCategoryName = '';
+  /** Opciones de iconos predefinidas para el selector del formulario. */
+  readonly iconOptions = ICON_OPTIONS;
+  /** Mapa de colores expuesto al template para el preview del modal. */
+  readonly ICON_COLORS = ICON_COLORS;
   /** Campos que fueron "tocados" para mostrar errores inline. */
   formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
 
@@ -60,12 +91,29 @@ export class ProductsComponent implements OnInit {
     return (cat?.name ?? '').toLowerCase().includes('alquiler');
   }
 
+  /**
+   * `true` cuando el producto pertenece a la categoría "Alquileres".
+   * Usado en la tabla para mostrar ∞ en lugar del stock numérico.
+   */
+  isRentalProduct(product: Product): boolean {
+    return (product.category?.name ?? '').toLowerCase().includes('alquiler');
+  }
+
   /** Llamado desde el template cuando el select de categoría cambia. */
   onCategoryChange(): void {
     if (this.isRentalCategory) {
       this.form.costPrice = '0';
       this.form.stock = '0';
     }
+
+    // Autocompletar icono según la categoría seleccionada
+    const categoryName = this.isNewCategory
+      ? this.newCategoryName.trim()
+      : (this.categories.find((c) => c.id === this.form.category)?.name ?? '');
+    if (categoryName) {
+      this.form.icon = iconForCategory(categoryName);
+    }
+
     this.formTouched.category = true;
   }
 
@@ -225,6 +273,7 @@ export class ProductsComponent implements OnInit {
       salePrice: product.salePrice.toString(),
       stock: product.stock.toString(),
       isFeatured: product.isFeatured,
+      icon: product.icon || 'inventory_2',
     };
     this.isDialogOpen = true;
   }
@@ -244,6 +293,7 @@ export class ProductsComponent implements OnInit {
       salePrice: product.salePrice.toString(),
       stock: product.stock.toString(),
       isFeatured: product.isFeatured,
+      icon: product.icon || 'inventory_2',
     };
     this.isDialogOpen = true;
   }
@@ -328,6 +378,7 @@ export class ProductsComponent implements OnInit {
       salePrice: parseFloat(this.form.salePrice),
       stock: rental ? 0 : parseInt(this.form.stock, 10),
       isFeatured: this.form.isFeatured,
+      icon: this.form.icon || 'inventory_2',
     };
 
     const request$ = this.editingProductId
@@ -345,6 +396,9 @@ export class ProductsComponent implements OnInit {
           this.products = [...this.products, saved];
           this.toast.success('Producto agregado', `${saved.name} se agregó al inventario`);
         }
+        this.products = [...this.products].sort((a, b) =>
+          a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
+        );
         this.closeDialog();
       },
       error: (err) => {
@@ -388,6 +442,12 @@ export class ProductsComponent implements OnInit {
   /** Devuelve las primeras dos letras del nombre en mayúsculas como avatar. */
   initials(name: string): string {
     return name.substring(0, 2).toUpperCase();
+  }
+
+  /** Devuelve las clases de color (bg + text) para el icono del producto. */
+  iconColor(product: Product): { bg: string; text: string } {
+    const key = product.icon || 'inventory_2';
+    return ICON_COLORS[key] ?? ICON_COLORS['inventory_2'];
   }
 
   /** Alterna el estado de destacado en el formulario (sólo en modo edición/creación). */
@@ -436,6 +496,7 @@ export class ProductsComponent implements OnInit {
       salePrice: '',
       stock: '',
       isFeatured: false,
+      icon: 'inventory_2',
     };
   }
 }

@@ -26,7 +26,7 @@
             *ngIf="!isReadOnly"
             type="button"
             (click)="openCreate()"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <svg
               class="h-4 w-4"
@@ -148,17 +148,19 @@
 
                 <!-- Celda 1: Nombre — título de tarjeta en móvil, fila normal en desktop -->
                 <td class="block md:table-cell px-0 md:px-3 py-0 md:py-3">
-                  <!-- Móvil: avatar grande + nombre como título de tarjeta -->
+                  <!-- Móvil: icono + nombre como título de tarjeta -->
                   <div class="flex items-center gap-3 pb-3 mb-3 border-b border-border md:hidden">
-                    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold uppercase">
-                      {{ initials(product.name) }}
+                    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
+                         [ngClass]="[iconColor(product).bg, iconColor(product).text]">
+                      <span class="material-symbols-rounded" style="font-size:22px">{{ product.icon || 'inventory_2' }}</span>
                     </div>
                     <span class="text-base font-bold text-card-foreground">{{ product.name }}</span>
                   </div>
-                  <!-- Desktop: avatar pequeño + nombre inline -->
+                  <!-- Desktop: icono + nombre inline -->
                   <div class="hidden md:flex items-center gap-3">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
-                      {{ initials(product.name) }}
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                         [ngClass]="[iconColor(product).bg, iconColor(product).text]">
+                      <span class="material-symbols-rounded" style="font-size:20px">{{ product.icon || 'inventory_2' }}</span>
                     </div>
                     <span class="font-medium">{{ product.name }}</span>
                   </div>
@@ -190,14 +192,25 @@
                 <!-- Celda 5: Stock -->
                 <td class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-center">
                   <span class="text-sm font-medium text-muted-foreground md:hidden">Stock</span>
+                  <!-- Alquiler: stock ilimitado → símbolo ∞ -->
                   <span
-                    [ngClass]="product.stock < 10
-                      ? 'bg-destructive text-destructive-foreground'
-                      : 'bg-primary text-primary-foreground'"
-                    class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+                    *ngIf="isRentalProduct(product); else stockBadge"
+                    class="inline-flex items-center rounded-full border border-transparent bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-600"
+                    title="Disponibilidad ilimitada"
                   >
-                    {{ product.stock }}
+                    &infin;
                   </span>
+                  <!-- Producto normal: badge con color según nivel de stock -->
+                  <ng-template #stockBadge>
+                    <span
+                      [ngClass]="product.stock < 10
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-primary text-primary-foreground'"
+                      class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+                    >
+                      {{ product.stock }}
+                    </span>
+                  </ng-template>
                 </td>
 
                 <!-- Celda 6: Destacado -->
@@ -423,6 +436,27 @@
             </p>
           </div>
 
+          <!-- Icono (se autocompleta al elegir categoría) -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium leading-none" for="prod-icono">Icono</label>
+            <div class="flex items-center gap-3">
+              <!-- Preview del icono seleccionado -->
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+                   [ngClass]="[(ICON_COLORS[form.icon] || ICON_COLORS['inventory_2']).bg, (ICON_COLORS[form.icon] || ICON_COLORS['inventory_2']).text]">
+                <span class="material-symbols-rounded" style="font-size:22px">{{ form.icon || 'inventory_2' }}</span>
+              </div>
+              <!-- Select de opciones -->
+              <select
+                id="prod-icono"
+                [(ngModel)]="form.icon"
+                [disabled]="viewMode"
+                class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option *ngFor="let opt of iconOptions" [value]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Precio Costo + Precio Venta (Costo oculto para Alquileres) -->
           <div class="grid gap-4" [ngClass]="isRentalCategory ? 'grid-cols-1' : 'grid-cols-2'">
             <div *ngIf="!isRentalCategory" class="flex flex-col gap-1.5">
@@ -519,7 +553,7 @@
         <button
           type="button"
           (click)="closeDialog()"
-          class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {{ viewMode ? "Cerrar" : "Cancelar" }}
         </button>

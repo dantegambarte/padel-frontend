@@ -20,7 +20,7 @@ import {
  * - Las ventas (SALE) permanecen como filas individuales.
  */
 export interface GroupedMovimiento {
-  type: 'BOOKING' | 'SALE';
+  type: 'BOOKING' | 'SALE' | 'EXPENSE';
   referenceId: string;
   concepto: string;
   customerName: string | null;
@@ -43,6 +43,7 @@ export interface GroupedMovimiento {
   hasTransfer: boolean;
   hasCourt: boolean;
   hasCantina: boolean;
+  expenseCategory: string | null;
 }
 @Component({
   selector: 'app-cash-register',
@@ -60,12 +61,16 @@ export class CashRegisterComponent implements OnInit {
   efectivoEsperado = 0;
   transferenciaTotal = 0;
   initialBalance = 0;
+  cashIncome = 0;
+  cashExpenseTotal = 0;
   movimientos: CashMovimiento[] = [];
   sessionDate: string | null = null;
   openedAt: string | null = null;
   openedByName: string | null = null;
 
   fondoInicial = '';
+  /** true cuando `fondoInicial` fue pre-cargado con el conteo del último cierre. */
+  fondoInicialSugerido = false;
   notasApertura = '';
   isOpening = false;
 
@@ -84,6 +89,13 @@ export class CashRegisterComponent implements OnInit {
   exportingSessionId: string | null = null;
   exportingDaily = false;
   isClosingDay = false;
+
+  /**
+   * `true` cuando la jornada comercial ya fue cerrada formalmente (Cierre de Jornada Z).
+   * Oculta el botón "Cerrar Jornada (Z)" y actualiza mensajes de UI.
+   * Fuente de verdad: campo `isBusinessDayClosed` del endpoint `/current`.
+   */
+  isBusinessDayClosed = false;
 
   historialDate = '';
   historialLoading = false;
@@ -112,17 +124,26 @@ export class CashRegisterComponent implements OnInit {
 
   /**
    * Fecha comercial que se va a abrir al presionar "Abrir Jornada".
-   * Si son menos de las 02:00 hs, el turno pertenece a AYER (margen administrativo post-cierre).
-   * Usa la hora local del navegador como aproximación (sin requerir TZ del servidor).
+   * Regla de negocio: horas entre las 00:00 y las 02:59 AM pertenecen al día ANTERIOR.
+   * Usa la hora local del navegador (sin requerir TZ del servidor).
    */
   get logicalCommercialDate(): Date {
     const now = new Date();
-    if (now.getHours() < 2) {
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      return yesterday;
+    let base: Date;
+    if (now.getHours() < 3) {
+      base = new Date(now);
+      base.setDate(base.getDate() - 1);
+    } else {
+      base = new Date(now);
     }
-    return now;
+    // Regla post-Cierre Z: si la jornada actual ya fue cerrada, la próxima apertura
+    // se imputa al día siguiente, sin importar la hora del reloj.
+    if (this.isBusinessDayClosed) {
+      const next = new Date(base);
+      next.setDate(next.getDate() + 1);
+      return next;
+    }
+    return base;
   }
 
   /**
@@ -139,11 +160,11 @@ export class CashRegisterComponent implements OnInit {
   }
 
   /**
-   * True cuando la hora actual está en la ventana de madrugada (00:00–01:59).
+   * True cuando la hora actual está en la ventana de madrugada (00:00–02:59).
    * Se usa para mostrar la nota aclaratoria en el banner de apertura.
    */
   get isOvernightWindow(): boolean {
-    return new Date().getHours() < 2;
+    return new Date().getHours() < 3;
   }
 
   /** Hora actual formateada como HH:MM para el banner de madrugada. */
@@ -152,6 +173,21 @@ export class CashRegisterComponent implements OnInit {
     const h = String(now.getHours()).padStart(2, '0');
     const m = String(now.getMinutes()).padStart(2, '0');
     return `${h}:${m}`;
+  }
+
+  /**
+   * Etiqueta legible de la fecha de la sesión cerrada (para el banner de Cierre Z).
+   * Ej: "miércoles, 1 de abril de 2026".
+   */
+  get closedSessionDateLabel(): string {
+    if (!this.sessionDate) return 'la jornada anterior';
+    const [y, m, d] = this.sessionDate.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   }
 
   /** Devuelve el nombre completo del usuario autenticado actualmente (quien opera el sistema). */
@@ -165,18 +201,28 @@ export class CashRegisterComponent implements OnInit {
   }
 
   /**
-   * Etiqueta del turno activo con la fecha de la sesión.
-   * Ej: "Turno del viernes 20 de marzo"
+   * Etiqueta del turno activo derivada de `openedAt` (fuente de verdad).
+   * Usa la zona horaria de Argentina para evitar el desfase UTC.
+   * Ej: "Turno abierto el: martes, 1 de abril de 2026, 12:01"
    */
   get jornadaLabel(): string {
-    if (!this.sessionDate) return 'Turno de hoy';
-    const [year, month, day] = this.sessionDate.split('-').map(Number);
-    const sessionDay = new Date(year, month - 1, day);
-    return `Turno del ${sessionDay.toLocaleDateString('es-AR', {
+    if (!this.openedAt) return 'Turno de hoy';
+    const d  = new Date(this.openedAt);
+    const TZ = 'America/Argentina/Buenos_Aires';
+    const datePart = d.toLocaleDateString('es-AR', {
+      timeZone: TZ,
       weekday: 'long',
       day: 'numeric',
       month: 'long',
-    })}`;
+      year: 'numeric',
+    });
+    const timePart = d.toLocaleTimeString('es-AR', {
+      timeZone: TZ,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `Turno abierto el: ${datePart}, ${timePart}`;
   }
 
   /** Suma de efectivo esperado y total de transferencias. */
@@ -244,20 +290,32 @@ export class CashRegisterComponent implements OnInit {
         next: (res) => {
           if (res.noSession) {
             // No existe ninguna sesión para el día comercial actual → pantalla de apertura.
+            // Pre-cargar el fondo con el conteo del último cierre (arrastre de fondo).
             this.isSessionOpen = false;
+            this.isBusinessDayClosed = res.isBusinessDayClosed;
+            this.cashService.getLastClosedSuggestion().subscribe(({ cashCounted }) => {
+              if (cashCounted !== null && this.fondoInicial === '') {
+                this.fondoInicial        = String(cashCounted);
+                this.fondoInicialSugerido = true;
+              }
+            });
             return;
           }
           // Hay sesión (abierta o cerrada) → mostrar el dashboard.
           this.isSessionOpen = true;
           this.sessionId = res.sessionId;
-          this.efectivoEsperado = res.efectivoEsperado;
+          // Piso en $0: físicamente no puede haber efectivo negativo en el cajón.
+          // Datos heredados con egresos > ingresos no deben generar un "sobrante" absurdo.
+          this.efectivoEsperado  = Math.max(0, res.efectivoEsperado);
           this.transferenciaTotal = res.transferenciaTotal;
-          this.initialBalance = res.initialBalance;
-          this.movimientos = res.movimientos;
+          this.initialBalance     = res.initialBalance;
+          this.cashIncome         = res.cashIncome;
+          this.cashExpenseTotal   = res.cashExpenseTotal;
+          this.movimientos        = res.movimientos;
           this.sessionDate = res.sessionDate;
           this.openedAt = res.openedAt;
           this.openedByName = res.openedByName;
-          this.staleSession = false;
+          this.staleSession = res.staleSession;
 
           if (res.isClosed) {
             // Turno cerrado pero jornada aún no finalizada → mostrar estado cerrado con
@@ -266,8 +324,15 @@ export class CashRegisterComponent implements OnInit {
             this.closedCashCounted = res.cashCounted;
             this.closedDifference = res.difference;
             this.turnoTab = 'cierre';
+            // Pre-cargar el fondo del próximo turno con el conteo físico de este cierre.
+            if (res.cashCounted !== null && this.fondoInicial === '') {
+              this.fondoInicial        = String(res.cashCounted);
+              this.fondoInicialSugerido = true;
+            }
+            this.isBusinessDayClosed = res.isBusinessDayClosed;
           } else {
             this.isClosed = false;
+            this.isBusinessDayClosed = res.isBusinessDayClosed; // always false for OPEN sessions (backend guarantees)
             this.closedCashCounted = null;
             this.closedDifference = null;
           }
@@ -305,13 +370,15 @@ export class CashRegisterComponent implements OnInit {
       .pipe(finalize(() => (this.isOpening = false)))
       .subscribe({
         next: () => {
-          this.fondoInicial = '';
-          this.notasApertura = '';
+          this.fondoInicial         = '';
+          this.fondoInicialSugerido = false;
+          this.notasApertura        = '';
           this.toast.success(
             'Turno abierto',
             `Fondo inicial: $${this.fmt(fondo)}`,
           );
-          this.isSessionOpen = null; // muestra loadingnu
+          this.isBusinessDayClosed = false;
+          this.isSessionOpen = null; // muestra loading
           this.loadCurrentSession();
         },
         error: (err) => {
@@ -384,6 +451,12 @@ export class CashRegisterComponent implements OnInit {
           this.closedCashCounted = this.efectivoReal;
           this.closedDifference = this.diferencia;
           this.turnoTab = 'cierre';
+          // Arrastre de fondo: pre-cargar el input del próximo turno con el efectivo
+          // físico contado en este cierre. Solo si el usuario no escribió nada antes.
+          if (this.fondoInicial === '') {
+            this.fondoInicial        = String(this.efectivoReal);
+            this.fondoInicialSugerido = true;
+          }
 
           const detalle =
             this.diferencia === 0
@@ -457,10 +530,37 @@ export class CashRegisterComponent implements OnInit {
             hasTransfer: mov.amountTransfer > 0,
             hasCourt: true,
             hasCantina: rawItems.length > 0,
+            expenseCategory: null,
           };
           bookingMap.set(mov.referenceId, group);
           result.push(group);
         }
+      } else if (mov.movType === 'EXPENSE') {
+        result.push({
+          type: 'EXPENSE',
+          referenceId: mov.referenceId,
+          concepto: mov.concepto,
+          customerName: null,
+          bookingCourtName: null,
+          bookingHour: null,
+          bookingClientName: null,
+          bookingPriceAmount: null,
+          saleTotal: null,
+          items: [],
+          itemsTotal: 0,
+          totalMonto: mov.monto,   // ya es negativo desde el servicio
+          totalCash: mov.amountCash,
+          totalTransfer: 0,
+          transactions: [mov],
+          hasMultiplePayments: false,
+          firstHora: mov.hora,
+          userName: mov.userName,
+          hasCash: false,
+          hasTransfer: false,
+          hasCourt: false,
+          hasCantina: false,
+          expenseCategory: mov.expenseCategory ?? null,
+        });
       } else {
         const rawItems = mov.saleItems ?? [];
         result.push({
@@ -486,6 +586,7 @@ export class CashRegisterComponent implements OnInit {
           hasTransfer: mov.amountTransfer > 0,
           hasCourt: false,
           hasCantina: rawItems.length > 0,
+          expenseCategory: null,
         });
       }
     }
@@ -1158,9 +1259,13 @@ export class CashRegisterComponent implements OnInit {
               `Total recaudado: <strong>$${totalStr}</strong><br>` +
               `Turnos: ${summary.sessions.length}`,
           });
-          // Transicionar a pantalla de apertura: la jornada está finalizada.
-          this.isSessionOpen = false;
-          this.isClosed = false;
+          // Feedback inmediato: ocultar el botón Z y actualizar el texto de estado
+          // antes de que loadCurrentSession() resuelva.
+          this.isBusinessDayClosed = true;
+          // Recarga el estado desde el servidor dentro de NgZone para que Angular
+          // detecte los cambios correctamente (fix: el async/await del Swal previo
+          // saca la ejecución de NgZone; las asignaciones manuales no disparan CD).
+          this.loadCurrentSession();
         },
         error: (err) => {
           if (err.status === 409) {
@@ -1168,6 +1273,11 @@ export class CashRegisterComponent implements OnInit {
               'Hay un turno abierto',
               'Cerrá el turno activo antes de realizar el Cierre de Jornada.',
             );
+          } else if (err.status === 400) {
+            // La jornada ya fue cerrada en el servidor pero el front no lo sabía.
+            // Actualizamos solo isBusinessDayClosed sin recargar, porque /current
+            // puede devolver isBusinessDayClosed=false y sobreescribir este valor.
+            this.isBusinessDayClosed = true;
           } else {
             this.toast.error('Error al cerrar jornada', 'Intente nuevamente.');
           }

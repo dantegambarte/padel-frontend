@@ -9,6 +9,7 @@ export interface RevenueDay {
   bookings: number;
   sales: number;
   total: number;
+  expenses: number;
 }
 
 export interface PaymentBreakdown {
@@ -24,6 +25,15 @@ export interface ReportsSummaryResponse {
   cashTotal: number;
   transferTotal: number;
   transactionCount: number;
+  totalExpenses: number;
+  netProfit: number;
+}
+
+export interface LowStockProduct {
+  id: string;
+  name: string;
+  stock: number;
+  minStock: number;
 }
 
 export interface ProductRanking {
@@ -46,6 +56,22 @@ export interface TransactionExport {
 }
 
 export type GroupBy = 'day' | 'week' | 'month';
+
+export interface ExpenseReportItem {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  paymentMethod: string;
+  amount: number;
+}
+
+export interface ExpensesReport {
+  items: ExpenseReportItem[];
+  totalAmount: number;
+  byCategory: { category: string; total: number }[];
+  byPaymentMethod: { method: string; total: number }[];
+}
 
 export interface TodayKpis {
   totalRevenue: number;
@@ -114,9 +140,17 @@ export class ReportsService {
     this.last7DaysCache$ = null;
   }
 
-  /** Devuelve el resumen de KPIs del período actual para el Dashboard Admin. */
-  getSummary(): Observable<ReportsSummaryResponse> {
-    return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`);
+  /** Devuelve el resumen de KPIs del período (ingresos, egresos, ganancia neta). */
+  getSummary(dateFrom?: string, dateTo?: string): Observable<ReportsSummaryResponse> {
+    const params = dateFrom && dateTo
+      ? new HttpParams().set('dateFrom', dateFrom).set('dateTo', dateTo)
+      : undefined;
+    return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`, { params });
+  }
+
+  /** Devuelve los productos activos cuyo stock es igual o inferior al umbral mínimo. */
+  getLowStock(): Observable<LowStockProduct[]> {
+    return this.http.get<LowStockProduct[]>(`${this.url}/low-stock`);
   }
 
   /**
@@ -211,5 +245,11 @@ export class ReportsService {
       `${this.url}/transactions`,
       { params },
     );
+  }
+
+  /** Devuelve el reporte de egresos del período con totales por categoría y método. */
+  getExpenses(dateFrom: string, dateTo: string): Observable<ExpensesReport> {
+    const params = this.buildParams({ dateFrom, dateTo });
+    return this.http.get<ExpensesReport>(`${this.url}/expenses`, { params });
   }
 }

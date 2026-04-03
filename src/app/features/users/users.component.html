@@ -172,7 +172,7 @@
                 <div class="flex flex-wrap items-center gap-2 justify-end pt-3 md:pt-0 border-t border-border md:border-0 mt-1 md:mt-0">
                   <button
                     (click)="openEditModal(user)"
-                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
+                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
                   >
                     Editar
                   </button>
@@ -193,7 +193,7 @@
                     *ngIf="canToggle(user)"
                     (click)="toggleStatus(user)"
                     [disabled]="togglingId === user.id"
-                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                    class="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <ng-container *ngIf="togglingId === user.id"
                       >Guardando…</ng-container
@@ -320,7 +320,7 @@
           type="button"
           (click)="closeResetModal()"
           [disabled]="isResetSubmitting"
-          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
         >
           Cancelar
         </button>
@@ -430,7 +430,7 @@
           type="button"
           (click)="closeEditModal()"
           [disabled]="isEditSubmitting"
-          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
         >
           Cancelar
         </button>
@@ -558,7 +558,7 @@
           type="button"
           (click)="closeDialog()"
           [disabled]="isSubmitting"
-          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50"
+          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
         >
           Cancelar
         </button>

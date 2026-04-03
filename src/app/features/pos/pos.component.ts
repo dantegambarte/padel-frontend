@@ -1,9 +1,11 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { Product } from '../../core/models/product.model';
 import { ProductsService } from '../../core/services/products.service';
 import { SalesService, CreateSaleDto } from '../../core/services/sales.service';
+import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
 import Swal from 'sweetalert2';
 
@@ -47,15 +49,44 @@ export class PosComponent implements OnInit, AfterViewInit {
   toastMessage: string | null = null;
   private toastTimeout: any;
 
+  /**
+   * Estado de la caja en tiempo real.
+   * Default `true` (optimista) para no bloquear en caso de red lenta al iniciar.
+   * Se actualiza en `ngOnInit` con la respuesta real del servidor.
+   */
+  isCashRegisterOpen = true;
+
   constructor(
     private productsService: ProductsService,
     private salesService: SalesService,
+    private cashService: CashService,
+    private router: Router,
     private toast: ToastService,
     private el: ElementRef<HTMLElement>,
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
+    this.checkCashStatus();
+  }
+
+  /**
+   * Consulta el estado actual de la caja al montar el componente.
+   * Usa el caché de 10 s de `CashService.getCurrent()` para no generar
+   * una petición extra si el Layout u otro componente ya lo cargó recientemente.
+   * En caso de error de red se mantiene el default optimista para no bloquear ventas.
+   */
+  private checkCashStatus(): void {
+    this.cashService.getCurrent().subscribe({
+      next: (cash) => {
+        this.isCashRegisterOpen = !cash.isClosed && !cash.noSession;
+      },
+      error: () => {
+        // Mantener default optimista: mejor permitir intentar la venta y
+        // dejar que el backend rechace con CAJA_CERRADA si corresponde.
+        this.isCashRegisterOpen = true;
+      },
+    });
   }
 
   /**
@@ -351,6 +382,24 @@ export class PosComponent implements OnInit, AfterViewInit {
    * Limpia el carrito y los montos de pago al completarse con éxito.
    */
   confirmSale(): void {
+    // Guard preventivo: interceptar antes de intentar la petición.
+    if (!this.isCashRegisterOpen) {
+      Swal.fire({
+        title: '¡Caja Cerrada!',
+        text: 'Necesitas abrir un turno en la caja para poder registrar ventas o cobros.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Abrir Caja',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4f46e5',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/app/cash-register']);
+        }
+      });
+      return;
+    }
+
     if (this.cart.length === 0) {
       this.toast.error(
         'Carrito vacío',

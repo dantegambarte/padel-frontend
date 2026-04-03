@@ -256,9 +256,11 @@
     type="button"
     (click)="confirmSale()"
     [disabled]="isConfirmDisabled"
+    [ngClass]="isCashRegisterOpen
+      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+      : 'bg-amber-600 text-white hover:bg-amber-700'"
     class="inline-flex h-11 w-full items-center justify-center gap-2
-           rounded-md bg-primary px-8 text-sm font-medium
-           text-primary-foreground transition-colors hover:bg-primary/90
+           rounded-md px-8 text-sm font-medium transition-colors
            disabled:pointer-events-none disabled:opacity-50
            focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -272,7 +274,9 @@
     <ng-container *ngIf="isSubmitting; else confirmarLabel">
       Procesando...
     </ng-container>
-    <ng-template #confirmarLabel>Confirmar Venta</ng-template>
+    <ng-template #confirmarLabel>
+      {{ isCashRegisterOpen ? 'Confirmar Venta' : 'Caja Cerrada (Clic para abrir)' }}
+    </ng-template>
   </button>
 </ng-template>
 
@@ -746,7 +750,7 @@
         (click)="toggleMobileCart()"
         aria-label="Cerrar carrito"
         class="inline-flex h-8 w-8 items-center justify-center rounded-full
-               text-muted-foreground hover:bg-accent hover:text-accent-foreground
+               text-muted-foreground hover:bg-secondary
                transition-colors focus-visible:outline-none
                focus-visible:ring-2 focus-visible:ring-ring"
       >

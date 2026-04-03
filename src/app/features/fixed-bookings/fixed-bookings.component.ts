@@ -152,15 +152,9 @@ export class FixedBookingsComponent implements OnInit {
     return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
   }
 
-  /** Precio del turno según la cancha y la duración. */
-  getBookingPrice(booking: FixedBooking): number | null {
-    const court = this.courts.find(c => c.id === booking.courtId);
-    if (!court) return null;
-    const map: Record<number, number> = {
-      30: court.price30, 60: court.price60,
-      90: court.price90, 120: court.price120,
-    };
-    return map[booking.durationMinutes] ?? null;
+  /** El precio ahora lo gestiona el Motor de Precios Dinámico (franjas horarias). */
+  getBookingPrice(_booking: FixedBooking): number | null {
+    return null;
   }
 
   openDetail(booking: FixedBooking): void {

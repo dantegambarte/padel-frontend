@@ -7,6 +7,7 @@ export interface Product {
   stock: number;
   isFeatured: boolean;
   isActive: boolean;
+  icon?: string;
   category?: { id: string; name: string };
 }
 
@@ -18,6 +19,7 @@ export interface CreateProductDto {
   salePrice: number;
   stock: number;
   isFeatured: boolean;
+  icon?: string;
 }
 
 /** Payload para actualizar parcialmente un producto existente. */
