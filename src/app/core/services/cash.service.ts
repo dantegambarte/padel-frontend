@@ -23,7 +23,7 @@ export interface CashMovimiento {
   amountCash: number;
   amountTransfer: number;
   referenceId: string;
-  movType: 'SALE' | 'BOOKING';
+  movType: 'SALE' | 'BOOKING' | 'EXPENSE';
   customerName?: string | null;
   userName: string;
   /** Datos estructurados del turno (solo cuando movType === 'BOOKING'). */
@@ -37,6 +37,8 @@ export interface CashMovimiento {
   saleTotal?: number | null;
   /** Ítems de productos de la venta (sale_items). */
   saleItems?: ItemDetail[] | null;
+  /** Categoría del egreso (solo cuando movType === 'EXPENSE'). */
+  expenseCategory?: string | null;
 }
 
 /** Estructura normalizada consumida por el componente de caja. */
@@ -49,6 +51,10 @@ export interface CashCurrentResponse {
   transferenciaTotal: number;
   /** Fondo de caja / cambio inicial declarado al abrir la jornada. */
   initialBalance: number;
+  /** Suma bruta de ingresos en efectivo (turnos + ventas) sin restar egresos. */
+  cashIncome: number;
+  /** Suma de egresos en efectivo ya registrados en esta sesión. */
+  cashExpenseTotal: number;
   movimientos: CashMovimiento[];
   sessionDate: string | null;
   openedAt: string | null;
@@ -62,6 +68,11 @@ export interface CashCurrentResponse {
   closedNotes: string | null;
   /** true cuando la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
   staleSession: boolean;
+  /**
+   * true cuando la jornada comercial ya fue cerrada formalmente con "Cierre de Jornada".
+   * Fuente de verdad: tabla `daily_closures` del backend.
+   */
+  isBusinessDayClosed: boolean;
 }
 
 // ── Interfaces para el endpoint daily-summary ──────────────────────────────
@@ -103,6 +114,8 @@ interface CashApiResponse {
     notes?: string | null;
     openedByUser?: { fullName?: string; username?: string } | null;
   } | null;
+  cashIncome: number;
+  cashExpenseTotal: number;
   cashExpected: number;
   transferTotal: number;
   dayTotal: number;
@@ -125,10 +138,13 @@ interface CashApiResponse {
     saleTotal?: number | null;
     bookingItems?: ItemDetail[] | null;
     saleItems?: ItemDetail[] | null;
+    expenseCategory?: string | null;
   }[];
   isOpen: boolean;
   /** true si la sesión abierta pertenece a una jornada comercial anterior al día de hoy. */
   staleSession: boolean;
+  /** true cuando la jornada comercial fue cerrada formalmente vía daily_closures. */
+  isBusinessDayClosed: boolean;
 }
 
 /** Payload para abrir una nueva sesión de caja. */
@@ -187,6 +203,8 @@ export class CashService {
       efectivoEsperado: 0,
       transferenciaTotal: 0,
       initialBalance: 0,
+      cashIncome: 0,
+      cashExpenseTotal: 0,
       movimientos: [],
       sessionDate: null,
       openedAt: null,
@@ -195,6 +213,7 @@ export class CashService {
       difference: null,
       closedNotes: null,
       staleSession: false,
+      isBusinessDayClosed: false,
     };
 
     this.currentCache$ = this.http.get<CashApiResponse>(`${this.url}/current`).pipe(
@@ -205,6 +224,8 @@ export class CashService {
         efectivoEsperado: Number(res.cashExpected) || 0,
         transferenciaTotal: Number(res.transferTotal) || 0,
         initialBalance: Number(res.initialBalance) || 0,
+        cashIncome: Number(res.cashIncome) || 0,
+        cashExpenseTotal: Number(res.cashExpenseTotal) || 0,
         sessionDate: res.session?.date ?? null,
         openedAt: res.session?.openedAt ?? null,
         openedByName: res.session?.openedByUser?.fullName ?? res.session?.openedByUser?.username ?? null,
@@ -212,26 +233,32 @@ export class CashService {
         difference: res.session?.difference != null ? Number(res.session.difference) : null,
         closedNotes: res.session?.notes ?? null,
         staleSession: res.staleSession ?? false,
-        movimientos: (res.transactions ?? []).map((t) => ({
-          id: t.id,
-          hora: this.formatHora(t.createdAt),
-          tipo: Number(t.amountCash) > 0 ? 'Efectivo' : ('Transferencia' as const),
-          concepto: t.concept,
-          monto: Number(t.amountCash) + Number(t.amountTransfer),
-          amountCash: Number(t.amountCash),
-          amountTransfer: Number(t.amountTransfer),
-          referenceId: t.referenceId,
-          movType: t.type.toUpperCase() as 'SALE' | 'BOOKING',
-          customerName: t.customerName ?? null,
-          userName: t.createdByFullName ?? t.createdByUsername ?? 'Desconocido',
-          bookingClientName: t.bookingClientName ?? null,
-          bookingHour: t.bookingHour ?? null,
-          bookingCourtName: t.bookingCourtName ?? null,
-          bookingPriceAmount: t.bookingPriceAmount != null ? Number(t.bookingPriceAmount) : null,
-          bookingItems: t.bookingItems ?? null,
-          saleTotal: t.saleTotal != null ? Number(t.saleTotal) : null,
-          saleItems: t.saleItems ?? null,
-        })),
+        isBusinessDayClosed: res.isBusinessDayClosed ?? false,
+        movimientos: (res.transactions ?? []).map((t) => {
+          const isExpense = t.type === 'expense';
+          return {
+            id: t.id,
+            hora: this.formatHora(t.createdAt),
+            tipo: isExpense ? 'Efectivo' : (Number(t.amountCash) > 0 ? 'Efectivo' : 'Transferencia' as const),
+            concepto: t.concept,
+            // Egresos: monto negativo para indicar salida de caja
+            monto: isExpense ? -Number(t.amountCash) : Number(t.amountCash) + Number(t.amountTransfer),
+            amountCash: isExpense ? -Number(t.amountCash) : Number(t.amountCash),
+            amountTransfer: Number(t.amountTransfer),
+            referenceId: t.referenceId,
+            movType: t.type.toUpperCase() as 'SALE' | 'BOOKING' | 'EXPENSE',
+            customerName: t.customerName ?? null,
+            userName: t.createdByFullName ?? t.createdByUsername ?? 'Administrador',
+            bookingClientName: t.bookingClientName ?? null,
+            bookingHour: t.bookingHour ?? null,
+            bookingCourtName: t.bookingCourtName ?? null,
+            bookingPriceAmount: t.bookingPriceAmount != null ? Number(t.bookingPriceAmount) : null,
+            bookingItems: t.bookingItems ?? null,
+            saleTotal: t.saleTotal != null ? Number(t.saleTotal) : null,
+            saleItems: t.saleItems ?? null,
+            expenseCategory: t.expenseCategory ?? null,
+          };
+        }),
       })),
       // 404 = no hay sesión para este día → equivale a noSession: true.
       // Cualquier otro error (500, 0, CORS, etc.) se relanza para que la UI
@@ -255,6 +282,17 @@ export class CashService {
   /** Invalida la caché de `getCurrent()`. Llamar tras cualquier mutación de caja. */
   clearCurrentCache(): void {
     this.currentCache$ = null;
+  }
+
+  /**
+   * Devuelve el efectivo físico contado del último turno cerrado.
+   * Se usa para pre-cargar el "Fondo Inicial" del formulario de apertura (arrastre de fondo).
+   * Nunca cachea: se llama una sola vez al detectar que no hay sesión activa.
+   */
+  getLastClosedSuggestion(): Observable<{ cashCounted: number | null }> {
+    return this.http.get<{ cashCounted: number | null }>(`${this.url}/sessions/suggestion`).pipe(
+      catchError(() => of({ cashCounted: null })),
+    );
   }
 
   /**
