@@ -36,9 +36,9 @@ export default defineConfig({
         viewport: { width: 1366, height: 768 },
         storageState: 'e2e/auth-state.json',
       },
-      // auth.spec.ts excluido: el endpoint /auth/login tiene throttle 5req/60s;
-      // correrlo en 3 proyectos simultáneos supera ese límite y genera falsos negativos.
-      testIgnore: ['**/schedule.mobile.spec.ts', '**/auth.spec.ts'],
+      // auth.spec.ts y expenses.spec.ts excluidos: el endpoint /auth/login tiene throttle
+      // 5req/60s; correrlos en 3 proyectos simultáneos supera ese límite.
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/auth.spec.ts', '**/expenses.spec.ts'],
     },
     {
       name: 'Mobile',
@@ -46,7 +46,7 @@ export default defineConfig({
         ...devices['iPhone SE'],
         storageState: 'e2e/auth-state.json',
       },
-      testIgnore: ['**/schedule.mobile.spec.ts', '**/chaos-paths.spec.ts', '**/pos.spec.ts', '**/auth.spec.ts'],
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/chaos-paths.spec.ts', '**/pos.spec.ts', '**/auth.spec.ts', '**/expenses.spec.ts'],
     },
   ],
 });
