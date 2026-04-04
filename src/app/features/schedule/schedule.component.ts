@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, forkJoin, timer, of } from 'rxjs';
-import { finalize, filter, take, catchError } from 'rxjs/operators';
+import { Subject, Subscription, forkJoin, timer, of } from 'rxjs';
+import { finalize, filter, take, catchError, debounceTime } from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -14,6 +14,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { FixedBookingsService } from '../../core/services/fixed-bookings.service';
 import { TeachersService } from '../../core/services/teachers.service';
 import { CashService } from '../../core/services/cash.service';
+import { DraftService } from '../../core/services/draft.service';
 import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
@@ -64,7 +65,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Productos marcados como destacados, disponibles para agregar rápidamente. */
   get featuredProducts(): Product[] {
-    return this.allProducts.filter((p) => p.isFeatured);
+    return this.allProducts.filter(
+      (p) => p.isFeatured && (p.stock > 0 || (p.category?.name ?? '').toLowerCase().includes('alquiler')),
+    );
   }
   isLoading = false;
   loadError = '';
@@ -229,6 +232,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   isCashRegisterOpen = true;
 
+  /** Draft de creación de reserva. */
+  showBookingDraftBanner = false;
+  private readonly DRAFT_KEY_BOOKING = 'draft_booking_create';
+  private bookingDraftSave$ = new Subject<void>();
+
   constructor(
     private authService: AuthService,
     private courtsService: CourtsService,
@@ -245,6 +253,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private cashService: CashService,
     private router: Router,
     private pricingShiftsService: PricingShiftsService,
+    private draftService: DraftService,
   ) {}
 
   ngOnInit(): void {
@@ -252,6 +261,20 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.startReminderTimer();
     this.listenToDateQueryParam();
     this.checkCashStatus();
+
+    // Auto-save del formulario de creación de reserva con debounce.
+    this.sub.add(
+      this.bookingDraftSave$.pipe(debounceTime(500)).subscribe(() => {
+        this.draftService.saveDraft(this.DRAFT_KEY_BOOKING, {
+          clientName: this.clientName,
+          phoneNumber: this.phoneNumber,
+          priceType: this.priceType,
+          durationMinutes: this.durationMinutes,
+          pagoEfectivo: this.pagoEfectivo,
+          pagoTransferencia: this.pagoTransferencia,
+        });
+      }),
+    );
   }
 
   /**
@@ -451,6 +474,33 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           : bookingMin >= startMin || bookingMin < endMin;
       }) ?? null
     );
+  }
+
+  /**
+   * Devuelve la etiqueta legible del tipo de tarifa aplicada a una reserva existente.
+   * Prioridad: Profesor > Turno Fijo > Franja Horaria coincidente > Estándar.
+   */
+  getPriceLabel(booking: BookingResponse): string {
+    if (booking.priceType === 'professor') return 'Profesor';
+    // Prefer the persisted shift name (snapshot taken at booking creation time).
+    // Fall back to live shift-matching for historical bookings that predate the column.
+    if (booking.appliedShiftName) return booking.appliedShiftName;
+    if (this.pricingShifts.length) {
+      const [year, month, day] = booking.date.split('-').map(Number);
+      const dayOfWeek = new Date(year, month - 1, day).getDay();
+      const bookingMin = this.timeToMinutes(booking.hour);
+      const shift = this.pricingShifts.find((s) => {
+        const days = (s.daysOfWeek as number[]).map(Number);
+        if (!days.includes(dayOfWeek)) return false;
+        const startMin = this.timeToMinutes(s.startTime);
+        const endMin   = this.timeToMinutes(s.endTime);
+        return startMin <= endMin
+          ? bookingMin >= startMin && bookingMin < endMin
+          : bookingMin >= startMin || bookingMin < endMin;
+      });
+      if (shift) return shift.name;
+    }
+    return 'Estándar';
   }
 
   /**
@@ -918,6 +968,57 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPaidCount = this.detailPlayerCount;
   }
 
+  /** Emite al Subject de auto-save del formulario de creación. */
+  triggerBookingDraftSave(): void {
+    this.bookingDraftSave$.next();
+  }
+
+  /** Cambia la duración del turno y fuerza un guardado del borrador. */
+  setDuration(minutes: number): void {
+    this.durationMinutes = minutes;
+    this.triggerBookingDraftSave();
+  }
+
+  /**
+   * Restaura el borrador del formulario de creación.
+   * Llamado cuando el usuario hace clic en "Recuperar" en el banner.
+   */
+  applyBookingDraft(): void {
+    const d = this.draftService.getDraft<{
+      clientName: string;
+      phoneNumber: string;
+      priceType: 'standard' | 'professor';
+      durationMinutes: number;
+      pagoEfectivo: number;
+      pagoTransferencia: number;
+    }>(this.DRAFT_KEY_BOOKING);
+    if (d) {
+      this.clientName = d.clientName ?? '';
+      this.phoneNumber = d.phoneNumber ?? '';
+      this.priceType = d.priceType ?? 'standard';
+      this.durationMinutes = d.durationMinutes ?? 60;
+      this.pagoEfectivo = d.pagoEfectivo ?? 0;
+      this.pagoTransferencia = d.pagoTransferencia ?? 0;
+    }
+    this.showBookingDraftBanner = false;
+  }
+
+  /** Descarta el borrador del formulario de creación sin restaurarlo. */
+  dismissBookingDraft(): void {
+    this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
+    this.showBookingDraftBanner = false;
+  }
+
+  /** Limpia los inputs de efectivo y transferencia de la sesión actual. */
+  clearPaymentInputs(): void {
+    this.detailAmountCash = 0;
+    this.detailAmountTransfer = 0;
+    this.detailPaidCount = this.initialPaidCount;
+    this.playerPaymentHistory = [];
+    this.partialCashCount = 0;
+    this.partialTransferCount = 0;
+  }
+
   /** Hora de fin calculada a partir de la reserva actualmente mostrada en el detalle. */
   get detailEndHour(): string {
     if (!this.selectedBooking) return '';
@@ -979,6 +1080,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.selectedBooking = null;
     this.resetForm();
     this.isDialogOpen = true;
+    // Mostrar banner si existe un borrador de una reserva previa inconclusa.
+    this.showBookingDraftBanner = this.draftService.hasDraft(this.DRAFT_KEY_BOOKING);
   }
 
   /** Abre el diálogo en modo detalle pre-cargando los datos de la reserva. */
@@ -1269,6 +1372,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         }).subscribe({
           next: () => {
             this.isSaving = false;
+            this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
+            this.showBookingDraftBanner = false;
             this.toast.success(
               '⭐ Turno Fijo creado',
               `${this.clientName.trim()} — ${this.selectedSlot!.court.name} los ${this.selectedDate} a las ${this.selectedSlot!.hour}hs y todas las semanas.`,
@@ -1312,6 +1417,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         next: (booking) => {
           this.isSaving = false;
           this.addToBookingMap(booking);
+          this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
+          this.showBookingDraftBanner = false;
           this.toast.success(
             'Reserva guardada',
             `Turno de ${booking.clientName} en ${booking.court.name} a las ${booking.hour}hs`,
@@ -1623,6 +1730,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             'Turno finalizado',
             `Turno de ${booking.clientName} completado.`,
           );
+          // Marcar los importes como guardados antes de cerrar para que
+          // closeDialog() no detecte "cambios sin guardar" y dispare la advertencia.
+          this.detailAmountCash = 0;
+          this.detailAmountTransfer = 0;
+          this.detailPaidCount = this.initialPaidCount;
           this.closeDialog();
         },
         error: (err) => {
@@ -1748,7 +1860,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       .filter(i => i.productId === product.id)
       .reduce((s, i) => s + i.quantity, 0);
 
-    if (totalInCart >= product.stock) {
+    const isRental = (product.category?.name ?? '').toLowerCase().includes('alquiler');
+    if (!isRental && totalInCart >= product.stock) {
       this.toast.info(
         'Stock máximo alcanzado',
         `"${product.name}" tiene ${product.stock} unidades disponibles.`,
@@ -1799,16 +1912,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         // Limitar al stock disponible considerando otras entradas del mismo producto
         const product = this.allProducts.find(p => p.id === item.productId);
         if (product) {
-          const otherQty = this.detailCart
-            .filter((it, i) => i !== index && it.productId === item.productId)
-            .reduce((s, it) => s + it.quantity, 0);
-          const maxAllowed = product.stock - otherQty;
-          if (qty > maxAllowed) {
-            qty = Math.max(1, maxAllowed);
-            this.toast.info(
-              'Stock máximo alcanzado',
-              `"${product.name}" tiene ${product.stock} unidades disponibles.`,
-            );
+          const isRental = (product.category?.name ?? '').toLowerCase().includes('alquiler');
+          if (!isRental) {
+            const otherQty = this.detailCart
+              .filter((it, i) => i !== index && it.productId === item.productId)
+              .reduce((s, it) => s + it.quantity, 0);
+            const maxAllowed = product.stock - otherQty;
+            if (qty > maxAllowed) {
+              qty = Math.max(1, maxAllowed);
+              this.toast.info(
+                'Stock máximo alcanzado',
+                `"${product.name}" tiene ${product.stock} unidades disponibles.`,
+              );
+            }
           }
         }
         this.detailCart = this.detailCart.map((it, i) =>
