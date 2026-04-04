@@ -22,6 +22,11 @@ interface NavItem {
   roles: UserRole[];
 }
 
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
@@ -36,90 +41,33 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   private sub = new Subscription();
 
-  readonly allNavItems: NavItem[] = [
+  readonly navGroups: NavGroup[] = [
     {
-      id: 'dashboard',
-      label: 'Inicio',
-      icon: 'layout-dashboard',
-      route: '/app/dashboard',
-      roles: ['admin', 'employee'],
+      label: 'Operaciones',
+      items: [
+        { id: 'dashboard',     label: 'Inicio',           icon: 'layout-dashboard', route: '/app/dashboard',     roles: ['admin', 'employee'] },
+        { id: 'schedule',      label: 'Agenda de Turnos', icon: 'calendar-check',   route: '/app/schedule',      roles: ['admin', 'employee'] },
+        { id: 'pos',           label: 'Nueva Venta',      icon: 'shopping-cart',    route: '/app/pos',           roles: ['admin', 'employee'] },
+        { id: 'cash-register', label: 'Cierre de Caja',  icon: 'credit-card',      route: '/app/cash-register', roles: ['admin', 'employee'] },
+        { id: 'expenses',      label: 'Egresos',          icon: 'money-off',        route: '/app/expenses',      roles: ['admin', 'employee'] },
+      ],
     },
     {
-      id: 'schedule',
-      label: 'Agenda de Turnos',
-      icon: 'calendar-check',
-      route: '/app/schedule',
-      roles: ['admin', 'employee'],
+      label: 'Gestión',
+      items: [
+        { id: 'fixed-bookings', label: 'Turnos Fijos', icon: 'repeat',          route: '/app/fixed-bookings', roles: ['admin'] },
+        { id: 'products',       label: 'Productos',    icon: 'package',         route: '/app/products',       roles: ['admin', 'employee'] },
+        { id: 'teachers',       label: 'Profesores',   icon: 'graduation-cap',  route: '/app/teachers',       roles: ['admin'] },
+      ],
     },
     {
-      id: 'fixed-bookings',
-      label: 'Turnos Fijos',
-      icon: 'repeat',
-      route: '/app/fixed-bookings',
-      roles: ['admin'],
-    },
-    {
-      id: 'teachers',
-      label: 'Profesores',
-      icon: 'graduation-cap',
-      route: '/app/teachers',
-      roles: ['admin'],
-    },
-    {
-      id: 'cash-register',
-      label: 'Cierre de Caja',
-      icon: 'credit-card',
-      route: '/app/cash-register',
-      roles: ['admin', 'employee'],
-    },
-    {
-      id: 'pos',
-      label: 'Nueva Venta',
-      icon: 'shopping-cart',
-      route: '/app/pos',
-      roles: ['admin', 'employee'],
-    },
-    {
-      id: 'products',
-      label: 'Productos',
-      icon: 'package',
-      route: '/app/products',
-      roles: ['admin', 'employee'],
-    },
-    {
-      id: 'reports',
-      label: 'Reportes',
-      icon: 'bar-chart',
-      route: '/app/reports',
-      roles: ['admin'],
-    },
-    {
-      id: 'users',
-      label: 'Usuarios',
-      icon: 'users',
-      route: '/app/users',
-      roles: ['admin'],
-    },
-    {
-      id: 'expenses',
-      label: 'Egresos',
-      icon: 'money-off',
-      route: '/app/expenses',
-      roles: ['admin'],   // CAPA 1 VISUAL: solo visible para administradores
-    },
-    {
-      id: 'pricing-shifts',
-      label: 'Tarifas',
-      icon: 'tag',
-      route: '/app/pricing-shifts',
-      roles: ['admin'],
-    },
-    {
-      id: 'settings',
-      label: 'Configuración',
-      icon: 'settings',
-      route: '/app/settings',
-      roles: ['admin'],
+      label: 'Administración',
+      items: [
+        { id: 'reports',        label: 'Reportes',      icon: 'bar-chart', route: '/app/reports',        roles: ['admin'] },
+        { id: 'users',          label: 'Usuarios',      icon: 'users',     route: '/app/users',          roles: ['admin'] },
+        { id: 'pricing-shifts', label: 'Tarifas',       icon: 'tag',       route: '/app/pricing-shifts', roles: ['admin'] },
+        { id: 'settings',       label: 'Configuración', icon: 'settings',  route: '/app/settings',       roles: ['admin'] },
+      ],
     },
   ];
 
@@ -177,11 +125,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.documentClickHandler);
   }
 
-  /** Devuelve los ítems de navegación permitidos para el rol del usuario actual. */
-  get filteredNavItems(): NavItem[] {
+  /**
+   * Devuelve los grupos de navegación con sus ítems filtrados por el rol del usuario.
+   * Los grupos que queden sin ítems son excluidos completamente para no renderizar
+   * cabeceras huérfanas en el DOM.
+   */
+  get filteredNavGroups(): NavGroup[] {
     const role = this.currentUser?.role;
     if (!role) return [];
-    return this.allNavItems.filter((item) => item.roles.includes(role));
+    return this.navGroups
+      .map((group) => ({
+        label: group.label,
+        items: group.items.filter((item) => item.roles.includes(role)),
+      }))
+      .filter((group) => group.items.length > 0);
   }
 
   /** Devuelve las dos primeras iniciales del nombre completo del usuario, en mayúsculas. */

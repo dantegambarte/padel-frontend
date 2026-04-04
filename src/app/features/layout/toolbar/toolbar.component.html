@@ -72,7 +72,7 @@
               <button
                 *ngFor="let item of searchResults.products"
                 type="button"
-                (click)="navigateToProduct()"
+                (click)="navigateToProduct(item)"
                 class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
               >
                 <svg class="h-4 w-4 flex-shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none"
@@ -134,7 +134,7 @@
               <button
                 *ngFor="let item of searchResults.sales"
                 type="button"
-                (click)="navigateToSale(item)"
+                (click)="openSaleTicket(item)"
                 class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
               >
                 <!-- Ícono bolsa / ticket de venta -->
@@ -145,7 +145,9 @@
                   <path d="M16 10a4 4 0 0 1-8 0"/>
                 </svg>
                 <span class="flex-1 min-w-0">
-                  <span class="block truncate font-medium">{{ item.label }}</span>
+                  <span class="block truncate font-medium">
+                    <span class="font-bold">Cliente:</span> {{ item.label || 'Consumidor Final' }}
+                  </span>
                   <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
                 </span>
               </button>
@@ -200,10 +202,11 @@
         <div
           *ngIf="isNotifOpen"
           (click)="$event.stopPropagation()"
-          class="fixed top-16 left-4 right-4
+          class="fixed top-16 left-3 right-3
                  sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:w-96 sm:mt-2
-                 z-[150] rounded-md border border-border bg-popover text-popover-foreground
-                 shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95"
+                 z-[200] rounded-xl border border-border bg-popover text-popover-foreground
+                 shadow-2xl ring-1 ring-black/5
+                 overflow-hidden animate-in fade-in-0 zoom-in-95"
         >
           <div class="p-2">
             <!-- Header del panel -->
@@ -424,3 +427,9 @@
     </div>
   </div>
 </header>
+
+<!-- Modal de ticket global: se abre sobre cualquier pantalla al seleccionar una venta en el buscador -->
+<app-ticket-modal
+  [saleId]="globalTicketSaleId"
+  (closeModal)="closeSaleTicket()"
+></app-ticket-modal>

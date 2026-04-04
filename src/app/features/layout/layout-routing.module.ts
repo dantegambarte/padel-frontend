@@ -85,12 +85,11 @@ const routes: Routes = [
         data: { title: 'Mi Cuenta' },
       },
 
-      // ── Egresos — Solo Administrador (CAPA 2: Guard de ruta) ──────────────
+      // ── Egresos — Admin y Empleados (el backend filtra por rol) ─────────────
       {
         path: 'expenses',
         loadChildren: () =>
           import('../expenses/expenses.module').then((m) => m.ExpensesModule),
-        canActivate: [AdminGuard],
         data: { title: 'Egresos' },
       },
 
