@@ -1,12 +1,15 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Subject, Subscription, finalize } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 import { Product } from '../../core/models/product.model';
 import { ProductsService } from '../../core/services/products.service';
 import { SalesService, CreateSaleDto } from '../../core/services/sales.service';
 import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DraftService } from '../../core/services/draft.service';
+import { getCategoryColor } from '../../core/utils/category-colors';
 import Swal from 'sweetalert2';
 
 interface PosCartItem {
@@ -22,7 +25,7 @@ interface PosCartItem {
   selector: 'app-pos',
   templateUrl: './pos.component.html',
 })
-export class PosComponent implements OnInit, AfterViewInit {
+export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
   cart: PosCartItem[] = [];
@@ -56,6 +59,13 @@ export class PosComponent implements OnInit, AfterViewInit {
    */
   isCashRegisterOpen = true;
 
+  /** Draft del carrito POS. */
+  showCartDraftBanner = false;
+  cartDraftItemCount = 0;
+  private readonly DRAFT_KEY_CART = 'draft_pos_cart';
+  private cartDraftSave$ = new Subject<void>();
+  private sub = new Subscription();
+
   constructor(
     private productsService: ProductsService,
     private salesService: SalesService,
@@ -63,11 +73,67 @@ export class PosComponent implements OnInit, AfterViewInit {
     private router: Router,
     private toast: ToastService,
     private el: ElementRef<HTMLElement>,
+    private draftService: DraftService,
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.checkCashStatus();
+
+    // Auto-save del carrito con debounce.
+    this.sub.add(
+      this.cartDraftSave$.pipe(debounceTime(500)).subscribe(() => {
+        this.draftService.saveDraft(this.DRAFT_KEY_CART, {
+          cart: this.cart,
+          customerName: this.customerName,
+          montoEfectivo: this.montoEfectivo,
+          montoTransferencia: this.montoTransferencia,
+        });
+      }),
+    );
+
+    // Mostrar banner si hay un carrito guardado.
+    const draft = this.draftService.getDraft<{
+      cart: PosCartItem[];
+      customerName: string;
+      montoEfectivo: string;
+      montoTransferencia: string;
+    }>(this.DRAFT_KEY_CART);
+    if (draft?.cart?.length) {
+      this.showCartDraftBanner = true;
+      this.cartDraftItemCount = draft.cart.reduce((s, i) => s + i.quantity, 0);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+
+  /** Restaura el carrito guardado en el borrador. */
+  restoreCartDraft(): void {
+    const draft = this.draftService.getDraft<{
+      cart: PosCartItem[];
+      customerName: string;
+      montoEfectivo: string;
+      montoTransferencia: string;
+    }>(this.DRAFT_KEY_CART);
+    if (!draft) return;
+    this.cart = draft.cart ?? [];
+    this.customerName = draft.customerName ?? '';
+    this.montoEfectivo = draft.montoEfectivo ?? '';
+    this.montoTransferencia = draft.montoTransferencia ?? '';
+    this.showCartDraftBanner = false;
+  }
+
+  /** Descarta el banner sin restaurar el borrador. */
+  dismissCartDraft(): void {
+    this.showCartDraftBanner = false;
+    this.draftService.clearDraft(this.DRAFT_KEY_CART);
+  }
+
+  /** Dispara el auto-save del carrito (con debounce). */
+  triggerCartDraftSave(): void {
+    this.cartDraftSave$.next();
   }
 
   /**
@@ -136,12 +202,20 @@ export class PosComponent implements OnInit, AfterViewInit {
    * el array entero en cada ciclo de detección de cambios.
    */
   private applyFilter(): void {
-    if (!this.searchQuery.trim()) {
-      this.filteredProducts = this.products;
-      return;
-    }
-    const q = this.normalize(this.searchQuery);
-    this.filteredProducts = this.products.filter((p) => this.normalize(p.name).includes(q));
+    const base = this.searchQuery.trim()
+      ? (() => {
+          const q = this.normalize(this.searchQuery);
+          return this.products.filter((p) => this.normalize(p.name).includes(q));
+        })()
+      : this.products;
+
+    this.filteredProducts = [...base].sort((a, b) => {
+      // Alquileres nunca se consideran agotados; van con los disponibles.
+      const aOut = !this.isRental(a) && a.stock <= 0 ? 1 : 0;
+      const bOut = !this.isRental(b) && b.stock <= 0 ? 1 : 0;
+      if (aOut !== bOut) return aOut - bOut;
+      return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+    });
   }
 
   /** Manejador del evento (ngModelChange) del buscador. Actualiza el array filtrado. */
@@ -247,6 +321,11 @@ export class PosComponent implements OnInit, AfterViewInit {
     );
   }
 
+  /** Devuelve las clases de color (bg + text) para el badge de categoría en la tarjeta del POS. */
+  categoryColor(product: Product): { bg: string; text: string } {
+    return getCategoryColor(product.category?.name ?? '');
+  }
+
   /** `true` si el producto es de categoría "Alquileres" (servicio retornable sin límite de stock). */
   protected isRental(product: Product | PosCartItem): boolean {
     const cat =
@@ -301,6 +380,8 @@ export class PosComponent implements OnInit, AfterViewInit {
       });
     }
 
+    this.triggerCartDraftSave();
+
     // Micro-feedback visual para mobile
     this.toastMessage = `+1 ${product.name}`;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
@@ -332,6 +413,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       this.cart = this.cart.map((i) =>
         i.productId === productId ? { ...i, quantity: newQty } : i,
       );
+      this.triggerCartDraftSave();
     }
     // Si newQty > stock para no-alquileres, simplemente no hace nada.
     // El botón + está deshabilitado en el HTML, por lo que este caso
@@ -364,6 +446,7 @@ export class PosComponent implements OnInit, AfterViewInit {
    */
   removeFromCart(productId: string): void {
     this.cart = this.cart.filter((i) => i.productId !== productId);
+    this.triggerCartDraftSave();
   }
 
   /** Cierra el ticket modal de la última venta. */
@@ -435,6 +518,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: (sale) => {
+          this.draftService.clearDraft(this.DRAFT_KEY_CART);
           this.cart = [];
           this.customerName = '';
           this.montoEfectivo = '';
