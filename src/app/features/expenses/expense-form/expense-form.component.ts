@@ -3,10 +3,13 @@ import {
   EventEmitter,
   Input,
   OnInit,
+  OnDestroy,
   Output,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 import {
   Expense,
@@ -14,12 +17,14 @@ import {
   PaymentMethod,
 } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
+import { DraftService } from '../../../core/services/draft.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-expense-form',
   templateUrl: './expense-form.component.html',
 })
-export class ExpenseFormComponent implements OnInit {
+export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** Si se pasa un Expense existente, el formulario trabaja en modo edición. */
   @Input() expense: Expense | null = null;
 
@@ -31,14 +36,30 @@ export class ExpenseFormComponent implements OnInit {
   serverError: string | null = null;
 
   showOpenCashPanel = false;
+  /** true cuando hay un borrador encontrado esperando confirmación del usuario. */
+  draftRestored = false;
+  private pendingDraft: Record<string, unknown> | null = null;
 
-  readonly categories: ExpenseCategory[] = [
+  private readonly DRAFT_KEY = 'draft_expense';
+  private sub = new Subscription();
+
+  /** Categorías exclusivas de admin que los empleados no pueden seleccionar. */
+  private readonly ADMIN_ONLY_CATEGORIES: ExpenseCategory[] = ['Sueldos'];
+
+  private readonly ALL_CATEGORIES: ExpenseCategory[] = [
     'Insumos',
     'Mantenimiento',
     'Sueldos',
     'Servicios',
     'Otro',
   ];
+
+  get categories(): ExpenseCategory[] {
+    if (this.authService.isAdmin) return this.ALL_CATEGORIES;
+    return this.ALL_CATEGORIES.filter(
+      (c) => !this.ADMIN_ONLY_CATEGORIES.includes(c),
+    );
+  }
 
   readonly paymentMethods: PaymentMethod[] = [
     'Efectivo',
@@ -55,6 +76,8 @@ export class ExpenseFormComponent implements OnInit {
     private fb: FormBuilder,
     private expensesService: ExpensesService,
     private router: Router,
+    private draftService: DraftService,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -83,6 +106,41 @@ export class ExpenseFormComponent implements OnInit {
         Validators.required,
       ],
     });
+
+    // Draft solo en modo creación.
+    if (!this.isEditMode) {
+      // Si existe un borrador, guardarlo en variable temporal y mostrar banner de confirmación.
+      const draft = this.draftService.getDraft<Record<string, unknown>>(this.DRAFT_KEY);
+      if (draft) {
+        this.pendingDraft = draft;
+        this.draftRestored = true;
+      }
+
+      // Auto-save con debounce a cada cambio del formulario.
+      this.sub.add(
+        this.form.valueChanges.pipe(debounceTime(500)).subscribe((value) => {
+          this.draftService.saveDraft(this.DRAFT_KEY, value);
+        }),
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+
+  applyDraft(): void {
+    if (this.pendingDraft) {
+      this.form.patchValue(this.pendingDraft);
+      this.pendingDraft = null;
+    }
+    this.draftRestored = false;
+  }
+
+  dismissDraftBadge(): void {
+    this.draftService.clearDraft(this.DRAFT_KEY);
+    this.pendingDraft = null;
+    this.draftRestored = false;
   }
 
   onSubmit(): void {
@@ -103,6 +161,9 @@ export class ExpenseFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.submitting = false;
+        if (!this.isEditMode) {
+          this.draftService.clearDraft(this.DRAFT_KEY);
+        }
         this.saved.emit();
       },
       error: (err) => {
