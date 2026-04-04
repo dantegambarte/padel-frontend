@@ -35,6 +35,11 @@ export interface BookingResponse {
   clientName: string;
   status: BookingStatus;
   priceType: PriceType;
+  /**
+   * Nombre de la franja horaria aplicada al crear la reserva (ej. 'Turno Tarde').
+   * null para reservas históricas creadas antes de esta columna.
+   */
+  appliedShiftName: string | null;
   priceAmount: number;
   durationMinutes: number;
   items: BookingItem[];

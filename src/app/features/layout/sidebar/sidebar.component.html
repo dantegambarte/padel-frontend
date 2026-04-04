@@ -34,14 +34,25 @@
     </p>
   </div>
 
-  <nav class="flex-1 overflow-y-auto scroll-smooth-mobile space-y-1 p-3">
-    <button
-      *ngFor="let item of filteredNavItems"
-      type="button"
-      (click)="navigate(item.route)"
-      [ngClass]="navItemClass(item.route)"
-      class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-    >
+  <nav class="flex-1 overflow-y-auto scroll-smooth-mobile p-3">
+    <ng-container *ngFor="let group of filteredNavGroups; let first = first">
+      <!-- Cabecera de grupo: margen superior reducido en el primer grupo -->
+      <p
+        [class.mt-0]="first"
+        [class.mt-4]="!first"
+        class="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none"
+      >
+        {{ group.label }}
+      </p>
+
+      <div class="space-y-0.5 mb-1">
+        <button
+          *ngFor="let item of group.items"
+          type="button"
+          (click)="navigate(item.route)"
+          [ngClass]="navItemClass(item.route)"
+          class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+        >
       <ng-container [ngSwitch]="item.icon">
         <svg
           *ngSwitchCase="'layout-dashboard'"
@@ -237,8 +248,10 @@
         </svg>
       </ng-container>
 
-      <span>{{ item.label }}</span>
-    </button>
+          <span>{{ item.label }}</span>
+        </button>
+      </div><!-- /group items -->
+    </ng-container><!-- /group -->
   </nav>
 
   <div class="relative border-t border-sidebar-border p-3">

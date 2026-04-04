@@ -40,6 +40,9 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   isSearchLoading = false;
   searchResults: SearchResponse = { products: [], bookings: [], sales: [] };
 
+  /** ID de la venta cuyo ticket debe mostrarse sobre la pantalla actual. */
+  globalTicketSaleId: string | null = null;
+
   private readonly searchSubject = new Subject<string>();
   private sub = new Subscription();
 
@@ -169,9 +172,9 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.isSearchOpen = false;
   }
 
-  navigateToProduct(): void {
+  navigateToProduct(item: SearchResultItem): void {
     this.clearSearch();
-    this.router.navigate(['/app/products']);
+    this.router.navigate(['/app/products'], { queryParams: { highlight: item.id } });
   }
 
   navigateToBooking(item: SearchResultItem): void {
@@ -181,11 +184,15 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  navigateToSale(item: SearchResultItem): void {
+  openSaleTicket(item: SearchResultItem): void {
     this.clearSearch();
-    this.router.navigate(['/app/pos'], {
-      queryParams: item.date ? { date: item.date } : undefined,
-    });
+    this.globalTicketSaleId = item.id;
+    // Navegar a Reportes (historial de movimientos) como contexto de la venta.
+    this.router.navigate(['/app/reports']);
+  }
+
+  closeSaleTicket(): void {
+    this.globalTicketSaleId = null;
   }
 
   // ── Notificaciones ───────────────────────────────────────────────────────

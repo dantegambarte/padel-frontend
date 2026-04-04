@@ -18,6 +18,8 @@ export interface Expense {
   paymentMethod: PaymentMethod;
   date: string;
   cashSessionId: string | null;
+  createdByUserId: string | null;
+  createdByUser: { id: string; fullName: string; role: string } | null;
   createdAt: string;
   updatedAt: string;
 }

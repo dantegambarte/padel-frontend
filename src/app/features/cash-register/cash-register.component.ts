@@ -1,10 +1,13 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { Component, ChangeDetectorRef, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subject, Subscription, finalize } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DraftService } from '../../core/services/draft.service';
 import {
   CashService,
   CashMovimiento,
@@ -49,7 +52,7 @@ export interface GroupedMovimiento {
   selector: 'app-cash-register',
   templateUrl: './cash-register.component.html',
 })
-export class CashRegisterComponent implements OnInit {
+export class CashRegisterComponent implements OnInit, OnDestroy {
   activeTab: 'turno' | 'historial' = 'turno';
   /** Sub-pestaña dentro de "Mi Turno": movimientos del turno o cierre. */
   turnoTab: 'movimientos' | 'cierre' = 'movimientos';
@@ -97,6 +100,23 @@ export class CashRegisterComponent implements OnInit {
    */
   isBusinessDayClosed = false;
 
+  /** Pendientes que viajarán al siguiente turno (resultado de check-pendings). */
+  pendingBookings = 0;
+  unpaidSales = 0;
+  showPendingsModal = false;
+  isCheckingPendings = false;
+
+  /** Draft de apertura: banner de recuperación y Subject para auto-save. */
+  showAperturaDraftBanner = false;
+  /** Draft de cierre: banner de confirmación explícita. */
+  showCierreDraftBanner = false;
+  private pendingCierreDraft: { efectivoContado: number | null; notas: string } | null = null;
+  private readonly DRAFT_KEY_APERTURA = 'draft_caja_apertura';
+  private readonly DRAFT_KEY_CIERRE   = 'draft_caja_cierre';
+  private draftSave$      = new Subject<void>();
+  private cierreDraftSave$ = new Subject<void>();
+  private draftSub = new Subscription();
+
   historialDate = '';
   historialLoading = false;
   dailySummary: DailySummaryResponse | null = null;
@@ -110,11 +130,52 @@ export class CashRegisterComponent implements OnInit {
     private cashService: CashService,
     private authService: AuthService,
     private toast: ToastService,
+    private router: Router,
+    private draftService: DraftService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.loadCurrentSession();
     this.historialDate = this.toISODate(this.logicalCommercialDate);
+
+    // Auto-save con debounce para el formulario de apertura.
+    this.draftSub.add(
+      this.draftSave$.pipe(debounceTime(500)).subscribe(() => {
+        this.draftService.saveDraft(this.DRAFT_KEY_APERTURA, {
+          fondoInicial: this.fondoInicial,
+          notasApertura: this.notasApertura,
+        });
+      }),
+    );
+
+    // Auto-save con debounce para el formulario de cierre (arqueo).
+    this.draftSub.add(
+      this.cierreDraftSave$.pipe(debounceTime(500)).subscribe(() => {
+        this.draftService.saveDraft(this.DRAFT_KEY_CIERRE, {
+          efectivoContado: this.efectivoContado,
+          notas: this.notas,
+        });
+      }),
+    );
+
+    // Mostrar banner si hay borrador guardado de una apertura previa inconclusa.
+    if (this.draftService.hasDraft(this.DRAFT_KEY_APERTURA)) {
+      this.showAperturaDraftBanner = true;
+    }
+
+    // Mostrar banner de confirmación si hay un borrador de arqueo guardado.
+    const cierreDraft = this.draftService.getDraft<{ efectivoContado: number | null; notas: string }>(
+      this.DRAFT_KEY_CIERRE,
+    );
+    if (cierreDraft) {
+      this.pendingCierreDraft = cierreDraft;
+      this.showCierreDraftBanner = true;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.draftSub.unsubscribe();
   }
 
   /** True cuando el usuario autenticado es administrador. */
@@ -222,7 +283,7 @@ export class CashRegisterComponent implements OnInit {
       minute: '2-digit',
       hour12: false,
     });
-    return `Turno abierto el: ${datePart}, ${timePart}`;
+    return `${datePart}, ${timePart}`;
   }
 
   /** Suma de efectivo esperado y total de transferencias. */
@@ -330,6 +391,15 @@ export class CashRegisterComponent implements OnInit {
               this.fondoInicialSugerido = true;
             }
             this.isBusinessDayClosed = res.isBusinessDayClosed;
+            // Verificar pendientes automáticamente al cargar la vista de cierre
+            if (!res.isBusinessDayClosed) {
+              this.cashService.checkPendings().subscribe({
+                next: (data) => {
+                  this.pendingBookings = data.pendingBookings;
+                  this.unpaidSales = data.unpaidSales;
+                },
+              });
+            }
           } else {
             this.isClosed = false;
             this.isBusinessDayClosed = res.isBusinessDayClosed; // always false for OPEN sessions (backend guarantees)
@@ -345,6 +415,51 @@ export class CashRegisterComponent implements OnInit {
           );
         },
       });
+  }
+
+  /** Emite al Subject de auto-save cada vez que el usuario toca el formulario de apertura. */
+  triggerDraftSave(): void {
+    this.draftSave$.next();
+  }
+
+  /** Emite al Subject de auto-save del arqueo de cierre. */
+  triggerCierreDraftSave(): void {
+    this.cierreDraftSave$.next();
+  }
+
+  /** Restaura el borrador guardado en el formulario de apertura. */
+  applyAperturaDraft(): void {
+    const d = this.draftService.getDraft<{ fondoInicial: string; notasApertura: string }>(
+      this.DRAFT_KEY_APERTURA,
+    );
+    if (d) {
+      this.fondoInicial = d.fondoInicial ?? '';
+      this.notasApertura = d.notasApertura ?? '';
+      this.fondoInicialSugerido = false;
+    }
+    this.showAperturaDraftBanner = false;
+  }
+
+  /** Descarta el borrador sin restaurarlo. */
+  dismissAperturaDraft(): void {
+    this.draftService.clearDraft(this.DRAFT_KEY_APERTURA);
+    this.showAperturaDraftBanner = false;
+  }
+
+  /** Aplica el borrador del arqueo de cierre al formulario. */
+  applyCierreDraft(): void {
+    if (!this.pendingCierreDraft) return;
+    this.efectivoContado = this.pendingCierreDraft.efectivoContado;
+    this.notas = this.pendingCierreDraft.notas ?? '';
+    this.pendingCierreDraft = null;
+    this.showCierreDraftBanner = false;
+  }
+
+  /** Descarta el borrador del arqueo sin aplicarlo. */
+  dismissCierreDraft(): void {
+    this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
+    this.pendingCierreDraft = null;
+    this.showCierreDraftBanner = false;
   }
 
   /**
@@ -373,6 +488,9 @@ export class CashRegisterComponent implements OnInit {
           this.fondoInicial         = '';
           this.fondoInicialSugerido = false;
           this.notasApertura        = '';
+          this.draftService.clearDraft(this.DRAFT_KEY_APERTURA);
+          this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
+          this.showAperturaDraftBanner = false;
           this.toast.success(
             'Turno abierto',
             `Fondo inicial: $${this.fmt(fondo)}`,
@@ -391,6 +509,50 @@ export class CashRegisterComponent implements OnInit {
           }
         },
       });
+  }
+
+  /**
+   * Navega a la sub-pestaña de Cierre.
+   * Si el turno ya está cerrado, navega directamente.
+   * Si hay pendientes (turnos PLAYING u otras ventas sin cobrar), muestra un modal
+   * de advertencia para que el cajero decida si traspasarlos al siguiente turno.
+   */
+  onCierreTabClick(): void {
+    if (this.isClosed) {
+      this.turnoTab = 'cierre';
+      return;
+    }
+    this.isCheckingPendings = true;
+    this.cashService
+      .checkPendings()
+      .pipe(finalize(() => (this.isCheckingPendings = false)))
+      .subscribe({
+        next: (data) => {
+          this.pendingBookings = data.pendingBookings;
+          this.unpaidSales = data.unpaidSales;
+          if (data.pendingBookings > 0 || data.unpaidSales > 0) {
+            this.showPendingsModal = true;
+          } else {
+            this.turnoTab = 'cierre';
+          }
+        },
+        error: () => {
+          // Si falla la verificación, dejamos pasar igual
+          this.turnoTab = 'cierre';
+        },
+      });
+  }
+
+  /** El cajero acepta traspasar los pendientes y avanza al arqueo. */
+  proceedToCierre(): void {
+    this.showPendingsModal = false;
+    this.turnoTab = 'cierre';
+  }
+
+  /** El cajero cancela y navega a la agenda para resolver los pendientes. */
+  closePendingsModal(): void {
+    this.showPendingsModal = false;
+    this.router.navigate(['/app/schedule']);
   }
 
   /**
@@ -451,6 +613,7 @@ export class CashRegisterComponent implements OnInit {
           this.closedCashCounted = this.efectivoReal;
           this.closedDifference = this.diferencia;
           this.turnoTab = 'cierre';
+          this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
           // Arrastre de fondo: pre-cargar el input del próximo turno con el efectivo
           // físico contado en este cierre. Solo si el usuario no escribió nada antes.
           if (this.fondoInicial === '') {
@@ -1259,13 +1422,13 @@ export class CashRegisterComponent implements OnInit {
               `Total recaudado: <strong>$${totalStr}</strong><br>` +
               `Turnos: ${summary.sessions.length}`,
           });
-          // Feedback inmediato: ocultar el botón Z y actualizar el texto de estado
-          // antes de que loadCurrentSession() resuelva.
+          // Ocultar el botón Z y actualizar el texto de estado inmediatamente.
+          // No llamamos a loadCurrentSession() porque el endpoint /current puede
+          // devolver isBusinessDayClosed=false y sobreescribir este valor.
+          // detectChanges() es necesario porque el async/await del Swal previo
+          // saca la ejecución de NgZone y las asignaciones no disparan CD solas.
           this.isBusinessDayClosed = true;
-          // Recarga el estado desde el servidor dentro de NgZone para que Angular
-          // detecte los cambios correctamente (fix: el async/await del Swal previo
-          // saca la ejecución de NgZone; las asignaciones manuales no disparan CD).
-          this.loadCurrentSession();
+          this.cdr.detectChanges();
         },
         error: (err) => {
           if (err.status === 409) {
@@ -1275,9 +1438,8 @@ export class CashRegisterComponent implements OnInit {
             );
           } else if (err.status === 400) {
             // La jornada ya fue cerrada en el servidor pero el front no lo sabía.
-            // Actualizamos solo isBusinessDayClosed sin recargar, porque /current
-            // puede devolver isBusinessDayClosed=false y sobreescribir este valor.
             this.isBusinessDayClosed = true;
+            this.cdr.detectChanges();
           } else {
             this.toast.error('Error al cerrar jornada', 'Intente nuevamente.');
           }

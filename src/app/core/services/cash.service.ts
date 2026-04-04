@@ -361,6 +361,16 @@ export class CashService {
   }
 
   /**
+   * Retorna la cantidad de turnos 'playing' y ventas sin cobrar de la jornada actual.
+   * Se usa antes del arqueo de cierre para advertir al cajero sobre pendientes.
+   */
+  checkPendings(): Observable<{ pendingBookings: number; unpaidSales: number }> {
+    return this.http.get<{ pendingBookings: number; unpaidSales: number }>(
+      `${this.url}/check-pendings`,
+    );
+  }
+
+  /**
    * Formatea un timestamp ISO a una cadena HH:MM usando el locale argentino.
    */
   private formatHora(isoString: string): string {

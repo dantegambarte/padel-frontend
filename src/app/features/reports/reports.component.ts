@@ -681,7 +681,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     const rows = transactions.map((tx) => [
       tx.date, tx.time,
-      tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta mostrador' : tx.type,
+      tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta cantina' : tx.type,
       tx.concept,
       Number(tx.cash)     || 0,
       Number(tx.transfer) || 0,
@@ -725,7 +725,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const rows = transactions.map((tx) => ({
       Fecha:          tx.date,
       Hora:           tx.time,
-      Tipo:           tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta mostrador' : tx.type,
+      Tipo:           tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta cantina' : tx.type,
       Concepto:       tx.concept,
       Efectivo:       Number(tx.cash)     || 0,
       Transferencia:  Number(tx.transfer) || 0,

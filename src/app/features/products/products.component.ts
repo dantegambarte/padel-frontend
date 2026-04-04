@@ -1,10 +1,12 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { Product, CreateProductDto } from '../../core/models/product.model';
 import { ProductsService } from '../../core/services/products.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { getCategoryColor } from '../../core/utils/category-colors';
 
 interface ProductForm {
   name: string;
@@ -58,6 +60,8 @@ export class ProductsComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   deletingId: string | null = null;
+  /** ID del producto que debe resaltarse al llegar desde el buscador. */
+  highlightedProductId: string | null = null;
   /** IDs de productos cuyo toggle está siendo procesado (evita doble click). */
   togglingFeaturedIds = new Set<string>();
 
@@ -131,11 +135,32 @@ export class ProductsComponent implements OnInit {
     private productsService: ProductsService,
     private authService: AuthService,
     private toast: ToastService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.loadCategories();
+
+    const highlightId = this.route.snapshot.queryParamMap.get('highlight');
+    if (highlightId) {
+      this.scrollAndHighlight(highlightId);
+    }
+  }
+
+  private scrollAndHighlight(id: string): void {
+    // Esperar a que la lista de productos esté renderizada antes de hacer scroll.
+    const attempt = (retries: number) => {
+      const el = document.getElementById(`product-${id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.highlightedProductId = id;
+        setTimeout(() => { this.highlightedProductId = null; }, 3000);
+      } else if (retries > 0) {
+        setTimeout(() => attempt(retries - 1), 200);
+      }
+    };
+    attempt(10);
   }
 
   /** Carga las categorías desde el backend independientemente de los productos. */
@@ -448,6 +473,11 @@ export class ProductsComponent implements OnInit {
   iconColor(product: Product): { bg: string; text: string } {
     const key = product.icon || 'inventory_2';
     return ICON_COLORS[key] ?? ICON_COLORS['inventory_2'];
+  }
+
+  /** Devuelve las clases de color (bg + text) para el badge de categoría del producto. */
+  categoryColor(product: Product): { bg: string; text: string } {
+    return getCategoryColor(product.category?.name ?? '');
   }
 
   /** Alterna el estado de destacado en el formulario (sólo en modo edición/creación). */

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Expense } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-expenses-list',
@@ -16,16 +17,39 @@ export class ExpensesListComponent implements OnInit {
   /** Egreso seleccionado para editar (null = modo creación). */
   selectedExpense: Expense | null = null;
 
-  constructor(private expensesService: ExpensesService) {}
+  /** Filtros de fecha (solo admin). */
+  dateFrom = '';
+  dateTo   = '';
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin;
+  }
+
+  constructor(
+    private expensesService: ExpensesService,
+    public authService: AuthService,
+  ) {}
 
   ngOnInit(): void {
+    // Inicializar rango de fechas al mes actual (solo relevante para admin).
+    if (this.isAdmin) {
+      const now = new Date();
+      const y   = now.getFullYear();
+      const m   = String(now.getMonth() + 1).padStart(2, '0');
+      this.dateFrom = `${y}-${m}-01`;
+      this.dateTo   = `${y}-${m}-${String(new Date(y, now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
+    }
     this.loadExpenses();
   }
 
   loadExpenses(): void {
     this.loading = true;
     this.error = null;
-    this.expensesService.getAll().subscribe({
+    const filters = this.isAdmin
+      ? { from: this.dateFrom || undefined, to: this.dateTo || undefined }
+      : undefined;
+
+    this.expensesService.getAll(filters).subscribe({
       next: (data) => {
         this.expenses = data;
         this.loading = false;
@@ -35,6 +59,10 @@ export class ExpensesListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  onFilterChange(): void {
+    this.loadExpenses();
   }
 
   openCreateForm(): void {
@@ -91,5 +119,15 @@ export class ExpensesListComponent implements OnInit {
       'Otro':          'bg-gray-100 text-gray-600',
     };
     return map[category] ?? 'bg-secondary text-secondary-foreground';
+  }
+
+  /** Nombre del responsable para mostrar en la columna de auditoría. */
+  creatorName(expense: Expense): string {
+    return expense.createdByUser?.fullName ?? 'Sistema';
+  }
+
+  /** True si el egreso fue creado por el admin (para badge visual). */
+  isCreatedByAdmin(expense: Expense): boolean {
+    return expense.createdByUser?.role === 'admin';
   }
 }
