@@ -96,6 +96,18 @@
           </button>
         </div>
 
+        <!-- Aviso de stock bajo -->
+        <p *ngIf="isLowStockItem(item)"
+           class="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <path d="M12 9v4"/><path d="M12 17h.01"/>
+          </svg>
+          Últimas unidades ({{ item.stock }} en stock)
+        </p>
+
         <!-- FILA 2: controles de cantidad + subtotal alineado a la derecha -->
         <div class="flex items-center justify-between">
           <!-- Controles de cantidad -->
@@ -388,7 +400,21 @@
                 <ng-container *ngIf="(product.category?.name ?? '').toLowerCase().includes('alquiler'); else stockLabel">
                   Servicio
                 </ng-container>
-                <ng-template #stockLabel>Stock: {{ product.stock }}</ng-template>
+                <ng-template #stockLabel>
+                  <span
+                    [ngClass]="isLowStockProduct(product) ? 'text-amber-600 font-semibold' : ''"
+                    class="inline-flex items-center gap-0.5"
+                  >
+                    <svg *ngIf="isLowStockProduct(product)"
+                         class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                      <path d="M12 9v4"/><path d="M12 17h.01"/>
+                    </svg>
+                    Stock: {{ product.stock }}
+                  </span>
+                </ng-template>
               </p>
             </div>
           </button>

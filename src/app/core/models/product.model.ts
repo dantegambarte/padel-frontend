@@ -5,6 +5,7 @@ export interface Product {
   costPrice: number;
   salePrice: number;
   stock: number;
+  minStock: number;
   isFeatured: boolean;
   isActive: boolean;
   icon?: string;
@@ -18,6 +19,7 @@ export interface CreateProductDto {
   costPrice: number;
   salePrice: number;
   stock: number;
+  minStock?: number;
   isFeatured: boolean;
   icon?: string;
 }
