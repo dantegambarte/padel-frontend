@@ -124,8 +124,10 @@ src/
 │   │       ├── reports.service.ts
 │   │       ├── sales.service.ts
 │   │       ├── search.service.ts
+│   │       ├── draft.service.ts
 │   │       ├── session-alert.service.ts
 │   │       ├── teachers.service.ts
+│   │       ├── theme.service.ts
 │   │       ├── toast.service.ts
 │   │       └── users.service.ts
 │   │
@@ -144,6 +146,7 @@ src/
 │   │   ├── teachers/                     # Gestión de profesores y recordatorios
 │   │   ├── users/                        # Administración de usuarios y roles
 │   │   ├── settings/                     # Configuración del sistema
+│   │   ├── inventory/                    # Alertas de stock bajo (solo admin)
 │   │   └── account/                      # Perfil del usuario autenticado
 │   │
 │   └── shared/                           # Componentes y directivas reutilizables
@@ -190,6 +193,7 @@ src/
   ├── products           → Gestión de productos e inventario
   ├── expenses           → Egresos del turno (solo admin — AdminGuard)
   ├── pricing-shifts     → Franjas horarias de precios (solo admin — AdminGuard)
+  ├── inventory          → Alertas de stock bajo (solo admin — AdminGuard)
   ├── reports            → Reportes de ventas
   ├── teachers           → Gestión de profesores
   ├── users              → Gestión de usuarios
@@ -316,6 +320,39 @@ Registro de gastos operativos por turno de caja.
 
 ---
 
+## Módulo de Inventario (`inventory`)
+
+Panel de alertas de stock bajo accesible solo para administradores.
+
+- Lista todos los productos cuyo stock es inferior al umbral mínimo configurado
+- Separa en dos secciones: **Sin stock** (stock = 0) y **Stock bajo** (stock > 0 pero por debajo del mínimo)
+- Barra de progreso visual por producto: porcentaje de stock restante respecto al umbral mínimo
+- Acceso directo al producto desde la alerta (navega a `/app/products?highlight=:id`)
+- Botón de recarga manual
+
+---
+
+## Tema oscuro
+
+El `ThemeService` gestiona el modo oscuro de la aplicación.
+
+- Detecta la preferencia del sistema (`prefers-color-scheme: dark`) en el primer arranque
+- Persiste la elección del usuario en `localStorage` (clave `padelsys-theme`)
+- Expone `isDark$` (BehaviorSubject) para que los componentes reaccionen al cambio
+- El toggle agrega/quita la clase `dark` en el `<html>` (compatible con Tailwind dark mode)
+
+---
+
+## Borradores persistentes (`DraftService`)
+
+Utilidad para preservar formularios ante recargas o pérdidas de conexión.
+
+- Guarda cualquier estado serializable en `localStorage` bajo una clave arbitraria
+- Métodos: `saveDraft`, `getDraft<T>`, `clearDraft`, `hasDraft`
+- Falla silenciosamente si el storage no está disponible o está lleno
+
+---
+
 ## Caché y rendimiento
 
 Los servicios de mayor demanda implementan una caché con TTL para evitar peticiones redundantes:
@@ -337,7 +374,7 @@ Las cachés se invalidan automáticamente al logout y al realizar mutaciones (PO
 | Guard                 | Uso                                                                     |
 | --------------------- | ----------------------------------------------------------------------- |
 | `AuthGuard`           | Protege todas las rutas dentro de `/app`                                |
-| `AdminGuard`          | Restringe acceso a `expenses` y `pricing-shifts` a rol `admin`          |
+| `AdminGuard`          | Restringe acceso a `expenses`, `pricing-shifts` e `inventory` a rol `admin` |
 | `UnsavedChangesGuard` | Alerta antes de navegar si hay cambios sin guardar (settings, teachers) |
 
 ---
@@ -380,6 +417,7 @@ npm run test:e2e:report
 | `e2e/dashboard.spec.ts`       | Métricas, resumen del día, métodos de pago, navbar    |
 | `e2e/navigation.spec.ts`      | Navegación a todas las secciones                      |
 | `e2e/pos.spec.ts`             | Flujo de venta completo                               |
+| `e2e/expenses.spec.ts`        | Registro de egresos — roles admin y empleado          |
 | `e2e/products.spec.ts`        | CRUD de productos                                     |
 | `e2e/reports.spec.ts`         | Filtros de período y gráficos                         |
 | `e2e/schedule.spec.ts`        | Grilla de canchas, reservas, slots, selector de fecha |
