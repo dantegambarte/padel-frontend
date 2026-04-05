@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 
 import { TeachersRoutingModule } from './teachers-routing.module';
 import { TeachersComponent } from './teachers.component';
+import { TeacherReportComponent } from './teacher-report/teacher-report.component';
 
 @NgModule({
-  declarations: [TeachersComponent],
+  declarations: [TeachersComponent, TeacherReportComponent],
   imports: [CommonModule, FormsModule, TeachersRoutingModule],
 })
 export class TeachersModule {}

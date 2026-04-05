@@ -9,13 +9,11 @@ import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard'
 type FormState = {
   fullName: string;
   phoneNumber: string;
-  email: string;
 };
 
 const EMPTY_FORM = (): FormState => ({
   fullName: '',
   phoneNumber: '',
-  email: '',
 });
 
 @Component({
@@ -58,8 +56,7 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     return this.teachers.filter(
       (t) =>
         t.fullName.toLowerCase().includes(term) ||
-        (t.phoneNumber ?? '').includes(term) ||
-        (t.email ?? '').toLowerCase().includes(term),
+        (t.phoneNumber ?? '').includes(term),
     );
   }
 
@@ -80,7 +77,6 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     this.form = {
       fullName:    teacher.fullName,
       phoneNumber: teacher.phoneNumber ?? '',
-      email:       teacher.email       ?? '',
     };
     this.initialForm = { ...this.form };
     this.formError = '';
@@ -105,7 +101,6 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     const dto: CreateTeacherDto = {
       fullName:    this.form.fullName.trim(),
       phoneNumber: this.form.phoneNumber.trim() || undefined,
-      email:       this.form.email.trim()       || undefined,
     };
 
     const op = this.editingId
@@ -212,8 +207,7 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     if (!this.isDialogOpen || !this.initialForm) return false;
     return (
       this.form.fullName    !== this.initialForm.fullName    ||
-      this.form.phoneNumber !== this.initialForm.phoneNumber ||
-      this.form.email       !== this.initialForm.email
+      this.form.phoneNumber !== this.initialForm.phoneNumber
     );
   }
 }
