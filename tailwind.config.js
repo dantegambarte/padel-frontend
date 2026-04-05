@@ -72,9 +72,14 @@ module.exports = {
           '0%':   { opacity: '0', transform: 'translateX(-50%) translateY(12px)' },
           '100%': { opacity: '1', transform: 'translateX(-50%) translateY(0)' },
         },
+        mobileSearchIn: {
+          '0%':   { opacity: '0', transform: 'translateY(-6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'fadeInUp': 'fadeInUp 0.2s ease-out',
+        'mobileSearchIn': 'mobileSearchIn 0.2s ease-out both',
       },
     },
   },
