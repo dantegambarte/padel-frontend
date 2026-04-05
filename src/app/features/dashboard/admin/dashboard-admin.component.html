@@ -1,7 +1,7 @@
 <div class="space-y-6 p-4 md:p-6">
 
   <!-- ── KPI Cards del DÍA ──────────────────────────────────────────────── -->
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <ng-container *ngIf="isLoading; else kpiCards">
       <div
         *ngFor="let i of [1, 2, 3, 4]"
@@ -121,7 +121,7 @@
   </div>
 
   <!-- ── Resumen financiero de hoy ──────────────────────────────────────── -->
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="grid gap-4 xl:grid-cols-2">
 
     <!-- Desglose de hoy -->
     <div class="rounded-lg border border-border bg-card text-card-foreground shadow-md">

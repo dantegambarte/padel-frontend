@@ -1,11 +1,11 @@
 <!-- Backdrop -->
 <div
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+  class="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4"
   (click)="onCancel()"
 >
   <!-- Panel del modal (detiene propagación para no cerrar al hacer click dentro) -->
   <div
-    class="relative w-full max-w-md rounded-lg border bg-background shadow-xl"
+    class="relative w-full max-w-md rounded-lg border bg-background shadow-xl flex flex-col max-h-[calc(100vh-2rem)]"
     (click)="$event.stopPropagation()"
   >
     <!-- Header -->
@@ -47,7 +47,10 @@
     </div>
 
     <!-- Formulario -->
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="px-6 py-5 space-y-4">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="flex flex-col flex-1 min-h-0 overflow-hidden">
+
+    <!-- Campos: área con scroll cuando la fuente es grande -->
+    <div class="overflow-y-auto flex-1 px-6 py-5 space-y-4">
 
       <!-- Monto -->
       <div class="space-y-1">
@@ -126,8 +129,10 @@
         {{ serverError }}
       </div>
 
-      <!-- Acciones principales -->
-      <div class="flex gap-3 pt-2">
+    </div><!-- /campos scrollables -->
+
+    <!-- Footer con botones: siempre visible, nunca se oculta por scroll -->
+    <div class="flex gap-3 border-t border-border px-6 py-4 shrink-0">
         <button
           type="button"
           (click)="onCancel()"

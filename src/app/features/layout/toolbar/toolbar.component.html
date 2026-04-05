@@ -13,7 +13,7 @@
       </svg>
     </button>
 
-    <div class="ml-auto flex items-center gap-3">
+    <div class="ml-auto flex items-center gap-1 sm:gap-3">
 
       <!-- ══════════════════════════════════════════════════════════
            BUSCADOR GLOBAL
@@ -297,7 +297,7 @@
         type="button"
         (click)="calcService.toggle()"
         title="Calculadora (Alt+C)"
-        class="relative inline-flex items-center justify-center rounded-md h-9 w-9
+        class="relative hidden sm:inline-flex items-center justify-center rounded-md h-9 w-9
                text-orange-500 hover:bg-orange-50 transition-colors
                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Abrir calculadora"
@@ -326,7 +326,7 @@
           type="button"
           (click)="toggleUserMenu()"
           title="Mi Cuenta"
-          class="relative flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5
+          class="relative flex shrink-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5
                  transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div class="relative">
