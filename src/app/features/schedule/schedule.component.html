@@ -1,7 +1,7 @@
 
 
 <div
-  class="rounded-lg border border-border bg-card text-card-foreground shadow-md flex flex-col h-full"
+  class="rounded-lg border border-border bg-card text-card-foreground shadow-md flex flex-col h-full dark:bg-slate-950 dark:border-slate-800"
 >
   
   <div class="flex flex-col space-y-1.5 p-6 pb-3">
@@ -11,32 +11,32 @@
       </h3>
 
       <div class="flex flex-nowrap items-center justify-between gap-1 sm:gap-3 w-full">
-        <span class="hidden sm:inline-block text-sm font-medium text-gray-700 shrink-0">Fecha:</span>
+        <span class="hidden sm:inline-block text-sm font-medium text-gray-700 dark:text-slate-400 shrink-0">Fecha:</span>
         <button
           type="button"
           (click)="prevDay()"
           title="Día anterior"
-          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium"
+          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200"
         >‹</button>
         <input
           id="fecha"
           type="date"
           [(ngModel)]="selectedDate"
           (change)="onDateChange()"
-          class="flex-1 w-full min-w-[110px] text-sm p-1.5 border border-input rounded-lg bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="flex-1 w-full min-w-[110px] text-sm p-1.5 border border-input rounded-lg bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
         />
         <button
           type="button"
           (click)="nextDay()"
           title="Día siguiente"
-          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium"
+          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200"
         >›</button>
         <button
           type="button"
           (click)="loadBookings()"
           [disabled]="isLoading"
           title="Actualizar grilla"
-          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+          class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700"
         >
           <svg
             [ngClass]="{'animate-spin text-indigo-500': isLoading, 'text-gray-600': !isLoading}"
@@ -103,10 +103,10 @@
       ──────────────────────────────────────────────────────────────────── -->
       <div #headerRow
            class="flex flex-nowrap flex-shrink-0 overflow-hidden z-20 bg-card
-                  border-b border-slate-200 pb-2 select-none cursor-default">
+                  border-b border-slate-200 pb-2 select-none cursor-default dark:bg-slate-950 dark:border-slate-800">
         <!-- Spacer alineado con la columna de tiempo -->
         <div class="flex-none w-16 bg-card border-r border-slate-200
-                    flex items-end pb-1 pl-1 h-8">
+                    flex items-end pb-1 pl-1 h-8 dark:bg-slate-950 dark:border-slate-800">
           <span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">hs</span>
         </div>
         <!-- Nombre de cada cancha -->
@@ -138,7 +138,8 @@
         <div
           class="sticky left-0 z-20 flex-none w-16
                  bg-card border-r border-slate-200
-                 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.10)]"
+                 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.10)]
+                 dark:bg-slate-900 dark:border-slate-800"
         >
           <!-- Labels de hora: una fila de 48px por cada slot de 30 min -->
           <div class="space-y-2">
@@ -190,7 +191,8 @@
                   (keydown.enter)="onSlotClick(court, hour)"
                   class="group absolute inset-0 rounded-lg border-2 border-dashed border-muted-foreground/30
                          cursor-pointer transition-colors
-                         hover:bg-slate-100 hover:border-primary/50"
+                         hover:bg-slate-100 hover:border-primary/50
+                         dark:border-slate-700 dark:hover:bg-slate-800/50 dark:hover:border-primary/50"
                 >
                   <span class="absolute inset-0 flex items-center justify-center
                                opacity-0 group-hover:opacity-100 transition-opacity duration-150
@@ -205,7 +207,7 @@
                 <ng-container *ngIf="getBooking(court.id, hour) as booking">
                   <div
                     class="absolute inset-x-0 top-0"
-                    [style.height.px]="getBookingBlockHeight(booking)"
+                    [style.height]="getBookingBlockHeight(booking)"
                     cdkDrag
                     [cdkDragData]="booking"
                     [cdkDragDisabled]="booking.status === 'completed'"
@@ -214,8 +216,8 @@
                   >
                     <!-- Fantasma del drag -->
                     <div *cdkDragPlaceholder
-                      class="absolute inset-[2px] rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/40"
-                      [style.height.px]="getBookingBlockHeight(booking) - 4"
+                      class="absolute inset-[2px] rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/40 dark:border-indigo-500 dark:bg-indigo-900/20"
+                      [style.height]="getBookingBlockHeightInner(booking)"
                     ></div>
 
                     <!-- Tarjeta de la reserva -->
@@ -261,7 +263,7 @@
                               class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                             >{{ getStatusLabel(booking.status) }}</span>
                             <span *ngIf="booking.fixedBookingId"
-                                  class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold"
+                                  class="inline-flex items-center rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 font-semibold dark:bg-amber-900/40 dark:text-amber-300"
                                   style="font-size:10px;">
                               ⭐ Fijo
                             </span>
@@ -326,7 +328,8 @@
                                 transition-opacity duration-150 delay-200
                                 flex flex-col absolute z-[100] top-full mt-1 left-0
                                 w-56 bg-white rounded-lg shadow-lg border border-slate-200 p-2.5
-                                text-slate-800">
+                                text-slate-800
+                                dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                       <div class="flex items-start justify-between gap-2 mb-2">
                         <p class="text-sm font-bold leading-tight">{{ booking.clientName }}</p>
                         <div class="flex flex-col items-end gap-1 shrink-0">
@@ -341,27 +344,27 @@
                           </span>
                         </div>
                       </div>
-                      <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
+                      <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-2.5">
                         <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
                         </svg>
-                        <span class="font-medium text-slate-700">
+                        <span class="font-medium text-slate-700 dark:text-slate-200">
                           {{ booking.hour }}hs – {{ getBookingEndHour(booking) }}hs
                         </span>
-                        <span class="text-slate-400">· {{ booking.durationMinutes }} min</span>
+                        <span class="text-slate-400 dark:text-slate-500">· {{ booking.durationMinutes }} min</span>
                       </div>
-                      <div class="border-t border-slate-100 pt-2 space-y-1">
-                        <div class="flex justify-between text-xs text-slate-500">
+                      <div class="border-t border-slate-100 dark:border-slate-700 pt-2 space-y-1">
+                        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                           <span>Cancha</span>
-                          <span class="font-medium text-slate-700">${{ fmt(booking.priceAmount) }}</span>
+                          <span class="font-medium text-slate-700 dark:text-slate-200">${{ fmt(booking.priceAmount) }}</span>
                         </div>
                         <div *ngIf="getBookingItemsTotal(booking) > 0"
-                             class="flex justify-between text-xs text-slate-500">
+                             class="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                           <span>Consumos</span>
-                          <span class="font-medium text-slate-700">${{ fmt(getBookingItemsTotal(booking)) }}</span>
+                          <span class="font-medium text-slate-700 dark:text-slate-200">${{ fmt(getBookingItemsTotal(booking)) }}</span>
                         </div>
-                        <div class="flex justify-between text-xs font-semibold border-t border-slate-100 pt-1">
+                        <div class="flex justify-between text-xs font-semibold border-t border-slate-100 dark:border-slate-700 pt-1">
                           <span>Total</span>
                           <span>${{ fmt(getBookingTotal(booking)) }}</span>
                         </div>
@@ -402,19 +405,19 @@
     <!-- Leyenda — siempre visible al pie de la grilla -->
     <div class="shrink-0 flex flex-wrap gap-4 border-t border-border pt-3 mt-3">
       <div class="flex items-center gap-2">
-        <div class="h-4 w-4 rounded border border-dashed border-muted-foreground/30"></div>
+        <div class="h-4 w-4 rounded border border-dashed border-muted-foreground/30 dark:border-slate-600"></div>
         <span class="text-sm">Disponible</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="h-4 w-4 rounded border-2 border-primary bg-primary/10"></div>
+        <div class="h-4 w-4 rounded border-2 border-primary bg-primary/10 dark:bg-primary/20"></div>
         <span class="text-sm">Reservado</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="h-4 w-4 rounded border-2 border-green-500 bg-green-50"></div>
+        <div class="h-4 w-4 rounded border-2 border-green-500 bg-green-50 dark:bg-green-900/30"></div>
         <span class="text-sm">Jugando</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="h-4 w-4 rounded border-2 border-slate-400 bg-slate-100"></div>
+        <div class="h-4 w-4 rounded border-2 border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-700"></div>
         <span class="text-sm">Completado</span>
       </div>
     </div>
@@ -435,7 +438,7 @@
       aria-modal="true"
       aria-labelledby="dialog-title"
       data-testid="booking-modal"
-      class="modal-card max-w-[600px]"
+      class="modal-card max-w-4xl"
       (click)="$event.stopPropagation()"
     >
 
@@ -533,7 +536,10 @@
           <p class="text-xs text-muted-foreground">
             De <span class="font-semibold">{{ selectedSlot?.hour }}hs</span> a
             <span class="font-semibold">{{ endHour }}hs</span> —
-            <span *ngIf="activeShift" class="text-primary font-medium">{{ activeShift.name }}</span>
+            <ng-container *ngIf="activeShift">
+              <span *ngIf="!(holidayService.isHoliday$ | async)" class="text-primary font-medium">{{ activeShift.name }}</span>
+              <span *ngIf="holidayService.isHoliday$ | async" class="font-semibold text-amber-600 dark:text-amber-400">&#9733; Tarifa Feriado</span>
+            </ng-container>
             <span *ngIf="!activeShift">Precio base</span>:
             <span class="font-semibold">${{ fmt(courtPrice) }}</span>
           </p>
@@ -839,7 +845,7 @@
           type="button"
           (click)="saveBooking()"
           [disabled]="isSaving || isTariffMissing"
-          class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-5 py-3 text-base font-bold hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
           <ng-container *ngIf="isSaving; else guardarLabel2">
             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -856,32 +862,27 @@
     <!-- DETAIL MODE -->
     <ng-container *ngIf="dialogMode === 'detail' && selectedBooking">
 
-      <!-- Sticky Header -->
-      <div class="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-        <div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Total a Pagar</p>
-          <p class="text-2xl font-black text-gray-900">${{ fmt(detailTotalReserva) }}</p>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-xs text-gray-500">{{ selectedSlot?.court?.name }} · {{ selectedSlot?.hour }}–{{ detailEndHour }}hs</span>
-            <span [ngClass]="getStatusBadgeClass(selectedBooking.status)" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
-              {{ getStatusLabel(selectedBooking.status) }}
-            </span>
-            <span *ngIf="selectedBooking.fixedBookingId"
-                  class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
-              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-                <path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-              </svg>
-              Turno Fijo
-            </span>
-          </div>
+      <!-- ── Slim Header ──────────────────────────────────────────────────────── -->
+      <div class="flex-shrink-0 bg-white border-b border-gray-100 px-5 py-3 flex justify-between items-center rounded-t-2xl dark:bg-slate-900 dark:border-slate-800">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-base font-semibold text-gray-700 dark:text-slate-200">{{ selectedSlot?.court?.name }} · {{ selectedSlot?.hour }}–{{ detailEndHour }}hs</span>
+          <span [ngClass]="getStatusBadgeClass(selectedBooking.status)" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
+            {{ getStatusLabel(selectedBooking.status) }}
+          </span>
+          <span *ngIf="selectedBooking.fixedBookingId"
+                class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              <path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+            Turno Fijo
+          </span>
         </div>
-        <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+        <div class="flex items-center gap-2 flex-shrink-0">
           <button type="button" (click)="calcService.toggle()" title="Abrir calculadora" aria-label="Abrir calculadora"
-            class="bg-orange-50 text-orange-500 p-2.5 rounded-full hover:bg-orange-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <line x1="8" y1="6" x2="16" y2="6"/>
+            class="bg-orange-50 text-orange-500 p-2 rounded-full hover:bg-orange-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/>
               <line x1="8" y1="10" x2="8" y2="10" stroke-width="3" stroke-linecap="round"/>
               <line x1="12" y1="10" x2="12" y2="10" stroke-width="3" stroke-linecap="round"/>
               <line x1="16" y1="10" x2="16" y2="10" stroke-width="3" stroke-linecap="round"/>
@@ -895,540 +896,567 @@
           </button>
           <button type="button" (click)="closeDialog()" aria-label="Cerrar"
             class="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
             </svg>
           </button>
         </div>
       </div>
 
-      <!-- Scrollable Body -->
-      <div #dialogScrollBody class="flex-1 overflow-y-auto overscroll-contain bg-gray-50/50 px-6 py-5 space-y-4">
+      <!-- ── Two-column body ──────────────────────────────────────────────────── -->
+      <div #dialogScrollBody class="flex-1 overflow-y-auto overscroll-contain bg-gray-50/60 dark:bg-slate-950">
+        <div class="grid grid-cols-1 md:grid-cols-2 min-h-full divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-slate-800">
 
-        <!-- Booking info -->
-        <div class="rounded-lg border border-border bg-white divide-y divide-border">
+          <!-- ════════════════════════════════════════════════════════════════════
+               COLUMNA IZQUIERDA — Ticket (info del turno + consumos)
+               ════════════════════════════════════════════════════════════════════ -->
+          <div class="flex flex-col px-5 py-4 gap-4 bg-white dark:bg-slate-900">
 
-          <div class="flex justify-between items-center px-4 py-3 text-sm">
-            <span class="text-muted-foreground">Cliente</span>
-            <div class="flex items-center gap-2">
-              <span class="font-semibold">{{ selectedBooking.clientName }}</span>
-              <!-- Botón WhatsApp (solo si tiene teléfono) -->
-              <button *ngIf="selectedBooking.fixedBookingId"
-                      type="button"
-                      (click)="confirmFixedBookingWhatsApp()"
-                      title="Enviar WhatsApp de confirmación"
-                      class="flex items-center justify-center h-7 w-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-                </svg>
-              </button>
-
-              <!-- Botón confirmar asistencia (solo cuando aún no fue confirmado) -->
-              <button *ngIf="selectedBooking.fixedBookingId && !selectedBooking.isConfirmed"
-                      type="button"
-                      (click)="confirmBooking()"
-                      [disabled]="isConfirmingBooking"
-                      title="Marcar asistencia como confirmada"
-                      class="flex items-center gap-1 px-2 h-7 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors text-xs font-semibold disabled:opacity-50">
-                <svg *ngIf="!isConfirmingBooking" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <svg *ngIf="isConfirmingBooking" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                Confirmar
-              </button>
-
-              <!-- Badge "Confirmado" (cuando ya fue confirmado) -->
-              <span *ngIf="selectedBooking.fixedBookingId && selectedBooking.isConfirmed"
-                    class="flex items-center gap-1 px-2 h-7 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Confirmado
-              </span>
-            </div>
-          </div>
-          <div class="flex justify-between px-4 py-3 text-sm">
-            <span class="text-muted-foreground">Tipo de precio</span>
-            <span class="font-semibold">{{ getPriceLabel(selectedBooking) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-3 text-sm">
-            <span class="text-muted-foreground">Precio cancha</span>
-            <span class="font-semibold">${{ fmt(selectedBooking.priceAmount) }}</span>
-          </div>
-        </div><!-- /booking info -->
-
-        <!-- Active sections: booked / playing -->
-        <ng-container *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'">
-
-          <!-- Products section -->
-          <div *ngIf="canSplitAccount" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <p class="text-sm font-semibold text-gray-700">Productos (Consumos)</p>
-              <span
-                *ngIf="isAutoSavingItems"
-                class="flex items-center gap-1 text-xs text-muted-foreground"
-              >
-                <svg class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                Guardando...
-              </span>
-            </div>
-
-            <!-- Agregar productos: solo disponible cuando el partido está EN CURSO -->
-            <ng-container *ngIf="selectedBooking.status === 'playing'">
-
-              <div *ngIf="featuredProducts.length > 0" class="flex flex-wrap gap-2">
-                <button
-                  *ngFor="let product of featuredProducts"
-                  type="button"
-                  (click)="addToDetailCart(product)"
-                  class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14" /><path d="M12 5v14" />
-                  </svg>
-                  {{ product.name }}
-                </button>
+            <!-- Booking info -->
+            <div class="rounded-lg border border-border divide-y divide-border dark:border-slate-700 dark:divide-slate-700">
+              <div class="flex justify-between items-center px-4 py-2.5 text-base">
+                <span class="text-muted-foreground dark:text-slate-400">Cliente</span>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                  <span class="font-semibold dark:text-slate-100">{{ selectedBooking.clientName }}</span>
+                  <!-- Botón WhatsApp -->
+                  <button *ngIf="selectedBooking.fixedBookingId"
+                          type="button"
+                          (click)="confirmFixedBookingWhatsApp()"
+                          title="Enviar WhatsApp de confirmación"
+                          class="flex items-center justify-center h-7 w-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                    </svg>
+                  </button>
+                  <!-- Botón confirmar asistencia -->
+                  <button *ngIf="selectedBooking.fixedBookingId && !selectedBooking.isConfirmed"
+                          type="button"
+                          (click)="confirmBooking()"
+                          [disabled]="isConfirmingBooking"
+                          title="Marcar asistencia como confirmada"
+                          class="flex items-center gap-1 px-2 h-7 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors text-xs font-semibold disabled:opacity-50">
+                    <svg *ngIf="!isConfirmingBooking" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <svg *ngIf="isConfirmingBooking" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Confirmar
+                  </button>
+                  <!-- Badge "Confirmado" -->
+                  <span *ngIf="selectedBooking.fixedBookingId && selectedBooking.isConfirmed"
+                        class="flex items-center gap-1 px-2 h-7 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Confirmado
+                  </span>
+                </div>
               </div>
+              <div class="flex justify-between px-4 py-2.5 text-base">
+                <span class="text-muted-foreground dark:text-slate-400">Tarifa</span>
+                <ng-container *ngIf="(holidayService.isHoliday$ | async) && selectedBooking.priceType !== 'professor'; else normalLabel">
+                  <span class="font-semibold text-amber-600 dark:text-amber-400">&#9733; Tarifa Feriado</span>
+                </ng-container>
+                <ng-template #normalLabel>
+                  <span class="font-semibold dark:text-slate-200">{{ getPriceLabel(selectedBooking) }}</span>
+                </ng-template>
+              </div>
+              <div class="flex justify-between px-4 py-2.5 text-base">
+                <span class="text-muted-foreground dark:text-slate-400">Precio cancha</span>
+                <span class="font-bold text-gray-900 dark:text-white">${{ fmt(selectedBooking.priceAmount) }}</span>
+              </div>
+            </div><!-- /booking info -->
 
-              <div class="relative">
-                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                </svg>
-                <input
-                  type="text"
-                  [(ngModel)]="detailProductSearch"
-                  (ngModelChange)="onDetailSearchChange()"
-                  placeholder="Buscar más productos..."
-                  autocomplete="off"
-                  class="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <div
-                  *ngIf="detailSearchResults.length > 0"
-                  class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-xl"
-                >
-                  <div class="max-h-48 overflow-y-auto">
-                    <button
-                      *ngFor="let product of detailSearchResults"
-                      type="button"
-                      (click)="addToDetailCart(product)"
-                      class="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
-                      <span>{{ product.name }}</span>
-                      <span class="ml-4 shrink-0 text-xs font-medium text-muted-foreground">
-                        ${{ fmt(product.salePrice) }}
+            <!-- Products section (booked / playing) -->
+            <ng-container *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'">
+              <div *ngIf="canSplitAccount" class="flex flex-col gap-3 flex-1">
+                <div class="flex items-center justify-between">
+                  <p class="text-base font-semibold text-gray-700 dark:text-slate-300">Consumos</p>
+                  <span *ngIf="isAutoSavingItems" class="flex items-center gap-1 text-xs text-muted-foreground">
+                    <svg class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Guardando...
+                  </span>
+                </div>
+
+                <!-- Quick-add buttons + search (only while playing) -->
+                <ng-container *ngIf="selectedBooking.status === 'playing'">
+                  <div *ngIf="featuredProducts.length > 0" class="flex flex-wrap gap-2">
+                    <button *ngFor="let product of featuredProducts"
+                      type="button" (click)="addToDetailCart(product)"
+                      class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-base font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700">
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"/><path d="M12 5v14"/>
+                      </svg>
+                      {{ product.name }}
+                    </button>
+                  </div>
+                  <div class="relative">
+                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" [(ngModel)]="detailProductSearch" (ngModelChange)="onDetailSearchChange()"
+                      placeholder="Buscar más productos..." autocomplete="off"
+                      class="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"/>
+                    <div *ngIf="detailSearchResults.length > 0"
+                      class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-xl">
+                      <div class="max-h-44 overflow-y-auto">
+                        <button *ngFor="let product of detailSearchResults"
+                          type="button" (click)="addToDetailCart(product)"
+                          class="flex w-full items-center justify-between px-3 py-2 text-base hover:bg-accent hover:text-accent-foreground transition-colors">
+                          <span>{{ product.name }}</span>
+                          <span class="ml-4 shrink-0 text-sm font-medium text-muted-foreground">${{ fmt(product.salePrice) }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- Cart list -->
+                <div *ngIf="detailCart.length > 0" class="space-y-1 rounded-md bg-muted/30 p-3 overflow-y-auto max-h-64">
+                  <div *ngFor="let item of detailCart; let cartIdx = index"
+                    class="flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 w-full"
+                    [ngClass]="{'opacity-70': item.isPaid}">
+                    <!-- Checkbox — deshabilitado en modo dividir por jugador -->
+                    <input *ngIf="!item.isPaid" type="checkbox"
+                      [(ngModel)]="item.selectedForPayment" (change)="onProductCheckChange()"
+                      [disabled]="detailPaymentTab === 'split'"
+                      class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                      [title]="detailPaymentTab === 'split' ? 'Deshabilitado en modo división por jugador' : (item.selectedForPayment ? 'Quitar del cobro actual' : 'Incluir en cobro actual')"/>
+                    <!-- Stepper -->
+                    <div *ngIf="!item.isPaid" class="flex items-center border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden dark:border-slate-700 dark:bg-slate-800">
+                      <button type="button" (click)="updateDetailQtyByIndex(cartIdx, item.quantity - 1)"
+                        class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600">-</button>
+                      <span class="w-6 text-center text-xs font-bold text-gray-800 dark:text-slate-100">{{ item.quantity }}</span>
+                      <button type="button" (click)="updateDetailQtyByIndex(cartIdx, item.quantity + 1)"
+                        class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600">+</button>
+                    </div>
+                    <!-- Qty estática (pagado) -->
+                    <div *ngIf="item.isPaid"
+                      class="flex items-center justify-center w-7 h-7 flex-shrink-0 text-xs font-bold text-gray-400 border border-gray-100 rounded-lg bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
+                      {{ item.quantity }}
+                    </div>
+                    <!-- Nombre -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm sm:text-base font-medium leading-tight line-clamp-2"
+                        [ngClass]="item.isPaid ? 'line-through text-gray-400 dark:text-slate-600' : 'text-gray-800 dark:text-slate-200'">
+                        {{ item.name }}
+                      </p>
+                    </div>
+                    <!-- Precio + badge + borrar -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      <span class="text-base font-bold" [ngClass]="item.isPaid ? 'text-gray-400 dark:text-slate-600' : 'text-gray-900 dark:text-white'">
+                        ${{ fmt(item.unitPrice * item.quantity) }}
                       </span>
+                      <span *ngIf="item.isPaid"
+                        class="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                        ✓ Pagado
+                      </span>
+                      <button *ngIf="!item.isPaid" type="button" (click)="removeFromDetailCartByIndex(cartIdx)"
+                        class="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Quitar producto">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex justify-between border-t border-border pt-2 text-base font-bold">
+                    <span>Subtotal:</span>
+                    <span>${{ fmt(detailItemsSubtotal) }}</span>
+                  </div>
+                </div>
+
+                <!-- ── Panel de cobro parcial (inline, columna izquierda) ────── -->
+                <div *ngIf="hasSelectedProducts"
+                     #cobroParcialPanel
+                     class="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 space-y-3 animate-in fade-in duration-200 dark:border-indigo-800 dark:bg-indigo-950/40">
+                  <div class="flex items-center justify-between">
+                    <p class="text-base font-semibold text-indigo-900 dark:text-indigo-300">
+                      {{ selectedProductsCount === 1 ? 'Cobrar producto' : 'Cobrar productos' }}
+                      <span class="ml-1 font-bold text-indigo-700 dark:text-indigo-400">${{ fmt(pendingProductPaymentAmount) }}</span>
+                    </p>
+                    <button type="button" (click)="dismissProductPaymentPrompt()"
+                      class="text-xs text-indigo-400 hover:text-indigo-700 transition-colors dark:text-indigo-500 dark:hover:text-indigo-300">
+                      Cancelar
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button type="button" (click)="applyProductPayment('cash')"
+                      class="inline-flex items-center justify-center gap-1 rounded-lg border border-green-300 bg-green-50 px-3 py-3 text-base font-semibold text-green-800 hover:bg-green-100 transition-colors dark:border-green-700 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50">
+                      💵 Efectivo
+                    </button>
+                    <button type="button" (click)="applyProductPayment('transfer')"
+                      class="inline-flex items-center justify-center gap-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-3 text-base font-semibold text-blue-800 hover:bg-blue-100 transition-colors dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">
+                      📱 Transferencia
                     </button>
                   </div>
                 </div>
-              </div>
 
+                <p *ngIf="detailCart.length === 0" class="text-sm text-muted-foreground text-center py-4">Sin consumos agregados</p>
+              </div>
             </ng-container>
 
-            <div
-              *ngIf="detailCart.length > 0"
-              class="space-y-2 rounded-md bg-muted/30 p-3"
-            >
-              <div
-                *ngFor="let item of detailCart; let cartIdx = index"
-                class="flex items-center gap-2 py-2 border-b border-gray-50 last:border-0 w-full"
-                [ngClass]="{'opacity-70': item.isPaid}"
-              >
-                <!-- Checkbox "incluir en cobro actual" — solo para ítems pendientes -->
-                <input
-                  *ngIf="!item.isPaid"
-                  type="checkbox"
-                  [(ngModel)]="item.selectedForPayment"
-                  (change)="onProductCheckChange()"
-                  class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                  [title]="item.selectedForPayment ? 'Quitar del cobro actual' : 'Incluir en cobro actual'"
-                />
+            <!-- Completed / Cancelled (read-only) -->
+            <ng-container *ngIf="selectedBooking.status === 'completed' || selectedBooking.status === 'cancelled'">
+              <div *ngIf="selectedBooking.items.length > 0" class="rounded-lg border border-border bg-white p-4">
+                <p class="mb-3 text-sm font-medium">Productos consumidos</p>
+                <div class="space-y-2">
+                  <div *ngFor="let item of selectedBooking.items" class="flex justify-between text-sm">
+                    <span>{{ item.quantity }}× {{ item.product.name }}</span>
+                    <span class="font-medium">${{ fmt(item.unitPrice * item.quantity) }}</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="selectedBooking.payment" class="rounded-lg border border-accent/50 bg-accent/5 p-4 space-y-2">
+                <p class="text-sm font-medium">Pago registrado</p>
+                <div class="flex justify-between text-sm">
+                  <span class="text-muted-foreground">Efectivo</span>
+                  <span>${{ fmt(+selectedBooking.payment.amountCash) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-muted-foreground">Transferencia</span>
+                  <span>${{ fmt(+selectedBooking.payment.amountTransfer) }}</span>
+                </div>
+                <div class="flex justify-between border-t border-border pt-2 text-sm font-bold">
+                  <span>Total pagado</span>
+                  <span>${{ fmt(getPaymentTotal(selectedBooking.payment)) }}</span>
+                </div>
+              </div>
+            </ng-container>
 
-                <!-- Stepper qty — oculto si el ítem ya fue pagado -->
-                <div *ngIf="!item.isPaid" class="flex items-center border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden">
-                  <button
-                    type="button"
-                    (click)="updateDetailQtyByIndex(cartIdx, item.quantity - 1)"
-                    class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                  >-</button>
-                  <span class="w-6 text-center text-xs font-bold text-gray-800">{{ item.quantity }}</span>
-                  <button
-                    type="button"
-                    (click)="updateDetailQtyByIndex(cartIdx, item.quantity + 1)"
-                    class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                  >+</button>
+          </div><!-- /columna izquierda -->
+
+          <!-- ════════════════════════════════════════════════════════════════════
+               COLUMNA DERECHA — Caja (cobro, totales, acciones)
+               ════════════════════════════════════════════════════════════════════ -->
+          <div class="flex flex-col px-5 py-4 gap-4 bg-gray-50/60 dark:bg-slate-900/80">
+
+            <!-- Total destacado -->
+            <div class="rounded-xl bg-white border border-border p-4 space-y-1 dark:bg-slate-800 dark:border-slate-700">
+              <p class="text-sm font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wide">Total a Pagar</p>
+              <p class="text-4xl font-black text-gray-900 dark:text-white">${{ fmt(detailTotalReserva) }}</p>
+              <!-- Falta Pagar / Saldo completo -->
+              <div *ngIf="canSplitAccount || totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0"
+                   class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700 mt-2">
+                <span class="text-base font-bold" [ngClass]="detailSaldoPendienteReal > 0 ? 'text-destructive' : 'text-emerald-600'">
+                  {{ detailSaldoPendienteReal > 0 ? 'Falta Pagar' : '✓ Saldo Completo' }}
+                </span>
+                <span class="text-2xl font-extrabold" [ngClass]="detailSaldoPendienteReal > 0 ? 'text-destructive' : 'text-emerald-600'">
+                  ${{ fmt(detailSaldoPendienteReal) }}
+                </span>
+              </div>
+              <!-- Desglose pagado -->
+              <div *ngIf="totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0" class="space-y-0.5 pt-1">
+                <div *ngIf="totalPagadoEfectivo > 0" class="flex justify-between text-sm text-emerald-600">
+                  <span>💵 Efectivo cobrado</span><span class="font-semibold">${{ fmt(totalPagadoEfectivo) }}</span>
                 </div>
-                <!-- Cantidad estática cuando está pagado -->
-                <div *ngIf="item.isPaid" class="flex items-center justify-center w-7 h-7 flex-shrink-0 text-xs font-bold text-gray-400 border border-gray-100 rounded-lg bg-gray-50">
-                  {{ item.quantity }}
+                <div *ngIf="totalPagadoTransferencia > 0" class="flex justify-between text-sm text-blue-600">
+                  <span>📱 Transf. cobrada</span><span class="font-semibold">${{ fmt(totalPagadoTransferencia) }}</span>
                 </div>
-                <!-- Nombre -->
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs sm:text-sm font-medium leading-tight line-clamp-2"
-                     [ngClass]="item.isPaid ? 'line-through text-gray-400' : 'text-gray-800'">
-                    {{ item.name }}
-                  </p>
-                </div>
-                <!-- Precio + badge Pagado + borrar -->
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-sm font-bold" [ngClass]="item.isPaid ? 'text-gray-400' : 'text-gray-900'">
-                    ${{ fmt(item.unitPrice * item.quantity) }}
-                  </span>
-                  <!-- Badge "Pagado" -->
-                  <span *ngIf="item.isPaid"
-                    class="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                    ✓ Pagado
-                  </span>
-                  <!-- Botón eliminar — oculto si ya fue pagado -->
-                  <button
-                    *ngIf="!item.isPaid"
-                    type="button"
-                    (click)="removeFromDetailCartByIndex(cartIdx)"
-                    class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                    title="Quitar producto"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                    </svg>
+              </div>
+              <!-- Vuelto -->
+              <div *ngIf="vuelto > 0" class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 mt-1 dark:border-amber-700 dark:bg-amber-900/20">
+                <span class="text-base font-bold text-amber-700 dark:text-amber-400">💰 Vuelto</span>
+                <span class="text-2xl font-black text-amber-700 dark:text-amber-400">${{ fmt(vuelto) }}</span>
+              </div>
+            </div>
+
+            <!-- Secciones activas: booked / playing -->
+            <ng-container *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'">
+
+              <!-- Banner caja cerrada -->
+              <div *ngIf="!isCashRegisterOpen"
+                   class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-2">
+                <svg class="h-4 w-4 shrink-0 text-amber-600 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <p class="text-xs text-amber-800 leading-snug">
+                  <strong>Caja cerrada.</strong> Los pagos quedarán bloqueados hasta que se abra una nueva sesión de caja.
+                </p>
+              </div>
+
+              <!-- Tabs de cobro (solo si el turno está jugando) -->
+              <ng-container *ngIf="selectedBooking.status === 'playing' && selectedBooking?.priceType !== 'professor'">
+                <!-- Tab pills -->
+                <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-0.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800">
+                  <button type="button"
+                    (click)="detailPaymentTab = 'quick'"
+                    [ngClass]="detailPaymentTab === 'quick' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'"
+                    class="flex-1 rounded-md px-3 py-2 transition-all text-center">
+                    1. Pago Rápido
+                  </button>
+                  <button type="button"
+                    (click)="detailPaymentTab = 'split'"
+                    [ngClass]="detailPaymentTab === 'split' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'"
+                    class="flex-1 rounded-md px-3 py-2 transition-all text-center">
+                    2. Dividir por Jugador
                   </button>
                 </div>
-              </div>
-              <div
-                class="flex justify-between border-t border-border pt-2 text-sm font-semibold"
-              >
-                <span>Subtotal Productos:</span>
-                <span>${{ fmt(detailItemsSubtotal) }}</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- SECCIÓN A1: División de Cuenta — info de jugadores (oculto en turnos de profesor) -->
-          <div *ngIf="canSplitAccount && selectedBooking?.priceType !== 'professor'" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="text-sm font-semibold text-gray-700">División de Cuenta</p>
-            </div>
+                <!-- TAB 1: Pago Rápido -->
+                <div *ngIf="detailPaymentTab === 'quick'" class="space-y-3">
+                  <!-- Inputs efectivo / transferencia -->
+                  <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-3 dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex items-center justify-between">
+                      <p class="text-base font-semibold text-gray-700 dark:text-slate-300">Ingreso de Dinero</p>
+                      <button *ngIf="(detailAmountCash || 0) + (detailAmountTransfer || 0) > 0"
+                        type="button" (click)="clearPaymentInputs()"
+                        class="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                        </svg>
+                        Limpiar
+                      </button>
+                    </div>
+                    <div class="grid gap-3 grid-cols-2">
+                      <div class="space-y-1.5">
+                        <label for="det-efectivo" class="text-sm font-medium leading-none">💵 Efectivo</label>
+                        <input id="det-efectivo" type="number" [(ngModel)]="detailAmountCash" min="0" placeholder="0"
+                          (focus)="$any($event.target).select()"
+                          class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-950 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"/>
+                      </div>
+                      <div class="space-y-1.5">
+                        <label for="det-transferencia" class="text-sm font-medium leading-none">📱 Transferencia</label>
+                        <input id="det-transferencia" type="number" [(ngModel)]="detailAmountTransfer" min="0" placeholder="0"
+                          (focus)="$any($event.target).select()"
+                          class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-950 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"/>
+                      </div>
+                    </div>
+                    <div *ngIf="detailSaldoPendiente > 0" class="grid grid-cols-2 gap-2">
+                      <button type="button" (click)="settleInCash()"
+                        class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700">
+                        💵 Liquidar Efectivo
+                        <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
+                      </button>
+                      <button type="button" (click)="settleInTransfer()"
+                        class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700">
+                        📱 Liquidar Transf.
+                        <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
+                      </button>
+                    </div>
+                  </div>
 
-            <!-- Toggle: qué se divide entre los jugadores -->
-            <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-medium">
-                <button type="button"
-                  (click)="setSplitMode('court')"
-                  [ngClass]="splitMode === 'court'
-                    ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200'
-                    : 'text-gray-500 hover:text-gray-700'"
-                  class="rounded-md px-2.5 py-1 transition-all">
-                  Solo cancha
-                </button>
-                <button type="button"
-                  (click)="setSplitMode('court+items')"
-                  [ngClass]="splitMode === 'court+items'
-                    ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200'
-                    : 'text-gray-500 hover:text-gray-700'"
-                  class="rounded-md px-2.5 py-1 transition-all">
-                  Cancha + consumos
-                </button>
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <!-- Jugadores en cancha -->
-                <div class="space-y-1.5">
-                  <p class="text-xs font-medium text-muted-foreground">Jugadores en cancha</p>
-                  <div class="flex items-center gap-2">
-                    <button type="button"
-                      (click)="detailPlayerCount = detailPlayerCount > 1 ? detailPlayerCount - 1 : 1"
-                      [disabled]="detailPlayerCount <= detailPaidCount"
-                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0 disabled:pointer-events-none disabled:opacity-40">−</button>
-                    <span class="w-6 text-center font-bold text-sm">{{ detailPlayerCount }}</span>
-                    <button type="button"
-                      (click)="detailPlayerCount = detailPlayerCount < MAX_PLAYERS ? detailPlayerCount + 1 : MAX_PLAYERS"
-                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0">+</button>
+                </div><!-- /tab quick -->
+
+                <!-- TAB 2: Dividir por Jugador -->
+                <div *ngIf="detailPaymentTab === 'split'" class="space-y-3">
+                  <!-- Configuración división -->
+                  <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4 dark:border-slate-700 dark:bg-slate-800">
+                    <!-- Toggle: qué se divide -->
+                    <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-900">
+                      <button type="button" (click)="setSplitMode('court')"
+                        [ngClass]="splitMode === 'court' ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200 dark:bg-slate-700 dark:text-indigo-300 dark:border-indigo-700' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'"
+                        class="rounded-md px-2.5 py-1 transition-all flex-1">Solo cancha</button>
+                      <button type="button" (click)="setSplitMode('court+items')"
+                        [ngClass]="splitMode === 'court+items' ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200 dark:bg-slate-700 dark:text-indigo-300 dark:border-indigo-700' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'"
+                        class="rounded-md px-2.5 py-1 transition-all flex-1">Cancha + consumos</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <!-- Jugadores en cancha -->
+                      <div class="space-y-1.5">
+                        <p class="text-sm font-medium text-muted-foreground">Jugadores en cancha</p>
+                        <div class="flex items-center gap-2">
+                          <button type="button"
+                            (click)="detailPlayerCount = detailPlayerCount > 1 ? detailPlayerCount - 1 : 1"
+                            [disabled]="detailPlayerCount <= detailPaidCount"
+                            class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">−</button>
+                          <span class="w-8 text-center font-bold text-lg dark:text-slate-100">{{ detailPlayerCount }}</span>
+                          <button type="button"
+                            (click)="detailPlayerCount = detailPlayerCount < MAX_PLAYERS ? detailPlayerCount + 1 : MAX_PLAYERS"
+                            class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">+</button>
+                        </div>
+                      </div>
+                      <!-- Pagaron -->
+                      <div class="space-y-1.5">
+                        <p class="text-sm font-medium text-muted-foreground">
+                          Pagaron
+                          <span class="ml-1 font-bold text-base" [ngClass]="detailPaidCount >= detailPlayerCount ? 'text-green-700' : 'text-foreground'">
+                            {{ detailPaidCount }}/{{ detailPlayerCount }}
+                          </span>
+                        </p>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          <ng-container *ngFor="let i of [].constructor(detailPlayerCount); let idx = index">
+                            <div class="h-4 w-4 rounded-full border-2 transition-colors"
+                              [ngClass]="idx < detailPaidCount ? 'bg-green-500 border-green-500' : 'bg-background border-muted-foreground/30'"></div>
+                          </ng-container>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Total por jugador -->
+                    <div class="rounded-md bg-blue-50 px-3 py-2.5 text-sm space-y-1 dark:bg-blue-950/30">
+                      <div class="flex justify-between">
+                        <span class="text-blue-700 font-medium dark:text-blue-400">Total por jugador:</span>
+                        <span class="font-bold text-base text-blue-900 dark:text-blue-200">${{ fmt(detailCostPerPlayer) }} c/u</span>
+                      </div>
+                      <div *ngIf="hasPriorPayment && detailSaldoPendiente > 0" class="flex justify-between">
+                        <span class="text-blue-600">Deuda restante por jugador:</span>
+                        <span class="font-semibold text-base text-destructive">${{ fmt(detailDebtPerPlayer) }} c/u</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Botones +1 por jugador -->
+                  <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 dark:border-slate-700 dark:bg-slate-800">
+                    <div class="flex flex-col gap-2">
+                      <p class="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-1">Registrar pago de 1 jugador:</p>
+                      <button type="button" (click)="addPaidByCash()"
+                        [disabled]="detailPaidCount >= detailPlayerCount || detailSaldoPendiente <= 0"
+                        class="w-full h-11 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700">
+                        + 1 en 💵 Efectivo
+                        <span class="text-sm text-muted-foreground dark:text-slate-400">(+${{ fmt(perPlayerAmount) }})</span>
+                      </button>
+                      <button type="button" (click)="addPaidByTransfer()"
+                        [disabled]="detailPaidCount >= detailPlayerCount || detailSaldoPendiente <= 0"
+                        class="w-full h-11 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700">
+                        + 1 en 📱 Transf.
+                        <span class="text-sm text-muted-foreground dark:text-slate-400">(+${{ fmt(perPlayerAmount) }})</span>
+                      </button>
+                      <button *ngIf="partialCashCount > 0" type="button" (click)="undoPartialPayment('cash')"
+                        class="w-full h-9 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors text-sm font-medium text-amber-800">
+                        ↶ Deshacer 1 Pago Efectivo ({{ partialCashCount }})
+                      </button>
+                      <button *ngIf="partialTransferCount > 0" type="button" (click)="undoPartialPayment('transfer')"
+                        class="w-full h-9 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-sm font-medium text-blue-800">
+                        ↶ Deshacer 1 Pago Transferencia ({{ partialTransferCount }})
+                      </button>
+                    </div>
+                  </div>
+                </div><!-- /tab split -->
+              </ng-container><!-- /tabs cobro -->
+
+              <!-- Para turnos de profesor: solo pago rápido sin tabs -->
+              <ng-container *ngIf="selectedBooking.status === 'playing' && selectedBooking?.priceType === 'professor'">
+                <div class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <p class="text-base font-semibold text-gray-700">Ingreso de Dinero</p>
+                    <button *ngIf="(detailAmountCash || 0) + (detailAmountTransfer || 0) > 0"
+                      type="button" (click)="clearPaymentInputs()"
+                      class="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                      </svg>
+                      Limpiar
+                    </button>
+                  </div>
+                  <div class="grid gap-3 grid-cols-2">
+                    <div class="space-y-1.5">
+                      <label for="det-efectivo-p" class="text-sm font-medium">💵 Efectivo</label>
+                      <input id="det-efectivo-p" type="number" [(ngModel)]="detailAmountCash" min="0" placeholder="0"
+                        (focus)="$any($event.target).select()"
+                        class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"/>
+                    </div>
+                    <div class="space-y-1.5">
+                      <label for="det-transferencia-p" class="text-sm font-medium">📱 Transferencia</label>
+                      <input id="det-transferencia-p" type="number" [(ngModel)]="detailAmountTransfer" min="0" placeholder="0"
+                        (focus)="$any($event.target).select()"
+                        class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"/>
+                    </div>
+                  </div>
+                  <div *ngIf="detailSaldoPendiente > 0" class="grid grid-cols-2 gap-2">
+                    <button type="button" (click)="settleInCash()"
+                      class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors">
+                      💵 Liquidar Efectivo <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
+                    </button>
+                    <button type="button" (click)="settleInTransfer()"
+                      class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors">
+                      📱 Liquidar Transf. <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
+                    </button>
                   </div>
                 </div>
-                <!-- Pagaron -->
-                <div class="space-y-1.5">
-                  <p class="text-xs font-medium text-muted-foreground">
-                    Pagaron
-                    <span class="ml-1 font-bold" [ngClass]="detailPaidCount >= detailPlayerCount ? 'text-green-700' : 'text-foreground'">
-                      {{ detailPaidCount }}/{{ detailPlayerCount }}
-                    </span>
-                  </p>
-                  <div class="flex flex-wrap gap-1 mt-1">
-                    <ng-container *ngFor="let i of [].constructor(detailPlayerCount); let idx = index">
-                      <div class="h-4 w-4 rounded-full border-2 transition-colors"
-                        [ngClass]="idx < detailPaidCount ? 'bg-green-500 border-green-500' : 'bg-background border-muted-foreground/30'"></div>
-                    </ng-container>
-                  </div>
-                </div>
+              </ng-container>
+
+            </ng-container><!-- /booked|playing -->
+
+            <!-- ── Botones de acción ────────────────────────────────────────── -->
+            <div class="flex flex-col gap-2 mt-auto pt-2">
+
+              <!-- Registrar Pago (playing + saldo pendiente) -->
+              <button *ngIf="selectedBooking.status === 'playing' && detailSaldoPendienteReal > 0"
+                type="button" (click)="saveDetailChanges()"
+                [disabled]="isSavingDetail || isAutoSavingItems || !isCashRegisterOpen"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3.5 text-base font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                <ng-container *ngIf="isSavingDetail; else registrarLabel">
+                  <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Registrando...
+                </ng-container>
+                <ng-template #registrarLabel>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  Registrar Pago
+                </ng-template>
+              </button>
+
+              <!-- Iniciar Partido (booked only) -->
+              <button *ngIf="selectedBooking.status === 'booked'"
+                type="button" (click)="onStartPlaying(selectedBooking)"
+                [disabled]="isSavingDetail"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-3.5 text-base font-bold hover:bg-emerald-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Iniciar Partido
+              </button>
+
+              <!-- Finalizar Turno (playing) -->
+              <div *ngIf="selectedBooking.status === 'playing'" class="space-y-1">
+                <button type="button" (click)="onFinishPlaying(selectedBooking)"
+                  [disabled]="detailSaldoPendienteReal > 0 || isSavingDetail || !isCashRegisterOpen"
+                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 text-white px-4 py-3.5 text-base font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                  <ng-container *ngIf="isSavingDetail; else finalizarLabel">
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Procesando...
+                  </ng-container>
+                  <ng-template #finalizarLabel>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                    Finalizar Turno / Pago Completo
+                  </ng-template>
+                </button>
+                <p *ngIf="detailSaldoPendienteReal > 0" class="text-center text-xs text-destructive font-medium">
+                  Registre el pago antes de finalizar
+                </p>
               </div>
-              <!-- Total por jugador — blue-50 box -->
-              <div class="rounded-md bg-blue-50 px-3 py-2 text-xs space-y-0.5">
-                <div class="flex justify-between">
-                  <span class="text-blue-700 font-medium">Total por jugador:</span>
-                  <span class="font-bold text-blue-900">${{ fmt(detailCostPerPlayer) }} c/u</span>
-                </div>
-                <div *ngIf="hasPriorPayment && detailSaldoPendiente > 0" class="flex justify-between">
-                  <span class="text-blue-600">Deuda restante por jugador:</span>
-                  <span class="font-semibold text-destructive">${{ fmt(detailDebtPerPlayer) }} c/u</span>
-                </div>
-              </div>
 
-          </div><!-- /SECCIÓN A1 -->
-
-          <!-- SECCIÓN A2: Botones de pago por jugador — solo visible con partido activo (oculto en turnos de profesor) -->
-          <div *ngIf="canSplitAccount && selectedBooking?.priceType !== 'professor'" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 animate-in fade-in duration-300">
-            <div class="flex flex-col items-center gap-2 w-full">
-              <!-- Título guía para el cajero -->
-              <p class="text-sm font-semibold text-gray-700 mb-2 w-full">Registrar pago de 1 jugador:</p>
-              <!-- Botones de cobro -->
-              <button type="button" (click)="addPaidByCash()"
-                [disabled]="detailPaidCount >= detailPlayerCount || detailSaldoPendiente <= 0"
-                class="w-full h-10 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm disabled:pointer-events-none disabled:opacity-40">
-                + 1 en 💵 Efectivo
-                <span class="text-xs text-muted-foreground">(+${{ fmt(perPlayerAmount) }})</span>
-              </button>
-              <button type="button" (click)="addPaidByTransfer()"
-                [disabled]="detailPaidCount >= detailPlayerCount || detailSaldoPendiente <= 0"
-                class="w-full h-10 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm disabled:pointer-events-none disabled:opacity-40">
-                + 1 en 📱 Transf.
-                <span class="text-xs text-muted-foreground">(+${{ fmt(perPlayerAmount) }})</span>
-              </button>
-              <!-- Deshacer selectivo -->
-              <button *ngIf="partialCashCount > 0" type="button" (click)="undoPartialPayment('cash')"
-                class="w-full h-9 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors text-sm font-medium text-amber-800">
-                ↶ Deshacer 1 Pago Efectivo ({{ partialCashCount }})
-              </button>
-              <button *ngIf="partialTransferCount > 0" type="button" (click)="undoPartialPayment('transfer')"
-                class="w-full h-9 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-sm font-medium text-blue-800">
-                ↶ Deshacer 1 Pago Transferencia ({{ partialTransferCount }})
-              </button>
-            </div>
-          </div><!-- /SECCIÓN A2 -->
-
-          <!-- Prompt: método de pago para productos tildados -->
-          <div *ngIf="showProductPaymentPrompt"
-            #paymentSection
-            class="rounded-xl border-2 border-indigo-300 bg-indigo-50 shadow-sm p-4 space-y-3 animate-pulse-once">
-            <p class="text-sm font-semibold text-gray-800">
-              ¿Con qué método de pago deseás pagar?
-            </p>
-            <p class="text-xs text-gray-500">
-              Productos seleccionados por <span class="font-bold text-indigo-700">${{ fmt(pendingProductPaymentAmount) }}</span>
-            </p>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" (click)="applyProductPayment('cash')"
-                class="inline-flex items-center justify-center gap-1 rounded-lg border border-green-300 bg-green-50 px-3 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100 transition-colors">
-                💵 Efectivo
-              </button>
-              <button type="button" (click)="applyProductPayment('transfer')"
-                class="inline-flex items-center justify-center gap-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-800 hover:bg-blue-100 transition-colors">
-                📱 Transferencia
-              </button>
-            </div>
-            <button type="button" (click)="dismissProductPaymentPrompt()"
-              class="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1">
-              Cancelar
-            </button>
-          </div>
-
-          <!-- SECCIÓN B: Ingreso de Dinero (solo mientras el turno está en juego) -->
-          <div *ngIf="selectedBooking.status === 'playing'" class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 space-y-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm font-semibold text-gray-700">Ingreso de Dinero</p>
-              <button *ngIf="(detailAmountCash || 0) + (detailAmountTransfer || 0) > 0"
-                type="button" (click)="clearPaymentInputs()"
-                class="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+              <!-- Mover / Duplicar -->
+              <button
+                *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'"
+                type="button" (click)="openRescheduleFromModal()"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/>
+                  <path d="M2 12h20"/><path d="M12 2v20"/>
                 </svg>
-                Limpiar
+                Mover / Duplicar turno
               </button>
-            </div>
-            <div class="grid gap-3 md:grid-cols-2">
-              <div class="space-y-2">
-                <label for="det-efectivo" class="text-sm font-medium leading-none">💵 Efectivo</label>
-                <input id="det-efectivo" type="number" [(ngModel)]="detailAmountCash" min="0" placeholder="0"
-                  (focus)="$any($event.target).select()"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"/>
-              </div>
-              <div class="space-y-2">
-                <label for="det-transferencia" class="text-sm font-medium leading-none">📱 Transferencia</label>
-                <input id="det-transferencia" type="number" [(ngModel)]="detailAmountTransfer" min="0" placeholder="0"
-                  (focus)="$any($event.target).select()"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"/>
-              </div>
-            </div>
-            <div *ngIf="detailSaldoPendiente > 0" class="grid grid-cols-2 gap-2">
-              <button type="button" (click)="settleInCash()"
-                class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors">
-                💵 Liquidar en Efectivo
-                <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
+
+              <!-- Cancelar Reserva (admin + booked) -->
+              <button *ngIf="isAdmin && selectedBooking.status === 'booked'"
+                type="button" (click)="onCancelBooking(selectedBooking)"
+                [disabled]="isSavingDetail"
+                class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                {{ selectedBooking.fixedBookingId ? 'Cancelar turno por esta semana' : 'Cancelar Reserva' }}
               </button>
-              <button type="button" (click)="settleInTransfer()"
-                class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors">
-                📱 Liquidar por Transf.
-                <span class="opacity-70">(${{ fmt(detailSaldoPendiente) }})</span>
-              </button>
-            </div>
-          </div><!-- /SECCIÓN B -->
 
-          <!-- SECCIÓN C: Resumen — visible al jugar/finalizar, o si hay seña registrada -->
-          <div *ngIf="canSplitAccount || totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-            <div class="px-4 pt-3 pb-2">
-              <p class="text-sm font-semibold text-gray-700">Resumen</p>
-            </div>
-            <div class="flex items-center justify-between px-4 py-2">
-              <span class="text-sm text-muted-foreground">Total a Pagar</span>
-              <span class="text-sm font-semibold text-foreground">$ {{ fmt(detailTotalReserva) }}</span>
-            </div>
-            <!-- Desglose por método de pago -->
-            <div *ngIf="totalPagadoEfectivo > 0" class="flex items-center justify-between px-4 py-1">
-              <span class="text-sm text-emerald-600">💵 Pagado (Efectivo)</span>
-              <span class="text-sm font-semibold text-emerald-600">$ {{ fmt(totalPagadoEfectivo) }}</span>
-            </div>
-            <div *ngIf="totalPagadoTransferencia > 0" class="flex items-center justify-between px-4 py-1">
-              <span class="text-sm text-blue-600">📱 Pagado (Transf.)</span>
-              <span class="text-sm font-semibold text-blue-600">$ {{ fmt(totalPagadoTransferencia) }}</span>
-            </div>
-            <div class="border-t border-gray-100 mx-4"></div>
-            <div class="flex items-center justify-between px-4 py-3">
-              <span class="font-bold text-sm" [ngClass]="detailSaldoPendienteReal > 0 ? 'text-destructive' : 'text-emerald-600'">
-                {{ detailSaldoPendienteReal > 0 ? 'Falta Pagar' : '✓ Saldo Completo' }}
-              </span>
-              <span class="text-lg font-extrabold" [ngClass]="detailSaldoPendienteReal > 0 ? 'text-destructive' : 'text-emerald-600'">
-                $ {{ fmt(detailSaldoPendienteReal) }}
-              </span>
-            </div>
-            <!-- Vuelto a entregar -->
-            <div *ngIf="vuelto > 0" class="mx-4 mb-3 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-              <span class="text-sm font-bold uppercase tracking-wide text-amber-700">💰 Vuelto a entregar</span>
-              <span class="text-xl font-black text-amber-700">$ {{ fmt(vuelto) }}</span>
-            </div>
-          </div><!-- /SECCIÓN C -->
+            </div><!-- /botones de acción -->
 
-          <!-- /booked|playing ng-container -->
-        </ng-container>
+          </div><!-- /columna derecha -->
 
-        <!-- Completed / Cancelled (read-only view) -->
-        <ng-container *ngIf="selectedBooking.status === 'completed' || selectedBooking.status === 'cancelled'">
-          <div *ngIf="selectedBooking.items.length > 0" class="rounded-lg border border-border bg-white p-4">
-            <p class="mb-3 text-sm font-medium">Productos consumidos</p>
-            <div class="space-y-2">
-              <div *ngFor="let item of selectedBooking.items" class="flex justify-between text-sm">
-                <span>{{ item.quantity }}× {{ item.product.name }}</span>
-                <span class="font-medium">${{ fmt(item.unitPrice * item.quantity) }}</span>
-              </div>
-            </div>
-          </div>
-          <div *ngIf="selectedBooking.payment" class="rounded-lg border border-accent/50 bg-accent/5 p-4 space-y-2">
-            <p class="text-sm font-medium">Pago registrado</p>
-            <div class="flex justify-between text-sm">
-              <span class="text-muted-foreground">Efectivo</span>
-              <span>${{ fmt(+selectedBooking.payment.amountCash) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-muted-foreground">Transferencia</span>
-              <span>${{ fmt(+selectedBooking.payment.amountTransfer) }}</span>
-            </div>
-            <div class="flex justify-between border-t border-border pt-2 text-sm font-bold">
-              <span>Total pagado</span>
-              <span>${{ fmt(getPaymentTotal(selectedBooking.payment)) }}</span>
-            </div>
-          </div>
-        </ng-container><!-- /completed|cancelled -->
+        </div><!-- /grid 2 columnas -->
+      </div><!-- /body scrollable -->
 
-      </div><!-- /scrollable body -->
-
-      <!-- STICKY FOOTER -->
-      <div class="flex-shrink-0 bg-white border-t border-gray-100 px-6 py-4 flex flex-col gap-2.5 rounded-b-2xl">
-
-        <!-- PRIMARY: Registrar Pago (solo mientras juega y queda saldo por cobrar) -->
-        <button *ngIf="selectedBooking.status === 'playing' && detailSaldoPendienteReal > 0"
-          type="button" (click)="saveDetailChanges()"
-          [disabled]="isSavingDetail || isAutoSavingItems"
-          [ngClass]="isCashRegisterOpen
-            ? 'bg-indigo-600 hover:bg-indigo-700'
-            : 'bg-amber-600 hover:bg-amber-700'"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-lg text-white px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-          <ng-container *ngIf="isSavingDetail; else registrarLabel">
-            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            Registrando...
-          </ng-container>
-          <ng-template #registrarLabel>
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            {{ isCashRegisterOpen ? 'Registrar Pago' : 'Caja Cerrada (Clic para abrir)' }}
-          </ng-template>
-        </button>
-
-        <!-- SECONDARY: Iniciar Partido (booked only) -->
-        <button *ngIf="selectedBooking.status === 'booked'"
-          type="button" (click)="onStartPlaying(selectedBooking)"
-          [disabled]="isSavingDetail"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 text-sm font-medium hover:bg-emerald-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Iniciar Partido
-        </button>
-
-        <!-- Finalizar Turno (playing) -->
-        <div *ngIf="selectedBooking.status === 'playing'" class="space-y-1">
-          <button type="button" (click)="onFinishPlaying(selectedBooking)"
-            [disabled]="detailSaldoPendienteReal > 0 || isSavingDetail"
-            class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-            <ng-container *ngIf="isSavingDetail; else finalizarLabel">
-              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              Procesando...
-            </ng-container>
-            <ng-template #finalizarLabel>
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 6 9 17l-5-5"/>
-              </svg>
-              Finalizar Turno / Pago Completo
-            </ng-template>
-          </button>
-          <p *ngIf="detailSaldoPendienteReal > 0" class="text-center text-xs text-destructive font-medium">
-            Saldo pendiente: ${{ fmt(detailSaldoPendienteReal) }} — registre el pago antes de finalizar
-          </p>
-        </div>
-
-        <!-- MOBILE FALLBACK: Mover / Duplicar (booked / playing) -->
-        <button
-          *ngIf="selectedBooking.status === 'booked' || selectedBooking.status === 'playing'"
-          type="button"
-          (click)="openRescheduleFromModal()"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-lg
-                 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100
-                 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/>
-            <path d="M2 12h20"/><path d="M12 2v20"/>
-          </svg>
-          Mover / Duplicar turno
-        </button>
-
-        <!-- TERTIARY: Cancelar Reserva (admin + booked) -->
-        <button *ngIf="isAdmin && selectedBooking.status === 'booked'"
-          type="button" (click)="onCancelBooking(selectedBooking)"
-          [disabled]="isSavingDetail"
-          class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          </svg>
-          {{ selectedBooking.fixedBookingId ? 'Cancelar turno por esta semana' : 'Cancelar Reserva' }}
-        </button>
-
-      </div><!-- /sticky footer -->
     </ng-container><!-- /detail mode -->
   </div>
   </div>

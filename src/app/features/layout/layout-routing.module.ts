@@ -93,6 +93,15 @@ const routes: Routes = [
         data: { title: 'Egresos' },
       },
 
+      // ── Stock Bajo — Solo Administrador ───────────────────────────────
+      {
+        path: 'inventory',
+        loadChildren: () =>
+          import('../inventory/inventory.module').then((m) => m.InventoryModule),
+        canActivate: [AdminGuard],
+        data: { title: 'Stock Bajo' },
+      },
+
       // ── Franjas Horarias de Precios — Solo Administrador ─────────────────
       {
         path: 'pricing-shifts',

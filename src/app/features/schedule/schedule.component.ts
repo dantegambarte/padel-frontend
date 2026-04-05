@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import { CalculatorService } from '../../core/services/calculator.service';
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
 import { PricingShift } from '../../core/models/pricing-shift.model';
+import { HolidayService } from '../../core/services/holiday.service';
 
 import { Court } from '../../core/models/court.model';
 import { Product } from '../../core/models/product.model';
@@ -139,13 +140,25 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   detailProductSearch = '';
   detailSearchResults: Product[] = [];
   isAutoSavingItems = false;
-  private paymentScrollTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Monto pendiente de los productos tildados, esperando que el cajero elija método de pago. */
-  pendingProductPaymentAmount = 0;
-  showProductPaymentPrompt = false;
+  /** Verdadero cuando al menos un ítem del carrito está tildado para cobro parcial. */
+  get hasSelectedProducts(): boolean {
+    return this.detailCart.some(i => !i.isPaid && i.selectedForPayment);
+  }
+  /** Cantidad de ítems (líneas) del carrito tildados para cobro parcial. */
+  get selectedProductsCount(): number {
+    return this.detailCart.filter(i => !i.isPaid && i.selectedForPayment).length;
+  }
+  /** Total de los productos tildados para cobro parcial. Calculado en tiempo real. */
+  get pendingProductPaymentAmount(): number {
+    return this.detailCart
+      .filter(i => !i.isPaid && i.selectedForPayment)
+      .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
+  }
+  /** Tab activo en el panel de cobro del modal de detalle: pago rápido o dividir por jugador. */
+  detailPaymentTab: 'quick' | 'split' = 'quick';
 
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
-  @ViewChild('paymentSection') paymentSection!: ElementRef<HTMLDivElement>;
+  @ViewChild('cobroParcialPanel') cobroParcialPanel!: ElementRef<HTMLDivElement>;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('headerRow') headerRow!: ElementRef<HTMLDivElement>;
 
@@ -254,6 +267,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private router: Router,
     private pricingShiftsService: PricingShiftsService,
     private draftService: DraftService,
+    public holidayService: HolidayService,
   ) {}
 
   ngOnInit(): void {
@@ -460,7 +474,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get activeShift(): PricingShift | null {
     if (!this.selectedSlot || !this.pricingShifts.length) return null;
     const [year, month, day] = this.selectedDate.split('-').map(Number);
-    const dayOfWeek = new Date(year, month - 1, day).getDay();
+    // En modo feriado se fuerza el día a sábado (6) para aplicar tarifa de fin de semana.
+    const realDay = new Date(year, month - 1, day).getDay();
+    const dayOfWeek = this.holidayService.isHoliday ? 6 : realDay;
     const bookingMin = this.timeToMinutes(this.selectedSlot.hour);
     return (
       this.pricingShifts.find((s) => {
@@ -759,15 +775,27 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Altura en píxeles de la tarjeta de reserva.
+   * Altura en rem de la tarjeta de reserva.
    *
-   * FÓRMULA: `numSlots * 48 + (numSlots - 1) * 8`
-   * donde 48 px es la altura de cada fila (h-12) y 8 px es el gap (space-y-2).
-   * Ejemplo: 60 min = 2 slots → 2*48 + 1*8 = 104 px.
+   * FÓRMULA: `numSlots * SLOT_H_REM + (numSlots - 1) * SLOT_GAP_REM`
+   * donde SLOT_H_REM (3rem) coincide con h-12 y SLOT_GAP_REM (0.5rem) con space-y-2.
+   * Al usar rem la altura escala junto con el font-size global sin desincronizarse.
+   * Ejemplo: 60 min = 2 slots → 2*3 + 1*0.5 = 6.5rem.
    */
-  getBookingBlockHeight(booking: BookingResponse): number {
+  private readonly SLOT_H_REM = 3;      // h-12 = 3rem
+  private readonly SLOT_GAP_REM = 0.5;  // space-y-2 = 0.5rem
+
+  getBookingBlockHeight(booking: BookingResponse): string {
     const numSlots = (booking.durationMinutes ?? 60) / 30;
-    return numSlots * 48 + (numSlots - 1) * 8;
+    const total = numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
+    return `${total}rem`;
+  }
+
+  getBookingBlockHeightInner(booking: BookingResponse): string {
+    const numSlots = (booking.durationMinutes ?? 60) / 30;
+    const total = numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
+    // 2px inset on each side (inset-[2px]) = 4px subtracted from the outer height
+    return `calc(${total}rem - 4px)`;
   }
 
   /** Devuelve las clases CSS del slot según su estado (disponible, reservado, jugando, completado). */
@@ -776,11 +804,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!b)
       return 'border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/5';
     if (b.status === 'booked')
-      return 'border-primary bg-primary/10 text-primary';
+      return 'border-primary bg-primary/10 text-primary dark:bg-primary/20';
     if (b.status === 'playing')
-      return 'border-green-500 bg-green-50 text-green-800';
+      return 'border-green-500 bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300';
     if (b.status === 'completed')
-      return 'border-slate-400 bg-slate-100 text-slate-600';
+      return 'border-slate-400 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400';
     return 'border-dashed border-muted-foreground/30';
   }
 
@@ -1048,9 +1076,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Devuelve las clases CSS del badge de estado de una reserva. */
   getStatusBadgeClass(status: BookingStatus): string {
     const map: Record<BookingStatus, string> = {
-      booked: 'bg-primary/15 text-primary',
-      playing: 'bg-green-100 text-green-800',
-      completed: 'bg-slate-200 text-slate-600',
+      booked: 'bg-primary/15 text-primary dark:bg-primary/25',
+      playing: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+      completed: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
       cancelled: 'bg-destructive/15 text-destructive',
     };
     return map[status] ?? 'bg-muted text-muted-foreground';
@@ -1130,6 +1158,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailAmountCash = 0;
     this.detailAmountTransfer = 0;
     this.detailPlayerCount = 4;
+    this.detailPaymentTab = 'quick';
 
     // Infiere cuántos jugadores ya pagaron a partir del monto guardado en DB.
     // Esto restaura el estado visual (puntos verdes) al reabrir un turno con pago parcial.
@@ -1260,10 +1289,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Cierra el diálogo sin validaciones, limpiando todo el estado temporal. */
   private forceCloseDialog(): void {
     this.isDialogOpen = false;
-    if (this.paymentScrollTimer) {
-      clearTimeout(this.paymentScrollTimer);
-      this.paymentScrollTimer = null;
-    }
     this.productSearch = '';
     this.searchResults = [];
     this.detailCart = [];
@@ -1277,8 +1302,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
     this.splitMode = 'court+items';
-    this.showProductPaymentPrompt = false;
-    this.pendingProductPaymentAmount = 0;
+    // hasSelectedProducts y pendingProductPaymentAmount son getters: se resetean con detailCart
   }
 
   /** Resetea el formulario de creación a sus valores iniciales. */
@@ -1546,66 +1570,40 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Llamado cuando se tilda/destilda un producto para incluirlo en el cobro.
-   * Reinicia un timer de 5s; al expirar, hace scroll a la sección de pago
-   * y autocompleta el monto con los productos seleccionados.
+   * Llamado cuando se tilda/destilda un producto.
+   * Si la selección pasa de 0 a 1, hace scroll suave al panel de cobro parcial
+   * para que el cajero lo vea sin tener que scrollear manualmente.
    */
   onProductCheckChange(): void {
-    // Reiniciar timer con cada tilde
-    if (this.paymentScrollTimer) {
-      clearTimeout(this.paymentScrollTimer);
-    }
-
-    const selectedItems = this.detailCart.filter(i => !i.isPaid && i.selectedForPayment);
-    if (selectedItems.length === 0) {
-      this.paymentScrollTimer = null;
-      return;
-    }
-
-    this.paymentScrollTimer = setTimeout(() => {
-      this.paymentScrollTimer = null;
-
-      // Calcular el total de los productos tildados
-      const selectedTotal = selectedItems.reduce(
-        (sum, i) => sum + Number(i.unitPrice) * Number(i.quantity), 0
-      );
-
-      // Mostrar prompt preguntando método de pago
-      this.pendingProductPaymentAmount = selectedTotal;
-      this.showProductPaymentPrompt = true;
-
-      // Esperar un tick para que Angular renderice el prompt, luego hacer scroll
+    if (this.selectedProductsCount === 1) {
       setTimeout(() => {
-        if (this.paymentSection?.nativeElement) {
-          this.paymentSection.nativeElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-        }
+        this.cobroParcialPanel?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
       });
-    }, 2500);
+    }
   }
 
   /** El cajero eligió pagar los productos tildados con un método específico. */
   applyProductPayment(method: 'cash' | 'transfer'): void {
+    const amount = this.pendingProductPaymentAmount;
     if (method === 'cash') {
-      this.detailAmountCash = (Number(this.detailAmountCash) || 0) + this.pendingProductPaymentAmount;
+      this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
     } else {
-      this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + this.pendingProductPaymentAmount;
+      this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + amount;
     }
-    this.showProductPaymentPrompt = false;
-    this.pendingProductPaymentAmount = 0;
-
-    // Scroll de vuelta a la sección de división de cuenta
-    if (this.dialogScrollBody?.nativeElement) {
-      this.dialogScrollBody.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // Desmarcar los ítems seleccionados — el panel desaparece solo porque hasSelectedProducts → false
+    this.detailCart = this.detailCart.map(i =>
+      !i.isPaid && i.selectedForPayment ? { ...i, selectedForPayment: false } : i,
+    );
   }
 
-  /** Cancela el prompt de método de pago de productos. */
+  /** Descarta la selección de productos (destilda todos). */
   dismissProductPaymentPrompt(): void {
-    this.showProductPaymentPrompt = false;
-    this.pendingProductPaymentAmount = 0;
+    this.detailCart = this.detailCart.map(i =>
+      !i.isPaid ? { ...i, selectedForPayment: false } : i,
+    );
   }
 
   /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */

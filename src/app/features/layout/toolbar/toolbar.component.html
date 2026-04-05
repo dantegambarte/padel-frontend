@@ -17,22 +17,20 @@
 
       <!-- ══════════════════════════════════════════════════════════
            BUSCADOR GLOBAL
+           Desktop: input siempre visible.
+           Mobile:  botón lupa → overlay expandido a ancho completo.
            ══════════════════════════════════════════════════════════ -->
+
+      <!-- ── Desktop (md+) ───────────────────────────────────────── -->
       <div
         class="relative hidden md:block"
         (click)="$event.stopPropagation()"
       >
-        <!-- Ícono lupa -->
-        <svg
-          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
+        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
         </svg>
-
-        <!-- Input — pr-8 cuando el spinner está visible para no solapar el texto -->
         <input
           type="search"
           placeholder="Buscar productos, turnos o ventas"
@@ -45,131 +43,31 @@
                  ring-offset-background placeholder:text-muted-foreground
                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-
-        <!-- Spinner de carga HTTP -->
         <div *ngIf="isSearchLoading" class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
           <svg class="h-4 w-4 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
           </svg>
         </div>
-
-        <!-- Dropdown de resultados -->
-        <div
-          *ngIf="isSearchOpen"
-          (click)="$event.stopPropagation()"
-          class="absolute left-0 top-full mt-1 w-72 z-[100] rounded-md border border-border
-                 bg-popover text-popover-foreground shadow-lg overflow-hidden
-                 animate-in fade-in-0 zoom-in-95"
-        >
-          <div class="max-h-80 overflow-y-auto p-1">
-
-            <!-- Grupo: Productos -->
-            <ng-container *ngIf="searchResults.products.length > 0">
-              <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Productos
-              </p>
-              <button
-                *ngFor="let item of searchResults.products"
-                type="button"
-                (click)="navigateToProduct(item)"
-                class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
-              >
-                <svg class="h-4 w-4 flex-shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                <span class="flex-1 min-w-0">
-                  <span class="block truncate font-medium">{{ item.label }}</span>
-                  <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
-                </span>
-              </button>
-            </ng-container>
-
-            <!-- Separador Productos / Reservas -->
-            <hr
-              *ngIf="searchResults.products.length > 0 && searchResults.bookings.length > 0"
-              class="my-1 border-border"
-            />
-
-            <!-- Grupo: Reservas -->
-            <ng-container *ngIf="searchResults.bookings.length > 0">
-              <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Reservas
-              </p>
-              <button
-                *ngFor="let item of searchResults.bookings"
-                type="button"
-                (click)="navigateToBooking(item)"
-                class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
-              >
-                <!-- Ícono calendario -->
-                <svg class="h-4 w-4 flex-shrink-0 text-primary/70" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span class="flex-1 min-w-0">
-                  <span class="block truncate font-medium">{{ item.label }}</span>
-                  <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
-                </span>
-              </button>
-            </ng-container>
-
-            <!-- Separador Reservas / Ventas POS -->
-            <hr
-              *ngIf="(searchResults.bookings.length > 0 || searchResults.products.length > 0) && searchResults.sales.length > 0"
-              class="my-1 border-border"
-            />
-
-            <!-- Grupo: Ventas POS -->
-            <ng-container *ngIf="searchResults.sales.length > 0">
-              <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Ventas POS
-              </p>
-              <button
-                *ngFor="let item of searchResults.sales"
-                type="button"
-                (click)="openSaleTicket(item)"
-                class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
-              >
-                <!-- Ícono bolsa / ticket de venta -->
-                <svg class="h-4 w-4 flex-shrink-0 text-accent/80" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                <span class="flex-1 min-w-0">
-                  <span class="block truncate font-medium">
-                    <span class="font-bold">Cliente:</span> {{ item.label || 'Consumidor Final' }}
-                  </span>
-                  <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
-                </span>
-              </button>
-            </ng-container>
-
-            <!-- Sin resultados -->
-            <div
-              *ngIf="!isSearchLoading && !hasSearchResults"
-              class="flex flex-col items-center gap-1 py-6 text-center"
-            >
-              <svg class="h-8 w-8 text-muted-foreground/40" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.3-4.3"/>
-              </svg>
-              <p class="text-sm text-muted-foreground">Sin resultados para</p>
-              <p class="text-sm font-medium text-card-foreground">"{{ searchQuery }}"</p>
-            </div>
-
-          </div>
-        </div>
+        <!-- Dropdown resultados desktop -->
+        <ng-container *ngTemplateOutlet="searchDropdown; context: { $implicit: 'left-0 w-72' }"></ng-container>
       </div>
+
+      <!-- ── Mobile: botón lupa (oculto cuando el buscador está abierto) ── -->
+      <button
+        *ngIf="!isMobileSearchOpen"
+        type="button"
+        (click)="openMobileSearch(); $event.stopPropagation()"
+        class="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md
+               text-card-foreground hover:bg-muted transition-colors
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Buscar"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+      </button>
 
       <!-- ══════════════════════════════════════════════════════════
            CAMPANITA DE NOTIFICACIONES
@@ -324,6 +222,76 @@
         </div>
       </div>
 
+      <!-- Toggle Dark Mode -->
+      <button
+        type="button"
+        (click)="themeService.toggle()"
+        [title]="(themeService.isDark$ | async) ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        [ngClass]="(themeService.isDark$ | async)
+          ? 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800'
+          : 'bg-amber-100 hover:bg-amber-200 text-amber-500 border border-amber-300'"
+        class="relative inline-flex items-center justify-center rounded-full h-9 w-9
+               transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        [attr.aria-label]="(themeService.isDark$ | async) ? 'Modo claro' : 'Modo oscuro'"
+      >
+        <!-- Sol (modo claro activo) -->
+        <svg
+          *ngIf="!(themeService.isDark$ | async)"
+          class="h-5 w-5"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+        <!-- Luna (modo oscuro activo) -->
+        <svg
+          *ngIf="themeService.isDark$ | async"
+          class="h-5 w-5"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <!-- ══════════════════════════════════════════════════════════
+           MODO FERIADO
+           ══════════════════════════════════════════════════════════ -->
+      <button
+        type="button"
+        (click)="holidayService.toggle()"
+        [attr.title]="(holidayService.isHoliday$ | async) ? 'Tarifa de Feriado Activa — clic para desactivar' : 'Activar Modo Feriado (tarifa fin de semana)'"
+        [ngClass]="(holidayService.isHoliday$ | async)
+          ? 'bg-amber-500/20 border-2 border-amber-500 text-amber-600 dark:text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.45)] hover:bg-amber-500/30'
+          : 'bg-transparent border border-border text-muted-foreground hover:bg-muted hover:text-foreground'"
+        class="relative inline-flex items-center justify-center rounded-full h-9 w-9
+               transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        [attr.aria-label]="(holidayService.isHoliday$ | async) ? 'Tarifa de Feriado Activa' : 'Activar Modo Feriado'"
+        [attr.aria-pressed]="holidayService.isHoliday$ | async"
+      >
+        <svg
+          class="h-5 w-5 transition-transform duration-200"
+          [class.scale-110]="holidayService.isHoliday$ | async"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <polygon points="12 12 13 14.5 16 15 14 17 14.5 20 12 18.5 9.5 20 10 17 8 15 11 14.5 12 12"></polygon>
+        </svg>
+
+        <!-- Anillo de pulso cuando activo -->
+        <span
+          *ngIf="holidayService.isHoliday$ | async"
+          class="pointer-events-none absolute inset-0 rounded-full"
+        >
+          <span class="animate-ping absolute inset-0 rounded-full bg-amber-400/40"></span>
+        </span>
+      </button>
+
       <!-- Calculadora -->
       <button
         type="button"
@@ -426,6 +394,69 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       BUSCADOR MOBILE EXPANDIDO
+       Aparece debajo del header principal con slide-down + fade.
+       Oculta todos los demás iconos del navbar para ganar espacio.
+       ══════════════════════════════════════════════════════════ -->
+  <div
+    *ngIf="isMobileSearchOpen"
+    (click)="$event.stopPropagation()"
+    class="md:hidden overflow-hidden
+           animate-[mobileSearchIn_200ms_ease-out_both]"
+  >
+    <div class="flex items-center gap-2 border-t border-border bg-card px-4 py-2.5">
+
+      <!-- Input expandido a ancho completo -->
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input
+          #mobileSearchInput
+          type="search"
+          placeholder="Buscar productos, turnos o ventas"
+          autocomplete="off"
+          [value]="searchQuery"
+          (input)="onSearchInput($event)"
+          (focus)="onSearchFocus()"
+          [class.pr-8]="isSearchLoading"
+          class="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm
+                 ring-offset-background placeholder:text-muted-foreground
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        />
+        <div *ngIf="isSearchLoading" class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+          <svg class="h-4 w-4 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Botón Cerrar (X) -->
+      <button
+        type="button"
+        (click)="closeMobileSearch()"
+        class="flex-shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md
+               text-muted-foreground hover:bg-muted hover:text-foreground transition-colors
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Cerrar buscador"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Dropdown de resultados mobile (ancho completo) -->
+    <ng-container *ngTemplateOutlet="searchDropdown; context: { $implicit: 'left-0 right-0 w-full rounded-none border-x-0' }"></ng-container>
+
+  </div>
+
 </header>
 
 <!-- Modal de ticket global: se abre sobre cualquier pantalla al seleccionar una venta en el buscador -->
@@ -433,3 +464,112 @@
   [saleId]="globalTicketSaleId"
   (closeModal)="closeSaleTicket()"
 ></app-ticket-modal>
+
+<!-- ══════════════════════════════════════════════════════════
+     TEMPLATE COMPARTIDO: Dropdown de resultados de búsqueda
+     Usado tanto en desktop como en mobile.
+     Se le pasa la clase de posicionamiento como contexto implícito.
+     ══════════════════════════════════════════════════════════ -->
+<ng-template #searchDropdown let-posClass>
+  <div
+    *ngIf="isSearchOpen"
+    (click)="$event.stopPropagation()"
+    [class]="'absolute top-full mt-1 z-[100] border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden rounded-md animate-in fade-in-0 zoom-in-95 ' + posClass"
+  >
+    <div class="max-h-80 overflow-y-auto p-1">
+
+      <!-- Grupo: Productos -->
+      <ng-container *ngIf="searchResults.products.length > 0">
+        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Productos
+        </p>
+        <button
+          *ngFor="let item of searchResults.products"
+          type="button"
+          (click)="navigateToProduct(item)"
+          class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
+        >
+          <svg class="h-4 w-4 flex-shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="flex-1 min-w-0">
+            <span class="block truncate font-medium">{{ item.label }}</span>
+            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+          </span>
+        </button>
+      </ng-container>
+
+      <hr *ngIf="searchResults.products.length > 0 && searchResults.bookings.length > 0" class="my-1 border-border"/>
+
+      <!-- Grupo: Reservas -->
+      <ng-container *ngIf="searchResults.bookings.length > 0">
+        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Reservas
+        </p>
+        <button
+          *ngFor="let item of searchResults.bookings"
+          type="button"
+          (click)="navigateToBooking(item)"
+          class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
+        >
+          <svg class="h-4 w-4 flex-shrink-0 text-primary/70" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="flex-1 min-w-0">
+            <span class="block truncate font-medium">{{ item.label }}</span>
+            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+          </span>
+        </button>
+      </ng-container>
+
+      <hr *ngIf="(searchResults.bookings.length > 0 || searchResults.products.length > 0) && searchResults.sales.length > 0" class="my-1 border-border"/>
+
+      <!-- Grupo: Ventas POS -->
+      <ng-container *ngIf="searchResults.sales.length > 0">
+        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Ventas POS
+        </p>
+        <button
+          *ngFor="let item of searchResults.sales"
+          type="button"
+          (click)="openSaleTicket(item)"
+          class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
+        >
+          <svg class="h-4 w-4 flex-shrink-0 text-accent/80" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="flex-1 min-w-0">
+            <span class="block truncate font-medium">
+              <span class="font-bold">Cliente:</span> {{ item.label || 'Consumidor Final' }}
+            </span>
+            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+          </span>
+        </button>
+      </ng-container>
+
+      <!-- Sin resultados -->
+      <div
+        *ngIf="!isSearchLoading && !hasSearchResults"
+        class="flex flex-col items-center gap-1 py-6 text-center"
+      >
+        <svg class="h-8 w-8 text-muted-foreground/40" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <p class="text-sm text-muted-foreground">Sin resultados para</p>
+        <p class="text-sm font-medium text-card-foreground">"{{ searchQuery }}"</p>
+      </div>
+
+    </div>
+  </div>
+</ng-template>

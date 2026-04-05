@@ -3,8 +3,8 @@
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Turnos Fijos</h1>
-      <p class="text-sm text-gray-500 mt-0.5">Reservas recurrentes semanales</p>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Turnos Fijos</h1>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Reservas recurrentes semanales</p>
     </div>
     <button
       type="button"
@@ -20,10 +20,10 @@
   </div>
 
   <!-- ── Selector de vista ── -->
-  <div class="flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1 w-fit">
+  <div class="flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1 w-fit dark:border-slate-700 dark:bg-slate-800">
     <button type="button"
             (click)="activeTab = 'lista'"
-            [ngClass]="activeTab === 'lista' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-700 font-medium'"
+            [ngClass]="activeTab === 'lista' ? 'bg-white shadow-sm text-gray-900 font-semibold dark:bg-slate-700 dark:text-slate-100' : 'text-gray-500 hover:text-gray-700 font-medium dark:text-slate-400 dark:hover:text-slate-200'"
             class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all">
       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
@@ -34,7 +34,7 @@
     </button>
     <button type="button"
             (click)="activeTab = 'grilla'"
-            [ngClass]="activeTab === 'grilla' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-700 font-medium'"
+            [ngClass]="activeTab === 'grilla' ? 'bg-white shadow-sm text-gray-900 font-semibold dark:bg-slate-700 dark:text-slate-100' : 'text-gray-500 hover:text-gray-700 font-medium dark:text-slate-400 dark:hover:text-slate-200'"
             class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all">
       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -46,25 +46,25 @@
 
   <!-- Loading skeleton -->
   <div *ngIf="isLoading" class="space-y-3">
-    <div *ngFor="let _ of [1,2,3]" class="h-20 rounded-xl bg-gray-100 animate-pulse"></div>
+    <div *ngFor="let _ of [1,2,3]" class="h-20 rounded-xl bg-gray-100 animate-pulse dark:bg-slate-800"></div>
   </div>
 
   <!-- Empty state -->
   <div *ngIf="!isLoading && fixedBookings.length === 0 && activeTab === 'lista'"
        class="flex flex-col items-center justify-center py-16 text-center">
-    <svg class="h-12 w-12 text-gray-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="h-12 w-12 text-gray-300 dark:text-slate-600 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M8 2v4"/><path d="M16 2v4"/>
       <rect width="18" height="18" x="3" y="4" rx="2"/>
       <path d="M3 10h18"/>
       <path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>
     </svg>
-    <p class="text-gray-500 font-medium">No hay turnos fijos registrados</p>
-    <p class="text-sm text-gray-400 mt-1">Creá el primero con el botón de arriba</p>
+    <p class="text-gray-500 dark:text-slate-400 font-medium">No hay turnos fijos registrados</p>
+    <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">Creá el primero con el botón de arriba</p>
   </div>
 
   <!-- Filtros -->
   <div *ngIf="!isLoading && fixedBookings.length > 0 && activeTab === 'lista'"
-       class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+       class="bg-gray-50 p-4 rounded-xl border border-gray-200 dark:bg-slate-800/50 dark:border-slate-700">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 
       <!-- Buscador -->
@@ -78,19 +78,19 @@
                [(ngModel)]="searchTerm"
                name="searchTerm"
                placeholder="Buscar por nombre o teléfono..."
-               class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+               class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
       </div>
 
       <!-- Filtro día -->
       <select [(ngModel)]="filterDay" name="filterDay"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
         <option value="">Todos los días</option>
         <option *ngFor="let d of DAYS" [value]="d">{{ dayLabel(d) }}</option>
       </select>
 
       <!-- Filtro cancha -->
       <select [(ngModel)]="filterCourt" name="filterCourt"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
         <option value="">Todas las canchas</option>
         <option *ngFor="let c of courts" [value]="c.id">{{ c.name }}</option>
       </select>
@@ -102,10 +102,10 @@
   <div *ngIf="!isLoading && fixedBookings.length > 0 && activeTab === 'lista'">
 
     <!-- Desktop table -->
-    <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <tr class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
             <th class="px-4 py-3">Cliente</th>
             <th class="px-4 py-3">Día / Hora</th>
             <th class="px-4 py-3">Cancha</th>
@@ -114,32 +114,32 @@
             <th class="px-4 py-3 text-right">Acciones</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-50">
+        <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
           <tr *ngIf="filteredBookings.length === 0">
-            <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-500">
+            <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-500 dark:text-slate-400">
               No se encontraron turnos fijos con esos filtros.
             </td>
           </tr>
           <tr *ngFor="let item of filteredBookings"
               [ngClass]="item.isActive ? '' : 'opacity-50'"
-              class="hover:bg-gray-50 transition-colors">
+              class="hover:bg-gray-50 transition-colors dark:hover:bg-slate-800">
             <td class="px-4 py-3">
-              <p class="font-semibold text-gray-900">{{ item.clientName }}</p>
-              <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 mt-0.5">{{ item.phoneNumber }}</p>
+              <p class="font-semibold text-gray-900 dark:text-slate-100">{{ item.clientName }}</p>
+              <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{{ item.phoneNumber }}</p>
             </td>
             <td class="px-4 py-3">
-              <span class="font-medium text-gray-700">{{ dayLabel(item.dayOfWeek) }}</span>
-              <span class="text-gray-400"> — {{ item.hour }}hs</span>
+              <span class="font-medium text-gray-700 dark:text-slate-200">{{ dayLabel(item.dayOfWeek) }}</span>
+              <span class="text-gray-400 dark:text-slate-500"> — {{ item.hour }}hs</span>
             </td>
-            <td class="px-4 py-3 text-gray-700">{{ item?.court?.name }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ item.durationMinutes }} min</td>
+            <td class="px-4 py-3 text-gray-700 dark:text-slate-300">{{ item?.court?.name }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-slate-400">{{ item.durationMinutes }} min</td>
             <td class="px-4 py-3">
               <span *ngIf="item.isActive"
-                    class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                    class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-emerald-500/20 dark:text-emerald-400">
                 Activo
               </span>
               <span *ngIf="!item.isActive"
-                    class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-500">
+                    class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-500 dark:bg-slate-700 dark:text-slate-400">
                 Inactivo
               </span>
             </td>
@@ -171,7 +171,7 @@
                 <button type="button"
                         (click)="openEditDialog(item)"
                         title="Editar"
-                        class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 transition-colors">
+                        class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-700">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -199,32 +199,32 @@
     <!-- Mobile cards -->
     <div class="md:hidden space-y-3">
       <div *ngIf="filteredBookings.length === 0"
-           class="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+           class="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No se encontraron turnos fijos con esos filtros.
       </div>
       <div *ngFor="let item of filteredBookings"
            [ngClass]="item.isActive ? '' : 'opacity-50'"
-           class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+           class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-900/50">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <p class="font-semibold text-gray-900 truncate">{{ item.clientName }}</p>
-            <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 mt-0.5">{{ item.phoneNumber }}</p>
+            <p class="font-semibold text-gray-900 dark:text-slate-100 truncate">{{ item.clientName }}</p>
+            <p *ngIf="item.phoneNumber" class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{{ item.phoneNumber }}</p>
           </div>
           <span *ngIf="item.isActive"
-                class="shrink-0 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                class="shrink-0 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-emerald-500/20 dark:text-emerald-400">
             Activo
           </span>
           <span *ngIf="!item.isActive"
-                class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
+                class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500 dark:bg-slate-700 dark:text-slate-400">
             Inactivo
           </span>
         </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
-          <span><span class="font-medium text-gray-700">{{ dayLabel(item.dayOfWeek) }}</span> — {{ item.hour }}hs</span>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-slate-400">
+          <span><span class="font-medium text-gray-700 dark:text-slate-300">{{ dayLabel(item.dayOfWeek) }}</span> — {{ item.hour }}hs</span>
           <span>{{ item?.court?.name }}</span>
           <span>{{ item.durationMinutes }} min</span>
         </div>
-        <div class="flex items-center justify-end pt-2 border-t border-gray-100">
+        <div class="flex items-center justify-end pt-2 border-t border-gray-100 dark:border-slate-800">
           <div class="flex items-center gap-2">
             <button *ngIf="item.phoneNumber" type="button" (click)="whatsapp(item)"
                     title="WhatsApp" class="rounded-md p-1.5 text-green-600 hover:bg-green-50">
@@ -264,7 +264,7 @@
 
   <!-- ── VISTA GRILLA SEMANAL ──────────────────────────────────────────── -->
   <div *ngIf="!isLoading && activeTab === 'grilla'"
-       class="overflow-auto rounded-xl border border-gray-200 bg-white shadow-sm"
+       class="overflow-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
        style="max-height: calc(100vh - 13rem)">
 
     <!--
@@ -277,26 +277,26 @@
          [style.gridTemplateRows]="'auto repeat(' + validHours.length + ', 52px)'">
 
       <!-- Esquina -->
-      <div class="sticky top-0 left-0 z-20 bg-gray-50 border-b border-r border-gray-200"
+      <div class="sticky top-0 left-0 z-20 bg-gray-50 border-b border-r border-gray-200 dark:bg-slate-800 dark:border-slate-700"
            style="grid-column:1; grid-row:1"></div>
 
       <!-- Encabezado días (sticky top) -->
       <div *ngFor="let d of DAYS; let di = index"
-           class="sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 px-1 py-2.5 text-center"
+           class="sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 px-1 py-2.5 text-center dark:bg-slate-800 dark:border-slate-700"
            [style.gridColumn]="di + 2" style="grid-row:1">
-        <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide leading-none hidden sm:block">
+        <p class="text-[11px] font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide leading-none hidden sm:block">
           {{ DAY_LABELS[d] }}
         </p>
-        <p class="text-[11px] font-bold text-gray-700 uppercase tracking-wide leading-none sm:hidden">
+        <p class="text-[11px] font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide leading-none sm:hidden">
           {{ DAY_LABELS[d] | slice:0:3 }}
         </p>
       </div>
 
       <!-- Etiquetas de hora (sticky left, columna 1) -->
       <div *ngFor="let hour of validHours; let hi = index"
-           class="sticky left-0 z-10 bg-white border-b border-r border-gray-100 flex items-center justify-center px-1"
+           class="sticky left-0 z-10 bg-white border-b border-r border-gray-100 flex items-center justify-center px-1 dark:bg-slate-900 dark:border-slate-800"
            style="grid-column:1" [style.gridRow]="hi + 2">
-        <span class="text-[10px] font-semibold text-gray-400 tabular-nums">{{ hour }}</span>
+        <span class="text-[10px] font-semibold text-gray-400 dark:text-slate-500 tabular-nums">{{ hour }}</span>
       </div>
 
       <!-- Celdas (columnas 2-8): por día → por hora con placement explícito -->
@@ -324,12 +324,12 @@
 
           <!-- CELDA LIBRE -->
           <div *ngIf="!getSlotData(d, hour)"
-               class="border-b border-r border-gray-100 relative group transition-colors hover:bg-emerald-50 cursor-pointer"
+               class="border-b border-r border-gray-100 relative group transition-colors hover:bg-emerald-50 cursor-pointer dark:border-slate-800 dark:hover:bg-emerald-900/20"
                [style.gridColumn]="di + 2"
                [style.gridRow]="hi + 2"
                (click)="openCreateFromGrid(d, hour)">
-            <div class="hidden group-hover:flex absolute inset-1 items-center justify-center rounded border border-dashed border-emerald-300 bg-emerald-50/50 pointer-events-none">
-              <span class="text-[10px] font-bold text-emerald-600">+ Nuevo</span>
+            <div class="hidden group-hover:flex absolute inset-1 items-center justify-center rounded border border-dashed border-emerald-300 bg-emerald-50/50 pointer-events-none dark:border-emerald-700 dark:bg-emerald-900/20">
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">+ Nuevo</span>
             </div>
           </div>
 
@@ -345,7 +345,7 @@
 <div *ngIf="selectedFixedBooking"
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
      (click)="closeDetail()">
-  <div class="relative w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden"
+  <div class="relative w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden dark:bg-slate-900"
        (click)="$event.stopPropagation()">
 
     <!-- Cabecera coloreada según cancha -->
@@ -365,87 +365,87 @@
     </div>
 
     <!-- Cuerpo con datos del turno -->
-    <div class="px-5 py-4 space-y-3 border-b border-gray-100">
+    <div class="px-5 py-4 space-y-3 border-b border-gray-100 dark:border-slate-800">
 
       <!-- Cancha -->
       <div class="flex items-center gap-3">
-        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center dark:bg-slate-800">
+          <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
             <line x1="12" y1="3" x2="12" y2="21"/>
           </svg>
         </div>
         <div>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Cancha</p>
-          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.court.name }}</p>
+          <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium">Cancha</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-slate-100">{{ selectedFixedBooking.court.name }}</p>
         </div>
       </div>
 
       <!-- Horario -->
       <div class="flex items-center gap-3">
-        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center dark:bg-slate-800">
+          <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
         <div>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Horario</p>
-          <p class="text-sm font-semibold text-gray-800">
+          <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium">Horario</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-slate-100">
             {{ DAY_LABELS[selectedFixedBooking.dayOfWeek] }} —
             {{ selectedFixedBooking.hour }} a {{ getEndHour(selectedFixedBooking) }}hs
           </p>
-          <p class="text-xs text-gray-400">{{ selectedFixedBooking.durationMinutes }} minutos</p>
+          <p class="text-xs text-gray-400 dark:text-slate-500">{{ selectedFixedBooking.durationMinutes }} minutos</p>
         </div>
       </div>
 
       <!-- Teléfono -->
       <div *ngIf="selectedFixedBooking.phoneNumber" class="flex items-center gap-3">
-        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center dark:bg-slate-800">
+          <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.93-8.2A2 2 0 0 1 4.68 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/>
           </svg>
         </div>
         <div>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Teléfono</p>
-          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.phoneNumber }}</p>
+          <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium">Teléfono</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-slate-100">{{ selectedFixedBooking.phoneNumber }}</p>
         </div>
       </div>
 
       <!-- Profesor -->
       <div *ngIf="selectedFixedBooking.teacher" class="flex items-center gap-3">
-        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center dark:bg-slate-800">
+          <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
             <path d="M6 12v5c3 3 9 3 12 0v-5"/>
           </svg>
         </div>
         <div>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Profesor</p>
-          <p class="text-sm font-semibold text-gray-800">{{ selectedFixedBooking.teacher.fullName }}</p>
+          <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium">Profesor</p>
+          <p class="text-sm font-semibold text-gray-800 dark:text-slate-100">{{ selectedFixedBooking.teacher.fullName }}</p>
         </div>
       </div>
 
       <!-- Precio -->
       <div *ngIf="getBookingPrice(selectedFixedBooking) !== null" class="flex items-center gap-3">
-        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg class="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center dark:bg-slate-800">
+          <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="1" x2="12" y2="23"/>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
         <div>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Valor del turno</p>
-          <p class="text-sm font-bold text-gray-800">$ {{ getBookingPrice(selectedFixedBooking) | number:'1.0-0' }}</p>
+          <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium">Valor del turno</p>
+          <p class="text-sm font-bold text-gray-800 dark:text-slate-100">$ {{ getBookingPrice(selectedFixedBooking) | number:'1.0-0' }}</p>
         </div>
       </div>
 
       <!-- Notas -->
       <div *ngIf="selectedFixedBooking.notes"
-           class="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
-        <p class="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-0.5">Notas</p>
-        <p class="text-sm text-gray-700">{{ selectedFixedBooking.notes }}</p>
+           class="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 dark:bg-slate-800 dark:border-slate-700">
+        <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide font-medium mb-0.5">Notas</p>
+        <p class="text-sm text-gray-700 dark:text-slate-300">{{ selectedFixedBooking.notes }}</p>
       </div>
 
     </div>
@@ -465,7 +465,7 @@
       <!-- Editar -->
       <button type="button"
               (click)="openEditDialog(selectedFixedBooking); closeDetail()"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -481,14 +481,14 @@
 <div *ngIf="isDialogOpen"
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
      (click)="closeDialog()">
-  <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-xl"
+  <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-slate-900"
        (click)="$event.stopPropagation()">
 
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-      <h2 class="text-lg font-semibold text-gray-900">{{ dialogTitle }}</h2>
+    <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">{{ dialogTitle }}</h2>
       <button type="button" (click)="closeDialog()"
-              class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+              class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-800">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
         </svg>
@@ -500,34 +500,34 @@
 
       <!-- Error alert -->
       <div *ngIf="formError"
-           class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+           class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
         {{ formError }}
       </div>
 
       <!-- Cliente -->
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">
+        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
           Nombre del cliente <span class="text-red-500">*</span>
         </label>
         <input type="text" [(ngModel)]="form.clientName" name="clientName"
                placeholder="Ej: Rodrigo Pérez"
-               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
       </div>
 
       <!-- Teléfono -->
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Teléfono (WhatsApp)</label>
+        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Teléfono (WhatsApp)</label>
         <input type="text" [(ngModel)]="form.phoneNumber" name="phoneNumber"
                placeholder="Ej: +5491155556666"
-               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
       </div>
 
       <!-- Profesor (opcional) -->
       <div *ngIf="teachers.length > 0">
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Profesor (opcional)</label>
+        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Profesor (opcional)</label>
         <select [(ngModel)]="form.teacherId" name="teacherId"
                 (ngModelChange)="onTeacherSelectChange($event)"
-                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
           <option value="">— Sin asignar —</option>
           <option *ngFor="let t of teachers" [value]="t.id">{{ t.fullName }}</option>
         </select>
@@ -536,21 +536,21 @@
       <!-- Día + Hora -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
+          <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
             Día de la semana <span class="text-red-500">*</span>
           </label>
           <select [(ngModel)]="form.dayOfWeek" name="dayOfWeek"
                   (ngModelChange)="onDayOfWeekChange()"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
             <option *ngFor="let d of DAYS" [value]="d">{{ dayLabel(d) }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
+          <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
             Hora <span class="text-red-500">*</span>
           </label>
           <select [(ngModel)]="form.hour" name="hour"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
             <option *ngFor="let h of validHours" [value]="h">{{ h }}</option>
           </select>
         </div>
@@ -559,19 +559,19 @@
       <!-- Cancha + Duración -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
+          <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
             Cancha <span class="text-red-500">*</span>
           </label>
           <select [(ngModel)]="form.courtId" name="courtId"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
             <option value="" disabled>Seleccionar...</option>
             <option *ngFor="let c of courts" [value]="c.id">{{ c.name }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Duración</label>
+          <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Duración</label>
           <select [(ngModel)]="form.durationMinutes" name="durationMinutes"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500">
             <option *ngFor="let d of DURATION_OPTIONS" [value]="d.value">{{ d.label }}</option>
           </select>
         </div>
@@ -579,16 +579,16 @@
 
       <!-- Fecha de inicio -->
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">
+        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
           Inicio <span class="text-red-500">*</span>
         </label>
         <input type="date" [(ngModel)]="form.startDate" name="startDate"
-               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
       </div>
 
       <!-- Notas -->
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Notas</label>
+        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Notas</label>
         <textarea [(ngModel)]="form.notes" name="notes" rows="2"
                   placeholder="Observaciones sobre el cliente o el turno..."
                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
@@ -596,7 +596,7 @@
     </form>
 
     <!-- Footer -->
-    <div class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <div class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-slate-800">
       <button type="button" (click)="closeDialog()"
               class="rounded-lg border border-input bg-transparent px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors">
         Cancelar

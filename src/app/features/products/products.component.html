@@ -80,8 +80,8 @@
           class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <option value="">Todo el stock</option>
-          <option value="low">Stock Bajo (≤ 5)</option>
-          <option value="zero">Sin Stock (= 0)</option>
+          <option value="zero">🚫 Agotados (stock = 0)</option>
+          <option value="low">⚠️ Stock bajo (bajo mínimo)</option>
         </select>
 
         <!-- Botón limpiar filtros -->
@@ -207,18 +207,44 @@
                   >
                     &infin;
                   </span>
-                  <!-- Producto normal: badge con color según nivel de stock -->
+                  <!-- Producto normal: tres estados diferenciados -->
                   <ng-template #stockBadge>
-                    <span
-                      [ngClass]="product.stock === 0
-                        ? 'bg-destructive text-destructive-foreground'
-                        : product.stock < 10
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-100 text-slate-700'"
-                      class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+
+                    <!-- AGOTADO (stock = 0) -->
+                    <span *ngIf="isOutOfStock(product)"
+                      class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      title="Sin stock disponible"
+                    >
+                      <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2.5"
+                           stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m4.9 4.9 14.2 14.2"/>
+                      </svg>
+                      Agotado
+                    </span>
+
+                    <!-- STOCK BAJO (0 < stock < minStock) -->
+                    <span *ngIf="isLowStock(product)"
+                      class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      title="Stock bajo el mínimo configurado (mínimo: {{ product.minStock }} uds.)"
+                    >
+                      <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2.5"
+                           stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                        <path d="M12 9v4"/><path d="M12 17h.01"/>
+                      </svg>
+                      {{ product.stock }}
+                    </span>
+
+                    <!-- STOCK NORMAL -->
+                    <span *ngIf="!isOutOfStock(product) && !isLowStock(product)"
+                      class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                     >
                       {{ product.stock }}
                     </span>
+
                   </ng-template>
                 </td>
 
@@ -326,27 +352,50 @@
       </h3>
     </div>
     <div class="px-6 pb-6">
-      <div class="grid gap-4 md:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-5">
+
+        <!-- Total Productos -->
         <div class="rounded-lg border border-border p-4">
-          <p class="text-sm text-muted-foreground">Total Productos</p>
-          <p class="text-2xl font-bold text-card-foreground">
-            {{ totalProducts }}
+          <p class="text-sm text-muted-foreground">Total</p>
+          <p class="text-2xl font-bold text-card-foreground">{{ totalProducts }}</p>
+        </div>
+
+        <!-- Valor inventario -->
+        <div class="rounded-lg border border-border p-4 md:col-span-2">
+          <p class="text-sm text-muted-foreground">Valor inventario</p>
+          <p class="text-2xl font-bold text-card-foreground">${{ fmt(totalInventoryValue) }}</p>
+        </div>
+
+        <!-- Agotados -->
+        <div class="rounded-lg border p-4"
+             [ngClass]="outOfStockCount > 0
+               ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20'
+               : 'border-border'">
+          <p class="text-sm font-medium"
+             [ngClass]="outOfStockCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'">
+            Agotados
+          </p>
+          <p class="text-2xl font-bold"
+             [ngClass]="outOfStockCount > 0 ? 'text-red-700 dark:text-red-300' : 'text-card-foreground'">
+            {{ outOfStockCount }}
           </p>
         </div>
 
-        <div class="rounded-lg border border-border p-4">
-          <p class="text-sm text-muted-foreground">Valor Total Inventario</p>
-          <p class="text-2xl font-bold text-card-foreground">
-            ${{ fmt(totalInventoryValue) }}
+        <!-- Stock bajo -->
+        <div class="rounded-lg border p-4"
+             [ngClass]="lowStockCount > 0
+               ? 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20'
+               : 'border-border'">
+          <p class="text-sm font-medium"
+             [ngClass]="lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'">
+            Stock bajo
+          </p>
+          <p class="text-2xl font-bold"
+             [ngClass]="lowStockCount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-card-foreground'">
+            {{ lowStockCount }}
           </p>
         </div>
 
-        <div class="rounded-lg border border-border p-4">
-          <p class="text-sm text-muted-foreground">Productos Destacados</p>
-          <p class="text-2xl font-bold text-card-foreground">
-            {{ featuredCount }}
-          </p>
-        </div>
       </div>
     </div>
   </div>
@@ -513,27 +562,48 @@
             </div>
           </div>
 
-          <!-- Stock (oculto para Alquileres) -->
-          <div *ngIf="!isRentalCategory" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium leading-none" for="prod-stock">
-              Stock Inicial <span class="text-destructive">*</span>
-            </label>
-            <input
-              id="prod-stock"
-              type="number"
-              min="0"
-              placeholder="0"
-              [(ngModel)]="form.stock"
-              [disabled]="viewMode"
-              (blur)="touchField('stock')"
-              (focus)="$any($event.target).select()"
-              [ngClass]="formTouched.stock && !form.stock && !viewMode
-                ? 'border-destructive focus-visible:ring-destructive'
-                : 'border-input'"
-              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <p *ngIf="formTouched.stock && !form.stock && !viewMode"
-               class="text-xs text-destructive">* Campo requerido</p>
+          <!-- Stock + Stock Mínimo (ocultos para Alquileres) -->
+          <div *ngIf="!isRentalCategory" class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium leading-none" for="prod-stock">
+                Stock Inicial <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="prod-stock"
+                type="number"
+                min="0"
+                placeholder="0"
+                [(ngModel)]="form.stock"
+                [disabled]="viewMode"
+                (blur)="touchField('stock')"
+                (focus)="$any($event.target).select()"
+                [ngClass]="formTouched.stock && !form.stock && !viewMode
+                  ? 'border-destructive focus-visible:ring-destructive'
+                  : 'border-input'"
+                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p *ngIf="formTouched.stock && !form.stock && !viewMode"
+                 class="text-xs text-destructive">* Campo requerido</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium leading-none" for="prod-min-stock">
+                Stock Mínimo
+              </label>
+              <input
+                id="prod-min-stock"
+                type="number"
+                min="0"
+                placeholder="5"
+                [(ngModel)]="form.minStock"
+                [disabled]="viewMode"
+                (focus)="$any($event.target).select()"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p class="text-xs text-muted-foreground">
+                Alerta cuando el stock llegue a este valor. Ingresá <strong>0</strong> para productos sin control de stock (ej: alquileres).
+              </p>
+            </div>
           </div>
 
           <div class="flex items-center justify-between rounded-lg border border-border p-3">

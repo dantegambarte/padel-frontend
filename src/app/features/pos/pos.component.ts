@@ -17,6 +17,7 @@ interface PosCartItem {
   name: string;
   salePrice: number;
   stock: number;
+  minStock: number;
   category: string;
   quantity: number;
 }
@@ -326,6 +327,16 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     return getCategoryColor(product.category?.name ?? '');
   }
 
+  /** `true` si el producto/ítem tiene stock bajo el mínimo (y no es alquiler). */
+  isLowStockProduct(product: Product): boolean {
+    return !this.isRental(product) && product.stock > 0 && product.stock < (product.minStock ?? 0);
+  }
+
+  /** `true` si el ítem del carrito tiene stock bajo el mínimo (y no es alquiler). */
+  isLowStockItem(item: PosCartItem): boolean {
+    return !this.isRental(item) && item.stock > 0 && item.stock < item.minStock;
+  }
+
   /** `true` si el producto es de categoría "Alquileres" (servicio retornable sin límite de stock). */
   protected isRental(product: Product | PosCartItem): boolean {
     const cat =
@@ -375,6 +386,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
         name: product.name,
         salePrice: product.salePrice,
         stock: product.stock,
+        minStock: product.minStock ?? 0,
         category: product.category?.name ?? '',
         quantity: 1,
       });

@@ -14,6 +14,7 @@ interface ProductForm {
   costPrice: string;
   salePrice: string;
   stock: string;
+  minStock: string;
   isFeatured: boolean;
   icon: string;
 }
@@ -199,6 +200,32 @@ export class ProductsComponent implements OnInit {
     return this.products.filter((p) => p.isFeatured).length;
   }
 
+  /**
+   * `true` si el producto tiene control de stock (minStock > 0) y está agotado.
+   * Productos con minStock = 0 son de stock ilimitado y no generan alerta.
+   */
+  isOutOfStock(product: Product): boolean {
+    return product.minStock > 0 && product.stock === 0;
+  }
+
+  /**
+   * `true` si el producto tiene control de stock (minStock > 0),
+   * tiene unidades disponibles pero llegó al umbral de alerta.
+   */
+  isLowStock(product: Product): boolean {
+    return product.minStock > 0 && product.stock > 0 && product.stock <= product.minStock;
+  }
+
+  /** Cantidad de productos activos con stock = 0 y minStock > 0. */
+  get outOfStockCount(): number {
+    return this.products.filter((p) => this.isOutOfStock(p)).length;
+  }
+
+  /** Cantidad de productos activos con stock en umbral de alerta (sin agotados). */
+  get lowStockCount(): number {
+    return this.products.filter((p) => this.isLowStock(p)).length;
+  }
+
   /** Devuelve los productos filtrados por búsqueda, categoría y estado de stock. */
   get filteredProducts(): Product[] {
     let list = this.products;
@@ -213,9 +240,9 @@ export class ProductsComponent implements OnInit {
     }
 
     if (this.filterStock === 'zero') {
-      list = list.filter((p) => p.stock === 0);
+      list = list.filter((p) => this.isOutOfStock(p));
     } else if (this.filterStock === 'low') {
-      list = list.filter((p) => p.stock > 0 && p.stock <= 5);
+      list = list.filter((p) => this.isLowStock(p));
     }
 
     return list;
@@ -297,6 +324,7 @@ export class ProductsComponent implements OnInit {
       costPrice: product.costPrice?.toString() ?? '',
       salePrice: product.salePrice.toString(),
       stock: product.stock.toString(),
+      minStock: product.minStock?.toString() ?? '5',
       isFeatured: product.isFeatured,
       icon: product.icon || 'inventory_2',
     };
@@ -317,6 +345,7 @@ export class ProductsComponent implements OnInit {
       costPrice: product.costPrice?.toString() ?? '',
       salePrice: product.salePrice.toString(),
       stock: product.stock.toString(),
+      minStock: product.minStock?.toString() ?? '5',
       isFeatured: product.isFeatured,
       icon: product.icon || 'inventory_2',
     };
@@ -402,6 +431,7 @@ export class ProductsComponent implements OnInit {
       costPrice: rental ? 0 : parseFloat(this.form.costPrice),
       salePrice: parseFloat(this.form.salePrice),
       stock: rental ? 0 : parseInt(this.form.stock, 10),
+      minStock: rental ? 0 : parseInt(this.form.minStock || '5', 10),
       isFeatured: this.form.isFeatured,
       icon: this.form.icon || 'inventory_2',
     };
@@ -525,6 +555,7 @@ export class ProductsComponent implements OnInit {
       costPrice: '',
       salePrice: '',
       stock: '',
+      minStock: '5',
       isFeatured: false,
       icon: 'inventory_2',
     };

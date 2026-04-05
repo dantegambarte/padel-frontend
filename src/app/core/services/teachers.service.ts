@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay, tap } from 'rxjs';
 
-import { Teacher, CreateTeacherDto, UpdateTeacherDto } from '../models/teacher.model';
+import { Teacher, CreateTeacherDto, UpdateTeacherDto, TeacherReport } from '../models/teacher.model';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -67,5 +67,13 @@ export class TeachersService {
     return this.http.delete<void>(`${this.base}/${id}`).pipe(
       tap(() => this.clearCache()),
     );
+  }
+
+  /** Obtiene el reporte de liquidación de un profesor en un rango de fechas. */
+  getReport(id: string, startDate: string, endDate: string): Observable<TeacherReport> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+    return this.http.get<TeacherReport>(`${this.base}/${id}/report`, { params });
   }
 }

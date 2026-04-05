@@ -5,6 +5,36 @@
 @tailwind components;
 @tailwind utilities;
 
+// ─────────────────────────────────────────────────────────────────────────────
+//   ESCALA BASE GLOBAL — aumenta la raíz rem al 112% (16px → ~18px).
+//   Todas las unidades rem de Tailwind (espaciados, fuentes, anchos) escalan
+//   proporcionalmente sin necesidad de cambiar clases individuales.
+// ─────────────────────────────────────────────────────────────────────────────
+html {
+  font-size: 112%;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   SCROLLBARS — Dark Mode
+//   Evita que las barras de desplazamiento aparezcan blancas sobre fondo oscuro.
+// ─────────────────────────────────────────────────────────────────────────────
+.dark {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155; // slate-700
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569; // slate-600
+  }
+}
+
 // Barra de progreso de navegación (Router Transition Loader).
 // Simula un progreso indeterminado: crece rápido hasta ~70% y luego
 // se detiene en 90% — cuando NavigationEnd llega, el *ngIf la elimina.
@@ -264,6 +294,36 @@ $radius: 0.5rem;
     padding: 8mm !important;
     background: white !important;
     color: black !important;
+  }
+
+  // ── Reporte de liquidación docente ──────────────────────────────────────
+  .teacher-report-print-area,
+  .teacher-report-print-area * {
+    visibility: visible !important;
+  }
+
+  .teacher-report-print-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    background: white !important;
+    color: black !important;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    th, td {
+      border-bottom: 1px solid #ddd;
+      padding: 5px 10px;
+      text-align: left;
+    }
+    th { font-weight: 600; background: #f5f5f5; }
+    td:last-child, th:last-child { text-align: right; }
   }
 
   // 4. Ocultar botones internos del ticket (Imprimir, Cerrar)
