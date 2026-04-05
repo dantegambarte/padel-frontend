@@ -12,6 +12,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { ProductsService } from '../../../core/services/products.service';
 import { User, UserRole } from '../../../core/models/user.model';
 
 interface NavItem {
@@ -38,6 +39,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   currentUrl = '';
   isUserMenuOpen = false;
+  /** Productos con 0 < stock < minStock (necesitan reposición pronto). */
+  lowStockCount = 0;
+  /** Productos con stock === 0 (agotados, urgente). */
+  outOfStockCount = 0;
 
   private sub = new Subscription();
 
@@ -55,9 +60,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     {
       label: 'Gestión',
       items: [
-        { id: 'fixed-bookings', label: 'Turnos Fijos', icon: 'repeat',          route: '/app/fixed-bookings', roles: ['admin'] },
-        { id: 'products',       label: 'Productos',    icon: 'package',         route: '/app/products',       roles: ['admin', 'employee'] },
-        { id: 'teachers',       label: 'Profesores',   icon: 'graduation-cap',  route: '/app/teachers',       roles: ['admin'] },
+        { id: 'fixed-bookings',    label: 'Turnos Fijos',  icon: 'repeat',          route: '/app/fixed-bookings',      roles: ['admin'] },
+        { id: 'products',          label: 'Productos',     icon: 'package',         route: '/app/products',            roles: ['admin', 'employee'] },
+        { id: 'inventory-alerts',  label: 'Stock Bajo', icon: 'alert-triangle',  route: '/app/inventory/alerts',    roles: ['admin'] },
+        { id: 'teachers',          label: 'Profesores',    icon: 'graduation-cap',  route: '/app/teachers',            roles: ['admin'] },
+        { id: 'teachers-report',   label: 'Liquidación',   icon: 'receipt',         route: '/app/teachers/report',     roles: ['admin'] },
       ],
     },
     {
@@ -89,6 +96,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
+    private productsService: ProductsService,
     private router: Router,
     private elRef: ElementRef,
     private ngZone: NgZone,
@@ -104,6 +112,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
         this.currentUser = user;
+        if (user) {
+          this.productsService.getLowStock().subscribe({
+            next: (list) => {
+              this.outOfStockCount = list.filter((p) => p.stock === 0).length;
+              this.lowStockCount   = list.filter((p) => p.stock > 0).length;
+            },
+            error: () => {
+              this.outOfStockCount = 0;
+              this.lowStockCount   = 0;
+            },
+          });
+        }
       }),
     );
 

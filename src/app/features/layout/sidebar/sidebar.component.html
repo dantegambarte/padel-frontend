@@ -29,7 +29,7 @@
   </div>
 
   <div class="p-4 border-b border-sidebar-border">
-    <p class="text-sm text-sidebar-foreground/80">
+    <p class="text-base text-sidebar-foreground/80">
       Hola, <span class="font-semibold">{{ currentUser?.fullName }}</span>
     </p>
   </div>
@@ -40,7 +40,7 @@
       <p
         [class.mt-0]="first"
         [class.mt-4]="!first"
-        class="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none"
+        class="mb-1 px-2 text-xs font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none"
       >
         {{ group.label }}
       </p>
@@ -51,12 +51,12 @@
           type="button"
           (click)="navigate(item.route)"
           [ngClass]="navItemClass(item.route)"
-          class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2.5 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
       <ng-container [ngSwitch]="item.icon">
         <svg
           *ngSwitchCase="'layout-dashboard'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -72,7 +72,7 @@
 
         <svg
           *ngSwitchCase="'calendar-check'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -89,7 +89,7 @@
 
         <svg
           *ngSwitchCase="'repeat'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -105,7 +105,7 @@
 
         <svg
           *ngSwitchCase="'graduation-cap'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -119,7 +119,7 @@
 
         <svg
           *ngSwitchCase="'credit-card'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -133,7 +133,7 @@
 
         <svg
           *ngSwitchCase="'shopping-cart'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -150,7 +150,7 @@
 
         <svg
           *ngSwitchCase="'package'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -168,7 +168,7 @@
 
         <svg
           *ngSwitchCase="'bar-chart'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -183,7 +183,7 @@
 
         <svg
           *ngSwitchCase="'users'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -200,7 +200,7 @@
         <!-- money-off: billete tachado → representa egresos/gastos -->
         <svg
           *ngSwitchCase="'money-off'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -219,7 +219,7 @@
         <!-- tag: etiqueta de precio → representa Tarifas / Franjas Horarias -->
         <svg
           *ngSwitchCase="'tag'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -231,9 +231,39 @@
           <path d="M7 7h.01"/>
         </svg>
 
+        <!-- alert-triangle: Stock Bajo -->
+        <svg
+          *ngSwitchCase="'alert-triangle'"
+          class="h-6 w-6 flex-shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <path d="M12 9v4"/><path d="M12 17h.01"/>
+        </svg>
+
+        <!-- receipt: comprobante de liquidación docente -->
+        <svg
+          *ngSwitchCase="'receipt'"
+          class="h-6 w-6 flex-shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+          <path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/>
+        </svg>
+
         <svg
           *ngSwitchCase="'settings'"
-          class="h-5 w-5"
+          class="h-6 w-6 flex-shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -248,7 +278,14 @@
         </svg>
       </ng-container>
 
-          <span>{{ item.label }}</span>
+          <span class="flex-1">{{ item.label }}</span>
+
+          <!-- Badge Stock Bajo: total de alertas (rojo) -->
+          <span
+            *ngIf="item.id === 'inventory-alerts' && (outOfStockCount + lowStockCount) > 0"
+            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white"
+            title="{{ outOfStockCount + lowStockCount }} producto{{ (outOfStockCount + lowStockCount) !== 1 ? 's' : '' }} en alerta"
+          >{{ outOfStockCount + lowStockCount }}</span>
         </button>
       </div><!-- /group items -->
     </ng-container><!-- /group -->

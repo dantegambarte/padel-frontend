@@ -17,6 +17,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CalculatorService } from '../../../core/services/calculator.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchService, SearchResponse, SearchResultItem } from '../../../core/services/search.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { HolidayService } from '../../../core/services/holiday.service';
 
 @Component({
   selector: 'app-toolbar',
@@ -40,6 +42,9 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   isSearchLoading = false;
   searchResults: SearchResponse = { products: [], bookings: [], sales: [] };
 
+  /** Controla si el buscador expandido está activo en mobile. */
+  isMobileSearchOpen = false;
+
   /** ID de la venta cuyo ticket debe mostrarse sobre la pantalla actual. */
   globalTicketSaleId: string | null = null;
 
@@ -48,6 +53,8 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   constructor(
     public calcService: CalculatorService,
+    public themeService: ThemeService,
+    public holidayService: HolidayService,
     private router: Router,
     public authService: AuthService,
     private notificationService: NotificationService,
@@ -172,6 +179,17 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.isSearchOpen = false;
   }
 
+  openMobileSearch(): void {
+    this.isMobileSearchOpen = true;
+    this.isNotifOpen = false;
+    this.isUserMenuOpen = false;
+  }
+
+  closeMobileSearch(): void {
+    this.isMobileSearchOpen = false;
+    this.clearSearch();
+  }
+
   navigateToProduct(item: SearchResultItem): void {
     this.clearSearch();
     this.router.navigate(['/app/products'], { queryParams: { highlight: item.id } });
@@ -286,5 +304,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.isUserMenuOpen = false;
     this.isNotifOpen = false;
     this.isSearchOpen = false;
+    this.isMobileSearchOpen = false;
+    this.clearSearch();
   }
 }
