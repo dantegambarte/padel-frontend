@@ -4,3 +4,5 @@
 53c7906
 # docs: translate all JSDoc comments from English to Spanish
 b893273
+# style: format codebase, remove inline comments, and add JSDoc in Spanish
+a9b1e8ffa9860fb8f404e3ad290f04c6d6064ac4
