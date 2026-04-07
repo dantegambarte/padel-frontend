@@ -41,9 +41,9 @@ export class UsersService {
    * @param dto - Datos del usuario a crear.
    */
   create(dto: CreateUserDto): Observable<User> {
-    return this.http.post<User>(this.url, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<User>(this.url, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -63,9 +63,9 @@ export class UsersService {
    * @param dto - Campos a modificar.
    */
   update(id: string, dto: UpdateUserDto): Observable<User> {
-    return this.http.patch<User>(`${this.url}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<User>(`${this.url}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -73,9 +73,9 @@ export class UsersService {
    * @param id - Identificador del usuario.
    */
   remove(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.url}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -85,7 +85,10 @@ export class UsersService {
    * @param id          - UUID del usuario al que se le resetea la contraseña.
    * @param newPassword - Nueva contraseña temporal definida por el administrador.
    */
-  resetPassword(id: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+  resetPassword(
+    id: string,
+    newPassword: string,
+  ): Observable<{ success: boolean; message: string }> {
     return this.http.patch<{ success: boolean; message: string }>(
       `${this.url}/${id}/reset-password`,
       { newPassword },

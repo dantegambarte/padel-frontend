@@ -63,12 +63,10 @@ export class FixedBookingsComponent implements OnInit {
   form: FormState = EMPTY_FORM();
   formError = '';
 
-  // ── Filtros ──────────────────────────────────────────
   searchTerm = '';
   filterDay = '';
   filterCourt = '';
 
-  // ── Vista ─────────────────────────────────────────────
   activeTab: 'lista' | 'grilla' = 'lista';
   private slotMap = new Map<string, SlotData>();
   selectedFixedBooking: FixedBooking | null = null;
@@ -109,7 +107,6 @@ export class FixedBookingsComponent implements OnInit {
       slots.push(`${String(h).padStart(2, '0')}:00`);
       slots.push(`${String(h).padStart(2, '0')}:30`);
     }
-    // Madrugada
     slots.push('00:00');
     slots.push('00:30');
     slots.push('01:00');
@@ -119,13 +116,15 @@ export class FixedBookingsComponent implements OnInit {
   /** Retorna los turnos fijos filtrados por searchTerm, día y cancha. */
   get filteredBookings(): FixedBooking[] {
     const term = this.searchTerm.trim().toLowerCase();
-    const day  = this.filterDay  ? Number(this.filterDay)  : null;
+    const day = this.filterDay ? Number(this.filterDay) : null;
     const court = this.filterCourt || null;
 
     return this.fixedBookings.filter((item) => {
       if (term) {
-        const nameMatch  = item.clientName.toLowerCase().includes(term);
-        const phoneMatch = (item.phoneNumber ?? '').toLowerCase().includes(term);
+        const nameMatch = item.clientName.toLowerCase().includes(term);
+        const phoneMatch = (item.phoneNumber ?? '')
+          .toLowerCase()
+          .includes(term);
         if (!nameMatch && !phoneMatch) return false;
       }
       if (day !== null && item.dayOfWeek !== day) return false;
@@ -136,7 +135,7 @@ export class FixedBookingsComponent implements OnInit {
 
   /** Devuelve la clase CSS de color asignada a una cancha, rotando la paleta. */
   courtColorClass(courtId: string): string {
-    const idx = this.courts.findIndex(c => c.id === courtId);
+    const idx = this.courts.findIndex((c) => c.id === courtId);
     return this.COURT_COLORS[Math.max(0, idx) % this.COURT_COLORS.length];
   }
 
@@ -157,10 +156,12 @@ export class FixedBookingsComponent implements OnInit {
     return null;
   }
 
+  /** Abre el panel de detalle lateral para el turno fijo seleccionado. */
   openDetail(booking: FixedBooking): void {
     this.selectedFixedBooking = booking;
   }
 
+  /** Cierra el panel de detalle lateral. */
   closeDetail(): void {
     this.selectedFixedBooking = null;
   }
@@ -188,15 +189,21 @@ export class FixedBookingsComponent implements OnInit {
   }
 
   @HostListener('document:keydown.escape')
+  /** Cierra el modal o panel de detalle abierto al presionar Escape. */
   onEscape(): void {
-    if (this.selectedFixedBooking) { this.closeDetail(); return; }
+    if (this.selectedFixedBooking) {
+      this.closeDetail();
+      return;
+    }
     if (this.isDialogOpen) this.closeDialog();
   }
 
+  /** Título del diálogo de formulario según si se está creando o editando. */
   get dialogTitle(): string {
     return this.editingId ? 'Editar Turno Fijo' : 'Nuevo Turno Fijo';
   }
 
+  /** Devuelve el nombre del día de la semana a partir de su número (0=Domingo). */
   dayLabel(d: number): string {
     return this.DAY_LABELS[d] ?? `Día ${d}`;
   }
@@ -209,8 +216,15 @@ export class FixedBookingsComponent implements OnInit {
    * desfase de UTC-3 que produce `toISOString()` pasada la medianoche.
    */
   onDayOfWeekChange(): void {
-    // Mapeo ISO (1=Lun…7=Dom) → JS getDay() (0=Dom, 1=Lun…6=Sáb)
-    const isoToJs: Record<number, number> = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0 };
+    const isoToJs: Record<number, number> = {
+      1: 1,
+      2: 2,
+      3: 3,
+      4: 4,
+      5: 5,
+      6: 6,
+      7: 0,
+    };
     const target = isoToJs[Number(this.form.dayOfWeek)];
     if (target === undefined) return;
 
@@ -227,6 +241,7 @@ export class FixedBookingsComponent implements OnInit {
     this.form.startDate = `${y}-${m}-${d}`;
   }
 
+  /** Abre el diálogo de creación de turno fijo con el formulario vacío. */
   openCreateDialog(): void {
     this.editingId = null;
     this.form = EMPTY_FORM();
@@ -234,6 +249,7 @@ export class FixedBookingsComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /** Abre el diálogo de edición pre-poblado con los datos del turno fijo. */
   openEditDialog(item: FixedBooking): void {
     this.editingId = item.id;
     this.form = {
@@ -251,6 +267,7 @@ export class FixedBookingsComponent implements OnInit {
     this.isDialogOpen = true;
   }
 
+  /** Cierra el diálogo de formulario y limpia el estado de edición. */
   closeDialog(): void {
     this.isDialogOpen = false;
     this.editingId = null;
@@ -262,6 +279,7 @@ export class FixedBookingsComponent implements OnInit {
     this.form.clientName = teacher ? `Clase - ${teacher.fullName}` : '';
   }
 
+  /** Valida el formulario y envía el DTO de creación o actualización al servicio. */
   submitForm(): void {
     if (!this.form.clientName.trim()) {
       this.formError = 'El nombre del cliente es obligatorio.';
@@ -308,13 +326,15 @@ export class FixedBookingsComponent implements OnInit {
         this.isSubmitting = false;
       },
       error: (err) => {
-        const msg = err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
+        const msg =
+          err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
         this.formError = Array.isArray(msg) ? msg.join(' ') : msg;
         this.isSubmitting = false;
       },
     });
   }
 
+  /** Genera los próximos turnos individuales a partir del patrón semanal del turno fijo. */
   generateNext(item: FixedBooking): void {
     this.generatingId = item.id;
     this.fixedSvc.generateNext(item.id).subscribe({
@@ -332,6 +352,7 @@ export class FixedBookingsComponent implements OnInit {
     });
   }
 
+  /** Confirma y elimina el turno fijo junto con todas sus reservas futuras asociadas. */
   deleteCascade(item: FixedBooking): void {
     Swal.fire({
       title: '¡Advertencia! Borrado Permanente',
@@ -368,6 +389,7 @@ export class FixedBookingsComponent implements OnInit {
     });
   }
 
+  /** Abre WhatsApp Web con un mensaje de recordatorio pre-cargado para el cliente. */
   whatsapp(item: FixedBooking): void {
     if (!item.phoneNumber) return;
     const phone = item.phoneNumber.replace(/\D/g, '');
@@ -377,6 +399,7 @@ export class FixedBookingsComponent implements OnInit {
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   }
 
+  /** Construye el mapa de slots de la grilla semanal a partir de los turnos fijos activos. */
   private buildGrid(): void {
     this.slotMap.clear();
     for (const b of this.fixedBookings) {
@@ -386,21 +409,26 @@ export class FixedBookingsComponent implements OnInit {
 
       const rowSpan = Math.ceil(b.durationMinutes / 30);
 
-      // Celda de inicio: se renderiza con span
-      this.slotMap.set(`${b.dayOfWeek}-${b.hour}`, { booking: b, isStart: true, rowSpan });
+      this.slotMap.set(`${b.dayOfWeek}-${b.hour}`, {
+        booking: b,
+        isStart: true,
+        rowSpan,
+      });
 
-      // Celdas cubiertas: se omiten en la grilla para no romper el layout
       for (let i = 1; i < rowSpan; i++) {
         const coveredIdx = startIdx + i;
         if (coveredIdx < this.validHours.length) {
           this.slotMap.set(`${b.dayOfWeek}-${this.validHours[coveredIdx]}`, {
-            booking: b, isStart: false, rowSpan: 0,
+            booking: b,
+            isStart: false,
+            rowSpan: 0,
           });
         }
       }
     }
   }
 
+  /** Carga todos los turnos fijos, canchas y profesores en paralelo para inicializar la vista. */
   private loadAll(): void {
     this.isLoading = true;
     this.fixedSvc.findAll().subscribe({

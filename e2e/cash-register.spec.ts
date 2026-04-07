@@ -10,37 +10,38 @@ test.describe('Cierre de Caja', () => {
     await goToCaja(page);
   });
 
-  // CA-01
-  test('CA-01: carga la pantalla de cierre de caja correctamente', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Cierre de Caja' })).toBeVisible();
+  test('CA-01: carga la pantalla de cierre de caja correctamente', async ({
+    page,
+  }) => {
+    await expect(
+      page.getByRole('heading', { name: 'Cierre de Caja' }),
+    ).toBeVisible();
   });
 
-  // CA-02
   test('CA-02: muestra el resumen de ingresos del día', async ({ page }) => {
-    // Debe mostrar totales o indicador de sesión
     const hasTotals =
-      (await page.getByText(/Total|Ingresos|Efectivo|Transferencia/i).count()) > 0;
+      (await page.getByText(/Total|Ingresos|Efectivo|Transferencia/i).count()) >
+      0;
     expect(hasTotals).toBeTruthy();
   });
 
-  // CA-03
-  test('CA-03: muestra el detalle de transacciones del día', async ({ page }) => {
-    // Busca tabla o listado de movimientos
+  test('CA-03: muestra el detalle de transacciones del día', async ({
+    page,
+  }) => {
     const hasTransactions =
       (await page.getByText(/Turno|Venta|Reserva|concepto/i).count()) > 0 ||
       (await page.locator('table, [role="table"]').count()) > 0;
-    // No falla si no hay transacciones (día sin actividad)
     expect(typeof hasTransactions).toBe('boolean');
   });
 
-  // CA-04
-  test('CA-04: el botón de cerrar caja abre un diálogo de confirmación', async ({ page }) => {
+  test('CA-04: el botón de cerrar caja abre un diálogo de confirmación', async ({
+    page,
+  }) => {
     const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
-    if (await closeBtn.isVisible() && await closeBtn.isEnabled()) {
+    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
     } else {
-      // Caja ya cerrada — verificar que lo indica
       const isClosed =
         (await page.getByText(/cerrada|Caja cerrada/i).count()) > 0 ||
         (await closeBtn.isDisabled());
@@ -48,22 +49,23 @@ test.describe('Cierre de Caja', () => {
     }
   });
 
-  // CA-05
-  test('CA-05: el formulario de cierre requiere monto en efectivo contado', async ({ page }) => {
+  test('CA-05: el formulario de cierre requiere monto en efectivo contado', async ({
+    page,
+  }) => {
     const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
-    if (await closeBtn.isVisible() && await closeBtn.isEnabled()) {
+    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 3000 });
 
-      // El botón de confirmar debe estar deshabilitado sin monto
       const confirmBtn = dialog.getByRole('button', { name: /Confirmar/i });
       if (await confirmBtn.isVisible()) {
         await expect(confirmBtn).toBeDisabled();
       }
 
-      // Al ingresar un monto, el botón se habilita
-      const montoInput = dialog.locator('input[type="number"], input[type="text"]').first();
+      const montoInput = dialog
+        .locator('input[type="number"], input[type="text"]')
+        .first();
       if (await montoInput.isVisible()) {
         await montoInput.fill('1000');
         await expect(confirmBtn).toBeEnabled({ timeout: 1000 });
@@ -71,27 +73,32 @@ test.describe('Cierre de Caja', () => {
     }
   });
 
-  // CA-06
-  test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({ page }) => {
+  test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({
+    page,
+  }) => {
     const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
-    if (await closeBtn.isVisible() && await closeBtn.isEnabled()) {
+    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 3000 });
 
-      const montoInput = dialog.locator('input[type="number"], input[type="text"]').first();
+      const montoInput = dialog
+        .locator('input[type="number"], input[type="text"]')
+        .first();
       if (await montoInput.isVisible()) {
         await montoInput.fill('5000');
-        // Debe aparecer algún indicador de diferencia
-        await expect(dialog.getByText(/diferencia|Diferencia|\$/i)).toBeVisible({ timeout: 2000 });
+        await expect(dialog.getByText(/diferencia|Diferencia|\$/i)).toBeVisible(
+          { timeout: 2000 },
+        );
       }
     }
   });
 
-  // CA-07
-  test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({ page }) => {
+  test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({
+    page,
+  }) => {
     const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
-    if (await closeBtn.isVisible() && await closeBtn.isEnabled()) {
+    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 3000 });
@@ -104,13 +111,14 @@ test.describe('Cierre de Caja', () => {
     }
   });
 
-  // CA-08
-  test('CA-08: muestra desglose por método de pago (efectivo vs transferencia)', async ({ page }) => {
-    // Si la caja está cerrada el desglose no aplica — el test verifica que la UI responde coherentemente
+  test('CA-08: muestra desglose por método de pago (efectivo vs transferencia)', async ({
+    page,
+  }) => {
     const cajaAbierta = (await page.getByText(/Caja Cerrada/i).count()) === 0;
     if (!cajaAbierta) {
-      // Con caja cerrada solo debe mostrar el formulario de apertura — comportamiento correcto
-      await expect(page.getByRole('heading', { name: /Caja Cerrada/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Caja Cerrada/i }),
+      ).toBeVisible();
       return;
     }
     const hasBreakdown =

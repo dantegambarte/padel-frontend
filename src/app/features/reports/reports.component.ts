@@ -1,7 +1,13 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import * as XLSX from 'xlsx';
 import { forkJoin, of, Subject } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs/operators';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  takeUntil,
+} from 'rxjs/operators';
 import { ChartData, ChartOptions } from 'chart.js';
 
 import {
@@ -18,98 +24,89 @@ import {
 import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
 
-interface Preset { id: string; label: string; }
+interface Preset {
+  id: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-reports',
   templateUrl: './reports.component.html',
 })
 export class ReportsComponent implements OnInit, OnDestroy {
-
-  // ─── Debounce subjects ────────────────────────────────────────────────────
   /** Emite el par from/to cada vez que cambia el filtro de período. */
   private readonly filterChange$ = new Subject<{ from: string; to: string }>();
-  private readonly destroy$      = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
-  // ─── Filter bar ───────────────────────────────────────────────────────────
   dateFrom = '';
-  dateTo   = '';
+  dateTo = '';
   readonly maxDate = this.localDateStr(new Date());
 
   readonly presets: Preset[] = [
-    { id: 'hoy',       label: 'Hoy'          },
-    { id: 'semana',    label: 'Esta Semana'   },
-    { id: 'mes',       label: 'Este Mes'      },
-    { id: 'trimestre', label: 'Trimestre'     },
-    { id: 'semestre',  label: 'Semestre'      },
-    { id: 'anual',     label: 'Anual'         },
+    { id: 'hoy', label: 'Hoy' },
+    { id: 'semana', label: 'Esta Semana' },
+    { id: 'mes', label: 'Este Mes' },
+    { id: 'trimestre', label: 'Trimestre' },
+    { id: 'semestre', label: 'Semestre' },
+    { id: 'anual', label: 'Anual' },
   ];
   /** Resalta el preset activo; se limpia cuando el usuario edita las fechas manualmente. */
   selectedPreset = 'mes';
 
-  // ─── Tabs ─────────────────────────────────────────────────────────────────
   activeTab: number = 0;
   readonly tabs = [
-    { label: 'Resumen General'        },
-    { label: 'Tendencias e Ingresos'  },
-    { label: 'Desempeño y Productos'  },
-    { label: 'Movimientos y Export.'  },
-    { label: 'Egresos'                },
+    { label: 'Resumen General' },
+    { label: 'Tendencias e Ingresos' },
+    { label: 'Desempeño y Productos' },
+    { label: 'Movimientos y Export.' },
+    { label: 'Egresos' },
   ];
 
-  // ─── Loading flags (one per data group) ──────────────────────────────────
-  isLoadingKpis         = false;
-  isLoadingRanking      = false;
+  isLoadingKpis = false;
+  isLoadingRanking = false;
   isLoadingTransactions = false;
-  isLoadingExpenses     = false;
+  isLoadingExpenses = false;
 
-  // ─── Loaded-for-current-filter flags (cache invalidation) ─────────────────
-  private kpisLoaded         = false;
-  private rankingLoaded      = false;
+  private kpisLoaded = false;
+  private rankingLoaded = false;
   private transactionsLoaded = false;
-  private expensesLoaded     = false;
+  private expensesLoaded = false;
 
-  // ─── Data ─────────────────────────────────────────────────────────────────
-  revenueData:    RevenueDay[]        = [];
-  paymentData:    PaymentBreakdown | null = null;
-  productRanking: ProductRanking[]    = [];
-  transactions:   TransactionExport[] = [];
+  revenueData: RevenueDay[] = [];
+  paymentData: PaymentBreakdown | null = null;
+  productRanking: ProductRanking[] = [];
+  transactions: TransactionExport[] = [];
   expensesReport: ExpensesReport | null = null;
-  summaryData:    ReportsSummaryResponse | null = null;
+  summaryData: ReportsSummaryResponse | null = null;
   lowStockProducts: LowStockProduct[] = [];
 
-  // ─── Transaction table filters ────────────────────────────────────────────
-  txFilterType:    'all' | 'booking' | 'sale'     = 'all';
-  txFilterPayment: 'all' | 'cash'    | 'transfer' = 'all';
+  txFilterType: 'all' | 'booking' | 'sale' = 'all';
+  txFilterPayment: 'all' | 'cash' | 'transfer' = 'all';
 
-  // ─── Export ───────────────────────────────────────────────────────────────
   isExporting = false;
 
-  // ─── Cash session banner ──────────────────────────────────────────────────
   cashSession: {
-    sessionId:   string | null;
-    isClosed:    boolean;
+    sessionId: string | null;
+    isClosed: boolean;
     sessionDate: string | null;
-    openedAt:    string | null;
+    openedAt: string | null;
   } | null = null;
   cashSessionLoading = true;
 
-  // ─── Charts ───────────────────────────────────────────────────────────────
   barChartType = 'bar' as const;
   barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
   cashFlowChartData: ChartData<'bar'> = { labels: [], datasets: [] };
   barChartOptions: ChartOptions<'bar'> = this.buildBarChartOptions();
 
-  /** Rebuild chart options on viewport resize so mobile gets adapted layouts. */
+  /** Reconstruye las opciones de los gráficos al cambiar el tamaño de ventana para adaptar el layout a móvil. */
   @HostListener('window:resize')
   onWindowResize(): void {
     this.barChartOptions = this.buildBarChartOptions();
     this.pieChartOptions = this.buildPieChartOptions();
   }
 
+  /** Construye las opciones de Chart.js para el gráfico de barras, adaptando escalas y etiquetas para móvil. */
   private buildBarChartOptions(): ChartOptions<'bar'> {
-    // iPhone SE and similar narrow viewports (< 640 px) need rotated labels
-    // and a slightly smaller font to avoid tick overlap.
     const mobile = typeof window !== 'undefined' && window.innerWidth < 640;
     return {
       responsive: true,
@@ -129,12 +126,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
         x: {
           grid: { display: false },
           ticks: {
-            // Force vertical orientation on narrow screens; auto-rotate on wider ones
             maxRotation: mobile ? 90 : 45,
             minRotation: mobile ? 90 : 0,
             font: { size: mobile ? 9 : 11 },
             autoSkip: true,
-            // Show at most 6 ticks on mobile (e.g. skip alternating days)
             maxTicksLimit: mobile ? 6 : 10,
           },
         },
@@ -153,6 +148,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   pieChartData: ChartData<'pie'> = { labels: [], datasets: [] };
   pieChartOptions: ChartOptions<'pie'> = this.buildPieChartOptions();
 
+  /** Construye las opciones de Chart.js para el gráfico circular, con leyenda lateral en desktop y pie en móvil. */
   private buildPieChartOptions(): ChartOptions<'pie'> {
     const mobile = typeof window !== 'undefined' && window.innerWidth < 640;
     return {
@@ -161,15 +157,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
       plugins: {
         legend: {
           position: mobile ? 'bottom' : 'right',
-          labels: { font: { size: mobile ? 10 : 12 }, boxWidth: mobile ? 10 : 14 },
+          labels: {
+            font: { size: mobile ? 10 : 12 },
+            boxWidth: mobile ? 10 : 14,
+          },
         },
         tooltip: {
           callbacks: {
             label: (ctx: any) => {
-              const data  = ctx.dataset.data as number[];
+              const data = ctx.dataset.data as number[];
               const total = data.reduce((a, b) => a + (b as number), 0);
               const value = ctx.parsed as number;
-              const pct   = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+              const pct = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
               return ` ${ctx.label}: $${value.toLocaleString('es-AR')} (${pct}%)`;
             },
           },
@@ -180,29 +179,25 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   constructor(
     private reportsService: ReportsService,
-    private cashService:    CashService,
-    private toast:          ToastService,
+    private cashService: CashService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
-    // Populate date range (current month) without firing HTTP yet
-    const range   = this.getDateRange('mes');
+    const range = this.getDateRange('mes');
     this.dateFrom = range.from;
-    this.dateTo   = range.to;
+    this.dateTo = range.to;
 
-    // ── Debounce pipeline: reacts to any filter change with 400 ms delay ──
-    // distinctUntilChanged evita llamadas duplicadas si el usuario vuelve
-    // al mismo rango sin haber cambiado los valores.
-    this.filterChange$.pipe(
-      debounceTime(400),
-      distinctUntilChanged((a, b) => a.from === b.from && a.to === b.to),
-      takeUntil(this.destroy$),
-    ).subscribe(() => this.applyFilters());
+    this.filterChange$
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged((a, b) => a.from === b.from && a.to === b.to),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => this.applyFilters());
 
-    // Cash session banner — lightweight, load immediately
     this.loadCashSession();
 
-    // Lazy-load only the first (active) tab on initial render
     this.loadActiveTab();
   }
 
@@ -211,28 +206,32 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ─── Computed getters ─────────────────────────────────────────────────────
-
+  /** Suma total de ingresos (alquileres + ventas) del período seleccionado. */
   get totalRevenue(): number {
     return this.revenueData.reduce(
-      (s, d) => s + (Number(d.bookings) || 0) + (Number(d.sales) || 0), 0,
+      (s, d) => s + (Number(d.bookings) || 0) + (Number(d.sales) || 0),
+      0,
     );
   }
 
+  /** Total de ingresos por reservas de canchas en el período. */
   get totalAlquileres(): number {
     return this.revenueData.reduce((s, d) => s + (Number(d.bookings) || 0), 0);
   }
 
+  /** Total de ingresos por ventas de productos en el período. */
   get totalProductos(): number {
     return this.revenueData.reduce((s, d) => s + (Number(d.sales) || 0), 0);
   }
 
+  /** Porcentaje de ingresos por alquileres sobre el total, como string con un decimal. */
   get pctAlquileres(): string {
     return this.totalRevenue > 0
       ? ((this.totalAlquileres / this.totalRevenue) * 100).toFixed(1)
       : '0.0';
   }
 
+  /** Porcentaje de ingresos por productos sobre el total, como string con un decimal. */
   get pctProductos(): string {
     return this.totalRevenue > 0
       ? ((this.totalProductos / this.totalRevenue) * 100).toFixed(1)
@@ -246,50 +245,68 @@ export class ReportsComponent implements OnInit, OnDestroy {
       : 0;
   }
 
+  /** Suma de todos los montos en la lista de transacciones cargadas. */
   get transactionTotal(): number {
     return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
   }
 
+  /** Transacciones filtradas por tipo (turno/venta) y método de pago. */
   get filteredTransactions(): TransactionExport[] {
     return this.transactions.filter((tx) => {
-      const typeOk    = this.txFilterType    === 'all' || tx.type === this.txFilterType;
-      const paymentOk = this.txFilterPayment === 'all'
-        || (this.txFilterPayment === 'cash'     && Number(tx.cash)     > 0)
-        || (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
+      const typeOk =
+        this.txFilterType === 'all' || tx.type === this.txFilterType;
+      const paymentOk =
+        this.txFilterPayment === 'all' ||
+        (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
+        (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
       return typeOk && paymentOk;
     });
   }
 
+  /** Total monetario de las transacciones filtradas. */
   get filteredTransactionTotal(): number {
-    return this.filteredTransactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
+    return this.filteredTransactions.reduce(
+      (s, t) => s + (Number(t.total) || 0),
+      0,
+    );
   }
 
+  /** Suma de ingresos de todos los productos del ranking del período. */
   get rankingTotalAmount(): number {
-    return this.productRanking.reduce((s, p) => s + (Number(p.revenue) || 0), 0);
+    return this.productRanking.reduce(
+      (s, p) => s + (Number(p.revenue) || 0),
+      0,
+    );
   }
 
+  /** Suma de unidades vendidas de todos los productos del ranking. */
   get rankingTotalUnidades(): number {
     return this.productRanking.reduce((s, p) => s + (Number(p.qty) || 0), 0);
   }
 
+  /** Etiqueta legible del rango de fechas activo. Ej: "01/04/2026 – 30/04/2026". */
   get periodoLabel(): string {
     return `${this.fmtDisplayDate(this.dateFrom)} – ${this.fmtDisplayDate(this.dateTo)}`;
   }
 
+  /** True si alguna de las cuatro secciones está cargando datos del servidor. */
   get isAnyLoading(): boolean {
-    return this.isLoadingKpis || this.isLoadingRanking || this.isLoadingTransactions || this.isLoadingExpenses;
+    return (
+      this.isLoadingKpis ||
+      this.isLoadingRanking ||
+      this.isLoadingTransactions ||
+      this.isLoadingExpenses
+    );
   }
-
-  // ─── Preset quick-fill (NO HTTP) ─────────────────────────────────────────
 
   /**
    * Rellena dateFrom / dateTo según el preset y emite en el pipeline de debounce.
    * El llamado HTTP se dispara 400 ms después (si el valor cambió).
    */
   setPreset(id: string): void {
-    const range       = this.getDateRange(id);
-    this.dateFrom     = range.from;
-    this.dateTo       = range.to;
+    const range = this.getDateRange(id);
+    this.dateFrom = range.from;
+    this.dateTo = range.to;
     this.selectedPreset = id;
     this.filterChange$.next({ from: this.dateFrom, to: this.dateTo });
   }
@@ -303,51 +320,55 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.filterChange$.next({ from: this.dateFrom, to: this.dateTo });
   }
 
-  // ─── Ver datos de hoy (desde el banner de caja) ──────────────────────────
-
   /** Botón explícito: sin esperar debounce, aplica el filtro de inmediato. */
   selectToday(): void {
     const range = this.getDateRange('hoy');
     this.dateFrom = range.from;
-    this.dateTo   = range.to;
+    this.dateTo = range.to;
     this.selectedPreset = 'hoy';
     this.applyFilters();
   }
 
-  // ─── Apply Filters button ─────────────────────────────────────────────────
-
+  /** Valida el rango de fechas y, si es correcto, recarga la pestaña activa. */
   applyFilters(): void {
     if (!this.dateFrom || !this.dateTo) {
-      this.toast.error('Fechas incompletas', 'Seleccioná una fecha de inicio y una fecha de fin.');
+      this.toast.error(
+        'Fechas incompletas',
+        'Seleccioná una fecha de inicio y una fecha de fin.',
+      );
       return;
     }
     if (this.dateFrom > this.dateTo) {
-      this.toast.error('Rango inválido', 'La fecha de inicio no puede ser posterior a la fecha de fin.');
+      this.toast.error(
+        'Rango inválido',
+        'La fecha de inicio no puede ser posterior a la fecha de fin.',
+      );
       return;
     }
-    // Invalidar caché de todos los grupos de datos
-    this.kpisLoaded         = false;
-    this.rankingLoaded      = false;
+    this.kpisLoaded = false;
+    this.rankingLoaded = false;
     this.transactionsLoaded = false;
-    this.expensesLoaded     = false;
+    this.expensesLoaded = false;
     this.resetTxFilters();
     this.loadActiveTab();
   }
 
-  // ─── Tab navigation ───────────────────────────────────────────────────────
-
+  /** Cambia la pestaña activa y carga sus datos si aún no están en caché. */
   onTabChange(index: number): void {
     if (this.activeTab === index) return;
     this.activeTab = index;
     this.loadActiveTab();
-    // Scroll snap: center the active tab button in the nav
     setTimeout(() => {
-      const btn = document.querySelector<HTMLElement>(`[data-tab-index="${index}"]`);
-      btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const btn = document.querySelector<HTMLElement>(
+        `[data-tab-index="${index}"]`,
+      );
+      btn?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
     }, 0);
   }
-
-  // ─── Core lazy loader ─────────────────────────────────────────────────────
 
   /**
    * Determina qué datos necesita la pestaña activa y lanza la petición SOLO si
@@ -355,22 +376,23 @@ export class ReportsComponent implements OnInit, OnDestroy {
    */
   private loadActiveTab(): void {
     switch (this.activeTab) {
-      case 0: // Resumen General   — KPIs (revenue + payment)
-      case 1: // Tendencias        — mismos datos que el Resumen (gráficos)
+      case 0:
+      case 1:
         if (!this.kpisLoaded) this.loadKpis();
         break;
-      case 2: // Desempeño y Productos
+      case 2:
         if (!this.rankingLoaded) this.loadRanking();
         break;
-      case 3: // Movimientos y Exportación
+      case 3:
         if (!this.transactionsLoaded) this.loadTransactions();
         break;
-      case 4: // Egresos
+      case 4:
         if (!this.expensesLoaded) this.loadExpenses();
         break;
     }
   }
 
+  /** Carga KPIs, ingresos, métodos de pago, resumen y stock bajo en paralelo con forkJoin. */
   private loadKpis(): void {
     this.isLoadingKpis = true;
     const groupBy = this.getGroupBy();
@@ -385,16 +407,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
       summary: this.reportsService
         .getSummary(this.dateFrom, this.dateTo)
         .pipe(catchError(() => of(null))),
-      stock: this.reportsService
-        .getLowStock()
-        .pipe(catchError(() => of([]))),
+      stock: this.reportsService.getLowStock().pipe(catchError(() => of([]))),
     })
       .pipe(finalize(() => (this.isLoadingKpis = false)))
       .subscribe({
         next: ({ revenue, payment, summary, stock }) => {
-          this.revenueData      = revenue as RevenueDay[];
-          this.paymentData      = payment as PaymentBreakdown | null;
-          this.summaryData      = summary as ReportsSummaryResponse | null;
+          this.revenueData = revenue as RevenueDay[];
+          this.paymentData = payment as PaymentBreakdown | null;
+          this.summaryData = summary as ReportsSummaryResponse | null;
           this.lowStockProducts = stock as LowStockProduct[];
           this.buildCharts();
           this.kpisLoaded = true;
@@ -404,6 +424,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Carga el ranking de productos más vendidos del período. */
   private loadRanking(): void {
     this.isLoadingRanking = true;
     this.reportsService
@@ -415,13 +436,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.productRanking = data as ProductRanking[];
-          this.rankingLoaded  = true;
+          this.rankingLoaded = true;
         },
         error: () =>
           this.toast.error('Error al cargar ranking', 'Intente nuevamente'),
       });
   }
 
+  /** Carga el detalle de transacciones del período para exportación y filtros. */
   private loadTransactions(): void {
     this.isLoadingTransactions = true;
     this.reportsService
@@ -432,14 +454,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data) => {
-          this.transactions         = data as TransactionExport[];
-          this.transactionsLoaded   = true;
+          this.transactions = data as TransactionExport[];
+          this.transactionsLoaded = true;
         },
         error: () =>
-          this.toast.error('Error al cargar transacciones', 'Intente nuevamente'),
+          this.toast.error(
+            'Error al cargar transacciones',
+            'Intente nuevamente',
+          ),
       });
   }
 
+  /** Carga el reporte de egresos del período seleccionado. */
   private loadExpenses(): void {
     this.isLoadingExpenses = true;
     this.reportsService
@@ -458,20 +484,19 @@ export class ReportsComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ─── Chart helpers ────────────────────────────────────────────────────────
-
   private static readonly BAR_COLORS = {
-    alquileres: '#06b6d4', // cyan-500
-    productos:  '#f97316', // orange-500
-    income:     '#06b6d4', // cyan-500
-    expenses:   '#ef4444', // red-500
+    alquileres: '#06b6d4',
+    productos: '#f97316',
+    income: '#06b6d4',
+    expenses: '#ef4444',
   } as const;
 
   private static readonly PAYMENT_COLORS = {
-    cash:     '#10b981', // emerald-500
-    transfer: '#6366f1', // indigo-500
+    cash: '#10b981',
+    transfer: '#6366f1',
   } as const;
 
+  /** Actualiza los datasets de Chart.js de ingresos y métodos de pago con los datos cargados. */
   private buildCharts(): void {
     const labels = this.revenueData.map((d) => d.period);
 
@@ -535,25 +560,35 @@ export class ReportsComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Genera y descarga un archivo Excel con los egresos del período activo. */
   exportExpensesExcel(): void {
     if (!this.expensesReport || this.isExporting) return;
     this.isExporting = true;
 
     const displayFrom = this.fmtDisplayDate(this.dateFrom);
-    const displayTo   = this.fmtDisplayDate(this.dateTo);
+    const displayTo = this.fmtDisplayDate(this.dateTo);
     const generatedAt = new Date().toLocaleString('es-AR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
 
     const rows = this.expensesReport.items.map((e) => ({
-      Fecha:         e.date,
-      Descripción:   e.description,
-      Categoría:     e.category,
-      Método:        e.paymentMethod,
-      Monto:         e.amount,
+      Fecha: e.date,
+      Descripción: e.description,
+      Categoría: e.category,
+      Método: e.paymentMethod,
+      Monto: e.amount,
     }));
-    rows.push({ Fecha: 'TOTAL', Descripción: '', Categoría: '', Método: '', Monto: this.expensesReport.totalAmount });
+    rows.push({
+      Fecha: 'TOTAL',
+      Descripción: '',
+      Categoría: '',
+      Método: '',
+      Monto: this.expensesReport.totalAmount,
+    });
 
     const headerAoa: (string | number)[][] = [
       [`Reporte de Egresos | Período: ${displayFrom} al ${displayTo}`],
@@ -563,11 +598,17 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(headerAoa);
     XLSX.utils.sheet_add_json(ws, rows, { origin: 'A4' });
-    ws['!cols'] = [{ wch: 12 }, { wch: 36 }, { wch: 16 }, { wch: 16 }, { wch: 14 }];
+    ws['!cols'] = [
+      { wch: 12 },
+      { wch: 36 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 14 },
+    ];
 
     const moneyFmt = '"$"#,##0.00';
     const dataStart = 5;
-    const dataEnd   = dataStart + rows.length - 1;
+    const dataEnd = dataStart + rows.length - 1;
     for (let r = dataStart; r <= dataEnd; r++) {
       const ref = `E${r}`;
       if (ws[ref]) ws[ref].z = moneyFmt;
@@ -575,12 +616,19 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Egresos');
-    XLSX.writeFile(wb, `Egresos_${this.dateFrom.replace(/-/g, '')}_al_${this.dateTo.replace(/-/g, '')}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `Egresos_${this.dateFrom.replace(/-/g, '')}_al_${this.dateTo.replace(/-/g, '')}.xlsx`,
+    );
 
     this.isExporting = false;
-    this.toast.success('Excel descargado', `Período: ${displayFrom} al ${displayTo}`);
+    this.toast.success(
+      'Excel descargado',
+      `Período: ${displayFrom} al ${displayTo}`,
+    );
   }
 
+  /** Genera y descarga un CSV con los egresos del período activo. */
   exportExpensesCSV(): void {
     if (!this.expensesReport || this.isExporting) return;
 
@@ -588,11 +636,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const escape = (v: string | number) => {
       const s = String(v ?? '');
       return s.includes(',') || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"` : s;
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
     };
 
     const rows = this.expensesReport.items.map((e) => [
-      e.date, e.description, e.category, e.paymentMethod, e.amount,
+      e.date,
+      e.description,
+      e.category,
+      e.paymentMethod,
+      e.amount,
     ]);
     rows.push(['TOTAL', '', '', '', this.expensesReport.totalAmount]);
 
@@ -601,26 +654,29 @@ export class ReportsComponent implements OnInit, OnDestroy {
       ...rows.map((r) => r.map(escape).join(',')),
     ].join('\r\n');
 
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const blob = new Blob(['\uFEFF' + csv], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `Egresos_${this.dateFrom.replace(/-/g, '')}_al_${this.dateTo.replace(/-/g, '')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
 
-    this.toast.success('CSV descargado', `Período: ${this.fmtDisplayDate(this.dateFrom)} al ${this.fmtDisplayDate(this.dateTo)}`);
+    this.toast.success(
+      'CSV descargado',
+      `Período: ${this.fmtDisplayDate(this.dateFrom)} al ${this.fmtDisplayDate(this.dateTo)}`,
+    );
   }
 
-  // ─── Table filters ────────────────────────────────────────────────────────
-
+  /** Restablece los filtros de tipo y método de pago de la tabla de transacciones. */
   resetTxFilters(): void {
-    this.txFilterType    = 'all';
+    this.txFilterType = 'all';
     this.txFilterPayment = 'all';
   }
 
-  // ─── Export ───────────────────────────────────────────────────────────────
-
+  /** Exporta las transacciones filtradas a un archivo Excel. */
   exportExcel(): void {
     if (this.isExporting) return;
 
@@ -636,25 +692,32 @@ export class ReportsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           const filtered = data.filter((tx) => {
-            const typeOk    = this.txFilterType    === 'all' || tx.type === this.txFilterType;
-            const paymentOk = this.txFilterPayment === 'all'
-              || (this.txFilterPayment === 'cash'     && Number(tx.cash)     > 0)
-              || (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
+            const typeOk =
+              this.txFilterType === 'all' || tx.type === this.txFilterType;
+            const paymentOk =
+              this.txFilterPayment === 'all' ||
+              (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
+              (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
             return typeOk && paymentOk;
           });
           this.triggerExcelDownload(filtered);
         },
         error: () =>
-          this.toast.error('Error al exportar', 'No se pudo generar el reporte'),
+          this.toast.error(
+            'Error al exportar',
+            'No se pudo generar el reporte',
+          ),
       });
   }
 
+  /** Exporta las transacciones filtradas a un archivo CSV con BOM UTF-8. */
   exportCSV(): void {
     if (this.isExporting) return;
 
-    const data = this.filteredTransactions.length > 0
-      ? this.filteredTransactions
-      : this.transactions;
+    const data =
+      this.filteredTransactions.length > 0
+        ? this.filteredTransactions
+        : this.transactions;
 
     if (data.length === 0) {
       this.toast.error(
@@ -667,31 +730,50 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.triggerCsvDownload(data);
   }
 
+  /** Construye el string CSV y dispara la descarga en el navegador. */
   private triggerCsvDownload(transactions: TransactionExport[]): void {
     const header = [
-      'Fecha', 'Hora', 'Tipo', 'Concepto',
-      'Efectivo', 'Transferencia', 'Total', 'Registrado por',
+      'Fecha',
+      'Hora',
+      'Tipo',
+      'Concepto',
+      'Efectivo',
+      'Transferencia',
+      'Total',
+      'Registrado por',
     ];
 
     const escape = (v: string | number) => {
       const s = String(v ?? '');
       return s.includes(',') || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"` : s;
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
     };
 
     const rows = transactions.map((tx) => [
-      tx.date, tx.time,
-      tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta cantina' : tx.type,
+      tx.date,
+      tx.time,
+      tx.type === 'booking'
+        ? 'Turno'
+        : tx.type === 'sale'
+          ? 'Venta cantina'
+          : tx.type,
       tx.concept,
-      Number(tx.cash)     || 0,
+      Number(tx.cash) || 0,
       Number(tx.transfer) || 0,
-      Number(tx.total)    || 0,
+      Number(tx.total) || 0,
       tx.createdBy,
     ]);
 
-    const totalEf  = transactions.reduce((s, t) => s + (Number(t.cash)     || 0), 0);
-    const totalTr  = transactions.reduce((s, t) => s + (Number(t.transfer) || 0), 0);
-    const totalGe  = transactions.reduce((s, t) => s + (Number(t.total)    || 0), 0);
+    const totalEf = transactions.reduce((s, t) => s + (Number(t.cash) || 0), 0);
+    const totalTr = transactions.reduce(
+      (s, t) => s + (Number(t.transfer) || 0),
+      0,
+    );
+    const totalGe = transactions.reduce(
+      (s, t) => s + (Number(t.total) || 0),
+      0,
+    );
     rows.push(['TOTAL', '', '', '', totalEf, totalTr, totalGe, '']);
 
     const csv = [
@@ -699,11 +781,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
       ...rows.map((r) => r.map(escape).join(',')),
     ].join('\r\n');
 
-    const bom  = '\uFEFF';
+    const bom = '\uFEFF';
     const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `Transacciones_${this.dateFrom.replace(/-/g, '')}_al_${this.dateTo.replace(/-/g, '')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
@@ -714,40 +796,67 @@ export class ReportsComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Construye el archivo Excel de transacciones y dispara la descarga. */
   private triggerExcelDownload(transactions: TransactionExport[]): void {
     const displayFrom = this.fmtDisplayDate(this.dateFrom);
-    const displayTo   = this.fmtDisplayDate(this.dateTo);
+    const displayTo = this.fmtDisplayDate(this.dateTo);
     const generatedAt = new Date().toLocaleString('es-AR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
 
     const rows = transactions.map((tx) => ({
-      Fecha:          tx.date,
-      Hora:           tx.time,
-      Tipo:           tx.type === 'booking' ? 'Turno' : tx.type === 'sale' ? 'Venta cantina' : tx.type,
-      Concepto:       tx.concept,
-      Efectivo:       Number(tx.cash)     || 0,
-      Transferencia:  Number(tx.transfer) || 0,
-      Total:          Number(tx.total)    || 0,
+      Fecha: tx.date,
+      Hora: tx.time,
+      Tipo:
+        tx.type === 'booking'
+          ? 'Turno'
+          : tx.type === 'sale'
+            ? 'Venta cantina'
+            : tx.type,
+      Concepto: tx.concept,
+      Efectivo: Number(tx.cash) || 0,
+      Transferencia: Number(tx.transfer) || 0,
+      Total: Number(tx.total) || 0,
       'Registrado por': tx.createdBy,
     }));
 
-    const totalEf = rows.reduce((s, r) => s + r.Efectivo,      0);
+    const totalEf = rows.reduce((s, r) => s + r.Efectivo, 0);
     const totalTr = rows.reduce((s, r) => s + r.Transferencia, 0);
-    const totalGe = rows.reduce((s, r) => s + r.Total,         0);
+    const totalGe = rows.reduce((s, r) => s + r.Total, 0);
     rows.push({
-      Fecha: 'TOTAL', Hora: '', Tipo: '', Concepto: '',
-      Efectivo: totalEf, Transferencia: totalTr, Total: totalGe, 'Registrado por': '',
+      Fecha: 'TOTAL',
+      Hora: '',
+      Tipo: '',
+      Concepto: '',
+      Efectivo: totalEf,
+      Transferencia: totalTr,
+      Total: totalGe,
+      'Registrado por': '',
     });
 
     const filterParts: string[] = [];
-    if (this.txFilterType    !== 'all') filterParts.push(this.txFilterType    === 'booking' ? 'Tipo: Alquileres' : 'Tipo: Ventas');
-    if (this.txFilterPayment !== 'all') filterParts.push(this.txFilterPayment === 'cash'    ? 'Pago: Efectivo'   : 'Pago: Transferencia');
-    const filterLabel = filterParts.length ? ` | Filtros: ${filterParts.join(' + ')}` : '';
+    if (this.txFilterType !== 'all')
+      filterParts.push(
+        this.txFilterType === 'booking' ? 'Tipo: Alquileres' : 'Tipo: Ventas',
+      );
+    if (this.txFilterPayment !== 'all')
+      filterParts.push(
+        this.txFilterPayment === 'cash'
+          ? 'Pago: Efectivo'
+          : 'Pago: Transferencia',
+      );
+    const filterLabel = filterParts.length
+      ? ` | Filtros: ${filterParts.join(' + ')}`
+      : '';
 
     const headerAoa: (string | number)[][] = [
-      [`Reporte de Transacciones | Periodo: ${displayFrom} al ${displayTo}${filterLabel}`],
+      [
+        `Reporte de Transacciones | Periodo: ${displayFrom} al ${displayTo}${filterLabel}`,
+      ],
       [`Generado el: ${generatedAt}`],
       [],
     ];
@@ -756,13 +865,19 @@ export class ReportsComponent implements OnInit, OnDestroy {
     XLSX.utils.sheet_add_json(ws, rows, { origin: 'A4' });
 
     ws['!cols'] = [
-      { wch: 12 }, { wch: 8 }, { wch: 18 }, { wch: 36 },
-      { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 20 },
+      { wch: 12 },
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 36 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 20 },
     ];
 
     const moneyFmt = '"$"#,##0.00';
     const dataStart = 5;
-    const dataEnd   = dataStart + rows.length - 1;
+    const dataEnd = dataStart + rows.length - 1;
     ['E', 'F', 'G'].forEach((col) => {
       for (let r = dataStart; r <= dataEnd; r++) {
         const ref = `${col}${r}`;
@@ -787,12 +902,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.toast.success('Reporte Excel descargado', toastDetail);
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
+  /** Formatea un valor numérico al estilo local argentino. Seguro ante null/undefined. */
   fmt(value: number | string | null | undefined): string {
     return (Number(value) || 0).toLocaleString('es-AR');
   }
 
+  /** Formatea un valor como moneda ARS con dos decimales. */
   fmtCurrency(value: number | string | null | undefined): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -806,26 +921,29 @@ export class ReportsComponent implements OnInit, OnDestroy {
     return this.activeTab === n;
   }
 
+  /** Devuelve las clases Tailwind del badge de categoría de egreso. */
   expenseCategoryClass(category: string): string {
     const map: Record<string, string> = {
-      'Insumos':       'bg-blue-100 text-blue-700',
-      'Mantenimiento': 'bg-amber-100 text-amber-700',
-      'Sueldos':       'bg-violet-100 text-violet-700',
-      'Servicios':     'bg-teal-100 text-teal-700',
-      'Otro':          'bg-gray-100 text-gray-600',
+      Insumos: 'bg-blue-100 text-blue-700',
+      Mantenimiento: 'bg-amber-100 text-amber-700',
+      Sueldos: 'bg-violet-100 text-violet-700',
+      Servicios: 'bg-teal-100 text-teal-700',
+      Otro: 'bg-gray-100 text-gray-600',
     };
     return map[category] ?? 'bg-secondary text-secondary-foreground';
   }
 
+  /** Convierte una fecha ISO (YYYY-MM-DD) al formato de pantalla DD/MM/AAAA. */
   private fmtDisplayDate(iso: string): string {
     if (!iso) return '—';
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
   }
 
+  /** Serializa una fecha a string ISO local (YYYY-MM-DD) sin desfase de zona horaria. */
   private localDateStr(d: Date): string {
-    const y   = d.getFullYear();
-    const m   = String(d.getMonth() + 1).padStart(2, '0');
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
@@ -836,16 +954,17 @@ export class ReportsComponent implements OnInit, OnDestroy {
   private getGroupBy(): GroupBy {
     if (!this.dateFrom || !this.dateTo) return 'week';
     const from = new Date(this.dateFrom + 'T00:00:00');
-    const to   = new Date(this.dateTo   + 'T00:00:00');
+    const to = new Date(this.dateTo + 'T00:00:00');
     const days = Math.round((to.getTime() - from.getTime()) / 86_400_000);
-    if (days <= 8)  return 'day';
+    if (days <= 8) return 'day';
     if (days <= 90) return 'week';
     return 'month';
   }
 
+  /** Devuelve el rango `{ from, to }` en formato ISO para un preset nombrado (hoy, semana, mes, etc.). */
   private getDateRange(period: string): { from: string; to: string } {
     const today = new Date();
-    const to    = this.localDateStr(today);
+    const to = this.localDateStr(today);
     let from: Date;
 
     switch (period) {
@@ -876,6 +995,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     return { from: this.localDateStr(from), to };
   }
 
+  /** Carga el estado de la sesión de caja activa para el banner informativo. */
   private loadCashSession(): void {
     this.cashSessionLoading = true;
     this.cashService
@@ -885,10 +1005,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
         this.cashSessionLoading = false;
         this.cashSession = res
           ? {
-              sessionId:   res.sessionId,
-              isClosed:    res.isClosed,
+              sessionId: res.sessionId,
+              isClosed: res.isClosed,
               sessionDate: res.sessionDate,
-              openedAt:    res.openedAt,
+              openedAt: res.openedAt,
             }
           : null;
       });

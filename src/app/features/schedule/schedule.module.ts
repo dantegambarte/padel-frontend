@@ -9,6 +9,12 @@ import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [ScheduleComponent],
-  imports: [CommonModule, FormsModule, DragDropModule, ScheduleRoutingModule, SharedModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DragDropModule,
+    ScheduleRoutingModule,
+    SharedModule,
+  ],
 })
 export class ScheduleModule {}

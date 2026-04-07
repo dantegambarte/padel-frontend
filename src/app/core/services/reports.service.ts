@@ -111,7 +111,7 @@ export class ReportsService {
    */
   private kpisCache$: Observable<TodayKpis> | null = null;
   private last7DaysCache$: Observable<DailyRevenue[]> | null = null;
-  private readonly KPIS_TTL_MS     = 30_000;
+  private readonly KPIS_TTL_MS = 30_000;
   private readonly LAST7DAYS_TTL_MS = 60_000;
 
   constructor(private http: HttpClient) {}
@@ -120,8 +120,12 @@ export class ReportsService {
   getTodayKpis(date?: string): Observable<TodayKpis> {
     if (this.kpisCache$) return this.kpisCache$;
     const params = date ? new HttpParams().set('date', date) : undefined;
-    this.kpisCache$ = this.http.get<TodayKpis>(`${this.url}/kpis`, { params }).pipe(shareReplay(1));
-    setTimeout(() => { this.kpisCache$ = null; }, this.KPIS_TTL_MS);
+    this.kpisCache$ = this.http
+      .get<TodayKpis>(`${this.url}/kpis`, { params })
+      .pipe(shareReplay(1));
+    setTimeout(() => {
+      this.kpisCache$ = null;
+    }, this.KPIS_TTL_MS);
     return this.kpisCache$;
   }
 
@@ -129,8 +133,12 @@ export class ReportsService {
   getLast7DaysRevenue(days = 7): Observable<DailyRevenue[]> {
     if (this.last7DaysCache$) return this.last7DaysCache$;
     const params = new HttpParams().set('days', days.toString());
-    this.last7DaysCache$ = this.http.get<DailyRevenue[]>(`${this.url}/revenue/trend`, { params }).pipe(shareReplay(1));
-    setTimeout(() => { this.last7DaysCache$ = null; }, this.LAST7DAYS_TTL_MS);
+    this.last7DaysCache$ = this.http
+      .get<DailyRevenue[]>(`${this.url}/revenue/trend`, { params })
+      .pipe(shareReplay(1));
+    setTimeout(() => {
+      this.last7DaysCache$ = null;
+    }, this.LAST7DAYS_TTL_MS);
     return this.last7DaysCache$;
   }
 
@@ -141,11 +149,17 @@ export class ReportsService {
   }
 
   /** Devuelve el resumen de KPIs del período (ingresos, egresos, ganancia neta). */
-  getSummary(dateFrom?: string, dateTo?: string): Observable<ReportsSummaryResponse> {
-    const params = dateFrom && dateTo
-      ? new HttpParams().set('dateFrom', dateFrom).set('dateTo', dateTo)
-      : undefined;
-    return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`, { params });
+  getSummary(
+    dateFrom?: string,
+    dateTo?: string,
+  ): Observable<ReportsSummaryResponse> {
+    const params =
+      dateFrom && dateTo
+        ? new HttpParams().set('dateFrom', dateFrom).set('dateTo', dateTo)
+        : undefined;
+    return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`, {
+      params,
+    });
   }
 
   /** Devuelve los productos activos cuyo stock es igual o inferior al umbral mínimo. */
@@ -241,10 +255,9 @@ export class ReportsService {
     const params = date
       ? this.buildParams({ date })
       : this.buildParams({ dateFrom, dateTo });
-    return this.http.get<TransactionExport[]>(
-      `${this.url}/transactions`,
-      { params },
-    );
+    return this.http.get<TransactionExport[]>(`${this.url}/transactions`, {
+      params,
+    });
   }
 
   /** Devuelve el reporte de egresos del período con totales por categoría y método. */

@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay, tap } from 'rxjs';
 
-import { Teacher, CreateTeacherDto, UpdateTeacherDto, TeacherReport } from '../models/teacher.model';
+import {
+  Teacher,
+  CreateTeacherDto,
+  UpdateTeacherDto,
+  TeacherReport,
+} from '../models/teacher.model';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -34,13 +39,17 @@ export class TeachersService {
     if (includeInactive) {
       if (!this.allCache$) {
         const params = new HttpParams().set('includeInactive', 'true');
-        this.allCache$ = this.http.get<Teacher[]>(this.base, { params }).pipe(shareReplay(1));
+        this.allCache$ = this.http
+          .get<Teacher[]>(this.base, { params })
+          .pipe(shareReplay(1));
       }
       return this.allCache$;
     }
 
     if (!this.activeCache$) {
-      this.activeCache$ = this.http.get<Teacher[]>(this.base).pipe(shareReplay(1));
+      this.activeCache$ = this.http
+        .get<Teacher[]>(this.base)
+        .pipe(shareReplay(1));
     }
     return this.activeCache$;
   }
@@ -51,29 +60,38 @@ export class TeachersService {
     this.allCache$ = null;
   }
 
+  /** Crea un nuevo profesor e invalida la caché. */
   create(dto: CreateTeacherDto): Observable<Teacher> {
-    return this.http.post<Teacher>(this.base, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<Teacher>(this.base, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Actualiza los datos de un profesor e invalida la caché. */
   update(id: string, dto: UpdateTeacherDto): Observable<Teacher> {
-    return this.http.patch<Teacher>(`${this.base}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<Teacher>(`${this.base}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Desactiva un profesor (soft-delete) e invalida la caché. */
   deactivate(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.base}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /** Obtiene el reporte de liquidación de un profesor en un rango de fechas. */
-  getReport(id: string, startDate: string, endDate: string): Observable<TeacherReport> {
+  getReport(
+    id: string,
+    startDate: string,
+    endDate: string,
+  ): Observable<TeacherReport> {
     const params = new HttpParams()
       .set('startDate', startDate)
       .set('endDate', endDate);
-    return this.http.get<TeacherReport>(`${this.base}/${id}/report`, { params });
+    return this.http.get<TeacherReport>(`${this.base}/${id}/report`, {
+      params,
+    });
   }
 }

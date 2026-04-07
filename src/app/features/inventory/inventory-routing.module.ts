@@ -5,7 +5,11 @@ import { InventoryAlertsComponent } from './inventory-alerts/inventory-alerts.co
 import { AdminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
-  { path: 'alerts', component: InventoryAlertsComponent, canActivate: [AdminGuard] },
+  {
+    path: 'alerts',
+    component: InventoryAlertsComponent,
+    canActivate: [AdminGuard],
+  },
   { path: '', redirectTo: 'alerts', pathMatch: 'full' },
 ];
 

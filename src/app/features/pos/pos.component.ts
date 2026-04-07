@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ElementRef,
+  ViewChildren,
+  QueryList,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, Subscription, finalize } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -42,7 +50,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedItemDetail: PosCartItem | null = null;
   isDetailModalOpen = false;
 
-  @ViewChildren('cartScrollContainer') private cartScrollContainers!: QueryList<ElementRef>;
+  @ViewChildren('cartScrollContainer')
+  private cartScrollContainers!: QueryList<ElementRef>;
 
   touchStartY = 0;
   touchEndY = 0;
@@ -81,7 +90,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProducts();
     this.checkCashStatus();
 
-    // Auto-save del carrito con debounce.
     this.sub.add(
       this.cartDraftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_CART, {
@@ -93,7 +101,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       }),
     );
 
-    // Mostrar banner si hay un carrito guardado.
     const draft = this.draftService.getDraft<{
       cart: PosCartItem[];
       customerName: string;
@@ -149,8 +156,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
         this.isCashRegisterOpen = !cash.isClosed && !cash.noSession;
       },
       error: () => {
-        // Mantener default optimista: mejor permitir intentar la venta y
-        // dejar que el backend rechace con CAJA_CERRADA si corresponde.
         this.isCashRegisterOpen = true;
       },
     });
@@ -161,12 +166,17 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * preventDefault() y evitar que el scroll del browser robe el gesto de swipe.
    */
   ngAfterViewInit(): void {
-    const swipeZone = this.el.nativeElement.querySelector<HTMLElement>('[data-swipe-zone]');
+    const swipeZone =
+      this.el.nativeElement.querySelector<HTMLElement>('[data-swipe-zone]');
     if (!swipeZone) return;
-    swipeZone.addEventListener('touchmove', (e: TouchEvent) => {
-      this.touchEndY = e.changedTouches[0].screenY;
-      if (this.touchEndY - this.touchStartY > 10) e.preventDefault();
-    }, { passive: false });
+    swipeZone.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        this.touchEndY = e.changedTouches[0].screenY;
+        if (this.touchEndY - this.touchStartY > 10) e.preventDefault();
+      },
+      { passive: false },
+    );
   }
 
   /**
@@ -194,7 +204,10 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Elimina diacríticos (tildes) para comparación insensible a acentos. */
   private normalize(s: string): string {
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   /**
@@ -206,12 +219,13 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     const base = this.searchQuery.trim()
       ? (() => {
           const q = this.normalize(this.searchQuery);
-          return this.products.filter((p) => this.normalize(p.name).includes(q));
+          return this.products.filter((p) =>
+            this.normalize(p.name).includes(q),
+          );
         })()
       : this.products;
 
     this.filteredProducts = [...base].sort((a, b) => {
-      // Alquileres nunca se consideran agotados; van con los disponibles.
       const aOut = !this.isRental(a) && a.stock <= 0 ? 1 : 0;
       const bOut = !this.isRental(b) && b.stock <= 0 ? 1 : 0;
       if (aOut !== bOut) return aOut - bOut;
@@ -235,15 +249,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.cart.reduce((sum, item) => sum + item.quantity, 0);
   }
 
+  /** Registra la posición vertical inicial del toque para detectar swipe en mobile. */
   onTouchStart(event: TouchEvent): void {
     this.touchStartY = event.changedTouches[0].screenY;
     this.touchEndY = 0;
   }
 
-  // touchmove se maneja en ngAfterViewInit con { passive: false } para poder llamar preventDefault()
-
+  /** Evalúa el gesto de swipe hacia abajo para cerrar el bottom sheet del carrito en mobile. */
   onTouchEnd(): void {
-    // Solo actúa si hubo movimiento real (touchMove registrado)
     if (this.touchEndY === 0) return;
     const deltaY = this.touchEndY - this.touchStartY;
     if (deltaY > this.swipeThreshold) {
@@ -329,7 +342,11 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** `true` si el producto/ítem tiene stock bajo el mínimo (y no es alquiler). */
   isLowStockProduct(product: Product): boolean {
-    return !this.isRental(product) && product.stock > 0 && product.stock < (product.minStock ?? 0);
+    return (
+      !this.isRental(product) &&
+      product.stock > 0 &&
+      product.stock < (product.minStock ?? 0)
+    );
   }
 
   /** `true` si el ítem del carrito tiene stock bajo el mínimo (y no es alquiler). */
@@ -355,9 +372,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     const existing = this.cart.find((i) => i.productId === product.id);
     const rental = this.isRental(product);
 
-    // Bloquear temprano si la tarjeta del catálogo fue clicada estando al límite.
-    // El HTML ya aplica pointer-events-none para no-alquileres, pero esta guardia
-    // cubre cualquier llamada programática o de teclado que pueda pasar el template.
     if (!rental && existing && existing.quantity >= product.stock) {
       this.toast.error(
         'Límite de stock alcanzado',
@@ -366,11 +380,12 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const existingIndex = this.cart.findIndex((i) => i.productId === product.id);
+    const existingIndex = this.cart.findIndex(
+      (i) => i.productId === product.id,
+    );
 
     if (existingIndex !== -1) {
       if (rental || this.cart[existingIndex].quantity < product.stock) {
-        // Extrae el ítem, incrementa cantidad y lo reinserta al final
         const item = this.cart.splice(existingIndex, 1)[0];
         item.quantity += 1;
         this.cart.push(item);
@@ -394,14 +409,16 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.triggerCartDraftSave();
 
-    // Micro-feedback visual para mobile
     this.toastMessage = `+1 ${product.name}`;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastMessage = null; }, 1500);
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage = null;
+    }, 1500);
 
     setTimeout(() => this.scrollCartsToBottom(), 0);
   }
 
+  /** Desplaza todos los contenedores de carrito al final para mostrar el ítem recién agregado. */
   private scrollCartsToBottom(): void {
     this.cartScrollContainers.forEach((ref) => {
       const el = ref.nativeElement as HTMLElement;
@@ -427,9 +444,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       );
       this.triggerCartDraftSave();
     }
-    // Si newQty > stock para no-alquileres, simplemente no hace nada.
-    // El botón + está deshabilitado en el HTML, por lo que este caso
-    // solo podría ocurrir por manipulación directa — sin toast para evitar spam.
   }
 
   /**
@@ -477,7 +491,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * Limpia el carrito y los montos de pago al completarse con éxito.
    */
   confirmSale(): void {
-    // Guard preventivo: interceptar antes de intentar la petición.
     if (!this.isCashRegisterOpen) {
       Swal.fire({
         title: '¡Caja Cerrada!',
@@ -547,8 +560,6 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
           );
         },
         error: (err) => {
-          // Detectar CAJA_CERRADA independientemente del campo que use el backend:
-          // errorCode, code, o un mensaje que contenga la cadena.
           const errBody = err.error ?? {};
           const isCajaCerrada =
             errBody.errorCode === 'CAJA_CERRADA' ||
@@ -569,7 +580,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
             );
             this.loadProducts();
           } else {
-            const errMsg = err.error?.message ?? 'Error desconocido al procesar la venta';
+            const errMsg =
+              err.error?.message ?? 'Error desconocido al procesar la venta';
             this.toast.error('Error al procesar venta', errMsg);
           }
         },

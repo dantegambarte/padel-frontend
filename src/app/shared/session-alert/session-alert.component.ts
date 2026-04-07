@@ -1,7 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { SessionAlertService, SessionAlertType } from '../../core/services/session-alert.service';
+import {
+  SessionAlertService,
+  SessionAlertType,
+} from '../../core/services/session-alert.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -47,7 +50,9 @@ export class SessionAlertComponent implements OnInit, OnDestroy {
   }
 
   get iconColor(): string {
-    return this.alertType === 'SESSION_OVERRIDDEN' ? 'text-amber-500' : 'text-blue-500';
+    return this.alertType === 'SESSION_OVERRIDDEN'
+      ? 'text-amber-500'
+      : 'text-blue-500';
   }
 
   confirm(): void {

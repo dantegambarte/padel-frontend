@@ -1,4 +1,10 @@
-import { Component, ChangeDetectorRef, HostListener, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  ChangeDetectorRef,
+  HostListener,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, Subscription, finalize } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -110,10 +116,13 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   showAperturaDraftBanner = false;
   /** Draft de cierre: banner de confirmación explícita. */
   showCierreDraftBanner = false;
-  private pendingCierreDraft: { efectivoContado: number | null; notas: string } | null = null;
+  private pendingCierreDraft: {
+    efectivoContado: number | null;
+    notas: string;
+  } | null = null;
   private readonly DRAFT_KEY_APERTURA = 'draft_caja_apertura';
-  private readonly DRAFT_KEY_CIERRE   = 'draft_caja_cierre';
-  private draftSave$      = new Subject<void>();
+  private readonly DRAFT_KEY_CIERRE = 'draft_caja_cierre';
+  private draftSave$ = new Subject<void>();
   private cierreDraftSave$ = new Subject<void>();
   private draftSub = new Subscription();
 
@@ -139,7 +148,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.loadCurrentSession();
     this.historialDate = this.toISODate(this.logicalCommercialDate);
 
-    // Auto-save con debounce para el formulario de apertura.
     this.draftSub.add(
       this.draftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_APERTURA, {
@@ -149,7 +157,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       }),
     );
 
-    // Auto-save con debounce para el formulario de cierre (arqueo).
     this.draftSub.add(
       this.cierreDraftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_CIERRE, {
@@ -159,15 +166,14 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       }),
     );
 
-    // Mostrar banner si hay borrador guardado de una apertura previa inconclusa.
     if (this.draftService.hasDraft(this.DRAFT_KEY_APERTURA)) {
       this.showAperturaDraftBanner = true;
     }
 
-    // Mostrar banner de confirmación si hay un borrador de arqueo guardado.
-    const cierreDraft = this.draftService.getDraft<{ efectivoContado: number | null; notas: string }>(
-      this.DRAFT_KEY_CIERRE,
-    );
+    const cierreDraft = this.draftService.getDraft<{
+      efectivoContado: number | null;
+      notas: string;
+    }>(this.DRAFT_KEY_CIERRE);
     if (cierreDraft) {
       this.pendingCierreDraft = cierreDraft;
       this.showCierreDraftBanner = true;
@@ -197,8 +203,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     } else {
       base = new Date(now);
     }
-    // Regla post-Cierre Z: si la jornada actual ya fue cerrada, la próxima apertura
-    // se imputa al día siguiente, sin importar la hora del reloj.
     if (this.isBusinessDayClosed) {
       const next = new Date(base);
       next.setDate(next.getDate() + 1);
@@ -268,7 +272,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    */
   get jornadaLabel(): string {
     if (!this.openedAt) return 'Turno de hoy';
-    const d  = new Date(this.openedAt);
+    const d = new Date(this.openedAt);
     const TZ = 'America/Argentina/Buenos_Aires';
     const datePart = d.toLocaleDateString('es-AR', {
       timeZone: TZ,
@@ -350,48 +354,41 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           if (res.noSession) {
-            // No existe ninguna sesión para el día comercial actual → pantalla de apertura.
-            // Pre-cargar el fondo con el conteo del último cierre (arrastre de fondo).
             this.isSessionOpen = false;
             this.isBusinessDayClosed = res.isBusinessDayClosed;
-            this.cashService.getLastClosedSuggestion().subscribe(({ cashCounted }) => {
-              if (cashCounted !== null && this.fondoInicial === '') {
-                this.fondoInicial        = String(cashCounted);
-                this.fondoInicialSugerido = true;
-              }
-            });
+            this.cashService
+              .getLastClosedSuggestion()
+              .subscribe(({ cashCounted }) => {
+                if (cashCounted !== null && this.fondoInicial === '') {
+                  this.fondoInicial = String(cashCounted);
+                  this.fondoInicialSugerido = true;
+                }
+              });
             return;
           }
-          // Hay sesión (abierta o cerrada) → mostrar el dashboard.
           this.isSessionOpen = true;
           this.sessionId = res.sessionId;
-          // Piso en $0: físicamente no puede haber efectivo negativo en el cajón.
-          // Datos heredados con egresos > ingresos no deben generar un "sobrante" absurdo.
-          this.efectivoEsperado  = Math.max(0, res.efectivoEsperado);
+          this.efectivoEsperado = Math.max(0, res.efectivoEsperado);
           this.transferenciaTotal = res.transferenciaTotal;
-          this.initialBalance     = res.initialBalance;
-          this.cashIncome         = res.cashIncome;
-          this.cashExpenseTotal   = res.cashExpenseTotal;
-          this.movimientos        = res.movimientos;
+          this.initialBalance = res.initialBalance;
+          this.cashIncome = res.cashIncome;
+          this.cashExpenseTotal = res.cashExpenseTotal;
+          this.movimientos = res.movimientos;
           this.sessionDate = res.sessionDate;
           this.openedAt = res.openedAt;
           this.openedByName = res.openedByName;
           this.staleSession = res.staleSession;
 
           if (res.isClosed) {
-            // Turno cerrado pero jornada aún no finalizada → mostrar estado cerrado con
-            // botón "Cerrar Jornada (Día Completo)" para admins.
             this.isClosed = true;
             this.closedCashCounted = res.cashCounted;
             this.closedDifference = res.difference;
             this.turnoTab = 'cierre';
-            // Pre-cargar el fondo del próximo turno con el conteo físico de este cierre.
             if (res.cashCounted !== null && this.fondoInicial === '') {
-              this.fondoInicial        = String(res.cashCounted);
+              this.fondoInicial = String(res.cashCounted);
               this.fondoInicialSugerido = true;
             }
             this.isBusinessDayClosed = res.isBusinessDayClosed;
-            // Verificar pendientes automáticamente al cargar la vista de cierre
             if (!res.isBusinessDayClosed) {
               this.cashService.checkPendings().subscribe({
                 next: (data) => {
@@ -402,7 +399,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             }
           } else {
             this.isClosed = false;
-            this.isBusinessDayClosed = res.isBusinessDayClosed; // always false for OPEN sessions (backend guarantees)
+            this.isBusinessDayClosed = res.isBusinessDayClosed;
             this.closedCashCounted = null;
             this.closedDifference = null;
           }
@@ -429,9 +426,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /** Restaura el borrador guardado en el formulario de apertura. */
   applyAperturaDraft(): void {
-    const d = this.draftService.getDraft<{ fondoInicial: string; notasApertura: string }>(
-      this.DRAFT_KEY_APERTURA,
-    );
+    const d = this.draftService.getDraft<{
+      fondoInicial: string;
+      notasApertura: string;
+    }>(this.DRAFT_KEY_APERTURA);
     if (d) {
       this.fondoInicial = d.fondoInicial ?? '';
       this.notasApertura = d.notasApertura ?? '';
@@ -485,9 +483,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.isOpening = false)))
       .subscribe({
         next: () => {
-          this.fondoInicial         = '';
+          this.fondoInicial = '';
           this.fondoInicialSugerido = false;
-          this.notasApertura        = '';
+          this.notasApertura = '';
           this.draftService.clearDraft(this.DRAFT_KEY_APERTURA);
           this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
           this.showAperturaDraftBanner = false;
@@ -496,7 +494,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             `Fondo inicial: $${this.fmt(fondo)}`,
           );
           this.isBusinessDayClosed = false;
-          this.isSessionOpen = null; // muestra loading
+          this.isSessionOpen = null;
           this.loadCurrentSession();
         },
         error: (err) => {
@@ -537,7 +535,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           }
         },
         error: () => {
-          // Si falla la verificación, dejamos pasar igual
           this.turnoTab = 'cierre';
         },
       });
@@ -614,10 +611,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.closedDifference = this.diferencia;
           this.turnoTab = 'cierre';
           this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
-          // Arrastre de fondo: pre-cargar el input del próximo turno con el efectivo
-          // físico contado en este cierre. Solo si el usuario no escribió nada antes.
           if (this.fondoInicial === '') {
-            this.fondoInicial        = String(this.efectivoReal);
+            this.fondoInicial = String(this.efectivoReal);
             this.fondoInicialSugerido = true;
           }
 
@@ -711,7 +706,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           saleTotal: null,
           items: [],
           itemsTotal: 0,
-          totalMonto: mov.monto,   // ya es negativo desde el servicio
+          totalMonto: mov.monto,
           totalCash: mov.amountCash,
           totalTransfer: 0,
           transactions: [mov],
@@ -1005,7 +1000,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             ? 'Efectivo'
             : 'Transferencia';
       const saleBase = group.saleTotal ?? group.itemsTotal;
-      const cambioSale = group.totalMonto > saleBase ? group.totalMonto - saleBase : 0;
+      const cambioSale =
+        group.totalMonto > saleBase ? group.totalMonto - saleBase : 0;
       bodyHtml = `
         <h3>Venta de Productos</h3>
         <p><b>Empleado:</b> ${group.userName}</p>
@@ -1018,7 +1014,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     }
 
     const TICKET_ID = '__ticket-comprobante__';
-    const STYLE_ID  = '__ticket-comprobante-style__';
+    const STYLE_ID = '__ticket-comprobante-style__';
 
     const container = document.createElement('div');
     container.id = TICKET_ID;
@@ -1054,8 +1050,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         #${TICKET_ID} .total  { font-size:16px; font-weight:700; margin-top:10px; }
         #${TICKET_ID} .cambio { font-size:12px; font-weight:700; margin:12px 0 3px; border-bottom:1px solid #ddd; padding-bottom:2px; }
         #${TICKET_ID} .footer { text-align:center; font-size:10px; color:#888; margin-top:14px; }
-        /* TODO: descomentar y ajustar ANCHO y ALTO segun tamano del papel (ej: 80mm 150mm) */
-        /* @page { size: ANCHOmm ALTOmm; margin: 4mm; } */
         @page { margin: 8mm; }
       }
     `;
@@ -1063,10 +1057,14 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     document.head.appendChild(style);
     document.body.appendChild(container);
 
-    window.addEventListener('afterprint', () => {
-      container.remove();
-      style.remove();
-    }, { once: true });
+    window.addEventListener(
+      'afterprint',
+      () => {
+        container.remove();
+        style.remove();
+      },
+      { once: true },
+    );
 
     window.print();
   }
@@ -1422,11 +1420,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               `Total recaudado: <strong>$${totalStr}</strong><br>` +
               `Turnos: ${summary.sessions.length}`,
           });
-          // Ocultar el botón Z y actualizar el texto de estado inmediatamente.
-          // No llamamos a loadCurrentSession() porque el endpoint /current puede
-          // devolver isBusinessDayClosed=false y sobreescribir este valor.
-          // detectChanges() es necesario porque el async/await del Swal previo
-          // saca la ejecución de NgZone y las asignaciones no disparan CD solas.
           this.isBusinessDayClosed = true;
           this.cdr.detectChanges();
         },
@@ -1437,7 +1430,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               'Cerrá el turno activo antes de realizar el Cierre de Jornada.',
             );
           } else if (err.status === 400) {
-            // La jornada ya fue cerrada en el servidor pero el front no lo sabía.
             this.isBusinessDayClosed = true;
             this.cdr.detectChanges();
           } else {

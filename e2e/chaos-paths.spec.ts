@@ -1,16 +1,6 @@
-// chaos-paths.spec.ts  v3 — El Camino del Caos
-// FIXES v3:
-//   - Interceptor usa URL absoluta del backend (localhost:3000/api/v1/products)
-//     para no colisionar con la ruta Angular /app/products (CHAOS-06).
-//   - Tab "Pago" con { exact: true } para evitar strict-mode violation (CHAOS-01/02).
-//   - Asercion de cantidad via badge del header desktop (CHAOS-04/05).
-
 import { test, expect, Page } from '@playwright/test';
 
-// URL base del backend — debe coincidir con environment.apiUrl
 const API = 'http://localhost:3000/api/v1';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function goToPOS(page: Page) {
   await page.goto('/app/pos');
@@ -33,22 +23,18 @@ async function goToCash(page: Page) {
  * Usa { exact: true } para el tab "Pago" y no colisionar con "Ir al Pago · $xx".
  */
 async function addFirstProductAndPay(page: Page): Promise<void> {
-  // 1. Esperar catálogo y clicar primer producto
   const productBtn = page.locator('button').filter({ hasText: /\$/ }).first();
   await productBtn.waitFor({ state: 'visible', timeout: 8000 });
   await productBtn.click();
 
-  // 2. Avanzar al Paso 2 del wizard desktop — tab con texto exacto "Pago"
   const pagoTab = page.getByRole('button', { name: 'Pago', exact: true });
   if (await pagoTab.isVisible({ timeout: 2000 }).catch(() => false)) {
     await pagoTab.click();
   }
 
-  // 3. Esperar input de efectivo (visible solo en Paso 2)
   const efectivoInput = page.locator('#efectivo').first();
   await efectivoInput.waitFor({ state: 'visible', timeout: 5000 });
 
-  // 4. Calcular monto: extraer el primer número del total del carrito
   let totalAmount = '9999';
   const totalText = await page
     .locator('.text-2xl.font-bold, .text-2xl.font-bold.text-primary')
@@ -63,14 +49,10 @@ async function addFirstProductAndPay(page: Page): Promise<void> {
   await efectivoInput.fill(totalAmount);
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUITE 1 · FLUJO DE CAJA ESTRICTO
-// ═════════════════════════════════════════════════════════════════════════════
-
 test.describe('Suite 1 · Flujo de Caja Estricto', () => {
-
-  // CHAOS-01 ─────────────────────────────────────────────────────────────────
-  test('CHAOS-01: cobrar con caja cerrada muestra el modal "Caja Cerrada"', async ({ page }) => {
+  test('CHAOS-01: cobrar con caja cerrada muestra el modal "Caja Cerrada"', async ({
+    page,
+  }) => {
     await page.route(`${API}/sales`, (route) => {
       if (route.request().method() === 'POST') {
         route.fulfill({
@@ -78,7 +60,8 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             errorCode: 'CAJA_CERRADA',
-            message: 'No hay una sesión de caja abierta para el día comercial actual.',
+            message:
+              'No hay una sesión de caja abierta para el día comercial actual.',
           }),
         });
       } else {
@@ -95,14 +78,20 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
 
     const swalPopup = page.locator('.swal2-popup');
     await expect(swalPopup).toBeVisible({ timeout: 5000 });
-    await expect(swalPopup.locator('.swal2-title')).toContainText('Caja Cerrada', {
-      ignoreCase: true,
-    });
-    await expect(swalPopup.locator('.swal2-html-container')).toContainText(/caja|apertura/i);
+    await expect(swalPopup.locator('.swal2-title')).toContainText(
+      'Caja Cerrada',
+      {
+        ignoreCase: true,
+      },
+    );
+    await expect(swalPopup.locator('.swal2-html-container')).toContainText(
+      /caja|apertura/i,
+    );
   });
 
-  // CHAOS-02 ─────────────────────────────────────────────────────────────────
-  test('CHAOS-02: abrir caja con fondo inicial y luego cobrar exitosamente', async ({ page }) => {
+  test('CHAOS-02: abrir caja con fondo inicial y luego cobrar exitosamente', async ({
+    page,
+  }) => {
     await goToCash(page);
 
     const fondoInput = page
@@ -111,11 +100,14 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
 
     if (await fondoInput.isVisible({ timeout: 3000 }).catch(() => false)) {
       await fondoInput.fill('5000');
-      const abrirBtn = page.getByRole('button', { name: /Abrir Jornada|Abrir Caja/i });
+      const abrirBtn = page.getByRole('button', {
+        name: /Abrir Jornada|Abrir Caja/i,
+      });
       await expect(abrirBtn).toBeEnabled();
 
       const openResponse = page.waitForResponse(
-        (res) => res.url().includes('/cash/open') && res.request().method() === 'POST',
+        (res) =>
+          res.url().includes('/cash/open') && res.request().method() === 'POST',
         { timeout: 10000 },
       );
       await abrirBtn.click();
@@ -131,7 +123,8 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
     await expect(confirmBtn).toBeEnabled({ timeout: 4000 });
 
     const saleResponse = page.waitForResponse(
-      (res) => res.url().includes('/sales') && res.request().method() === 'POST',
+      (res) =>
+        res.url().includes('/sales') && res.request().method() === 'POST',
       { timeout: 12000 },
     );
     await confirmBtn.click();
@@ -139,7 +132,6 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
 
     if (saleRes) {
       const status = saleRes.status();
-      // 201 OK | 400 validacion backend | 409 stock agotado | 503 caja cerrada
       expect([201, 400, 409, 503]).toContain(status);
       if (status === 201) {
         await expect(confirmBtn).toBeDisabled({ timeout: 6000 });
@@ -147,8 +139,9 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
     }
   });
 
-  // CHAOS-03 ─────────────────────────────────────────────────────────────────
-  test('CHAOS-03: el dashboard de caja refleja el movimiento recién cobrado', async ({ page }) => {
+  test('CHAOS-03: el dashboard de caja refleja el movimiento recién cobrado', async ({
+    page,
+  }) => {
     await page.route(`${API}/cash/current`, (route) => {
       route.fulfill({
         status: 200,
@@ -189,28 +182,21 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
 
     await goToCash(page);
 
-    // Sesión abierta → pantalla de Apertura NO debe aparecer
     await expect(
       page.getByRole('heading', { name: /Apertura de Caja/i }),
     ).not.toBeVisible({ timeout: 4000 });
 
-    // El total de efectivo esperado ($1.500) debe aparecer en algún lugar del dashboard
-    await expect(page.getByText(/1[.,]500|1500/).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/1[.,]500|1500/).first()).toBeVisible({
+      timeout: 5000,
+    });
 
-    // El concepto del movimiento inyectado debe ser visible.
-    // El cash-register usa divs, no <tr>: buscar por el texto del concepto.
     await expect(
       page.getByText(/Venta POS.*E2E Test|E2E Test/i).first(),
     ).toBeVisible({ timeout: 4000 });
   });
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUITE 2 · HARD COMMIT DE STOCK
-// ═════════════════════════════════════════════════════════════════════════════
-
 test.describe('Suite 2 · Hard Commit de Stock', () => {
-
   /**
    * Inyecta un catálogo con UN producto de stock = 5.
    * FIX v3: intercepta la URL exacta del backend (API/v1/products) para no
@@ -239,63 +225,59 @@ test.describe('Suite 2 · Hard Commit de Stock', () => {
     });
   }
 
-  // CHAOS-04 ─────────────────────────────────────────────────────────────────
   test('CHAOS-04: se pueden agregar hasta 5 unidades de un producto con stock=5', async ({
     page,
   }) => {
     await injectLimitedStockCatalog(page);
     await goToPOS(page);
 
-    const productBtn = page.locator('button').filter({ hasText: /Pelotas|300/i }).first();
+    const productBtn = page
+      .locator('button')
+      .filter({ hasText: /Pelotas|300/i })
+      .first();
     await expect(productBtn).toBeVisible({ timeout: 8000 });
 
-    // 5 clics: todos deben ser aceptados
     for (let i = 0; i < 5; i++) {
       await productBtn.click();
       await page.waitForTimeout(150);
     }
 
-    // FIX v3: usar el badge del header desktop ("5 ítems") para confirmar la cantidad.
-    // El span de qty vive dentro de overflow-y-auto y puede reportar "hidden" en Playwright.
     const itemsBadge = page.locator('text=/5 ítems?/').first();
     await expect(itemsBadge).toBeVisible({ timeout: 3000 });
 
-    // Adicionalmente: la tarjeta debe estar en estado "límite alcanzado"
     await expect(productBtn).toHaveClass(/opacity-50/, { timeout: 2000 });
   });
 
-  // CHAOS-05 ─────────────────────────────────────────────────────────────────
   test('CHAOS-05: la tarjeta queda bloqueada en stock=5 y la cantidad no supera el límite', async ({
     page,
   }) => {
     await injectLimitedStockCatalog(page);
     await goToPOS(page);
 
-    const productBtn = page.locator('button').filter({ hasText: /Pelotas|300/i }).first();
+    const productBtn = page
+      .locator('button')
+      .filter({ hasText: /Pelotas|300/i })
+      .first();
     await expect(productBtn).toBeVisible({ timeout: 8000 });
 
-    // Llenar hasta el límite
     for (let i = 0; i < 5; i++) {
       await productBtn.click();
       await page.waitForTimeout(150);
     }
 
-    // Verificar estado visual de bloqueo en la tarjeta
     await expect(productBtn).toHaveClass(/opacity-50/, { timeout: 2000 });
     await expect(productBtn).toHaveClass(/pointer-events-none/);
     await expect(productBtn).toHaveAttribute('aria-disabled', 'true');
 
-    // Intento de 6.º clic con { force: true } (bypasea pointer-events-none)
-    // El handler Angular addToCart() debe bloquear el incremento y mostrar toast
     await productBtn.click({ force: true });
     await page.waitForTimeout(400);
 
-    // El badge debe seguir mostrando "5 ítems", no "6 ítems"
-    await expect(page.locator('text=/5 ítems?/').first()).toBeVisible({ timeout: 2000 });
+    await expect(page.locator('text=/5 ítems?/').first()).toBeVisible({
+      timeout: 2000,
+    });
     await expect(page.locator('text=/6 ítems?/')).not.toBeVisible();
   });
 
-  // CHAOS-06 ─────────────────────────────────────────────────────────────────
   test('CHAOS-06: navegar a Productos sin pagar NO descuenta stock (late commit)', async ({
     page,
   }) => {
@@ -309,7 +291,10 @@ test.describe('Suite 2 · Hard Commit de Stock', () => {
 
     await goToPOS(page);
 
-    const productBtn = page.locator('button').filter({ hasText: /Pelotas|300/i }).first();
+    const productBtn = page
+      .locator('button')
+      .filter({ hasText: /Pelotas|300/i })
+      .first();
     await expect(productBtn).toBeVisible({ timeout: 8000 });
 
     for (let i = 0; i < 5; i++) {
@@ -317,27 +302,20 @@ test.describe('Suite 2 · Hard Commit de Stock', () => {
       await page.waitForTimeout(150);
     }
 
-    // Abandonar el POS sin pagar
     await page.goto('/app/products');
     await page.waitForLoadState('networkidle');
 
-    // FIX v3: buscar el h3 del componente Productos que rinde
-    // "Gestión de Productos" o "Consulta de Productos"
-    const productsHeading = page.locator('h3').filter({ hasText: /Productos/i }).first();
+    const productsHeading = page
+      .locator('h3')
+      .filter({ hasText: /Productos/i })
+      .first();
     await expect(productsHeading).toBeVisible({ timeout: 8000 });
 
-    // La venta nunca fue enviada al backend
     expect(saleCallCount).toBe(0);
   });
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUITE 3 · DRAG & DROP AGENDA (Reschedule Dialog)
-// ═════════════════════════════════════════════════════════════════════════════
-
 test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
-
-  // CHAOS-07 ─────────────────────────────────────────────────────────────────
   test('CHAOS-07: arrastrar una reserva a otro slot abre el diálogo de confirmación', async ({
     page,
   }) => {
@@ -345,15 +323,24 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
     await page.waitForLoadState('networkidle');
 
     const booking = page
-      .locator('[draggable="true"], [class*="cursor-move"], [class*="booking-card"]')
+      .locator(
+        '[draggable="true"], [class*="cursor-move"], [class*="booking-card"]',
+      )
       .first();
-    const bookingVisible = await booking.isVisible({ timeout: 5000 }).catch(() => false);
-    if (!bookingVisible) { test.skip(); return; }
+    const bookingVisible = await booking
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    if (!bookingVisible) {
+      test.skip();
+      return;
+    }
 
     const bookingBox = await booking.boundingBox();
     if (!bookingBox) return;
 
-    const availableSlot = page.getByRole('button', { name: 'Disponible' }).first();
+    const availableSlot = page
+      .getByRole('button', { name: 'Disponible' })
+      .first();
     const slotBox = await availableSlot.boundingBox();
     if (!slotBox) return;
 
@@ -374,20 +361,30 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
     await expect(dialog).toContainText(/mover|confirmar|turno|horario/i);
   });
 
-  // CHAOS-08 ─────────────────────────────────────────────────────────────────
-  test('CHAOS-08: cancelar el drag-confirm no mueve la reserva', async ({ page }) => {
+  test('CHAOS-08: cancelar el drag-confirm no mueve la reserva', async ({
+    page,
+  }) => {
     await page.goto('/app/schedule');
     await page.waitForLoadState('networkidle');
 
     const booking = page
-      .locator('[draggable="true"], [class*="cursor-move"], [class*="booking-card"]')
+      .locator(
+        '[draggable="true"], [class*="cursor-move"], [class*="booking-card"]',
+      )
       .first();
-    const bookingVisible = await booking.isVisible({ timeout: 5000 }).catch(() => false);
-    if (!bookingVisible) { test.skip(); return; }
+    const bookingVisible = await booking
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    if (!bookingVisible) {
+      test.skip();
+      return;
+    }
 
     const originalText = (await booking.textContent()) ?? '';
     const bookingBox = await booking.boundingBox();
-    const availableSlot = page.getByRole('button', { name: 'Disponible' }).first();
+    const availableSlot = page
+      .getByRole('button', { name: 'Disponible' })
+      .first();
     const slotBox = await availableSlot.boundingBox();
     if (!bookingBox || !slotBox) return;
 
@@ -404,7 +401,9 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
     await page.mouse.up();
 
     const dialog = page.getByRole('dialog');
-    const dialogVisible = await dialog.isVisible({ timeout: 3000 }).catch(() => false);
+    const dialogVisible = await dialog
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
     if (dialogVisible) {
       const cancelBtn = dialog.getByRole('button', { name: /Cancelar|No/i });
       if (await cancelBtn.isVisible()) {
@@ -414,11 +413,16 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
     }
 
     const bookingAfter = page
-      .locator('[draggable="true"], [class*="cursor-move"], [class*="booking-card"]')
+      .locator(
+        '[draggable="true"], [class*="cursor-move"], [class*="booking-card"]',
+      )
       .first();
-    await expect(bookingAfter).toContainText(originalText.trim().substring(0, 10), {
-      timeout: 3000,
-    });
+    await expect(bookingAfter).toContainText(
+      originalText.trim().substring(0, 10),
+      {
+        timeout: 3000,
+      },
+    );
     await expect(page.getByRole('heading', { name: /Agenda/i })).toBeVisible();
   });
 });

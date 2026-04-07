@@ -7,8 +7,18 @@ import { ModalScrollLockDirective } from './modal-scroll-lock.directive';
 import { SessionAlertComponent } from './session-alert/session-alert.component';
 
 @NgModule({
-  declarations: [ToastComponent, CalculatorComponent, ModalScrollLockDirective, SessionAlertComponent],
+  declarations: [
+    ToastComponent,
+    CalculatorComponent,
+    ModalScrollLockDirective,
+    SessionAlertComponent,
+  ],
   imports: [CommonModule],
-  exports: [ToastComponent, CalculatorComponent, ModalScrollLockDirective, SessionAlertComponent],
+  exports: [
+    ToastComponent,
+    CalculatorComponent,
+    ModalScrollLockDirective,
+    SessionAlertComponent,
+  ],
 })
 export class SharedModule {}

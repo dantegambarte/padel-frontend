@@ -37,19 +37,38 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Cierra la calculadora flotante. */
   close(): void {
     this.calcService.close();
   }
 
   @HostListener('window:keydown', ['$event'])
+  /** Maneja los eventos de teclado para operar la calculadora sin usar el ratón. */
   onKey(e: KeyboardEvent): void {
     if (!this.visible) return;
 
     const HANDLED = new Set([
       'Escape',
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-      '.', ',', '+', '-', '*', '/',
-      'Enter', '=', 'Backspace', 'Delete',
+      '0',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '.',
+      ',',
+      '+',
+      '-',
+      '*',
+      '/',
+      'Enter',
+      '=',
+      'Backspace',
+      'Delete',
     ]);
 
     if (!HANDLED.has(e.key)) return;
@@ -58,18 +77,49 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    if (e.key === 'Escape') { this.close(); return; }
-    if (e.key >= '0' && e.key <= '9') { this.appendDigit(e.key); return; }
-    if (e.key === '.' || e.key === ',') { this.appendDot(); return; }
-    if (e.key === '+') { this.setOperator('+'); return; }
-    if (e.key === '-') { this.setOperator('−'); return; }
-    if (e.key === '*') { this.setOperator('×'); return; }
-    if (e.key === '/') { this.setOperator('÷'); return; }
-    if (e.key === 'Enter' || e.key === '=') { this.calculate(); return; }
-    if (e.key === 'Backspace') { this.backspace(); return; }
-    if (e.key === 'Delete') { this.clear(); return; }
+    if (e.key === 'Escape') {
+      this.close();
+      return;
+    }
+    if (e.key >= '0' && e.key <= '9') {
+      this.appendDigit(e.key);
+      return;
+    }
+    if (e.key === '.' || e.key === ',') {
+      this.appendDot();
+      return;
+    }
+    if (e.key === '+') {
+      this.setOperator('+');
+      return;
+    }
+    if (e.key === '-') {
+      this.setOperator('−');
+      return;
+    }
+    if (e.key === '*') {
+      this.setOperator('×');
+      return;
+    }
+    if (e.key === '/') {
+      this.setOperator('÷');
+      return;
+    }
+    if (e.key === 'Enter' || e.key === '=') {
+      this.calculate();
+      return;
+    }
+    if (e.key === 'Backspace') {
+      this.backspace();
+      return;
+    }
+    if (e.key === 'Delete') {
+      this.clear();
+      return;
+    }
   }
 
+  /** Agrega un dígito al número actual respetando el estado de la máquina. */
   appendDigit(d: string): void {
     if (this.justEvaluated) {
       this.currentInput = d;
@@ -88,6 +138,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Agrega el separador decimal si aún no existe en el número actual. */
   appendDot(): void {
     if (this.justEvaluated) {
       this.currentInput = '0.';
@@ -105,10 +156,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Borra el último dígito o cancela el operador pendiente si el input está vacío. */
   backspace(): void {
     if (this.justEvaluated) return;
 
-    // Operador recién ingresado, aún no se escribió el segundo número → deshace el operador.
     if (this.waitingForOperand2) {
       this.currentInput = this.previousInput || '0';
       this.operator = '';
@@ -120,13 +171,10 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
     if (this.currentInput.length > 1) {
       const sliced = this.currentInput.slice(0, -1);
-      // Evitar dejar solo '-' o '.' como estado inválido.
-      this.currentInput = (sliced === '-' || sliced === '.') ? '0' : sliced;
+      this.currentInput = sliced === '-' || sliced === '.' ? '0' : sliced;
       return;
     }
 
-    // Queda un solo dígito y hay operador pendiente → transiciona a espera de operando 2,
-    // para que el siguiente backspace borre el operador (comportamiento calculadora de teléfono).
     if (this.operator) {
       this.currentInput = '0';
       this.waitingForOperand2 = true;
@@ -136,6 +184,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Establece el operador activo y encadena el resultado si había una operación previa pendiente. */
   setOperator(op: string): void {
     if (this.justEvaluated) {
       this.justEvaluated = false;
@@ -161,11 +210,11 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${op}`;
   }
 
+  /** Ejecuta la operación pendiente y muestra el resultado en el display. */
   calculate(): void {
     if (!this.operator || this.waitingForOperand2) return;
 
-    this.expressionHistory =
-      `${this.fmtNumber(this.previousInput)} ${this.operator} ${this.fmtNumber(this.currentInput)} =`;
+    this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${this.operator} ${this.fmtNumber(this.currentInput)} =`;
 
     const result = this.evaluate(
       parseFloat(this.previousInput),
@@ -184,6 +233,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.justEvaluated = true;
   }
 
+  /** Invierte el signo del número actual. */
   toggleSign(): void {
     if (this.currentInput === '0' || this.currentInput === 'Error') return;
     this.currentInput = this.currentInput.startsWith('-')
@@ -191,12 +241,14 @@ export class CalculatorComponent implements OnInit, OnDestroy {
       : '-' + this.currentInput;
   }
 
+  /** Divide el número actual entre 100 para convertirlo a porcentaje. */
   percent(): void {
     const n = parseFloat(this.currentInput);
     if (isNaN(n)) return;
     this.currentInput = String(parseFloat((n / 100).toPrecision(12)));
   }
 
+  /** Reinicia la calculadora al estado inicial (AC). */
   clear(): void {
     this.currentInput = '0';
     this.previousInput = '';
@@ -214,12 +266,19 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     return parts.join(',');
   }
 
+  /** Aplica la operación aritmética a los dos operandos. Devuelve null en caso de división por cero. */
   private evaluate(a: number, b: number, op: string): number | null {
     let result: number;
     switch (op) {
-      case '+': result = a + b; break;
-      case '−': result = a - b; break;
-      case '×': result = a * b; break;
+      case '+':
+        result = a + b;
+        break;
+      case '−':
+        result = a - b;
+        break;
+      case '×':
+        result = a * b;
+        break;
       case '÷':
         if (b === 0) return null;
         result = a / b;
@@ -230,6 +289,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     return parseFloat(result.toPrecision(12));
   }
 
+  /** Limpia el operador y los operandos sin tocar el display (se llama después de calcular). */
   private resetState(): void {
     this.previousInput = '';
     this.operator = '';

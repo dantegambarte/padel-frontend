@@ -9,15 +9,19 @@ export class ThemeService {
 
   constructor() {
     const saved = localStorage.getItem(this.STORAGE_KEY);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)',
+    ).matches;
     const isDark = saved ? saved === 'dark' : prefersDark;
     this.applyTheme(isDark);
   }
 
+  /** Alterna entre tema claro y oscuro. */
   toggle(): void {
     this.applyTheme(!this.isDark$.value);
   }
 
+  /** Aplica el tema al DOM, persiste la preferencia y notifica el BehaviorSubject. */
   private applyTheme(dark: boolean): void {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem(this.STORAGE_KEY, dark ? 'dark' : 'light');

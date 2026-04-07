@@ -22,7 +22,6 @@ import { JwtInterceptor } from './interceptors/jwt.interceptor';
   ],
 })
 export class CoreModule {
-  // Previene importación accidental en feature modules
   constructor(@Optional() @SkipSelf() parentModule: CoreModule) {
     if (parentModule) {
       throw new Error('CoreModule ya fue cargado. Solo importar en AppModule.');

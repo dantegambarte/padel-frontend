@@ -15,7 +15,6 @@ export interface CanComponentDeactivate {
 
 @Injectable({ providedIn: 'root' })
 export class UnsavedChangesGuard implements CanDeactivate<CanComponentDeactivate> {
-
   canDeactivate(
     component: CanComponentDeactivate,
   ): boolean | Observable<boolean> | Promise<boolean> {
@@ -27,11 +26,12 @@ export class UnsavedChangesGuard implements CanDeactivate<CanComponentDeactivate
 
     if (result instanceof Observable) {
       return result.pipe(
-        switchMap((canLeave) => (canLeave ? of(true) : from(this.showConfirmation()))),
+        switchMap((canLeave) =>
+          canLeave ? of(true) : from(this.showConfirmation()),
+        ),
       );
     }
 
-    // Promise
     return (result as Promise<boolean>).then((canLeave) =>
       canLeave ? true : this.showConfirmation(),
     );

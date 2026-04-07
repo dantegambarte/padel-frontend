@@ -15,18 +15,21 @@ export class HolidayService {
 
   isHoliday$ = new BehaviorSubject<boolean>(this.readFromStorage());
 
+  /** True si el modo feriado está actualmente activo. */
   get isHoliday(): boolean {
     return this.isHoliday$.value;
   }
 
+  /** Alterna el estado del modo feriado y lo persiste en localStorage. */
   toggle(): void {
     const next = !this.isHoliday$.value;
     try {
       localStorage.setItem(this.STORAGE_KEY, next ? 'true' : 'false');
-    } catch { /* storage not available */ }
+    } catch {}
     this.isHoliday$.next(next);
   }
 
+  /** Lee el estado del modo feriado desde localStorage. */
   private readFromStorage(): boolean {
     try {
       return localStorage.getItem(this.STORAGE_KEY) === 'true';

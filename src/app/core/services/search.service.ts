@@ -24,6 +24,7 @@ export class SearchService {
 
   constructor(private http: HttpClient) {}
 
+  /** Busca productos, reservas y ventas que coincidan con la cadena `q`. */
   search(q: string): Observable<SearchResponse> {
     const params = new HttpParams().set('q', q.trim());
     return this.http.get<SearchResponse>(this.url, { params });

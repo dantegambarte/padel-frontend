@@ -1,12 +1,17 @@
 <div class="p-4 md:p-6 space-y-4">
-
-  <!-- Encabezado -->
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div
+    class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+  >
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Egresos</h1>
       <p class="text-sm text-muted-foreground">
-        <ng-container *ngIf="isAdmin">Historial completo de gastos · podés filtrar por período.</ng-container>
-        <ng-container *ngIf="!isAdmin">Gastos registrados en el turno de hoy.</ng-container>
+        <ng-container *ngIf="isAdmin"
+          >Historial completo de gastos · podés filtrar por
+          período.</ng-container
+        >
+        <ng-container *ngIf="!isAdmin"
+          >Gastos registrados en el turno de hoy.</ng-container
+        >
       </p>
     </div>
     <button
@@ -14,15 +19,26 @@
       (click)="openCreateForm()"
       class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
     >
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12h14"/><path d="M12 5v14"/>
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
       </svg>
       Nuevo Egreso
     </button>
   </div>
 
-  <!-- Filtros de fecha (solo admin) -->
-  <div *ngIf="isAdmin" class="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+  <div
+    *ngIf="isAdmin"
+    class="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 px-4 py-3"
+  >
     <div class="flex flex-col gap-1">
       <label class="text-xs font-medium text-muted-foreground">Desde</label>
       <input
@@ -50,49 +66,87 @@
     </button>
   </div>
 
-  <!-- Error -->
-  <div *ngIf="error" class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+  <div
+    *ngIf="error"
+    class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+  >
     {{ error }}
   </div>
 
-  <!-- Skeleton de carga -->
   <div *ngIf="loading" class="space-y-2">
-    <div *ngFor="let _ of [1,2,3,4]" class="h-12 rounded-md bg-muted animate-pulse"></div>
+    <div
+      *ngFor="let _ of [1, 2, 3, 4]"
+      class="h-12 rounded-md bg-muted animate-pulse"
+    ></div>
   </div>
 
-  <!-- Tabla (desktop) / Cards (mobile) -->
   <ng-container *ngIf="!loading && !error">
-
-    <!-- Sin datos -->
     <div
       *ngIf="expenses.length === 0"
       class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center"
     >
-      <svg class="h-10 w-10 text-muted-foreground/50 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="2" y1="2" x2="22" y2="22"/>
-        <path d="M10.29 10.29A2 2 0 0 0 10 11c0 1.1.9 2 2 2 .26 0 .51-.05.74-.14"/>
-        <path d="M14 9a2 2 0 0 0-2-2"/>
-        <path d="M8 8H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 1.83-1.2"/>
-        <path d="M20 12V8h-4"/><path d="M20 8l-4-4"/>
+      <svg
+        class="h-10 w-10 text-muted-foreground/50 mb-3"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="2" y1="2" x2="22" y2="22" />
+        <path
+          d="M10.29 10.29A2 2 0 0 0 10 11c0 1.1.9 2 2 2 .26 0 .51-.05.74-.14"
+        />
+        <path d="M14 9a2 2 0 0 0-2-2" />
+        <path d="M8 8H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 1.83-1.2" />
+        <path d="M20 12V8h-4" />
+        <path d="M20 8l-4-4" />
       </svg>
-      <p class="font-medium text-muted-foreground">No hay egresos registrados</p>
-      <p class="text-sm text-muted-foreground/70 mt-1">Haz clic en "Nuevo Egreso" para registrar el primero.</p>
+      <p class="font-medium text-muted-foreground">
+        No hay egresos registrados
+      </p>
+      <p class="text-sm text-muted-foreground/70 mt-1">
+        Haz clic en "Nuevo Egreso" para registrar el primero.
+      </p>
     </div>
 
-    <!-- Tabla desktop -->
-    <div *ngIf="expenses.length > 0" class="hidden md:block rounded-lg border overflow-hidden">
+    <div
+      *ngIf="expenses.length > 0"
+      class="hidden md:block rounded-lg border overflow-hidden"
+    >
       <table class="w-full text-sm">
         <thead class="bg-muted/50">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Fecha</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Descripción</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Categoría</th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">Método</th>
-            <!-- Columna Responsable: solo admin -->
-            <th *ngIf="isAdmin" class="px-4 py-3 text-left font-medium text-muted-foreground">Responsable</th>
-            <th class="px-4 py-3 text-right font-medium text-muted-foreground">Monto</th>
-            <!-- Acciones: solo admin -->
-            <th *ngIf="isAdmin" class="px-4 py-3 text-center font-medium text-muted-foreground">Acciones</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Fecha
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Descripción
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Categoría
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Método
+            </th>
+
+            <th
+              *ngIf="isAdmin"
+              class="px-4 py-3 text-left font-medium text-muted-foreground"
+            >
+              Responsable
+            </th>
+            <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+              Monto
+            </th>
+
+            <th
+              *ngIf="isAdmin"
+              class="px-4 py-3 text-center font-medium text-muted-foreground"
+            >
+              Acciones
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border">
@@ -100,46 +154,100 @@
             *ngFor="let expense of expenses"
             class="hover:bg-muted/30 transition-colors"
           >
-            <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">{{ expense.date }}</td>
-            <td class="px-4 py-3 max-w-[200px] truncate" [title]="expense.description">{{ expense.description }}</td>
+            <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
+              {{ expense.date }}
+            </td>
+            <td
+              class="px-4 py-3 max-w-[200px] truncate"
+              [title]="expense.description"
+            >
+              {{ expense.description }}
+            </td>
             <td class="px-4 py-3">
-              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    [ngClass]="categoryClass(expense.category)">
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [ngClass]="categoryClass(expense.category)"
+              >
                 {{ expense.category }}
               </span>
             </td>
-            <td class="px-4 py-3 text-muted-foreground">{{ expense.paymentMethod }}</td>
-            <!-- Celda Responsable -->
+            <td class="px-4 py-3 text-muted-foreground">
+              {{ expense.paymentMethod }}
+            </td>
+
             <td *ngIf="isAdmin" class="px-4 py-3">
               <span
                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                [ngClass]="isCreatedByAdmin(expense)
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-slate-100 text-slate-600'"
+                [ngClass]="
+                  isCreatedByAdmin(expense)
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-slate-100 text-slate-600'
+                "
               >
-                <svg class="mr-1 h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                <svg
+                  class="mr-1 h-3 w-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
                 </svg>
                 {{ creatorName(expense) }}
               </span>
             </td>
-            <td class="px-4 py-3 text-right font-medium tabular-nums">{{ formatCurrency(expense.amount) }}</td>
-            <!-- Botones de acción: solo admin -->
+            <td class="px-4 py-3 text-right font-medium tabular-nums">
+              {{ formatCurrency(expense.amount) }}
+            </td>
+
             <td *ngIf="isAdmin" class="px-4 py-3">
               <div class="flex items-center justify-center gap-1">
-                <button type="button" (click)="openEditForm(expense)" title="Editar"
-                  class="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                <button
+                  type="button"
+                  (click)="openEditForm(expense)"
+                  title="Editar"
+                  class="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                    />
+                    <path
+                      d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                    />
                   </svg>
                 </button>
-                <button type="button" (click)="deleteExpense(expense.id)" title="Eliminar"
-                  class="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                    <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                <button
+                  type="button"
+                  (click)="deleteExpense(expense.id)"
+                  title="Eliminar"
+                  class="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
                   </svg>
                 </button>
               </div>
@@ -148,15 +256,21 @@
         </tbody>
         <tfoot class="bg-muted/50 border-t border-border">
           <tr>
-            <td [attr.colspan]="isAdmin ? 5 : 4" class="px-4 py-3 text-sm font-semibold text-right text-muted-foreground">Total:</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums">{{ formatCurrency(totalAmount) }}</td>
+            <td
+              [attr.colspan]="isAdmin ? 5 : 4"
+              class="px-4 py-3 text-sm font-semibold text-right text-muted-foreground"
+            >
+              Total:
+            </td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums">
+              {{ formatCurrency(totalAmount) }}
+            </td>
             <td *ngIf="isAdmin"></td>
           </tr>
         </tfoot>
       </table>
     </div>
 
-    <!-- Cards mobile -->
     <div *ngIf="expenses.length > 0" class="md:hidden space-y-3">
       <div
         *ngFor="let expense of expenses"
@@ -165,54 +279,95 @@
         <div class="flex items-start justify-between gap-2">
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ expense.description }}</p>
-            <p class="text-xs text-muted-foreground">{{ expense.date }} · {{ expense.paymentMethod }}</p>
-            <!-- Responsable en mobile (solo admin) -->
+            <p class="text-xs text-muted-foreground">
+              {{ expense.date }} · {{ expense.paymentMethod }}
+            </p>
+
             <p *ngIf="isAdmin" class="mt-1">
-              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                [ngClass]="isCreatedByAdmin(expense) ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'">
+              <span
+                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                [ngClass]="
+                  isCreatedByAdmin(expense)
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-slate-100 text-slate-600'
+                "
+              >
                 {{ creatorName(expense) }}
               </span>
             </p>
           </div>
-          <p class="font-bold text-base tabular-nums whitespace-nowrap">{{ formatCurrency(expense.amount) }}</p>
+          <p class="font-bold text-base tabular-nums whitespace-nowrap">
+            {{ formatCurrency(expense.amount) }}
+          </p>
         </div>
         <div class="flex items-center justify-between">
-          <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                [ngClass]="categoryClass(expense.category)">
+          <span
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+            [ngClass]="categoryClass(expense.category)"
+          >
             {{ expense.category }}
           </span>
-          <!-- Botones solo admin -->
+
           <div *ngIf="isAdmin" class="flex gap-1">
-            <button type="button" (click)="openEditForm(expense)"
-              class="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            <button
+              type="button"
+              (click)="openEditForm(expense)"
+              class="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                />
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                />
               </svg>
             </button>
-            <button type="button" (click)="deleteExpense(expense.id)"
-              class="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            <button
+              type="button"
+              (click)="deleteExpense(expense.id)"
+              class="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4h6v2" />
               </svg>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Total mobile -->
-      <div class="rounded-lg border bg-muted/50 px-4 py-3 flex justify-between items-center">
+      <div
+        class="rounded-lg border bg-muted/50 px-4 py-3 flex justify-between items-center"
+      >
         <span class="text-sm font-semibold text-muted-foreground">Total</span>
-        <span class="font-bold tabular-nums">{{ formatCurrency(totalAmount) }}</span>
+        <span class="font-bold tabular-nums">{{
+          formatCurrency(totalAmount)
+        }}</span>
       </div>
     </div>
-
   </ng-container>
 </div>
 
-<!-- Modal del formulario -->
 <app-expense-form
   *ngIf="showForm"
   [expense]="selectedExpense"

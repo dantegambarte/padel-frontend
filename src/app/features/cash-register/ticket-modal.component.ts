@@ -35,6 +35,7 @@ export class TicketModalComponent implements OnChanges {
     }
   }
 
+  /** Solicita el detalle de la venta al servicio y lo almacena para renderizar el ticket. */
   private fetchSale(id: string): void {
     this.isLoading = true;
     this.loadError = '';
@@ -45,14 +46,17 @@ export class TicketModalComponent implements OnChanges {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (s) => (this.sale = s),
-        error: () => (this.loadError = 'No se pudo cargar el detalle de la venta.'),
+        error: () =>
+          (this.loadError = 'No se pudo cargar el detalle de la venta.'),
       });
   }
 
+  /** Dispara la impresión del ticket en la misma pestaña. */
   print(): void {
     window.print();
   }
 
+  /** Emite el evento de cierre para que el componente padre oculte el modal. */
   close(): void {
     this.closeModal.emit();
   }

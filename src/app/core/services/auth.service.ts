@@ -1,13 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  Observable,
-  tap,
-  catchError,
-  throwError,
-} from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 
 import { AuthResponse, LoginCredentials, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
@@ -136,21 +130,13 @@ export class AuthService {
    * Esta operación es idempotente: llamarla varias veces es seguro.
    */
   logout(): void {
-    // ── Tokens y perfil ──────────────────────────────────────────────────────
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
-    // ── Estado persistido de otras features ──────────────────────────────────
-    // Notificaciones: pueden contener alertas de turnos retrasados del cajero
-    // anterior que no son relevantes para el próximo usuario en este dispositivo.
     localStorage.removeItem(NOTIFICATIONS_KEY);
 
-    // ── Memoria reactiva en el BehaviorSubject ───────────────────────────────
     this.currentUserSubject.next(null);
 
-    // ── Cachés en memoria ────────────────────────────────────────────────────
-    // Evita que datos de la sesión anterior sean servidos a un usuario diferente
-    // antes de que cada caché se invalide sola por mutación.
     this.cashService.clearCurrentCache();
     this.configService.clearCache();
     this.courtsService.clearCache();
@@ -184,10 +170,13 @@ export class AuthService {
     newPassword: string,
   ): Observable<{ success: boolean; message: string }> {
     return this.http
-      .patch<{ success: boolean; message: string }>(`${this.apiUrl}/me/password`, {
-        currentPassword,
-        newPassword,
-      })
+      .patch<{ success: boolean; message: string }>(
+        `${this.apiUrl}/me/password`,
+        {
+          currentPassword,
+          newPassword,
+        },
+      )
       .pipe(
         tap(() => {
           const user = this.currentUserSubject.value;
@@ -224,9 +213,6 @@ export class AuthService {
       const raw = localStorage.getItem(USER_KEY);
       if (!raw) return null;
 
-      // Verificar expiración del token ANTES de restaurar el estado.
-      // Evita el bug "vista muerta": la sesión persiste en storage pero
-      // el token expiró → el guard pasaría, el componente carga sin datos.
       if (this.isTokenExpired()) {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(REFRESH_KEY);

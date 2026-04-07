@@ -9,6 +9,12 @@ import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [SettingsComponent],
-  imports: [CommonModule, FormsModule, RouterModule, SettingsRoutingModule, SharedModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SettingsRoutingModule,
+    SharedModule,
+  ],
 })
 export class SettingsModule {}

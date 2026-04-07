@@ -11,7 +11,6 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-      // ── Fase 1–9 (lazy-loaded) ───────────────────────────────────────────
       {
         path: 'dashboard',
         loadChildren: () =>
@@ -85,7 +84,6 @@ const routes: Routes = [
         data: { title: 'Mi Cuenta' },
       },
 
-      // ── Egresos — Admin y Empleados (el backend filtra por rol) ─────────────
       {
         path: 'expenses',
         loadChildren: () =>
@@ -93,16 +91,16 @@ const routes: Routes = [
         data: { title: 'Egresos' },
       },
 
-      // ── Stock Bajo — Solo Administrador ───────────────────────────────
       {
         path: 'inventory',
         loadChildren: () =>
-          import('../inventory/inventory.module').then((m) => m.InventoryModule),
+          import('../inventory/inventory.module').then(
+            (m) => m.InventoryModule,
+          ),
         canActivate: [AdminGuard],
         data: { title: 'Stock Bajo' },
       },
 
-      // ── Franjas Horarias de Precios — Solo Administrador ─────────────────
       {
         path: 'pricing-shifts',
         loadChildren: () =>

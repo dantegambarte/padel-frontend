@@ -32,11 +32,9 @@ export class AccountComponent implements OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
   ) {
-    // Mostrar el modal al cargar por primera vez si el cambio es obligatorio
     if (this.isForced) {
       this.showForcedModal = true;
     }
-    // Re-mostrar el modal cada vez que el usuario intenta navegar a otra ruta
     this.navSub = this.router.events
       .pipe(filter((e) => e instanceof NavigationStart))
       .subscribe((e) => {
@@ -51,6 +49,7 @@ export class AccountComponent implements OnDestroy {
     this.navSub?.unsubscribe();
   }
 
+  /** Usuario autenticado actualmente. */
   get currentUser(): User | null {
     return this.authService.currentUser;
   }
@@ -58,14 +57,16 @@ export class AccountComponent implements OnDestroy {
   /** Iniciales del nombre completo (máx. 2 letras). */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
-    return name
-      .trim()
-      .split(/\s+/)
-      .filter((n) => n.length > 0)
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || '?';
+    return (
+      name
+        .trim()
+        .split(/\s+/)
+        .filter((n) => n.length > 0)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || '?'
+    );
   }
 
   /** `true` cuando el admin restableció la contraseña y el usuario debe cambiarla. */
@@ -83,23 +84,26 @@ export class AccountComponent implements OnDestroy {
 
   /** `true` cuando hay contenido en confirmación pero no coincide todavía. */
   get confirmMismatch(): boolean {
-    return this.form.confirmPassword.length > 0 && this.form.newPassword !== this.form.confirmPassword;
+    return (
+      this.form.confirmPassword.length > 0 &&
+      this.form.newPassword !== this.form.confirmPassword
+    );
   }
 
   /** El formulario está listo para enviarse. */
   get canSubmit(): boolean {
     return (
-      !!this.form.currentPassword &&
-      this.passwordsMatch &&
-      !this.isSubmitting
+      !!this.form.currentPassword && this.passwordsMatch && !this.isSubmitting
     );
   }
 
   @HostListener('document:keydown.escape')
+  /** Navega al dashboard al presionar Escape (solo si el cambio de contraseña no es forzado). */
   onEscape(): void {
     if (!this.isForced) this.router.navigate(['/app/dashboard']);
   }
 
+  /** Valida y envía el formulario de cambio de contraseña. */
   submitChange(): void {
     this.formError = '';
     this.showSuccess = false;
@@ -128,23 +132,29 @@ export class AccountComponent implements OnDestroy {
       .subscribe({
         next: () => {
           this.isSubmitting = false;
-          this.form = { currentPassword: '', newPassword: '', confirmPassword: '' };
+          this.form = {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+          };
           if (wasForced) {
-            // Forzado: cerrar sesión para que vuelva a loguearse con la nueva contraseña
             this.toast.success(
               'Contraseña actualizada',
               'Iniciá sesión con tu nueva contraseña.',
             );
             this.authService.logout();
           } else {
-            // Voluntario: solo confirmar en pantalla
-            this.toast.success('Contraseña actualizada', 'Tu nueva contraseña ya está activa.');
+            this.toast.success(
+              'Contraseña actualizada',
+              'Tu nueva contraseña ya está activa.',
+            );
             this.showSuccess = true;
           }
         },
         error: (err) => {
           this.isSubmitting = false;
-          const msg = err?.error?.message ?? 'No se pudo actualizar la contraseña.';
+          const msg =
+            err?.error?.message ?? 'No se pudo actualizar la contraseña.';
           this.formError = Array.isArray(msg) ? msg.join(', ') : msg;
         },
       });

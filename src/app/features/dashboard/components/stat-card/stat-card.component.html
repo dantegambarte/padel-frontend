@@ -1,18 +1,11 @@
-<!--
-  StatCard — traducción 1:1 de stat-card.tsx
-  Estructura: CardHeader (title + icon) + CardContent (value + trend)
--->
 <div
   class="rounded-lg border border-border bg-card text-card-foreground shadow-md transition-shadow hover:shadow-lg h-full flex flex-col justify-between"
   [ngClass]="extraClass"
 >
-  <!-- CardHeader: flex-row, icon a la derecha -->
   <div class="flex flex-row items-center justify-between p-6 pb-2">
     <h4 class="text-sm font-medium text-muted-foreground">{{ title }}</h4>
 
-    <!-- Icono — *ngSwitch sobre el string de tipo -->
     <ng-container [ngSwitch]="icon">
-      <!-- dollar-sign -->
       <svg
         *ngSwitchCase="'dollar-sign'"
         class="h-5 w-5 text-muted-foreground"
@@ -27,7 +20,6 @@
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
 
-      <!-- trending-up -->
       <svg
         *ngSwitchCase="'trending-up'"
         class="h-5 w-5 text-muted-foreground"
@@ -42,7 +34,6 @@
         <polyline points="17 6 23 6 23 12" />
       </svg>
 
-      <!-- calendar -->
       <svg
         *ngSwitchCase="'calendar'"
         class="h-5 w-5 text-muted-foreground"
@@ -59,7 +50,6 @@
         <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
 
-      <!-- users -->
       <svg
         *ngSwitchCase="'users'"
         class="h-5 w-5 text-muted-foreground"
@@ -76,7 +66,6 @@
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
 
-      <!-- clock -->
       <svg
         *ngSwitchCase="'clock'"
         class="h-5 w-5 text-muted-foreground"
@@ -91,7 +80,6 @@
         <polyline points="12 6 12 12 16 14" />
       </svg>
 
-      <!-- alert-triangle -->
       <svg
         *ngSwitchCase="'alert-triangle'"
         class="h-5 w-5 text-muted-foreground"
@@ -109,7 +97,6 @@
         <line x1="12" y1="17" x2="12.01" y2="17" />
       </svg>
 
-      <!-- shopping-cart -->
       <svg
         *ngSwitchCase="'shopping-cart'"
         class="h-5 w-5 text-muted-foreground"
@@ -129,7 +116,6 @@
     </ng-container>
   </div>
 
-  <!-- CardContent: valor + trend opcional -->
   <div class="px-6 pb-6">
     <div class="text-2xl font-bold text-card-foreground">{{ value }}</div>
     <p

@@ -65,6 +65,7 @@ export class FixedBookingsService {
     return this.fixedBookingsCache$;
   }
 
+  /** Obtiene un turno fijo por su ID (sin caché). */
   findOne(id: string): Observable<FixedBooking> {
     return this.http.get<FixedBooking>(`${this.url}/${id}`);
   }
@@ -74,34 +75,38 @@ export class FixedBookingsService {
     this.fixedBookingsCache$ = null;
   }
 
+  /** Crea un nuevo turno fijo e invalida la caché. */
   create(dto: CreateFixedBookingDto): Observable<FixedBooking> {
-    return this.http.post<FixedBooking>(this.url, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<FixedBooking>(this.url, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Actualiza un turno fijo e invalida la caché. */
   update(id: string, dto: UpdateFixedBookingDto): Observable<FixedBooking> {
-    return this.http.patch<FixedBooking>(`${this.url}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<FixedBooking>(`${this.url}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Desactiva un turno fijo (soft-delete) e invalida la caché. */
   deactivate(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.url}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Elimina el turno fijo y todas sus ocurrencias futuras; invalida la caché. */
   deleteFixedBookingCascade(id: string): Observable<{ deleted: number }> {
-    return this.http.delete<{ deleted: number }>(`${this.url}/${id}/cascade`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<{ deleted: number }>(`${this.url}/${id}/cascade`)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /** Genera las próximas ocurrencias de un turno fijo e invalida la caché. */
   generateNext(id: string): Observable<{ generated: number }> {
-    return this.http.post<{ generated: number }>(`${this.url}/${id}/generate`, {}).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<{ generated: number }>(`${this.url}/${id}/generate`, {})
+      .pipe(tap(() => this.clearCache()));
   }
 }

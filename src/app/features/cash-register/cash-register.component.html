@@ -1,64 +1,106 @@
-<!-- ── Estado: Cargando ────────────────────────────────────────────────────── -->
-<div *ngIf="isSessionOpen === null" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-  <svg class="h-10 w-10 animate-spin text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+<div
+  *ngIf="isSessionOpen === null"
+  class="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+>
+  <svg
+    class="h-10 w-10 animate-spin text-accent"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
   <p class="text-sm text-muted-foreground">Consultando estado de caja...</p>
 </div>
 
-<!-- ── Estado: Sin sesión activa → Pantalla de Apertura ───────────────────── -->
-<div *ngIf="isSessionOpen === false && activeTab === 'turno'" class="flex flex-col items-center justify-center min-h-[60vh] px-4">
-  <div class="w-full max-w-md rounded-2xl border-2 border-accent/30 bg-card shadow-xl">
-
-    <!-- Header con ícono -->
+<div
+  *ngIf="isSessionOpen === false && activeTab === 'turno'"
+  class="flex flex-col items-center justify-center min-h-[60vh] px-4"
+>
+  <div
+    class="w-full max-w-md rounded-2xl border-2 border-accent/30 bg-card shadow-xl"
+  >
     <div class="p-8 text-center border-b border-border">
-      <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 ring-4 ring-accent/20 text-accent">
-        <!-- Ícono caja registradora -->
-        <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-          <line x1="7" y1="12" x2="7" y2="12.01"/>
-          <line x1="11" y1="12" x2="11" y2="12.01"/>
-          <line x1="15" y1="12" x2="15" y2="12.01"/>
+      <div
+        class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 ring-4 ring-accent/20 text-accent"
+      >
+        <svg
+          class="h-10 w-10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          <line x1="7" y1="12" x2="7" y2="12.01" />
+          <line x1="11" y1="12" x2="11" y2="12.01" />
+          <line x1="15" y1="12" x2="15" y2="12.01" />
         </svg>
       </div>
-      <h2 class="text-2xl font-bold text-card-foreground tracking-tight">Caja Cerrada</h2>
+      <h2 class="text-2xl font-bold text-card-foreground tracking-tight">
+        Caja Cerrada
+      </h2>
       <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-        Debes iniciar tu jornada para poder<br>registrar ventas y cobros.
+        Debes iniciar tu jornada para poder<br />registrar ventas y cobros.
       </p>
     </div>
 
-    <!-- Banner: Borrador recuperable -->
-    <div *ngIf="showAperturaDraftBanner"
-         class="mx-6 mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+    <div
+      *ngIf="showAperturaDraftBanner"
+      class="mx-6 mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm"
+    >
       <span class="flex items-center gap-2 text-amber-800 font-medium">
-        <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        <svg
+          class="h-4 w-4 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
         </svg>
         Borrador sin guardar encontrado
       </span>
       <div class="flex gap-2 shrink-0">
-        <button type="button" (click)="applyAperturaDraft()"
-          class="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors">
+        <button
+          type="button"
+          (click)="applyAperturaDraft()"
+          class="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+        >
           Recuperar
         </button>
-        <button type="button" (click)="dismissAperturaDraft()"
-          class="rounded-md border border-amber-300 px-3 py-1 text-xs text-amber-700 hover:bg-amber-100 transition-colors">
+        <button
+          type="button"
+          (click)="dismissAperturaDraft()"
+          class="rounded-md border border-amber-300 px-3 py-1 text-xs text-amber-700 hover:bg-amber-100 transition-colors"
+        >
           Descartar
         </button>
       </div>
     </div>
 
-    <!-- Formulario -->
     <div class="space-y-5 p-8">
-
-      <!-- Fondo de caja -->
       <div class="space-y-2">
-        <label class="text-sm font-semibold leading-none text-card-foreground" for="fondo-inicial">
-          Fondo de Caja <span class="text-muted-foreground font-normal">(Cambio Inicial)</span>
+        <label
+          class="text-sm font-semibold leading-none text-card-foreground"
+          for="fondo-inicial"
+        >
+          Fondo de Caja
+          <span class="text-muted-foreground font-normal"
+            >(Cambio Inicial)</span
+          >
         </label>
         <div class="relative">
-          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-lg">$</span>
+          <span
+            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-lg"
+            >$</span
+          >
           <input
             id="fondo-inicial"
             type="number"
@@ -71,22 +113,40 @@
             class="flex h-12 w-full rounded-lg border-2 border-input bg-background pl-8 pr-3 py-2 text-xl font-bold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
-        <p *ngIf="fondoInicialSugerido; else fondoHint1" class="text-xs text-amber-700 flex items-center gap-1">
-          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+        <p
+          *ngIf="fondoInicialSugerido; else fondoHint1"
+          class="text-xs text-amber-700 flex items-center gap-1"
+        >
+          <svg
+            class="h-3.5 w-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
           </svg>
-          Arrastrado del último cierre. Modificalo si retiraste dinero del cajón.
+          Arrastrado del último cierre. Modificalo si retiraste dinero del
+          cajón.
         </p>
         <ng-template #fondoHint1>
-          <p class="text-xs text-muted-foreground">Billetes y monedas para dar vuelto. No se suma a los ingresos del día.</p>
+          <p class="text-xs text-muted-foreground">
+            Billetes y monedas para dar vuelto. No se suma a los ingresos del
+            día.
+          </p>
         </ng-template>
       </div>
 
-      <!-- Notas opcionales -->
       <div class="space-y-2">
-        <label class="text-sm font-semibold leading-none text-card-foreground" for="notas-apertura">
-          Observaciones <span class="text-muted-foreground font-normal">(opcional)</span>
+        <label
+          class="text-sm font-semibold leading-none text-card-foreground"
+          for="notas-apertura"
+        >
+          Observaciones
+          <span class="text-muted-foreground font-normal">(opcional)</span>
         </label>
         <input
           id="notas-apertura"
@@ -99,56 +159,101 @@
         />
       </div>
 
-      <!-- Banner: Jornada comercial que se va a abrir -->
-      <div class="rounded-md bg-blue-50 p-3 text-center text-sm text-blue-800 ring-1 ring-blue-200">
+      <div
+        class="rounded-md bg-blue-50 p-3 text-center text-sm text-blue-800 ring-1 ring-blue-200"
+      >
         <span class="flex items-center justify-center gap-1.5">
-          <svg class="h-4 w-4 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            class="h-4 w-4 flex-shrink-0 text-blue-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           Vas a abrir un turno para la jornada comercial del:
         </span>
-        <strong class="mt-0.5 block capitalize text-blue-900">{{ logicalCommercialDateLabel }}</strong>
-        <span *ngIf="isOvernightWindow && !isBusinessDayClosed" class="mt-1 block text-xs text-blue-600">
-          (Son las {{ currentTimeLabel }} hs — antes de las 03:00 corresponde al día anterior)
+        <strong class="mt-0.5 block capitalize text-blue-900">{{
+          logicalCommercialDateLabel
+        }}</strong>
+        <span
+          *ngIf="isOvernightWindow && !isBusinessDayClosed"
+          class="mt-1 block text-xs text-blue-600"
+        >
+          (Son las {{ currentTimeLabel }} hs — antes de las 03:00 corresponde al
+          día anterior)
         </span>
-        <span *ngIf="isBusinessDayClosed" class="mt-1.5 flex items-center justify-center gap-1 text-xs font-semibold text-amber-700">
-          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        <span
+          *ngIf="isBusinessDayClosed"
+          class="mt-1.5 flex items-center justify-center gap-1 text-xs font-semibold text-amber-700"
+        >
+          <svg
+            class="h-3.5 w-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+            />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          La jornada comercial de hoy ya fue cerrada. El nuevo turno iniciará la jornada del día siguiente.
+          La jornada comercial de hoy ya fue cerrada. El nuevo turno iniciará la
+          jornada del día siguiente.
         </span>
       </div>
 
-      <!-- Botón Abrir Jornada -->
       <button
         type="button"
         (click)="abrirJornada()"
         [disabled]="isOpening"
         class="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <svg *ngIf="!isOpening" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
+        <svg
+          *ngIf="!isOpening"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
         </svg>
-        <svg *ngIf="isOpening" class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        <svg
+          *ngIf="isOpening"
+          class="h-5 w-5 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-        <ng-container *ngIf="isOpening; else labelAbrir">Abriendo...</ng-container>
+        <ng-container *ngIf="isOpening; else labelAbrir"
+          >Abriendo...</ng-container
+        >
         <ng-template #labelAbrir>
           <span class="sm:hidden">Abrir Turno</span>
           <span class="hidden sm:inline">Abrir Turno de Caja</span>
         </ng-template>
       </button>
-
     </div>
   </div>
 </div>
 
-<!-- ── Navegación por pestañas (solo visible con sesión abierta o para admins) ── -->
 <div *ngIf="isSessionOpen !== null" class="mb-4 border-b border-border">
   <nav class="flex gap-1 -mb-px" aria-label="Secciones de caja">
     <button
@@ -160,9 +265,17 @@
       [class.text-muted-foreground]="activeTab !== 'turno'"
       class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
     >
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2"/>
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
       </svg>
       Mi Turno
     </button>
@@ -176,35 +289,50 @@
       [class.text-muted-foreground]="activeTab !== 'historial'"
       class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
     >
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
       Historial Diario
     </button>
   </nav>
 </div>
 
-<!-- ── Estado: Sesión activa → Dashboard ──────────────────────────────────── -->
 <div *ngIf="isSessionOpen === true && activeTab === 'turno'" class="space-y-6">
-
-  <!-- ── Alerta: Caja de un día anterior (Stale Session) ───────────────────── -->
   <div
     *ngIf="staleSession"
-    class="flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 text-orange-900
-           dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-200"
+    class="flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 text-orange-900 dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-200"
     role="alert"
   >
-    <svg class="mt-0.5 h-5 w-5 shrink-0 text-orange-500 dark:text-orange-400"
-         viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    <svg
+      class="mt-0.5 h-5 w-5 shrink-0 text-orange-500 dark:text-orange-400"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path
+        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+      />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
     <div class="space-y-1">
-      <p class="text-sm font-semibold leading-tight">Caja de un día anterior sin cerrar</p>
+      <p class="text-sm font-semibold leading-tight">
+        Caja de un día anterior sin cerrar
+      </p>
       <p class="text-xs leading-relaxed">
         Este turno fue abierto el: <strong>{{ jornadaLabel }}</strong>
         y nunca se cerró. Cerrá este turno antes de abrir uno nuevo para hoy.
@@ -315,7 +443,6 @@
     </div>
   </div>
 
-  <!-- ── Sub-navegación: Movimientos / Cierre ───────────────────────────── -->
   <div class="border-b border-border">
     <nav class="flex gap-1 -mb-px" aria-label="Secciones del turno">
       <button
@@ -327,16 +454,28 @@
         [class.text-muted-foreground]="turnoTab !== 'movimientos'"
         class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
       >
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
         </svg>
         Movimientos
         <span
           *ngIf="movimientos.length > 0"
           class="ml-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent"
-        >{{ movimientos.length }}</span>
+          >{{ movimientos.length }}</span
+        >
       </button>
       <button
         type="button"
@@ -348,617 +487,934 @@
         [class.text-muted-foreground]="turnoTab !== 'cierre'"
         class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
       >
-        <svg *ngIf="!isCheckingPendings" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <svg
+          *ngIf="!isCheckingPendings"
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
-        <svg *ngIf="isCheckingPendings" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        <svg
+          *ngIf="isCheckingPendings"
+          class="h-4 w-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
         Cierre de Turno
         <span
           *ngIf="isClosed"
           class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700"
-        >Cerrado</span>
+          >Cerrado</span
+        >
       </button>
     </nav>
   </div>
 
-  <!-- ── Sub-pestaña: Cierre de Turno ───────────────────────────────────── -->
   <ng-container *ngIf="turnoTab === 'cierre'">
-  <div
-    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
-  >
-    <div class="p-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 class="text-xl font-semibold leading-none tracking-tight text-card-foreground">
-            Arqueo de Turno
-          </h3>
-          <p class="mt-1.5 text-sm text-muted-foreground">
-            {{ jornadaLabel }} · Verificación de efectivo físico vs sistema
-          </p>
-        </div>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent ring-1 ring-accent/30">
-          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-          Caja abierta por: {{ cajeroActual }}
-        </span>
-      </div>
-    </div>
-
-    <div class="space-y-6 px-6 pb-6">
-
-      <!-- Banner: borrador de arqueo pendiente de confirmación -->
-      <div *ngIf="showCierreDraftBanner"
-           class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
-        <span class="flex items-center gap-2 text-amber-800 font-medium">
-          <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
-          </svg>
-          Tenés un arqueo sin guardar. ¿Querés recuperarlo?
-        </span>
-        <div class="flex gap-2 shrink-0">
-          <button type="button" (click)="applyCierreDraft()"
-            class="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors">
-            Restaurar
-          </button>
-          <button type="button" (click)="dismissCierreDraft()"
-            class="rounded-md border border-amber-300 px-3 py-1 text-xs text-amber-700 hover:bg-amber-100 transition-colors">
-            Descartar
-          </button>
-        </div>
-      </div>
-
-      <div class="grid gap-6 md:grid-cols-2">
-        <div class="space-y-4 rounded-lg border border-border p-4">
-          <h3 class="font-semibold">Lo que registró el sistema</h3>
-          <div class="space-y-2 text-sm">
-
-            <!-- Fondo inicial -->
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">Fondo inicial:</span>
-              <span class="font-medium text-muted-foreground">${{ fmt(initialBalance) }}</span>
-            </div>
-
-            <!-- + Ingresos en efectivo -->
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">
-                <span class="font-semibold text-emerald-600">+</span>
-                Ingresos en Efectivo (Ventas/Turnos):
-              </span>
-              <span class="font-medium text-emerald-600">+${{ fmt(cashIncome) }}</span>
-            </div>
-
-            <!-- - Egresos en efectivo -->
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">
-                <span class="font-semibold text-destructive">−</span>
-                Egresos en Efectivo (Gastos):
-              </span>
-              <span class="font-medium text-destructive">−${{ fmt(cashExpenseTotal) }}</span>
-            </div>
-
-            <!-- = Efectivo a rendir -->
-            <div class="flex justify-between border-t border-border pt-2">
-              <span class="font-semibold">= Efectivo a rendir (Sistema):</span>
-              <span class="font-bold">${{ fmt(efectivoEsperado) }}</span>
-            </div>
-
-            <!-- Transferencias y total -->
-            <div class="flex justify-between border-t border-dashed border-border pt-2 mt-1">
-              <span class="text-muted-foreground">Transferencias recibidas:</span>
-              <span class="font-semibold">${{ fmt(transferenciaTotal) }}</span>
-            </div>
-            <div class="flex justify-between border-t border-border pt-2">
-              <span class="font-semibold">Total recaudado:</span>
-              <span class="font-bold">${{ fmt(totalEsperado) }}</span>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="space-y-4 rounded-lg border border-border p-4">
-          <h3 class="font-semibold">Lo que contás en caja</h3>
-
-          <div class="space-y-2">
-            <label class="text-sm font-medium leading-none" for="efectivo-real">
-              Efectivo físico contado
-            </label>
-            <ng-container *ngIf="isClosed && closedCashCounted != null; else inputContado">
-              <p class="text-2xl font-bold text-foreground py-1">
-                ${{ fmt(closedCashCounted) }}
-              </p>
-            </ng-container>
-            <ng-template #inputContado>
-              <input
-                id="efectivo-real"
-                type="number"
-                min="0"
-                placeholder="0"
-                [(ngModel)]="efectivoContado"
-                (ngModelChange)="triggerCierreDraftSave()"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-lg font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </ng-template>
-          </div>
-
-          <div *ngIf="showDiferencia" class="mt-4 space-y-2">
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-foreground"
-                >Efectivo contado:</span
-              >
-              <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
-            </div>
-            <div class="flex justify-between border-t border-border pt-2">
-              <span class="font-semibold">Descuadre:</span>
-              <span class="font-bold" [ngClass]="diferenciaClass">
-                {{ diferenciaText }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        *ngIf="showDiferencia && !isBusinessDayClosed"
-        class="flex items-center gap-3 rounded-lg p-4"
-        [ngClass]="indicatorClass"
-      >
-        <ng-container *ngIf="diferencia === 0; else hasDifferenceIndicator">
-          <svg
-            class="h-6 w-6 flex-shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
+      <div class="p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p class="font-semibold">La caja cuadra perfectamente</p>
-            <p class="text-sm opacity-80">
-              El efectivo contado coincide con el sistema
+            <h3
+              class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+            >
+              Arqueo de Turno
+            </h3>
+            <p class="mt-1.5 text-sm text-muted-foreground">
+              {{ jornadaLabel }} · Verificación de efectivo físico vs sistema
             </p>
           </div>
-        </ng-container>
-
-        <ng-template #hasDifferenceIndicator>
-          <svg
-            class="h-6 w-6 flex-shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent ring-1 ring-accent/30"
           >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <div>
-            <p class="font-semibold">{{ discrepancyLabel }}</p>
-            <p class="text-sm opacity-80">
-              Verifique el conteo antes de cerrar la caja
-            </p>
-          </div>
-        </ng-template>
+            <svg
+              class="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+            Caja abierta por: {{ cajeroActual }}
+          </span>
+        </div>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-sm font-medium leading-none" for="notas">
-          Notas del Cierre
-        </label>
-        <input
-          id="notas"
-          type="text"
-          placeholder="Agregar observaciones..."
-          [(ngModel)]="notas"
-          (ngModelChange)="triggerCierreDraftSave()"
-          [disabled]="isClosed"
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        />
-      </div>
-
-      <ng-container *ngIf="!isClosed; else cajaCerrada">
-        <button
-          type="button"
-          (click)="openConfirmDialog()"
-          [disabled]="efectivoContado === null"
-          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent px-8 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      <div class="space-y-6 px-6 pb-6">
+        <div
+          *ngIf="showCierreDraftBanner"
+          class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Cerrar mi Turno
-        </button>
-      </ng-container>
+          <span class="flex items-center gap-2 text-amber-800 font-medium">
+            <svg
+              class="h-4 w-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+            </svg>
+            Tenés un arqueo sin guardar. ¿Querés recuperarlo?
+          </span>
+          <div class="flex gap-2 shrink-0">
+            <button
+              type="button"
+              (click)="applyCierreDraft()"
+              class="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+            >
+              Restaurar
+            </button>
+            <button
+              type="button"
+              (click)="dismissCierreDraft()"
+              class="rounded-md border border-amber-300 px-3 py-1 text-xs text-amber-700 hover:bg-amber-100 transition-colors"
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
 
-      <ng-template #cajaCerrada>
-        <div class="space-y-5">
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="space-y-4 rounded-lg border border-border p-4">
+            <h3 class="font-semibold">Lo que registró el sistema</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">Fondo inicial:</span>
+                <span class="font-medium text-muted-foreground"
+                  >${{ fmt(initialBalance) }}</span
+                >
+              </div>
 
-          <!-- ── Banner: Jornada Cerrada ────────────────────────────────────── -->
-          <div *ngIf="isBusinessDayClosed"
-               class="flex items-start gap-3 rounded-xl border border-green-300/60 bg-green-50 p-4">
-            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100">
-              <svg class="h-5 w-5 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-            </div>
-            <div>
-              <p class="font-semibold text-green-900">Jornada comercial cerrada correctamente</p>
-              <p class="mt-0.5 text-sm text-green-700 leading-relaxed">
-                La jornada comercial anterior ha sido cerrada. Abre un nuevo turno para iniciar las operaciones de hoy.
-              </p>
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">
+                  <span class="font-semibold text-emerald-600">+</span>
+                  Ingresos en Efectivo (Ventas/Turnos):
+                </span>
+                <span class="font-medium text-emerald-600"
+                  >+${{ fmt(cashIncome) }}</span
+                >
+              </div>
+
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">
+                  <span class="font-semibold text-destructive">−</span>
+                  Egresos en Efectivo (Gastos):
+                </span>
+                <span class="font-medium text-destructive"
+                  >−${{ fmt(cashExpenseTotal) }}</span
+                >
+              </div>
+
+              <div class="flex justify-between border-t border-border pt-2">
+                <span class="font-semibold"
+                  >= Efectivo a rendir (Sistema):</span
+                >
+                <span class="font-bold">${{ fmt(efectivoEsperado) }}</span>
+              </div>
+
+              <div
+                class="flex justify-between border-t border-dashed border-border pt-2 mt-1"
+              >
+                <span class="text-muted-foreground"
+                  >Transferencias recibidas:</span
+                >
+                <span class="font-semibold"
+                  >${{ fmt(transferenciaTotal) }}</span
+                >
+              </div>
+              <div class="flex justify-between border-t border-border pt-2">
+                <span class="font-semibold">Total recaudado:</span>
+                <span class="font-bold">${{ fmt(totalEsperado) }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- ── Estado: Turno Cerrado ──────────────────────────────────────── -->
-          <div class="flex items-start gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-4">
-            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100">
-              <svg class="h-5 w-5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </div>
-            <div>
-              <p class="font-semibold text-amber-900">
-                {{ isBusinessDayClosed ? 'Jornada comercial cerrada' : 'Estado: Turno cerrado' }}
-              </p>
-              <p class="mt-0.5 text-sm text-amber-700 leading-relaxed">
-                {{
-                  isBusinessDayClosed
-                    ? 'Turno y jornada comercial cerrados. Al abrir un nuevo turno, se iniciará la gestión de un nuevo día.'
-                    : 'El turno fue cerrado correctamente. La jornada del día sigue activa. Podés abrir el siguiente turno o cerrar la jornada completa si sos el último turno del día.'
-                }}
-              </p>
-            </div>
-          </div>
+          <div class="space-y-4 rounded-lg border border-border p-4">
+            <h3 class="font-semibold">Lo que contás en caja</h3>
 
-          <!-- ── Pendientes Transferidos ────────────────────────────────────── -->
-          <div *ngIf="pendingBookings > 0 || unpaidSales > 0"
-               class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2">
-            <h4 class="flex items-center gap-2 text-sm font-semibold text-blue-800">
-              <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-              </svg>
-              Pendientes Transferidos al Siguiente Turno
-            </h4>
-            <div class="text-sm text-blue-700 space-y-1">
-              <p *ngIf="pendingBookings > 0">
-                · <strong>{{ pendingBookings }}</strong> turno{{ pendingBookings !== 1 ? 's' : '' }} en juego (jugando actualmente)
-              </p>
-              <p *ngIf="unpaidSales > 0">
-                · <strong>{{ unpaidSales }}</strong> venta{{ unpaidSales !== 1 ? 's' : '' }} sin cobrar
-              </p>
-            </div>
-            <p class="text-xs text-blue-600 leading-relaxed border-t border-blue-200 pt-2">
-              Estos ítems no afectan tu efectivo esperado ni tu descuadre actual. Cuando el siguiente cajero los cobre, el dinero entrará en su propio turno.
-            </p>
-          </div>
-
-          <!-- ── Abrir Nuevo Turno / Iniciar Nueva Jornada ────────────────── -->
-          <div class="rounded-xl border-2 border-accent/30 bg-card p-5 space-y-4">
-            <h4 class="flex items-center gap-2 font-semibold text-card-foreground">
-              <svg class="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="16"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-              {{ isBusinessDayClosed ? 'Iniciar Nueva Jornada Comercial' : 'Abrir Nuevo Turno' }}
-            </h4>
-
-            <!-- Fondo de caja -->
-            <div class="space-y-1.5">
-              <label class="text-sm font-semibold leading-none text-card-foreground" for="fondo-nuevo-turno">
-                Fondo de Caja <span class="text-muted-foreground font-normal">(Cambio Inicial)</span>
+            <div class="space-y-2">
+              <label
+                class="text-sm font-medium leading-none"
+                for="efectivo-real"
+              >
+                Efectivo físico contado
               </label>
-              <div class="relative">
-                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-lg">$</span>
+              <ng-container
+                *ngIf="isClosed && closedCashCounted != null; else inputContado"
+              >
+                <p class="text-2xl font-bold text-foreground py-1">
+                  ${{ fmt(closedCashCounted) }}
+                </p>
+              </ng-container>
+              <ng-template #inputContado>
                 <input
-                  id="fondo-nuevo-turno"
+                  id="efectivo-real"
                   type="number"
                   min="0"
-                  step="100"
                   placeholder="0"
-                  [(ngModel)]="fondoInicial"
-                  [disabled]="isOpening"
-                  class="flex h-12 w-full rounded-lg border-2 border-input bg-background pl-8 pr-3 py-2 text-xl font-bold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  [(ngModel)]="efectivoContado"
+                  (ngModelChange)="triggerCierreDraftSave()"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-lg font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
-              </div>
-              <p *ngIf="fondoInicialSugerido; else fondoHint2" class="text-xs text-amber-700 flex items-center gap-1">
-                <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
-                </svg>
-                Arrastrado del último cierre. Modificalo si retiraste dinero del cajón.
-              </p>
-              <ng-template #fondoHint2>
-                <p class="text-xs text-muted-foreground">Billetes y monedas para dar vuelto. No se suma a los ingresos del día.</p>
               </ng-template>
             </div>
 
-            <!-- Notas opcionales -->
-            <div class="space-y-1.5">
-              <label class="text-sm font-semibold leading-none text-card-foreground" for="notas-nuevo-turno">
-                Observaciones <span class="text-muted-foreground font-normal">(opcional)</span>
-              </label>
-              <input
-                id="notas-nuevo-turno"
-                type="text"
-                placeholder="Ej: Turno noche, evento especial..."
-                [(ngModel)]="notasApertura"
-                [disabled]="isOpening"
-                class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
+            <div *ngIf="showDiferencia" class="mt-4 space-y-2">
+              <div class="flex justify-between">
+                <span class="text-sm text-muted-foreground"
+                  >Efectivo contado:</span
+                >
+                <span class="font-semibold">${{ fmt(efectivoReal) }}</span>
+              </div>
+              <div class="flex justify-between border-t border-border pt-2">
+                <span class="font-semibold">Descuadre:</span>
+                <span class="font-bold" [ngClass]="diferenciaClass">
+                  {{ diferenciaText }}
+                </span>
+              </div>
             </div>
-
-            <!-- Banner: jornada comercial -->
-            <div class="rounded-md p-3 text-center text-sm ring-1"
-                 [ngClass]="isBusinessDayClosed ? 'bg-amber-50 text-amber-800 ring-amber-200' : 'bg-blue-50 text-blue-800 ring-blue-200'">
-              <ng-container *ngIf="!isBusinessDayClosed">
-                <span class="flex items-center justify-center gap-1.5">
-                  <svg class="h-4 w-4 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  Vas a abrir un turno para la jornada comercial del:
-                </span>
-                <strong class="mt-0.5 block capitalize text-blue-900">{{ logicalCommercialDateLabel }}</strong>
-                <span *ngIf="isOvernightWindow" class="mt-1 block text-xs text-blue-600">
-                  (Son las {{ currentTimeLabel }} hs — antes de las 03:00 corresponde al día anterior)
-                </span>
-              </ng-container>
-              <ng-container *ngIf="isBusinessDayClosed">
-                <span class="flex items-center justify-center gap-1.5 font-semibold">
-                  <svg class="h-4 w-4 flex-shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                  Jornada comercial cerrada
-                </span>
-                <p class="mt-1 text-xs leading-relaxed">
-                  La jornada comercial del <strong class="capitalize">{{ closedSessionDateLabel }}</strong> ya fue cerrada.<br>
-                  El nuevo turno iniciará la jornada del día siguiente.
-                </p>
-                <strong class="mt-1 block capitalize text-amber-900">{{ logicalCommercialDateLabel }}</strong>
-              </ng-container>
-            </div>
-
-            <!-- Botón principal -->
-            <button
-              type="button"
-              (click)="abrirJornada()"
-              [disabled]="isOpening"
-              class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <svg *ngIf="!isOpening" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="16"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-              <svg *ngIf="isOpening" class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-              </svg>
-              {{ isOpening ? 'Abriendo...' : (isBusinessDayClosed ? 'Iniciar Nueva Jornada' : 'Abrir Nuevo Turno') }}
-            </button>
           </div>
-
-          <!-- ── Alerta de pendientes — bloquea el Cierre Z ─────────────────── -->
-          <div *ngIf="!isBusinessDayClosed && pendingBookings > 0"
-               class="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
-            <svg class="h-5 w-5 shrink-0 text-amber-600 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <p class="text-sm text-amber-800 leading-snug">
-              <strong>Acción bloqueada:</strong> Hay <strong>{{ pendingBookings }}</strong> turno{{ pendingBookings !== 1 ? 's' : '' }} en juego o pendiente{{ pendingBookings !== 1 ? 's' : '' }} de cobro. Finalízalos para poder cerrar la caja.
-            </p>
-          </div>
-
-          <!-- ── Cerrar Jornada (Z) — oculto tras Cierre Z exitoso ───────────── -->
-          <button
-            *ngIf="!isBusinessDayClosed"
-            type="button"
-            (click)="closeDaySession()"
-            [disabled]="isClosingDay || pendingBookings > 0"
-            class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-800/40 bg-red-900 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 active:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-          >
-            <svg *ngIf="!isClosingDay" class="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18M6 6l12 12"/>
-            </svg>
-            <svg *ngIf="isClosingDay" class="h-4 w-4 animate-spin flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-            </svg>
-            {{ isClosingDay ? 'Procesando...' : 'Cerrar Jornada (Z)' }}
-          </button>
-
         </div>
-      </ng-template>
-    </div>
-  </div>
-  </ng-container><!-- /turnoTab === 'cierre' -->
 
-  <!-- ── Sub-pestaña: Movimientos del Turno ─────────────────────────────── -->
-  <ng-container *ngIf="turnoTab === 'movimientos'">
-  <div
-    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
-  >
-    <div class="p-6">
-      <h3
-        class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
-      >
-        Movimientos del Turno
-      </h3>
-      <p class="mt-1.5 text-sm text-muted-foreground">
-        {{ jornadaLabel }} · Historial de transacciones del turno activo
-      </p>
-    </div>
-
-    <div class="px-6 pb-6">
-      <div class="space-y-2">
-        <ng-container *ngIf="isLoading; else movimientosLoaded">
-          <div
-            *ngFor="let i of [1, 2, 3, 4, 5]"
-            class="h-16 w-full animate-pulse rounded-lg bg-muted"
-          ></div>
-        </ng-container>
-
-        <ng-template #movimientosLoaded>
-
-          <!-- ── Tarjeta de movimiento ──────────────────────────────────────── -->
-          <ng-container *ngFor="let item of groupedMovimientos">
-
-            <!-- ── EGRESO ── -->
-            <div *ngIf="item.type === 'EXPENSE'"
-                 class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border border-red-100 bg-red-50 shadow-sm">
-
-              <div class="flex items-start gap-3 flex-1 min-w-0">
-                <!-- Chip hora -->
-                <div class="shrink-0 rounded px-2.5 py-1.5 text-xs font-semibold mt-0.5 bg-red-100 text-red-700">
-                  {{ item.firstHora }}
-                </div>
-
-                <div class="flex flex-col flex-1 min-w-0">
-                  <p class="text-sm font-bold truncate text-red-800" [title]="item.concepto">
-                    {{ item.concepto }}
-                  </p>
-
-                  <!-- Usuario que registró el egreso -->
-                  <p *ngIf="item.userName" class="text-xs text-red-500 truncate">{{ item.userName }}</p>
-
-                  <!-- Badges -->
-                  <div class="flex flex-wrap gap-1.5 mt-2">
-                    <span class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      Egreso
-                    </span>
-                    <span *ngIf="item.expenseCategory"
-                          class="inline-flex items-center rounded-md bg-red-100 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                      {{ item.expenseCategory }}
-                    </span>
-                    <span class="inline-flex items-center rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      Efectivo
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Monto negativo -->
-              <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0
-                          mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-red-100 sm:border-none">
-                <p class="text-base font-bold whitespace-nowrap text-red-600">-${{ fmt(-item.totalMonto) }}</p>
-              </div>
+        <div
+          *ngIf="showDiferencia && !isBusinessDayClosed"
+          class="flex items-center gap-3 rounded-lg p-4"
+          [ngClass]="indicatorClass"
+        >
+          <ng-container *ngIf="diferencia === 0; else hasDifferenceIndicator">
+            <svg
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <div>
+              <p class="font-semibold">La caja cuadra perfectamente</p>
+              <p class="text-sm opacity-80">
+                El efectivo contado coincide con el sistema
+              </p>
             </div>
-
-            <!-- ── BOOKING / SALE ── -->
-            <div *ngIf="item.type !== 'EXPENSE'"
-                 class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
-
-              <!-- Columna izquierda: chip hora + texto + badges -->
-              <div class="flex items-start gap-3 flex-1 min-w-0">
-
-                <!-- Chip de hora -->
-                <div class="shrink-0 rounded px-2.5 py-1.5 text-xs font-semibold mt-0.5 bg-gray-100 text-gray-700">
-                  {{ item.firstHora }}
-                </div>
-
-                <div class="flex flex-col flex-1 min-w-0">
-                  <!-- Título: BOOKING muestra cancha + horario de juego, SALE muestra concepto -->
-                  <p class="text-sm font-bold truncate" [title]="item.concepto" [ngClass]="item.hasCourt ? 'text-indigo-700' : 'text-gray-900'">
-                    <ng-container *ngIf="item.type === 'BOOKING' && item.bookingCourtName; else fallbackConcept">
-                      Turno: {{ item.bookingCourtName }}
-                      <span *ngIf="item.bookingHour" class="text-gray-400 font-normal"> — {{ item.bookingHour }}hs</span>
-                    </ng-container>
-                    <ng-template #fallbackConcept>{{ item.concepto }}</ng-template>
-                  </p>
-
-                  <!-- Cliente (se omite si no existe) -->
-                  <p *ngIf="item.bookingClientName || item.customerName"
-                     class="text-xs text-gray-500 truncate">
-                    <span class="font-bold">Cliente:</span> {{ item.bookingClientName || item.customerName }}
-                  </p>
-
-                  <!-- Badges dinámicos: métodos de pago + conceptos cobrados -->
-                  <div class="flex flex-wrap gap-1.5 mt-2">
-                    <span *ngIf="item.hasCash"
-                          class="inline-flex items-center rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      Efectivo
-                    </span>
-                    <span *ngIf="item.hasTransfer"
-                          class="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      Transferencia
-                    </span>
-                    <span *ngIf="item.hasCourt"
-                          class="inline-flex items-center rounded-full bg-indigo-700 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      Cancha
-                    </span>
-                    <span *ngIf="item.hasCantina"
-                          class="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-gray-900 border border-amber-200">
-                      Cantina
-                    </span>
-                    <span *ngIf="item.hasMultiplePayments"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-gray-900"
-                          style="background-color: rgb(195 219 254);">
-                      Incluye seña
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Columna derecha: monto + botones -->
-              <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0
-                          mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-none">
-                <p class="text-base font-bold whitespace-nowrap text-gray-900">${{ fmt(item.totalMonto) }}</p>
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    (click)="openTransactionDetail(item)"
-                    [title]="item.type === 'BOOKING' ? 'Ver detalle del turno' : 'Ver detalle de la venta'"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="printTicket(item)"
-                    [title]="item.type === 'BOOKING' ? 'Imprimir comprobante del turno' : 'Imprimir comprobante de venta'"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 6 2 18 2 18 9"/>
-                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                      <rect x="6" y="14" width="12" height="8"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
           </ng-container>
 
-          <p *ngIf="movimientos.length === 0"
-             class="py-8 text-center text-sm text-muted-foreground">
-            No hay movimientos registrados
-          </p>
+          <ng-template #hasDifferenceIndicator>
+            <svg
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <div>
+              <p class="font-semibold">{{ discrepancyLabel }}</p>
+              <p class="text-sm opacity-80">
+                Verifique el conteo antes de cerrar la caja
+              </p>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none" for="notas">
+            Notas del Cierre
+          </label>
+          <input
+            id="notas"
+            type="text"
+            placeholder="Agregar observaciones..."
+            [(ngModel)]="notas"
+            (ngModelChange)="triggerCierreDraftSave()"
+            [disabled]="isClosed"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
+
+        <ng-container *ngIf="!isClosed; else cajaCerrada">
+          <button
+            type="button"
+            (click)="openConfirmDialog()"
+            [disabled]="efectivoContado === null"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent px-8 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Cerrar mi Turno
+          </button>
+        </ng-container>
+
+        <ng-template #cajaCerrada>
+          <div class="space-y-5">
+            <div
+              *ngIf="isBusinessDayClosed"
+              class="flex items-start gap-3 rounded-xl border border-green-300/60 bg-green-50 p-4"
+            >
+              <div
+                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100"
+              >
+                <svg
+                  class="h-5 w-5 text-green-700"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div>
+                <p class="font-semibold text-green-900">
+                  Jornada comercial cerrada correctamente
+                </p>
+                <p class="mt-0.5 text-sm text-green-700 leading-relaxed">
+                  La jornada comercial anterior ha sido cerrada. Abre un nuevo
+                  turno para iniciar las operaciones de hoy.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="flex items-start gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-4"
+            >
+              <div
+                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100"
+              >
+                <svg
+                  class="h-5 w-5 text-amber-700"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <div>
+                <p class="font-semibold text-amber-900">
+                  {{
+                    isBusinessDayClosed
+                      ? "Jornada comercial cerrada"
+                      : "Estado: Turno cerrado"
+                  }}
+                </p>
+                <p class="mt-0.5 text-sm text-amber-700 leading-relaxed">
+                  {{
+                    isBusinessDayClosed
+                      ? "Turno y jornada comercial cerrados. Al abrir un nuevo turno, se iniciará la gestión de un nuevo día."
+                      : "El turno fue cerrado correctamente. La jornada del día sigue activa. Podés abrir el siguiente turno o cerrar la jornada completa si sos el último turno del día."
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              *ngIf="pendingBookings > 0 || unpaidSales > 0"
+              class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2"
+            >
+              <h4
+                class="flex items-center gap-2 text-sm font-semibold text-blue-800"
+              >
+                <svg
+                  class="h-4 w-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                Pendientes Transferidos al Siguiente Turno
+              </h4>
+              <div class="text-sm text-blue-700 space-y-1">
+                <p *ngIf="pendingBookings > 0">
+                  · <strong>{{ pendingBookings }}</strong> turno{{
+                    pendingBookings !== 1 ? "s" : ""
+                  }}
+                  en juego (jugando actualmente)
+                </p>
+                <p *ngIf="unpaidSales > 0">
+                  · <strong>{{ unpaidSales }}</strong> venta{{
+                    unpaidSales !== 1 ? "s" : ""
+                  }}
+                  sin cobrar
+                </p>
+              </div>
+              <p
+                class="text-xs text-blue-600 leading-relaxed border-t border-blue-200 pt-2"
+              >
+                Estos ítems no afectan tu efectivo esperado ni tu descuadre
+                actual. Cuando el siguiente cajero los cobre, el dinero entrará
+                en su propio turno.
+              </p>
+            </div>
+
+            <div
+              class="rounded-xl border-2 border-accent/30 bg-card p-5 space-y-4"
+            >
+              <h4
+                class="flex items-center gap-2 font-semibold text-card-foreground"
+              >
+                <svg
+                  class="h-4 w-4 text-accent"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                {{
+                  isBusinessDayClosed
+                    ? "Iniciar Nueva Jornada Comercial"
+                    : "Abrir Nuevo Turno"
+                }}
+              </h4>
+
+              <div class="space-y-1.5">
+                <label
+                  class="text-sm font-semibold leading-none text-card-foreground"
+                  for="fondo-nuevo-turno"
+                >
+                  Fondo de Caja
+                  <span class="text-muted-foreground font-normal"
+                    >(Cambio Inicial)</span
+                  >
+                </label>
+                <div class="relative">
+                  <span
+                    class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-lg"
+                    >$</span
+                  >
+                  <input
+                    id="fondo-nuevo-turno"
+                    type="number"
+                    min="0"
+                    step="100"
+                    placeholder="0"
+                    [(ngModel)]="fondoInicial"
+                    [disabled]="isOpening"
+                    class="flex h-12 w-full rounded-lg border-2 border-input bg-background pl-8 pr-3 py-2 text-xl font-bold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
+                <p
+                  *ngIf="fondoInicialSugerido; else fondoHint2"
+                  class="text-xs text-amber-700 flex items-center gap-1"
+                >
+                  <svg
+                    class="h-3.5 w-3.5 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                  </svg>
+                  Arrastrado del último cierre. Modificalo si retiraste dinero
+                  del cajón.
+                </p>
+                <ng-template #fondoHint2>
+                  <p class="text-xs text-muted-foreground">
+                    Billetes y monedas para dar vuelto. No se suma a los
+                    ingresos del día.
+                  </p>
+                </ng-template>
+              </div>
+
+              <div class="space-y-1.5">
+                <label
+                  class="text-sm font-semibold leading-none text-card-foreground"
+                  for="notas-nuevo-turno"
+                >
+                  Observaciones
+                  <span class="text-muted-foreground font-normal"
+                    >(opcional)</span
+                  >
+                </label>
+                <input
+                  id="notas-nuevo-turno"
+                  type="text"
+                  placeholder="Ej: Turno noche, evento especial..."
+                  [(ngModel)]="notasApertura"
+                  [disabled]="isOpening"
+                  class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              <div
+                class="rounded-md p-3 text-center text-sm ring-1"
+                [ngClass]="
+                  isBusinessDayClosed
+                    ? 'bg-amber-50 text-amber-800 ring-amber-200'
+                    : 'bg-blue-50 text-blue-800 ring-blue-200'
+                "
+              >
+                <ng-container *ngIf="!isBusinessDayClosed">
+                  <span class="flex items-center justify-center gap-1.5">
+                    <svg
+                      class="h-4 w-4 flex-shrink-0 text-blue-500"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    Vas a abrir un turno para la jornada comercial del:
+                  </span>
+                  <strong class="mt-0.5 block capitalize text-blue-900">{{
+                    logicalCommercialDateLabel
+                  }}</strong>
+                  <span
+                    *ngIf="isOvernightWindow"
+                    class="mt-1 block text-xs text-blue-600"
+                  >
+                    (Son las {{ currentTimeLabel }} hs — antes de las 03:00
+                    corresponde al día anterior)
+                  </span>
+                </ng-container>
+                <ng-container *ngIf="isBusinessDayClosed">
+                  <span
+                    class="flex items-center justify-center gap-1.5 font-semibold"
+                  >
+                    <svg
+                      class="h-4 w-4 flex-shrink-0 text-amber-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                      />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    Jornada comercial cerrada
+                  </span>
+                  <p class="mt-1 text-xs leading-relaxed">
+                    La jornada comercial del
+                    <strong class="capitalize">{{
+                      closedSessionDateLabel
+                    }}</strong>
+                    ya fue cerrada.<br />
+                    El nuevo turno iniciará la jornada del día siguiente.
+                  </p>
+                  <strong class="mt-1 block capitalize text-amber-900">{{
+                    logicalCommercialDateLabel
+                  }}</strong>
+                </ng-container>
+              </div>
+
+              <button
+                type="button"
+                (click)="abrirJornada()"
+                [disabled]="isOpening"
+                class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <svg
+                  *ngIf="!isOpening"
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                <svg
+                  *ngIf="isOpening"
+                  class="h-5 w-5 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                {{
+                  isOpening
+                    ? "Abriendo..."
+                    : isBusinessDayClosed
+                      ? "Iniciar Nueva Jornada"
+                      : "Abrir Nuevo Turno"
+                }}
+              </button>
+            </div>
+
+            <div
+              *ngIf="!isBusinessDayClosed && pendingBookings > 0"
+              class="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3"
+            >
+              <svg
+                class="h-5 w-5 shrink-0 text-amber-600 mt-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p class="text-sm text-amber-800 leading-snug">
+                <strong>Acción bloqueada:</strong> Hay
+                <strong>{{ pendingBookings }}</strong> turno{{
+                  pendingBookings !== 1 ? "s" : ""
+                }}
+                en juego o pendiente{{ pendingBookings !== 1 ? "s" : "" }} de
+                cobro. Finalízalos para poder cerrar la caja.
+              </p>
+            </div>
+
+            <button
+              *ngIf="!isBusinessDayClosed"
+              type="button"
+              (click)="closeDaySession()"
+              [disabled]="isClosingDay || pendingBookings > 0"
+              class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-800/40 bg-red-900 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 active:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+            >
+              <svg
+                *ngIf="!isClosingDay"
+                class="h-4 w-4 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+              <svg
+                *ngIf="isClosingDay"
+                class="h-4 w-4 animate-spin flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+              {{ isClosingDay ? "Procesando..." : "Cerrar Jornada (Z)" }}
+            </button>
+          </div>
         </ng-template>
       </div>
     </div>
-  </div>
-  </ng-container><!-- /turnoTab === 'movimientos' -->
+  </ng-container>
 
+  <ng-container *ngIf="turnoTab === 'movimientos'">
+    <div
+      class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+    >
+      <div class="p-6">
+        <h3
+          class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+        >
+          Movimientos del Turno
+        </h3>
+        <p class="mt-1.5 text-sm text-muted-foreground">
+          {{ jornadaLabel }} · Historial de transacciones del turno activo
+        </p>
+      </div>
+
+      <div class="px-6 pb-6">
+        <div class="space-y-2">
+          <ng-container *ngIf="isLoading; else movimientosLoaded">
+            <div
+              *ngFor="let i of [1, 2, 3, 4, 5]"
+              class="h-16 w-full animate-pulse rounded-lg bg-muted"
+            ></div>
+          </ng-container>
+
+          <ng-template #movimientosLoaded>
+            <ng-container *ngFor="let item of groupedMovimientos">
+              <div
+                *ngIf="item.type === 'EXPENSE'"
+                class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border border-red-100 bg-red-50 shadow-sm"
+              >
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                  <div
+                    class="shrink-0 rounded px-2.5 py-1.5 text-xs font-semibold mt-0.5 bg-red-100 text-red-700"
+                  >
+                    {{ item.firstHora }}
+                  </div>
+
+                  <div class="flex flex-col flex-1 min-w-0">
+                    <p
+                      class="text-sm font-bold truncate text-red-800"
+                      [title]="item.concepto"
+                    >
+                      {{ item.concepto }}
+                    </p>
+
+                    <p
+                      *ngIf="item.userName"
+                      class="text-xs text-red-500 truncate"
+                    >
+                      {{ item.userName }}
+                    </p>
+
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                      <span
+                        class="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Egreso
+                      </span>
+                      <span
+                        *ngIf="item.expenseCategory"
+                        class="inline-flex items-center rounded-md bg-red-100 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-700"
+                      >
+                        {{ item.expenseCategory }}
+                      </span>
+                      <span
+                        class="inline-flex items-center rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Efectivo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center justify-between sm:justify-end gap-3 shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-red-100 sm:border-none"
+                >
+                  <p class="text-base font-bold whitespace-nowrap text-red-600">
+                    -${{ fmt(-item.totalMonto) }}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                *ngIf="item.type !== 'EXPENSE'"
+                class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                  <div
+                    class="shrink-0 rounded px-2.5 py-1.5 text-xs font-semibold mt-0.5 bg-gray-100 text-gray-700"
+                  >
+                    {{ item.firstHora }}
+                  </div>
+
+                  <div class="flex flex-col flex-1 min-w-0">
+                    <p
+                      class="text-sm font-bold truncate"
+                      [title]="item.concepto"
+                      [ngClass]="
+                        item.hasCourt ? 'text-indigo-700' : 'text-gray-900'
+                      "
+                    >
+                      <ng-container
+                        *ngIf="
+                          item.type === 'BOOKING' && item.bookingCourtName;
+                          else fallbackConcept
+                        "
+                      >
+                        Turno: {{ item.bookingCourtName }}
+                        <span
+                          *ngIf="item.bookingHour"
+                          class="text-gray-400 font-normal"
+                        >
+                          — {{ item.bookingHour }}hs</span
+                        >
+                      </ng-container>
+                      <ng-template #fallbackConcept>{{
+                        item.concepto
+                      }}</ng-template>
+                    </p>
+
+                    <p
+                      *ngIf="item.bookingClientName || item.customerName"
+                      class="text-xs text-gray-500 truncate"
+                    >
+                      <span class="font-bold">Cliente:</span>
+                      {{ item.bookingClientName || item.customerName }}
+                    </p>
+
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                      <span
+                        *ngIf="item.hasCash"
+                        class="inline-flex items-center rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Efectivo
+                      </span>
+                      <span
+                        *ngIf="item.hasTransfer"
+                        class="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Transferencia
+                      </span>
+                      <span
+                        *ngIf="item.hasCourt"
+                        class="inline-flex items-center rounded-full bg-indigo-700 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Cancha
+                      </span>
+                      <span
+                        *ngIf="item.hasCantina"
+                        class="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-gray-900 border border-amber-200"
+                      >
+                        Cantina
+                      </span>
+                      <span
+                        *ngIf="item.hasMultiplePayments"
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-gray-900"
+                        style="background-color: rgb(195 219 254)"
+                      >
+                        Incluye seña
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center justify-between sm:justify-end gap-3 shrink-0 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-100 sm:border-none"
+                >
+                  <p
+                    class="text-base font-bold whitespace-nowrap text-gray-900"
+                  >
+                    ${{ fmt(item.totalMonto) }}
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="openTransactionDetail(item)"
+                      [title]="
+                        item.type === 'BOOKING'
+                          ? 'Ver detalle del turno'
+                          : 'Ver detalle de la venta'
+                      "
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"
+                        />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="printTicket(item)"
+                      [title]="
+                        item.type === 'BOOKING'
+                          ? 'Imprimir comprobante del turno'
+                          : 'Imprimir comprobante de venta'
+                      "
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path
+                          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                        />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+            <p
+              *ngIf="movimientos.length === 0"
+              class="py-8 text-center text-sm text-muted-foreground"
+            >
+              No hay movimientos registrados
+            </p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>
 
 <app-ticket-modal
@@ -966,28 +1422,26 @@
   (closeModal)="closeTicket()"
 ></app-ticket-modal>
 
-<!-- ── Pestaña: Historial Diario (solo Admin) ──────────────────────────────── -->
 <div *ngIf="isAdmin && activeTab === 'historial'" class="space-y-6">
-
-  <!-- DatePicker + navegación + acciones -->
   <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-
-    <!-- Navegador de fecha -->
     <div class="space-y-1.5">
-      <label class="text-sm font-semibold text-card-foreground" for="historial-date">
+      <label
+        class="text-sm font-semibold text-card-foreground"
+        for="historial-date"
+      >
         Seleccionar día
       </label>
       <div class="flex items-center gap-2">
-        <!-- Día anterior -->
         <button
           type="button"
           (click)="changeDay(-1)"
           [disabled]="historialLoading"
           title="Día anterior"
           class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium disabled:pointer-events-none disabled:opacity-40"
-        >&#8249;</button>
+        >
+          &#8249;
+        </button>
 
-        <!-- Input de fecha -->
         <input
           id="historial-date"
           type="date"
@@ -997,18 +1451,18 @@
           class="flex h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         />
 
-        <!-- Día siguiente -->
         <button
           type="button"
           (click)="changeDay(1)"
           [disabled]="historialLoading || historialDate >= maxDate"
           title="Día siguiente"
           class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium disabled:pointer-events-none disabled:opacity-40"
-        >&#8250;</button>
+        >
+          &#8250;
+        </button>
       </div>
     </div>
 
-    <!-- Botón Exportar Jornada Z -->
     <button
       *ngIf="dailySummary && dailySummary.sessions.length > 0"
       type="button"
@@ -1017,22 +1471,36 @@
       title="Descargar Excel consolidado de la jornada (Cierre del Turno)"
       class="inline-flex h-10 items-center gap-2 rounded-lg border border-green-600 bg-white px-4 text-sm font-medium text-green-700 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50"
     >
-      <svg *ngIf="!exportingDaily" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="16" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
+      <svg
+        *ngIf="!exportingDaily"
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
       </svg>
-      <svg *ngIf="exportingDaily" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      <svg
+        *ngIf="exportingDaily"
+        class="h-4 w-4 animate-spin"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
       </svg>
-      {{ exportingDaily ? 'Generando...' : 'Exportar Jornada Z' }}
+      {{ exportingDaily ? "Generando..." : "Exportar Jornada Z" }}
     </button>
-
   </div>
 
-  <!-- Skeleton de carga -->
   <ng-container *ngIf="historialLoading">
     <div class="h-32 w-full animate-pulse rounded-xl bg-muted"></div>
     <div class="grid gap-4 md:grid-cols-2">
@@ -1041,39 +1509,63 @@
     </div>
   </ng-container>
 
-  <!-- Sin datos -->
   <div
-    *ngIf="!historialLoading && dailySummary && dailySummary.sessions.length === 0"
+    *ngIf="
+      !historialLoading && dailySummary && dailySummary.sessions.length === 0
+    "
     class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-16 text-center"
   >
-    <svg class="mb-3 h-10 w-10 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
+    <svg
+      class="mb-3 h-10 w-10 text-muted-foreground"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
-    <p class="text-sm font-medium text-muted-foreground">Sin sesiones registradas</p>
-    <p class="mt-1 text-xs text-muted-foreground">No hubo turnos de caja el {{ fmtDateLabel(historialDate) }}.</p>
+    <p class="text-sm font-medium text-muted-foreground">
+      Sin sesiones registradas
+    </p>
+    <p class="mt-1 text-xs text-muted-foreground">
+      No hubo turnos de caja el {{ fmtDateLabel(historialDate) }}.
+    </p>
   </div>
 
-  <!-- Dashboard consolidado -->
-  <ng-container *ngIf="!historialLoading && dailySummary && dailySummary.sessions.length > 0">
-
-    <!-- Encabezado del día -->
+  <ng-container
+    *ngIf="
+      !historialLoading && dailySummary && dailySummary.sessions.length > 0
+    "
+  >
     <div class="rounded-xl border border-border bg-card px-6 py-4">
-      <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Consolidado</p>
+      <p
+        class="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+      >
+        Consolidado
+      </p>
       <h2 class="mt-1 text-lg font-bold capitalize text-card-foreground">
         {{ fmtDateLabel(dailySummary.date) }}
       </h2>
       <p class="text-sm text-muted-foreground">
-        {{ dailySummary.sessions.length }} turno{{ dailySummary.sessions.length > 1 ? 's' : '' }} registrado{{ dailySummary.sessions.length > 1 ? 's' : '' }}
+        {{ dailySummary.sessions.length }} turno{{
+          dailySummary.sessions.length > 1 ? "s" : ""
+        }}
+        registrado{{ dailySummary.sessions.length > 1 ? "s" : "" }}
       </p>
     </div>
 
-    <!-- Tarjeta grande: Recaudación Total -->
-    <div class="relative overflow-hidden rounded-2xl border-2 border-accent/50 bg-gradient-to-br from-accent/10 to-accent/5 p-8 text-center shadow-lg">
+    <div
+      class="relative overflow-hidden rounded-2xl border-2 border-accent/50 bg-gradient-to-br from-accent/10 to-accent/5 p-8 text-center shadow-lg"
+    >
       <div class="absolute inset-0 opacity-5">
         <svg class="h-full w-full" viewBox="0 0 400 200" fill="currentColor">
-          <circle cx="350" cy="20" r="120"/><circle cx="50" cy="180" r="80"/>
+          <circle cx="350" cy="20" r="120" />
+          <circle cx="50" cy="180" r="80" />
         </svg>
       </div>
       <p class="text-sm font-semibold uppercase tracking-widest text-accent">
@@ -1085,7 +1577,9 @@
       <div class="mt-4 flex justify-center gap-4 text-sm text-muted-foreground">
         <span *ngIf="dailySummary.totalCounted !== null">
           Arqueo físico total:
-          <span class="font-semibold text-foreground">${{ fmt(dailySummary.totalCounted) }}</span>
+          <span class="font-semibold text-foreground"
+            >${{ fmt(dailySummary.totalCounted) }}</span
+          >
         </span>
         <span *ngIf="dailySummary.totalCounted === null" class="italic">
           (Hay turnos aún abiertos — arqueo incompleto)
@@ -1093,9 +1587,10 @@
       </div>
     </div>
 
-    <!-- Desglose por turnos -->
     <div class="space-y-3">
-      <h3 class="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+      <h3
+        class="text-sm font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         Desglose por Turno
       </h3>
 
@@ -1103,21 +1598,26 @@
         *ngFor="let shift of dailySummary.sessions; let i = index"
         class="rounded-xl border border-border bg-card p-5 shadow-sm"
       >
-        <!-- Encabezado del turno -->
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-bold text-accent">
+            <div
+              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-bold text-accent"
+            >
               {{ i + 1 }}
             </div>
             <div>
-              <p class="font-semibold text-card-foreground">{{ shift.openedByName }}</p>
+              <p class="font-semibold text-card-foreground">
+                {{ shift.openedByName }}
+              </p>
               <p class="text-xs text-muted-foreground">
                 {{ fmtHora(shift.openedAt) }}
-                <span *ngIf="shift.closedAt"> — {{ fmtHora(shift.closedAt) }}</span>
+                <span *ngIf="shift.closedAt">
+                  — {{ fmtHora(shift.closedAt) }}</span
+                >
               </p>
             </div>
           </div>
-          <!-- Badge estado + Botón Exportar Turno X -->
+
           <div class="flex items-center gap-2">
             <span
               [class.bg-green-100]="shift.status === 'closed'"
@@ -1126,9 +1626,9 @@
               [class.text-yellow-700]="shift.status === 'open'"
               class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
             >
-              {{ shift.status === 'open' ? 'Turno abierto' : 'Cerrado' }}
+              {{ shift.status === "open" ? "Turno abierto" : "Cerrado" }}
             </span>
-            <!-- Botón Exportar Turno X -->
+
             <button
               type="button"
               (click)="exportTurnoX(shift.sessionId, shift.openedByName)"
@@ -1136,43 +1636,74 @@
               title="Descargar Excel de este turno (Cierre X)"
               class="inline-flex items-center gap-1.5 rounded-md border border-green-600 bg-white px-2.5 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50"
             >
-              <svg *ngIf="exportingSessionId !== shift.sessionId" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="8" y1="13" x2="16" y2="13"/>
-                <line x1="8" y1="17" x2="16" y2="17"/>
+              <svg
+                *ngIf="exportingSessionId !== shift.sessionId"
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="8" y1="13" x2="16" y2="13" />
+                <line x1="8" y1="17" x2="16" y2="17" />
               </svg>
-              <svg *ngIf="exportingSessionId === shift.sessionId" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              <svg
+                *ngIf="exportingSessionId === shift.sessionId"
+                class="h-3.5 w-3.5 animate-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-              {{ exportingSessionId === shift.sessionId ? '...' : 'Exportar Turno X' }}
+              {{
+                exportingSessionId === shift.sessionId
+                  ? "..."
+                  : "Exportar Turno X"
+              }}
             </button>
           </div>
         </div>
 
-        <!-- Montos del turno -->
-        <div class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
+        <div
+          class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4"
+        >
           <div class="text-center">
             <p class="text-xs text-muted-foreground">Efectivo</p>
-            <p class="mt-0.5 text-lg font-bold">${{ fmt(shift.cashExpected) }}</p>
+            <p class="mt-0.5 text-lg font-bold">
+              ${{ fmt(shift.cashExpected) }}
+            </p>
           </div>
           <div class="text-center">
             <p class="text-xs text-muted-foreground">Transferencias</p>
-            <p class="mt-0.5 text-lg font-bold">${{ fmt(shift.transferTotal) }}</p>
+            <p class="mt-0.5 text-lg font-bold">
+              ${{ fmt(shift.transferTotal) }}
+            </p>
           </div>
           <div class="text-center">
             <p class="text-xs text-muted-foreground">Total turno</p>
-            <p class="mt-0.5 text-lg font-bold text-accent">${{ fmt(shift.dayTotal) }}</p>
+            <p class="mt-0.5 text-lg font-bold text-accent">
+              ${{ fmt(shift.dayTotal) }}
+            </p>
           </div>
           <div class="text-center">
             <p class="text-xs text-muted-foreground">Diferencia arqueo</p>
-            <p class="mt-0.5 text-lg font-bold" [ngClass]="diferenciaShiftClass(shift)">
+            <p
+              class="mt-0.5 text-lg font-bold"
+              [ngClass]="diferenciaShiftClass(shift)"
+            >
               {{ diferenciaShiftLabel(shift) }}
             </p>
           </div>
         </div>
 
-        <!-- Alerta de descuadre -->
         <div
           *ngIf="shift.difference !== null && shift.difference !== 0"
           class="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium"
@@ -1181,12 +1712,22 @@
           [class.bg-red-50]="shift.difference < 0"
           [class.text-red-700]="shift.difference < 0"
         >
-          <svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            class="h-3.5 w-3.5 flex-shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          {{ shift.difference > 0 ? 'Sobrante' : 'Faltante' }} de ${{ fmt(Math.abs(shift.difference)) }}
+          {{ shift.difference > 0 ? "Sobrante" : "Faltante" }} de ${{
+            fmt(Math.abs(shift.difference))
+          }}
           en el turno de {{ shift.openedByName }}.
         </div>
       </div>
@@ -1194,13 +1735,8 @@
   </ng-container>
 </div>
 
-<!-- ── Modal: Pendientes antes del cierre ─────────────────────────────────── -->
 <ng-container *ngIf="showPendingsModal">
-  <div
-    appModalScrollLock
-    class="modal-backdrop"
-    (click)="closePendingsModal()"
-  >
+  <div appModalScrollLock class="modal-backdrop" (click)="closePendingsModal()">
     <div
       role="dialog"
       aria-modal="true"
@@ -1208,12 +1744,25 @@
       class="modal-card max-w-md"
       (click)="$event.stopPropagation()"
     >
-      <!-- Header -->
       <div class="modal-header">
-        <h2 id="pendings-dialog-title" class="text-lg font-semibold leading-none tracking-tight text-card-foreground flex items-center gap-2">
-          <svg class="h-5 w-5 text-amber-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        <h2
+          id="pendings-dialog-title"
+          class="text-lg font-semibold leading-none tracking-tight text-card-foreground flex items-center gap-2"
+        >
+          <svg
+            class="h-5 w-5 text-amber-500 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+            />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           Hay pendientes en el turno
         </h2>
@@ -1222,31 +1771,60 @@
         </p>
       </div>
 
-      <!-- Body -->
       <div class="modal-body">
-        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
-          <p *ngIf="pendingBookings > 0" class="flex items-center gap-2 text-sm text-amber-800">
-            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        <div
+          class="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2"
+        >
+          <p
+            *ngIf="pendingBookings > 0"
+            class="flex items-center gap-2 text-sm text-amber-800"
+          >
+            <svg
+              class="h-4 w-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
-            <strong>{{ pendingBookings }}</strong>&nbsp;turno{{ pendingBookings !== 1 ? 's' : '' }} con gente jugando actualmente
+            <strong>{{ pendingBookings }}</strong
+            >&nbsp;turno{{ pendingBookings !== 1 ? "s" : "" }} con gente jugando
+            actualmente
           </p>
-          <p *ngIf="unpaidSales > 0" class="flex items-center gap-2 text-sm text-amber-800">
-            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          <p
+            *ngIf="unpaidSales > 0"
+            class="flex items-center gap-2 text-sm text-amber-800"
+          >
+            <svg
+              class="h-4 w-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
-            <strong>{{ unpaidSales }}</strong>&nbsp;venta{{ unpaidSales !== 1 ? 's' : '' }} sin cobrar
+            <strong>{{ unpaidSales }}</strong
+            >&nbsp;venta{{ unpaidSales !== 1 ? "s" : "" }} sin cobrar
           </p>
         </div>
         <p class="mt-3 text-xs text-muted-foreground leading-relaxed">
-          Si aceptás, estos ítems <strong>no afectarán</strong> tu efectivo esperado ni tu descuadre. Cuando el siguiente cajero los cobre, el dinero ingresará en su propio turno.
+          Si aceptás, estos ítems <strong>no afectarán</strong> tu efectivo
+          esperado ni tu descuadre. Cuando el siguiente cajero los cobre, el
+          dinero ingresará en su propio turno.
         </p>
         <p class="mt-1 text-xs text-muted-foreground">
           Si cancelás, volvé a la agenda y finalizá los cobros antes de cerrar.
         </p>
       </div>
 
-      <!-- Footer -->
       <div class="modal-footer">
         <button
           type="button"
@@ -1268,11 +1846,7 @@
 </ng-container>
 
 <ng-container *ngIf="isDialogOpen">
-  <div
-    appModalScrollLock
-    class="modal-backdrop"
-    (click)="closeDialog()"
-  >
+  <div appModalScrollLock class="modal-backdrop" (click)="closeDialog()">
     <div
       role="dialog"
       aria-modal="true"
@@ -1280,18 +1854,20 @@
       class="modal-card max-w-md"
       (click)="$event.stopPropagation()"
     >
-
-      <!-- Header -->
       <div class="modal-header">
-        <h2 id="cash-dialog-title" class="text-lg font-semibold leading-none tracking-tight text-card-foreground">
+        <h2
+          id="cash-dialog-title"
+          class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
+        >
           Confirmar Cierre de Turno
         </h2>
         <p class="mt-1.5 text-sm text-muted-foreground">
-          Caja abierta por <strong>{{ cajeroActual }}</strong>. Esta acción cierra el turno actual y bloquea nuevas operaciones. ¿Está seguro?
+          Caja abierta por <strong>{{ cajeroActual }}</strong
+          >. Esta acción cierra el turno actual y bloquea nuevas operaciones.
+          ¿Está seguro?
         </p>
       </div>
 
-      <!-- Body -->
       <div class="modal-body">
         <div class="rounded-lg border border-border bg-muted/30 p-4">
           <div class="flex flex-col gap-2">
@@ -1305,13 +1881,14 @@
             </div>
             <div class="flex justify-between border-t border-border pt-2">
               <span class="font-bold">Descuadre:</span>
-              <span class="font-bold" [ngClass]="diferenciaClass">{{ diferenciaText }}</span>
+              <span class="font-bold" [ngClass]="diferenciaClass">{{
+                diferenciaText
+              }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="modal-footer">
         <button
           type="button"

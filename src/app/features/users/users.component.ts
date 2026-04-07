@@ -61,6 +61,7 @@ export class UsersComponent implements OnInit {
   }
 
   @HostListener('document:keydown.escape')
+  /** Cierra el modal abierto al presionar Escape. */
   onEscape(): void {
     if (this.isDialogOpen) this.closeDialog();
     if (this.isEditOpen) this.closeEditModal();
@@ -237,7 +238,8 @@ export class UsersComponent implements OnInit {
       return;
     }
     if (this.resetPassword.length < 6) {
-      this.resetPasswordError = 'La contraseña debe tener al menos 6 caracteres.';
+      this.resetPasswordError =
+        'La contraseña debe tener al menos 6 caracteres.';
       return;
     }
 
@@ -256,7 +258,8 @@ export class UsersComponent implements OnInit {
         },
         error: (err) => {
           this.isResetSubmitting = false;
-          const msg = err?.error?.message ?? 'No se pudo restablecer la contraseña';
+          const msg =
+            err?.error?.message ?? 'No se pudo restablecer la contraseña';
           this.resetPasswordError = Array.isArray(msg) ? msg.join(', ') : msg;
         },
       });

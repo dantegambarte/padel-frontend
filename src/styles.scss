@@ -1,23 +1,11 @@
-// ─────────────────────────────────────────────────────────────────────────────
-//   TAILWIND v3 — entry point
-// ─────────────────────────────────────────────────────────────────────────────
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   ESCALA BASE GLOBAL — aumenta la raíz rem al 112% (16px → ~18px).
-//   Todas las unidades rem de Tailwind (espaciados, fuentes, anchos) escalan
-//   proporcionalmente sin necesidad de cambiar clases individuales.
-// ─────────────────────────────────────────────────────────────────────────────
 html {
   font-size: 112%;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   SCROLLBARS — Dark Mode
-//   Evita que las barras de desplazamiento aparezcan blancas sobre fondo oscuro.
-// ─────────────────────────────────────────────────────────────────────────────
 .dark {
   ::-webkit-scrollbar {
     width: 8px;
@@ -27,29 +15,35 @@ html {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #334155; // slate-700
+    background: #334155;
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #475569; // slate-600
+    background: #475569;
   }
 }
 
-// Barra de progreso de navegación (Router Transition Loader).
-// Simula un progreso indeterminado: crece rápido hasta ~70% y luego
-// se detiene en 90% — cuando NavigationEnd llega, el *ngIf la elimina.
 @keyframes router-progress {
-  0%   { transform: scaleX(0);   opacity: 1; }
-  20%  { transform: scaleX(0.4); }
-  60%  { transform: scaleX(0.7); }
-  100% { transform: scaleX(0.9); opacity: 1; }
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  20% {
+    transform: scaleX(0.4);
+  }
+  60% {
+    transform: scaleX(0.7);
+  }
+  100% {
+    transform: scaleX(0.9);
+    opacity: 1;
+  }
 }
 
 .animate-router-progress {
   animation: router-progress 8s cubic-bezier(0.1, 0.05, 0, 1) forwards;
 }
 
-// ── Calculadora: botón base (aplicado con @apply para reutilizar en el grid) ──
 @layer components {
   .calc-btn {
     @apply flex items-center justify-center p-4 text-xl font-medium
@@ -57,11 +51,6 @@ html {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   ANGULAR CDK DRAG & DROP — overrides globales
-//   El preview se renderiza en el body (fuera del stacking context del grid),
-//   por lo que necesita z-index y sombra explícitos.
-// ─────────────────────────────────────────────────────────────────────────────
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 8px;
@@ -84,12 +73,10 @@ html {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-// Drop list resaltado mientras hay un item encima
 .cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-// Celda destino resaltada cuando el cursor entra durante el drag
 .cdk-drop-list-receiving {
   border-radius: 8px;
   background-color: rgba(99, 102, 241, 0.08) !important;
@@ -97,60 +84,46 @@ html {
   outline-offset: -2px;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   Z-INDEX OVERRIDE — Notificaciones siempre por encima de modales (z-[9999])
-// ─────────────────────────────────────────────────────────────────────────────
-// Sistema de toasts propio (app-toast, fixed top-3)
 app-toast > div,
-[aria-live="polite"] { z-index: 99999 !important; }
+[aria-live="polite"] {
+  z-index: 99999 !important;
+}
 
-// Librerías de terceros (por si se agregan en el futuro)
-#toast-container          { z-index: 99999 !important; }
-.swal2-container          { z-index: 99999 !important; }
-.ngx-toastr               { z-index: 99999 !important; }
+#toast-container {
+  z-index: 99999 !important;
+}
+.swal2-container {
+  z-index: 99999 !important;
+}
+.ngx-toastr {
+  z-index: 99999 !important;
+}
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   MODAL SYSTEM — Flexbox Sandwich Modal estandarizado
-//   Patrón: backdrop → card → [header | body | footer]
-//   - backdrop: fondo oscuro que bloquea scroll y touch en iOS
-//   - card:     contenedor adaptativo con max-h y flex column
-//   - header:   cabecera rígida (flex-shrink-0)
-//   - body:     zona scrollable independiente (flex-1 + overflow-y-auto)
-//   - footer:   pie rígido con botones de acción (flex-shrink-0)
-// ─────────────────────────────────────────────────────────────────────────────
 @layer components {
-  // Fondo oscuro bloqueado
   .modal-backdrop {
     @apply fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm
            flex items-center justify-center p-4 sm:p-6 touch-none;
   }
 
-  // Tarjeta blanca adaptativa (No supera el 85% de la pantalla)
   .modal-card {
     @apply bg-card rounded-2xl shadow-2xl w-full max-w-lg
            flex flex-col overflow-hidden max-h-[85dvh];
   }
 
-  // Cabecera rígida
   .modal-header {
     @apply p-5 sm:p-6 border-b border-border flex-shrink-0 bg-card;
   }
 
-  // Cuerpo fluido con scroll independiente
   .modal-body {
     @apply p-5 sm:p-6 overflow-y-auto overscroll-contain flex-1;
   }
 
-  // Pie rígido
   .modal-footer {
     @apply p-4 sm:p-6 border-t border-border flex-shrink-0 flex justify-end gap-3;
     background-color: var(--muted);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   SCSS VARIABLES — Design tokens como variables SCSS
-// ─────────────────────────────────────────────────────────────────────────────
 $color-primary: oklch(0.42 0.15 281);
 $color-accent: oklch(0.55 0.16 155);
 $color-destructive: oklch(0.55 0.22 25);
@@ -162,10 +135,6 @@ $color-muted: oklch(0.95 0.01 264);
 $color-sidebar: oklch(0.25 0.02 281);
 $radius: 0.5rem;
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   DESIGN TOKENS — Paleta PadelSys
-//   Deep Purple/Indigo (primary) + Emerald Green (accent)
-// ─────────────────────────────────────────────────────────────────────────────
 :root {
   --background: #{$color-background};
   --foreground: #{$color-foreground};
@@ -176,11 +145,9 @@ $radius: 0.5rem;
   --popover: #{$color-card};
   --popover-foreground: #{$color-foreground};
 
-  // Deep Purple/Indigo — botones primarios, ring, logo
   --primary: #{$color-primary};
   --primary-foreground: oklch(0.98 0 0);
 
-  // Emerald Green — logo sidebar, badge accent
   --accent: #{$color-accent};
   --accent-foreground: oklch(0.98 0 0);
 
@@ -190,7 +157,6 @@ $radius: 0.5rem;
   --muted: #{$color-muted};
   --muted-foreground: oklch(0.5 0.01 264);
 
-  // Red — errores, destructivo
   --destructive: #{$color-destructive};
   --destructive-foreground: oklch(0.98 0 0);
 
@@ -198,7 +164,6 @@ $radius: 0.5rem;
   --input: #{$color-border};
   --ring: #{$color-primary};
 
-  // Chart colors — módulo de Reportes
   --chart-1: #{$color-accent};
   --chart-2: #{$color-primary};
   --chart-3: oklch(0.65 0.18 200);
@@ -207,7 +172,6 @@ $radius: 0.5rem;
 
   --radius: #{$radius};
 
-  // Sidebar oscuro con texto claro — sidenav de la app
   --sidebar: #{$color-sidebar};
   --sidebar-foreground: oklch(0.95 0 0);
   --sidebar-primary: #{$color-primary};
@@ -253,14 +217,6 @@ $radius: 0.5rem;
   --sidebar-ring: oklch(0.6 0.18 155);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   @MEDIA PRINT — Comanda de Consumo (ticket térmico 58mm / 80mm)
-//
-//   Estrategia: ocultar el layout explícitamente (sidebar, toolbar, backdrop)
-//   y dejar que .ticket-print-area ocupe la página completa.
-//   NO se usa `body * { visibility: hidden }` porque en Angular destruye
-//   el renderizado de app-root y deja la hoja en blanco.
-//
 //   TODO: Agregar @page con el ancho real del papel de la impresora térmica.
 //   Confirmar si usa 58mm u 80mm y descomentar la regla correspondiente:
 //
@@ -273,18 +229,15 @@ $radius: 0.5rem;
 //   (Panel de control → Dispositivos e impresoras → Preferencias de impresión).
 // ─────────────────────────────────────────────────────────────────────────────
 @media print {
-  // 1. Ocultar todo el body con visibility (no display:none) para preservar el layout
   body * {
     visibility: hidden !important;
   }
 
-  // 2. Mostrar solo el área del ticket y todo su contenido
   .ticket-print-area,
   .ticket-print-area * {
     visibility: visible !important;
   }
 
-  // 3. Posicionar el ticket en la esquina superior izquierda de la página
   .ticket-print-area {
     position: fixed !important;
     top: 0 !important;
@@ -296,7 +249,6 @@ $radius: 0.5rem;
     color: black !important;
   }
 
-  // ── Reporte de liquidación docente ──────────────────────────────────────
   .teacher-report-print-area,
   .teacher-report-print-area * {
     visibility: visible !important;
@@ -317,26 +269,28 @@ $radius: 0.5rem;
       border-collapse: collapse;
       font-size: 11px;
     }
-    th, td {
+    th,
+    td {
       border-bottom: 1px solid #ddd;
       padding: 5px 10px;
       text-align: left;
     }
-    th { font-weight: 600; background: #f5f5f5; }
-    td:last-child, th:last-child { text-align: right; }
+    th {
+      font-weight: 600;
+      background: #f5f5f5;
+    }
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
   }
 
-  // 4. Ocultar botones internos del ticket (Imprimir, Cerrar)
   .no-print {
     display: none !important;
     visibility: hidden !important;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   MOBILE SCROLL UTILITIES
-// ─────────────────────────────────────────────────────────────────────────────
-// ── iOS Body Scroll Lock — se agrega al <body> cuando un modal está abierto ──
 .ios-modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -350,50 +304,36 @@ $radius: 0.5rem;
     overscroll-behavior-y: contain;
   }
 
-  // Scroll horizontal para la grilla de la Agenda.
-  // • Móvil (touch): overscroll-behavior-x contiene el scroll sin
-  //   propagar al body. -webkit-overflow-scrolling activa el momentum iOS.
-  // • Desktop: barra webkit personalizada — delgada, redondeada y sutil
-  //   para no competir con el contenido operativo de la grilla.
   .scroll-hint-x {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
 
-    // Barra sutil para desktop Webkit (Chrome, Edge, Safari).
-    // En Firefox se controla con scrollbar-width/color (ver abajo).
     &::-webkit-scrollbar {
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      background: #f1f5f9; // slate-100
+      background: #f1f5f9;
       border-radius: 999px;
     }
     &::-webkit-scrollbar-thumb {
-      background: #94a3b8; // slate-400
+      background: #94a3b8;
       border-radius: 999px;
       &:hover {
-        background: #64748b; // slate-500
+        background: #64748b;
       }
     }
 
-    // Firefox
     scrollbar-width: thin;
     scrollbar-color: #94a3b8 #f1f5f9;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   BASE STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 @layer base {
   * {
     @apply border-border;
     outline-color: var(--ring);
   }
 
-  // Grilla de agenda: todos los descendientes heredan el cursor del contenedor
-  // (cursor-grab / cursor-grabbing). Está en @layer base para que las utility
-  // classes de Tailwind (cursor-pointer en tarjetas, botones, slots) lo sobreescriban.
   .scroll-hint-x * {
     cursor: inherit;
   }
@@ -413,7 +353,6 @@ $radius: 0.5rem;
       "calt" 1;
   }
 
-  // Scrollbar custom
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -428,17 +367,12 @@ $radius: 0.5rem;
   }
 }
 
-// ── Tabs nav: ocultar barra de scroll manteniendo deslizamiento táctil ────
 .tabs-nav::-webkit-scrollbar {
   display: none;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//   MATERIAL SYMBOLS ROUNDED — Iconos dinámicos desde CDN
-//   Uso: <span class="material-symbols-rounded">icon_name</span>
-// ─────────────────────────────────────────────────────────────────────────────
 .material-symbols-rounded {
-  font-family: 'Material Symbols Rounded';
+  font-family: "Material Symbols Rounded";
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -449,6 +383,6 @@ $radius: 0.5rem;
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
-  font-feature-settings: 'liga';
+  font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }

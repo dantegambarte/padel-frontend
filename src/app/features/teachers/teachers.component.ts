@@ -46,10 +46,12 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
   }
 
   @HostListener('document:keydown.escape')
+  /** Cierra el diálogo abierto al presionar Escape. */
   onEscape(): void {
     if (this.isDialogOpen) this.closeDialog();
   }
 
+  /** Profesores filtrados por el término de búsqueda (nombre o teléfono). */
   get filteredTeachers(): Teacher[] {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return this.teachers;
@@ -60,10 +62,12 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     );
   }
 
+  /** Título del diálogo según modo creación o edición. */
   get dialogTitle(): string {
     return this.editingId ? 'Editar Profesor' : 'Nuevo Profesor';
   }
 
+  /** Abre el diálogo de creación con el formulario vacío. */
   openCreateDialog(): void {
     this.editingId = null;
     this.form = EMPTY_FORM();
@@ -72,10 +76,11 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     this.isDialogOpen = true;
   }
 
+  /** Abre el diálogo de edición pre-poblado con los datos del profesor. */
   openEditDialog(teacher: Teacher): void {
     this.editingId = teacher.id;
     this.form = {
-      fullName:    teacher.fullName,
+      fullName: teacher.fullName,
       phoneNumber: teacher.phoneNumber ?? '',
     };
     this.initialForm = { ...this.form };
@@ -83,12 +88,14 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     this.isDialogOpen = true;
   }
 
+  /** Cierra el diálogo y limpia el estado de edición. */
   closeDialog(): void {
     this.isDialogOpen = false;
     this.editingId = null;
     this.initialForm = null;
   }
 
+  /** Valida el formulario y envía el DTO de creación o actualización al servicio. */
   submitForm(): void {
     if (!this.form.fullName.trim()) {
       this.formError = 'El nombre del profesor es obligatorio.';
@@ -99,7 +106,7 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     this.isSubmitting = true;
 
     const dto: CreateTeacherDto = {
-      fullName:    this.form.fullName.trim(),
+      fullName: this.form.fullName.trim(),
       phoneNumber: this.form.phoneNumber.trim() || undefined,
     };
 
@@ -111,20 +118,24 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
       next: () => {
         this.toast.success(
           this.editingId ? 'Profesor actualizado' : 'Profesor creado',
-          this.editingId ? 'Los datos fueron guardados.' : 'El profesor ya está disponible en la agenda.',
+          this.editingId
+            ? 'Los datos fueron guardados.'
+            : 'El profesor ya está disponible en la agenda.',
         );
         this.closeDialog();
         this.loadAll();
         this.isSubmitting = false;
       },
       error: (err) => {
-        const msg = err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
+        const msg =
+          err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
         this.formError = Array.isArray(msg) ? msg.join(' ') : msg;
         this.isSubmitting = false;
       },
     });
   }
 
+  /** Activa o desactiva un profesor sin abrir el modal de confirmación. */
   toggleActive(teacher: Teacher): void {
     this.togglingId = teacher.id;
     this.teachersSvc
@@ -139,12 +150,16 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
           this.loadAll();
         },
         error: () => {
-          this.toast.error('Error', 'No se pudo cambiar el estado del profesor.');
+          this.toast.error(
+            'Error',
+            'No se pudo cambiar el estado del profesor.',
+          );
           this.togglingId = null;
         },
       });
   }
 
+  /** Muestra el diálogo de confirmación y desactiva al profesor si se confirma. */
   confirmDelete(teacher: Teacher): void {
     Swal.fire({
       title: 'Desactivar Profesor',
@@ -162,7 +177,10 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
       this.togglingId = teacher.id;
       this.teachersSvc.deactivate(teacher.id).subscribe({
         next: () => {
-          this.toast.success('Profesor desactivado', `${teacher.fullName} fue desactivado.`);
+          this.toast.success(
+            'Profesor desactivado',
+            `${teacher.fullName} fue desactivado.`,
+          );
           this.togglingId = null;
           this.loadAll();
         },
@@ -174,12 +192,14 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     });
   }
 
+  /** Abre WhatsApp Web con el número del profesor. */
   whatsapp(teacher: Teacher): void {
     if (!teacher.phoneNumber) return;
     const phone = teacher.phoneNumber.replace(/\D/g, '');
     window.open(`https://wa.me/${phone}`, '_blank');
   }
 
+  /** Carga todos los profesores (activos e inactivos) desde el servidor. */
   private loadAll(): void {
     this.isLoading = true;
     this.teachersSvc.findAll(true).subscribe({
@@ -203,10 +223,11 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
     return !this.isDialogFormDirty();
   }
 
+  /** True si el formulario del diálogo tiene cambios respecto al estado inicial. */
   private isDialogFormDirty(): boolean {
     if (!this.isDialogOpen || !this.initialForm) return false;
     return (
-      this.form.fullName    !== this.initialForm.fullName    ||
+      this.form.fullName !== this.initialForm.fullName ||
       this.form.phoneNumber !== this.initialForm.phoneNumber
     );
   }

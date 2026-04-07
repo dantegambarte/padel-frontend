@@ -24,6 +24,7 @@ export class RemindersApiService {
 
   constructor(private http: HttpClient) {}
 
+  /** Obtiene los recordatorios de reservas de hoy y mañana. */
   getUpcoming(): Observable<UpcomingReminders> {
     return this.http.get<UpcomingReminders>(this.url);
   }

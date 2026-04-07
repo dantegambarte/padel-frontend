@@ -1,35 +1,40 @@
 <header class="sticky top-0 z-[110] border-b border-border bg-card shadow-sm">
   <div class="flex h-16 items-center gap-4 px-4 md:px-6">
-
-    <!-- Hamburger (mobile) -->
     <button
       type="button"
       class="lg:hidden p-2 rounded-md text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       (click)="toggleMenu.emit()"
       aria-label="Abrir menú"
     >
-      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      <svg
+        class="h-6 w-6"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
       </svg>
     </button>
 
     <div class="ml-auto flex items-center gap-1 sm:gap-3">
-
-      <!-- ══════════════════════════════════════════════════════════
-           BUSCADOR GLOBAL
-           Desktop: input siempre visible.
-           Mobile:  botón lupa → overlay expandido a ancho completo.
-           ══════════════════════════════════════════════════════════ -->
-
-      <!-- ── Desktop (md+) ───────────────────────────────────────── -->
-      <div
-        class="relative hidden md:block"
-        (click)="$event.stopPropagation()"
-      >
-        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+      <div class="relative hidden md:block" (click)="$event.stopPropagation()">
+        <svg
+          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
         <input
           type="search"
@@ -39,75 +44,96 @@
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()"
           [class.pr-8]="isSearchLoading"
-          class="flex h-9 w-72 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm
-                 ring-offset-background placeholder:text-muted-foreground
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="flex h-9 w-72 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-        <div *ngIf="isSearchLoading" class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg class="h-4 w-4 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        <div
+          *ngIf="isSearchLoading"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        >
+          <svg
+            class="h-4 w-4 animate-spin text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
           </svg>
         </div>
-        <!-- Dropdown resultados desktop -->
-        <ng-container *ngTemplateOutlet="searchDropdown; context: { $implicit: 'left-0 w-72' }"></ng-container>
+
+        <ng-container
+          *ngTemplateOutlet="
+            searchDropdown;
+            context: { $implicit: 'left-0 w-72' }
+          "
+        ></ng-container>
       </div>
 
-      <!-- ── Mobile: botón lupa (oculto cuando el buscador está abierto) ── -->
       <button
         *ngIf="!isMobileSearchOpen"
         type="button"
         (click)="openMobileSearch(); $event.stopPropagation()"
-        class="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md
-               text-card-foreground hover:bg-muted transition-colors
-               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Buscar"
       >
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
       </button>
 
-      <!-- ══════════════════════════════════════════════════════════
-           CAMPANITA DE NOTIFICACIONES
-           ══════════════════════════════════════════════════════════ -->
       <div class="relative" (click)="$event.stopPropagation()">
         <button
           type="button"
           (click)="toggleNotif()"
-          class="relative inline-flex items-center justify-center rounded-md h-9 w-9
-                 text-card-foreground hover:bg-muted transition-colors
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="relative inline-flex items-center justify-center rounded-md h-9 w-9 text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Notificaciones"
         >
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            class="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
             <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
           </svg>
-          <!-- Badge con cantidad (oculto si no hay notificaciones) -->
+
           <span
             *ngIf="notifCount > 0"
-            class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center
-                   rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold"
+            class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold"
           >
-            {{ notifCount > 9 ? '9+' : notifCount }}
+            {{ notifCount > 9 ? "9+" : notifCount }}
           </span>
         </button>
 
-        <!-- Panel de notificaciones -->
         <div
           *ngIf="isNotifOpen"
           (click)="$event.stopPropagation()"
-          class="fixed top-16 left-3 right-3
-                 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:w-96 sm:mt-2
-                 z-[200] rounded-xl border border-border bg-popover text-popover-foreground
-                 shadow-2xl ring-1 ring-black/5
-                 overflow-hidden animate-in fade-in-0 zoom-in-95"
+          class="fixed top-16 left-3 right-3 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:w-96 sm:mt-2 z-[200] rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/5 overflow-hidden animate-in fade-in-0 zoom-in-95"
         >
           <div class="p-2">
-            <!-- Header del panel -->
             <div class="flex items-center justify-between px-2 py-1.5">
               <p class="text-sm font-semibold">Notificaciones</p>
               <div class="flex items-center gap-2">
@@ -129,208 +155,339 @@
             </div>
             <hr class="my-1 border-border" />
 
-            <!-- Estado vacío -->
             <div
               *ngIf="notifications.length === 0"
               class="flex flex-col items-center gap-2 py-6 text-center"
             >
-              <svg class="h-8 w-8 text-muted-foreground/40" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+              <svg
+                class="h-8 w-8 text-muted-foreground/40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
               <p class="text-sm text-muted-foreground">Sin notificaciones</p>
             </div>
 
-            <!-- Lista agrupada por categoría -->
             <div class="max-h-[60vh] sm:max-h-80 overflow-y-auto">
               <ng-container *ngFor="let group of groupedNotifications">
-
-                <!-- Encabezado de categoría -->
                 <div class="flex items-center gap-1.5 px-2 pt-2 pb-1">
                   <span
                     class="h-2 w-2 rounded-full flex-shrink-0"
                     [ngClass]="categoryDotClass(group.category)"
                   ></span>
-                  <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p
+                    class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
                     {{ group.label }}
                   </p>
                 </div>
 
-                <!-- Ítems de la categoría -->
                 <div
                   *ngFor="let notif of group.items"
                   (click)="navigateFromNotification(notif)"
                   class="group flex items-start gap-2 rounded-sm p-3 hover:bg-accent/10 cursor-pointer transition-colors"
                 >
-                  <!-- Ícono de alerta -->
-                  <div class="mt-0.5 flex-shrink-0 rounded-full bg-amber-100 p-1">
-                    <svg class="h-3.5 w-3.5 text-amber-600" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  <div
+                    class="mt-0.5 flex-shrink-0 rounded-full bg-amber-100 p-1"
+                  >
+                    <svg
+                      class="h-3.5 w-3.5 text-amber-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                      />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
                     </svg>
                   </div>
 
-                  <!-- Contenido -->
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium leading-tight truncate">{{ notif.title }}</p>
-                    <p class="mt-0.5 text-xs text-muted-foreground line-clamp-2">{{ notif.message }}</p>
+                    <p class="text-sm font-medium leading-tight truncate">
+                      {{ notif.title }}
+                    </p>
+                    <p
+                      class="mt-0.5 text-xs text-muted-foreground line-clamp-2"
+                    >
+                      {{ notif.message }}
+                    </p>
 
-                    <!-- CTA dinámico: cambia según si ya se abrió WhatsApp o no -->
                     <ng-container *ngIf="notif.whatsappUrl">
-                      <span *ngIf="!hasClickedWA(notif.id)"
-                            class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 transition-colors">
-                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                      <span
+                        *ngIf="!hasClickedWA(notif.id)"
+                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 transition-colors"
+                      >
+                        <svg
+                          class="h-3 w-3"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.305-.88-.653-1.473-1.46-1.646-1.757-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"
+                          />
                         </svg>
                         Haz clic para enviar WhatsApp ➔
                       </span>
-                      <span *ngIf="hasClickedWA(notif.id)"
-                            class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 transition-colors">
-                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="20 6 9 17 4 12"/>
+                      <span
+                        *ngIf="hasClickedWA(notif.id)"
+                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 transition-colors"
+                      >
+                        <svg
+                          class="h-3 w-3"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
                         </svg>
                         Haz clic para confirmar en la agenda ➔
                       </span>
                     </ng-container>
                   </div>
 
-                  <!-- Botón descartar -->
                   <button
                     type="button"
                     (click)="dismissNotification(notif.id, $event)"
-                    class="flex-shrink-0 rounded-sm p-0.5 text-muted-foreground
-                           opacity-100 sm:opacity-0 sm:group-hover:opacity-100
-                           hover:bg-muted hover:text-foreground transition-all"
+                    class="flex-shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all"
                     title="Descartar"
                     aria-label="Descartar notificación"
                   >
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    <svg
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
-
               </ng-container>
             </div>
-
           </div>
         </div>
       </div>
 
-      <!-- Toggle Dark Mode -->
       <button
         type="button"
         (click)="themeService.toggle()"
-        [title]="(themeService.isDark$ | async) ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-        [ngClass]="(themeService.isDark$ | async)
-          ? 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800'
-          : 'bg-amber-100 hover:bg-amber-200 text-amber-500 border border-amber-300'"
-        class="relative inline-flex items-center justify-center rounded-full h-9 w-9
-               transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        [attr.aria-label]="(themeService.isDark$ | async) ? 'Modo claro' : 'Modo oscuro'"
+        [title]="
+          (themeService.isDark$ | async)
+            ? 'Cambiar a modo claro'
+            : 'Cambiar a modo oscuro'
+        "
+        [ngClass]="
+          (themeService.isDark$ | async)
+            ? 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800'
+            : 'bg-amber-100 hover:bg-amber-200 text-amber-500 border border-amber-300'
+        "
+        class="relative inline-flex items-center justify-center rounded-full h-9 w-9 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        [attr.aria-label]="
+          (themeService.isDark$ | async) ? 'Modo claro' : 'Modo oscuro'
+        "
       >
-        <!-- Sol (modo claro activo) -->
         <svg
           *ngIf="!(themeService.isDark$ | async)"
           class="h-5 w-5"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+          />
         </svg>
-        <!-- Luna (modo oscuro activo) -->
+
         <svg
           *ngIf="themeService.isDark$ | async"
           class="h-5 w-5"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       </button>
 
-      <!-- ══════════════════════════════════════════════════════════
-           MODO FERIADO
-           ══════════════════════════════════════════════════════════ -->
       <button
         type="button"
         (click)="holidayService.toggle()"
-        [attr.title]="(holidayService.isHoliday$ | async) ? 'Tarifa de Feriado Activa — clic para desactivar' : 'Activar Modo Feriado (tarifa fin de semana)'"
-        [ngClass]="(holidayService.isHoliday$ | async)
-          ? 'bg-amber-500/20 border-2 border-amber-500 text-amber-600 dark:text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.45)] hover:bg-amber-500/30'
-          : 'bg-transparent border border-border text-muted-foreground hover:bg-muted hover:text-foreground'"
-        class="relative inline-flex items-center justify-center rounded-full h-9 w-9
-               transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        [attr.aria-label]="(holidayService.isHoliday$ | async) ? 'Tarifa de Feriado Activa' : 'Activar Modo Feriado'"
+        [attr.title]="
+          (holidayService.isHoliday$ | async)
+            ? 'Tarifa de Feriado Activa — clic para desactivar'
+            : 'Activar Modo Feriado (tarifa fin de semana)'
+        "
+        [ngClass]="
+          (holidayService.isHoliday$ | async)
+            ? 'bg-amber-500/20 border-2 border-amber-500 text-amber-600 dark:text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.45)] hover:bg-amber-500/30'
+            : 'bg-transparent border border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+        "
+        class="relative inline-flex items-center justify-center rounded-full h-9 w-9 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        [attr.aria-label]="
+          (holidayService.isHoliday$ | async)
+            ? 'Tarifa de Feriado Activa'
+            : 'Activar Modo Feriado'
+        "
         [attr.aria-pressed]="holidayService.isHoliday$ | async"
       >
         <svg
           class="h-5 w-5 transition-transform duration-200"
           [class.scale-110]="holidayService.isHoliday$ | async"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
-          <polygon points="12 12 13 14.5 16 15 14 17 14.5 20 12 18.5 9.5 20 10 17 8 15 11 14.5 12 12"></polygon>
+          <polygon
+            points="12 12 13 14.5 16 15 14 17 14.5 20 12 18.5 9.5 20 10 17 8 15 11 14.5 12 12"
+          ></polygon>
         </svg>
 
-        <!-- Anillo de pulso cuando activo -->
         <span
           *ngIf="holidayService.isHoliday$ | async"
           class="pointer-events-none absolute inset-0 rounded-full"
         >
-          <span class="animate-ping absolute inset-0 rounded-full bg-amber-400/40"></span>
+          <span
+            class="animate-ping absolute inset-0 rounded-full bg-amber-400/40"
+          ></span>
         </span>
       </button>
 
-      <!-- Calculadora -->
       <button
         type="button"
         (click)="calcService.toggle()"
         title="Calculadora (Alt+C)"
-        class="relative hidden sm:inline-flex items-center justify-center rounded-md h-9 w-9
-               text-orange-500 hover:bg-orange-50 transition-colors
-               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="relative hidden sm:inline-flex items-center justify-center rounded-md h-9 w-9 text-orange-500 hover:bg-orange-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Abrir calculadora"
       >
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <rect x="4" y="2" width="16" height="20" rx="2" />
           <line x1="8" y1="6" x2="16" y2="6" />
-          <line x1="8" y1="10" x2="8" y2="10" stroke-width="3" stroke-linecap="round" />
-          <line x1="12" y1="10" x2="12" y2="10" stroke-width="3" stroke-linecap="round" />
-          <line x1="16" y1="10" x2="16" y2="10" stroke-width="3" stroke-linecap="round" />
-          <line x1="8" y1="14" x2="8" y2="14" stroke-width="3" stroke-linecap="round" />
-          <line x1="12" y1="14" x2="12" y2="14" stroke-width="3" stroke-linecap="round" />
-          <line x1="16" y1="14" x2="16" y2="14" stroke-width="3" stroke-linecap="round" />
-          <line x1="8" y1="18" x2="8" y2="18" stroke-width="3" stroke-linecap="round" />
-          <line x1="12" y1="18" x2="12" y2="18" stroke-width="3" stroke-linecap="round" />
-          <line x1="16" y1="18" x2="16" y2="18" stroke-width="3" stroke-linecap="round" />
+          <line
+            x1="8"
+            y1="10"
+            x2="8"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="10"
+            x2="12"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="10"
+            x2="16"
+            y2="10"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="8"
+            y1="14"
+            x2="8"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="14"
+            x2="12"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="14"
+            x2="16"
+            y2="14"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="8"
+            y1="18"
+            x2="8"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="12"
+            y1="18"
+            x2="12"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <line
+            x1="16"
+            y1="18"
+            x2="16"
+            y2="18"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
 
-      <!-- ══════════════════════════════════════════════════════════
-           MENÚ DE USUARIO
-           ══════════════════════════════════════════════════════════ -->
       <div class="relative" (click)="$event.stopPropagation()">
         <button
           type="button"
           (click)="toggleUserMenu()"
           title="Mi Cuenta"
-          class="relative flex shrink-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5
-                 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="relative flex shrink-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div class="relative">
-            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+            <div
+              class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+            >
               {{ userInitials }}
             </div>
             <span
@@ -338,28 +495,42 @@
               class="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 ring-2 ring-card"
               title="Debés cambiar tu contraseña"
             >
-              <svg class="h-2 w-2 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              <svg
+                class="h-2 w-2 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </span>
           </div>
           <div class="hidden lg:block">
-            <p class="text-sm font-medium text-card-foreground">{{ currentUser?.fullName }}</p>
+            <p class="text-sm font-medium text-card-foreground">
+              {{ currentUser?.fullName }}
+            </p>
           </div>
-          <svg class="h-3.5 w-3.5 text-muted-foreground hidden lg:block" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"/>
+          <svg
+            class="h-3.5 w-3.5 text-muted-foreground hidden lg:block"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m6 9 6 6 6-6" />
           </svg>
         </button>
 
-        <!-- Dropdown de usuario -->
         <div
           *ngIf="isUserMenuOpen"
           (click)="$event.stopPropagation()"
-          class="absolute right-0 top-full mt-1 w-48 z-[100] rounded-md border border-border
-                 bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+          class="absolute right-0 top-full mt-1 w-48 z-[100] rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
         >
           <div class="p-1">
             <button
@@ -367,10 +538,19 @@
               (click)="goToAccount()"
               class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
             >
-              <svg class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                <circle cx="12" cy="12" r="3"/>
+              <svg
+                class="h-4 w-4 text-muted-foreground"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                />
+                <circle cx="12" cy="12" r="3" />
               </svg>
               Configuración
             </button>
@@ -380,40 +560,47 @@
               (click)="logout()"
               class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
             >
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               Cerrar Sesión
             </button>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════════
-       BUSCADOR MOBILE EXPANDIDO
-       Aparece debajo del header principal con slide-down + fade.
-       Oculta todos los demás iconos del navbar para ganar espacio.
-       ══════════════════════════════════════════════════════════ -->
   <div
     *ngIf="isMobileSearchOpen"
     (click)="$event.stopPropagation()"
-    class="md:hidden overflow-hidden
-           animate-[mobileSearchIn_200ms_ease-out_both]"
+    class="md:hidden overflow-hidden animate-[mobileSearchIn_200ms_ease-out_both]"
   >
-    <div class="flex items-center gap-2 border-t border-border bg-card px-4 py-2.5">
-
-      <!-- Input expandido a ancho completo -->
+    <div
+      class="flex items-center gap-2 border-t border-border bg-card px-4 py-2.5"
+    >
       <div class="relative flex-1">
-        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        <svg
+          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
         <input
           #mobileSearchInput
@@ -424,63 +611,83 @@
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()"
           [class.pr-8]="isSearchLoading"
-          class="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm
-                 ring-offset-background placeholder:text-muted-foreground
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-        <div *ngIf="isSearchLoading" class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg class="h-4 w-4 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        <div
+          *ngIf="isSearchLoading"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        >
+          <svg
+            class="h-4 w-4 animate-spin text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
           </svg>
         </div>
       </div>
 
-      <!-- Botón Cerrar (X) -->
       <button
         type="button"
         (click)="closeMobileSearch()"
-        class="flex-shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md
-               text-muted-foreground hover:bg-muted hover:text-foreground transition-colors
-               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="flex-shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Cerrar buscador"
       >
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
     </div>
 
-    <!-- Dropdown de resultados mobile (ancho completo) -->
-    <ng-container *ngTemplateOutlet="searchDropdown; context: { $implicit: 'left-0 right-0 w-full rounded-none border-x-0' }"></ng-container>
-
+    <ng-container
+      *ngTemplateOutlet="
+        searchDropdown;
+        context: { $implicit: 'left-0 right-0 w-full rounded-none border-x-0' }
+      "
+    ></ng-container>
   </div>
-
 </header>
 
-<!-- Modal de ticket global: se abre sobre cualquier pantalla al seleccionar una venta en el buscador -->
 <app-ticket-modal
   [saleId]="globalTicketSaleId"
   (closeModal)="closeSaleTicket()"
 ></app-ticket-modal>
 
-<!-- ══════════════════════════════════════════════════════════
-     TEMPLATE COMPARTIDO: Dropdown de resultados de búsqueda
-     Usado tanto en desktop como en mobile.
-     Se le pasa la clase de posicionamiento como contexto implícito.
-     ══════════════════════════════════════════════════════════ -->
 <ng-template #searchDropdown let-posClass>
   <div
     *ngIf="isSearchOpen"
     (click)="$event.stopPropagation()"
-    [class]="'absolute top-full mt-1 z-[100] border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden rounded-md animate-in fade-in-0 zoom-in-95 ' + posClass"
+    [class]="
+      'absolute top-full mt-1 z-[100] border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden rounded-md animate-in fade-in-0 zoom-in-95 ' +
+      posClass
+    "
   >
     <div class="max-h-80 overflow-y-auto p-1">
-
-      <!-- Grupo: Productos -->
       <ng-container *ngIf="searchResults.products.length > 0">
-        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p
+          class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
           Productos
         </p>
         <button
@@ -489,24 +696,41 @@
           (click)="navigateToProduct(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
         >
-          <svg class="h-4 w-4 flex-shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
+          <svg
+            class="h-4 w-4 flex-shrink-0 text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
           </svg>
           <span class="flex-1 min-w-0">
             <span class="block truncate font-medium">{{ item.label }}</span>
-            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+            <span
+              *ngIf="item.subLabel"
+              class="block truncate text-xs text-muted-foreground"
+              >{{ item.subLabel }}</span
+            >
           </span>
         </button>
       </ng-container>
 
-      <hr *ngIf="searchResults.products.length > 0 && searchResults.bookings.length > 0" class="my-1 border-border"/>
+      <hr
+        *ngIf="
+          searchResults.products.length > 0 && searchResults.bookings.length > 0
+        "
+        class="my-1 border-border"
+      />
 
-      <!-- Grupo: Reservas -->
       <ng-container *ngIf="searchResults.bookings.length > 0">
-        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p
+          class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
           Reservas
         </p>
         <button
@@ -515,25 +739,44 @@
           (click)="navigateToBooking(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
         >
-          <svg class="h-4 w-4 flex-shrink-0 text-primary/70" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
+          <svg
+            class="h-4 w-4 flex-shrink-0 text-primary/70"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
           <span class="flex-1 min-w-0">
             <span class="block truncate font-medium">{{ item.label }}</span>
-            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+            <span
+              *ngIf="item.subLabel"
+              class="block truncate text-xs text-muted-foreground"
+              >{{ item.subLabel }}</span
+            >
           </span>
         </button>
       </ng-container>
 
-      <hr *ngIf="(searchResults.bookings.length > 0 || searchResults.products.length > 0) && searchResults.sales.length > 0" class="my-1 border-border"/>
+      <hr
+        *ngIf="
+          (searchResults.bookings.length > 0 ||
+            searchResults.products.length > 0) &&
+          searchResults.sales.length > 0
+        "
+        class="my-1 border-border"
+      />
 
-      <!-- Grupo: Ventas POS -->
       <ng-container *ngIf="searchResults.sales.length > 0">
-        <p class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p
+          class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
           Ventas POS
         </p>
         <button
@@ -542,34 +785,54 @@
           (click)="openSaleTicket(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
         >
-          <svg class="h-4 w-4 flex-shrink-0 text-accent/80" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
+          <svg
+            class="h-4 w-4 flex-shrink-0 text-accent/80"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
           </svg>
           <span class="flex-1 min-w-0">
             <span class="block truncate font-medium">
-              <span class="font-bold">Cliente:</span> {{ item.label || 'Consumidor Final' }}
+              <span class="font-bold">Cliente:</span>
+              {{ item.label || "Consumidor Final" }}
             </span>
-            <span *ngIf="item.subLabel" class="block truncate text-xs text-muted-foreground">{{ item.subLabel }}</span>
+            <span
+              *ngIf="item.subLabel"
+              class="block truncate text-xs text-muted-foreground"
+              >{{ item.subLabel }}</span
+            >
           </span>
         </button>
       </ng-container>
 
-      <!-- Sin resultados -->
       <div
         *ngIf="!isSearchLoading && !hasSearchResults"
         class="flex flex-col items-center gap-1 py-6 text-center"
       >
-        <svg class="h-8 w-8 text-muted-foreground/40" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        <svg
+          class="h-8 w-8 text-muted-foreground/40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
         <p class="text-sm text-muted-foreground">Sin resultados para</p>
-        <p class="text-sm font-medium text-card-foreground">"{{ searchQuery }}"</p>
+        <p class="text-sm font-medium text-card-foreground">
+          "{{ searchQuery }}"
+        </p>
       </div>
-
     </div>
   </div>
 </ng-template>

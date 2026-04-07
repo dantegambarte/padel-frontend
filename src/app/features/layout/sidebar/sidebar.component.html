@@ -10,11 +10,7 @@
 >
   <div class="border-b border-sidebar-border p-4">
     <div class="flex items-center gap-3">
-      <img
-        src="assets/imagen.png"
-        alt="La Caldera Logo"
-        class="h-12 w-12"
-      />
+      <img src="assets/imagen.png" alt="La Caldera Logo" class="h-12 w-12" />
       <div>
         <h1 class="text-xl font-bold">La Caldera</h1>
         <p class="text-xs text-sidebar-foreground/60">
@@ -36,7 +32,6 @@
 
   <nav class="flex-1 overflow-y-auto scroll-smooth-mobile p-3">
     <ng-container *ngFor="let group of filteredNavGroups; let first = first">
-      <!-- Cabecera de grupo: margen superior reducido en el primer grupo -->
       <p
         [class.mt-0]="first"
         [class.mt-4]="!first"
@@ -53,242 +48,256 @@
           [ngClass]="navItemClass(item.route)"
           class="w-full flex items-center justify-start gap-3 rounded-md px-4 py-2.5 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
-      <ng-container [ngSwitch]="item.icon">
-        <svg
-          *ngSwitchCase="'layout-dashboard'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect width="7" height="9" x="3" y="3" rx="1" />
-          <rect width="7" height="5" x="14" y="3" rx="1" />
-          <rect width="7" height="9" x="14" y="12" rx="1" />
-          <rect width="7" height="5" x="3" y="16" rx="1" />
-        </svg>
+          <ng-container [ngSwitch]="item.icon">
+            <svg
+              *ngSwitchCase="'layout-dashboard'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect width="7" height="9" x="3" y="3" rx="1" />
+              <rect width="7" height="5" x="14" y="3" rx="1" />
+              <rect width="7" height="9" x="14" y="12" rx="1" />
+              <rect width="7" height="5" x="3" y="16" rx="1" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'calendar-check'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M8 2v4" />
-          <path d="M16 2v4" />
-          <rect width="18" height="18" x="3" y="4" rx="2" />
-          <path d="M3 10h18" />
-          <path d="m9 16 2 2 4-4" />
-        </svg>
+            <svg
+              *ngSwitchCase="'calendar-check'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 2v4" />
+              <path d="M16 2v4" />
+              <rect width="18" height="18" x="3" y="4" rx="2" />
+              <path d="M3 10h18" />
+              <path d="m9 16 2 2 4-4" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'repeat'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m17 2 4 4-4 4" />
-          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-          <path d="m7 22-4-4 4-4" />
-          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-        </svg>
+            <svg
+              *ngSwitchCase="'repeat'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m17 2 4 4-4 4" />
+              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+              <path d="m7 22-4-4 4-4" />
+              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'graduation-cap'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-          <path d="M6 12v5c3 3 9 3 12 0v-5" />
-        </svg>
+            <svg
+              *ngSwitchCase="'graduation-cap'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'credit-card'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect width="20" height="14" x="2" y="5" rx="2" />
-          <line x1="2" x2="22" y1="10" y2="10" />
-        </svg>
+            <svg
+              *ngSwitchCase="'credit-card'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'shopping-cart'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="8" cy="21" r="1" />
-          <circle cx="19" cy="21" r="1" />
-          <path
-            d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-          />
-        </svg>
+            <svg
+              *ngSwitchCase="'shopping-cart'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="8" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path
+                d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+              />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'package'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m7.5 4.27 9 5.15" />
-          <path
-            d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
-          />
-          <path d="m3.3 7 8.7 5 8.7-5" />
-          <path d="M12 22V12" />
-        </svg>
+            <svg
+              *ngSwitchCase="'package'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m7.5 4.27 9 5.15" />
+              <path
+                d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+              />
+              <path d="m3.3 7 8.7 5 8.7-5" />
+              <path d="M12 22V12" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'bar-chart'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="18" x2="18" y1="20" y2="10" />
-          <line x1="12" x2="12" y1="20" y2="4" />
-          <line x1="6" x2="6" y1="20" y2="14" />
-        </svg>
+            <svg
+              *ngSwitchCase="'bar-chart'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" x2="18" y1="20" y2="10" />
+              <line x1="12" x2="12" y1="20" y2="4" />
+              <line x1="6" x2="6" y1="20" y2="14" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'users'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
+            <svg
+              *ngSwitchCase="'users'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
 
-        <!-- money-off: billete tachado → representa egresos/gastos -->
-        <svg
-          *ngSwitchCase="'money-off'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="2" y1="2" x2="22" y2="22" />
-          <path d="M10.29 10.29A2 2 0 0 0 10 11c0 1.1.9 2 2 2 .26 0 .51-.05.74-.14" />
-          <path d="M14 9a2 2 0 0 0-2-2" />
-          <path d="M8 8H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 1.83-1.2" />
-          <path d="M20 12V8h-4" />
-          <path d="M20 8l-4-4" />
-        </svg>
+            <svg
+              *ngSwitchCase="'money-off'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="2" y1="2" x2="22" y2="22" />
+              <path
+                d="M10.29 10.29A2 2 0 0 0 10 11c0 1.1.9 2 2 2 .26 0 .51-.05.74-.14"
+              />
+              <path d="M14 9a2 2 0 0 0-2-2" />
+              <path
+                d="M8 8H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 1.83-1.2"
+              />
+              <path d="M20 12V8h-4" />
+              <path d="M20 8l-4-4" />
+            </svg>
 
-        <!-- tag: etiqueta de precio → representa Tarifas / Franjas Horarias -->
-        <svg
-          *ngSwitchCase="'tag'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/>
-          <path d="M7 7h.01"/>
-        </svg>
+            <svg
+              *ngSwitchCase="'tag'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"
+              />
+              <path d="M7 7h.01" />
+            </svg>
 
-        <!-- alert-triangle: Stock Bajo -->
-        <svg
-          *ngSwitchCase="'alert-triangle'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-          <path d="M12 9v4"/><path d="M12 17h.01"/>
-        </svg>
+            <svg
+              *ngSwitchCase="'alert-triangle'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+              />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
 
-        <!-- receipt: comprobante de liquidación docente -->
-        <svg
-          *ngSwitchCase="'receipt'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
-          <path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/>
-        </svg>
+            <svg
+              *ngSwitchCase="'receipt'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"
+              />
+              <path d="M14 8H8" />
+              <path d="M16 12H8" />
+              <path d="M13 16H8" />
+            </svg>
 
-        <svg
-          *ngSwitchCase="'settings'"
-          class="h-6 w-6 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path
-            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-          />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      </ng-container>
+            <svg
+              *ngSwitchCase="'settings'"
+              class="h-6 w-6 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+              />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </ng-container>
 
           <span class="flex-1">{{ item.label }}</span>
 
-          <!-- Badge Stock Bajo: total de alertas (rojo) -->
           <span
-            *ngIf="item.id === 'inventory-alerts' && (outOfStockCount + lowStockCount) > 0"
+            *ngIf="
+              item.id === 'inventory-alerts' &&
+              outOfStockCount + lowStockCount > 0
+            "
             class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white"
-            title="{{ outOfStockCount + lowStockCount }} producto{{ (outOfStockCount + lowStockCount) !== 1 ? 's' : '' }} en alerta"
-          >{{ outOfStockCount + lowStockCount }}</span>
+            title="{{ outOfStockCount + lowStockCount }} producto{{
+              outOfStockCount + lowStockCount !== 1 ? 's' : ''
+            }} en alerta"
+            >{{ outOfStockCount + lowStockCount }}</span
+          >
         </button>
-      </div><!-- /group items -->
-    </ng-container><!-- /group -->
+      </div>
+    </ng-container>
   </nav>
 
   <div class="relative border-t border-sidebar-border p-3">
@@ -328,7 +337,6 @@
         <p class="px-2 py-1.5 text-sm font-semibold">Mi Cuenta</p>
         <hr class="my-1 border-border" />
 
-        <!-- Mi Cuenta — disponible para todos los usuarios -->
         <button
           type="button"
           (click)="navigate('/app/account')"
@@ -343,8 +351,8 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           Cambiar Contraseña
         </button>

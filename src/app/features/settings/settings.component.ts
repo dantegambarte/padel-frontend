@@ -32,8 +32,8 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
    */
   get isDirty(): boolean {
     return (
-      this.horarioApertura  !== this.savedHorarioApertura  ||
-      this.horarioCierre    !== this.savedHorarioCierre
+      this.horarioApertura !== this.savedHorarioApertura ||
+      this.horarioCierre !== this.savedHorarioCierre
     );
   }
 
@@ -59,6 +59,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   }
 
   @HostListener('document:keydown.escape')
+  /** Cancela la confirmación de borrado o cierra el modal de cancha al presionar Escape. */
   onEscape(): void {
     if (this.courtToDelete) {
       this.courtToDelete = null;
@@ -98,11 +99,12 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   private applyConfig(entries: ConfigEntry[]): void {
     if (!Array.isArray(entries)) return;
     const map = new Map(entries.map((e) => [e.key, e.value]));
-    if (map.has('hora_apertura')) this.horarioApertura = map.get('hora_apertura')!;
-    if (map.has('hora_cierre'))   this.horarioCierre   = map.get('hora_cierre')!;
+    if (map.has('hora_apertura'))
+      this.horarioApertura = map.get('hora_apertura')!;
+    if (map.has('hora_cierre')) this.horarioCierre = map.get('hora_cierre')!;
 
     this.savedHorarioApertura = this.horarioApertura;
-    this.savedHorarioCierre   = this.horarioCierre;
+    this.savedHorarioCierre = this.horarioCierre;
   }
 
   /** Guarda la configuración de horarios y actualiza el snapshot. */
@@ -121,7 +123,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
       .subscribe({
         next: () => {
           this.savedHorarioApertura = this.horarioApertura;
-          this.savedHorarioCierre   = this.horarioCierre;
+          this.savedHorarioCierre = this.horarioCierre;
           this.toast.success(
             'Configuración guardada',
             'Los cambios se aplicarán de inmediato',
@@ -250,12 +252,18 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
     this.courtToDelete = null;
     this.courtsService.delete(id).subscribe({
       next: () => {
-        this.courts = this.courts.filter(c => c.id !== id);
-        this.toast.success('Cancha eliminada', `"${name}" fue eliminada del sistema`);
+        this.courts = this.courts.filter((c) => c.id !== id);
+        this.toast.success(
+          'Cancha eliminada',
+          `"${name}" fue eliminada del sistema`,
+        );
       },
       error: (err) => {
         const msg = err?.error?.message ?? 'No se pudo eliminar la cancha';
-        this.toast.error('Error al eliminar', Array.isArray(msg) ? msg.join(', ') : msg);
+        this.toast.error(
+          'Error al eliminar',
+          Array.isArray(msg) ? msg.join(', ') : msg,
+        );
       },
     });
   }
@@ -268,5 +276,4 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   canDeactivate(): boolean {
     return !this.isDirty;
   }
-
 }

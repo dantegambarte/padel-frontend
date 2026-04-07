@@ -6,8 +6,16 @@ import { UnsavedChangesGuard } from '../../core/guards/unsaved-changes.guard';
 import { AdminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
-  { path: '', component: TeachersComponent, canDeactivate: [UnsavedChangesGuard] },
-  { path: 'report', component: TeacherReportComponent, canActivate: [AdminGuard] },
+  {
+    path: '',
+    component: TeachersComponent,
+    canDeactivate: [UnsavedChangesGuard],
+  },
+  {
+    path: 'report',
+    component: TeacherReportComponent,
+    canActivate: [AdminGuard],
+  },
 ];
 
 @NgModule({

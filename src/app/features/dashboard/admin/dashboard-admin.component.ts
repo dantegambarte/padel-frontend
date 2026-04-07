@@ -96,14 +96,14 @@ export class DashboardAdminComponent implements OnInit {
         {
           data: data.map((d) => d.cash),
           label: 'Efectivo',
-          backgroundColor: '#10b981', // emerald-500
+          backgroundColor: '#10b981',
           borderColor: '#059669',
           borderRadius: { topLeft: 0, topRight: 0 },
         },
         {
           data: data.map((d) => d.transfer),
           label: 'Transferencia',
-          backgroundColor: '#6366f1', // indigo-500
+          backgroundColor: '#6366f1',
           borderColor: '#4f46e5',
           borderRadius: { topLeft: 4, topRight: 4 },
         },

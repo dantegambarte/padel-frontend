@@ -1,4 +1,3 @@
-<!-- Alerta bloqueante de sesión — se renderiza sobre todo (z-[99999]) -->
 <div
   *ngIf="visible"
   class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4"
@@ -6,33 +5,37 @@
   aria-modal="true"
   [attr.aria-label]="title"
 >
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center gap-4 text-center">
-
-    <!-- Icono -->
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center gap-4 text-center"
+  >
     <div class="rounded-full bg-gray-50 p-3">
-      <svg [ngClass]="iconColor" class="w-10 h-10" fill="none" stroke="currentColor"
-        viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      <svg
+        [ngClass]="iconColor"
+        class="w-10 h-10"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
     </div>
 
-    <!-- Texto -->
     <div>
       <h2 class="text-lg font-bold text-gray-900 mb-1">{{ title }}</h2>
       <p class="text-sm text-gray-600 leading-relaxed">{{ message }}</p>
     </div>
 
-    <!-- CTA -->
     <button
       type="button"
       (click)="confirm()"
-      class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-semibold
-             text-sm hover:bg-indigo-700 active:scale-95 transition-all"
+      class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 active:scale-95 transition-all"
     >
       Volver al inicio de sesión
     </button>
-
   </div>
 </div>

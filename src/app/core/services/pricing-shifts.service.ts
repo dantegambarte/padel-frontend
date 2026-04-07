@@ -41,21 +41,24 @@ export class PricingShiftsService {
     this.shiftsCache$ = null;
   }
 
+  /** Crea una nueva franja horaria e invalida la caché. */
   create(dto: CreatePricingShiftDto): Observable<PricingShift> {
-    return this.http.post<PricingShift>(this.url, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<PricingShift>(this.url, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Actualiza una franja horaria e invalida la caché. */
   update(id: string, dto: UpdatePricingShiftDto): Observable<PricingShift> {
-    return this.http.patch<PricingShift>(`${this.url}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<PricingShift>(`${this.url}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
+  /** Elimina una franja horaria e invalida la caché. */
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.url}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 }

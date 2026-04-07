@@ -48,7 +48,9 @@ export class ProductsService {
 
   /** Devuelve todas las categorías disponibles — sin caché (lista relativamente estable). */
   getCategories(): Observable<{ id: string; name: string }[]> {
-    return this.http.get<{ id: string; name: string }[]>(`${this.url}/categories`);
+    return this.http.get<{ id: string; name: string }[]>(
+      `${this.url}/categories`,
+    );
   }
 
   /**
@@ -56,7 +58,10 @@ export class ProductsService {
    * El backend retorna la categoría existente si ya hay una con ese nombre.
    */
   createCategory(name: string): Observable<{ id: string; name: string }> {
-    return this.http.post<{ id: string; name: string }>(`${this.url}/categories`, { name });
+    return this.http.post<{ id: string; name: string }>(
+      `${this.url}/categories`,
+      { name },
+    );
   }
 
   /** Busca productos por nombre en tiempo real — sin caché (query dinámica). */
@@ -76,9 +81,9 @@ export class ProductsService {
    * @param dto - Payload de creación.
    */
   create(dto: CreateProductDto): Observable<Product> {
-    return this.http.post<Product>(this.url, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<Product>(this.url, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -87,9 +92,9 @@ export class ProductsService {
    * @param dto - Campos a modificar.
    */
   update(id: string, dto: UpdateProductDto): Observable<Product> {
-    return this.http.patch<Product>(`${this.url}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<Product>(`${this.url}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -97,9 +102,9 @@ export class ProductsService {
    * @param id - Identificador del producto.
    */
   remove(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.url}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /** Devuelve los productos con stock por debajo del mínimo — sin caché (dato volátil). */

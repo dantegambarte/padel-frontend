@@ -1,51 +1,90 @@
 <div *ngIf="unclosedSessionDate" appModalScrollLock class="modal-backdrop">
-  <div role="alertdialog" aria-modal="true" aria-labelledby="unclosed-title"
-    class="modal-card max-w-md border border-amber-200">
-
-    <!-- Body -->
+  <div
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="unclosed-title"
+    class="modal-card max-w-md border border-amber-200"
+  >
     <div class="modal-body flex flex-col gap-4">
       <div class="flex items-start gap-4">
         <div class="flex-shrink-0 rounded-full bg-amber-100 p-2.5">
-          <svg class="h-6 w-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <svg
+            class="h-6 w-6 text-amber-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+            />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </div>
         <div class="flex-1">
-          <h2 id="unclosed-title" class="text-base font-semibold text-card-foreground">Caja sin cerrar</h2>
+          <h2
+            id="unclosed-title"
+            class="text-base font-semibold text-card-foreground"
+          >
+            Caja sin cerrar
+          </h2>
           <p class="mt-1 text-sm text-muted-foreground">
             La jornada del
-            <span class="font-semibold text-amber-700">{{ formatUnclosedDate(unclosedSessionDate) }}</span>
-            todavía está abierta. Realizá el cierre antes de continuar para que los movimientos queden correctamente registrados.
+            <span class="font-semibold text-amber-700">{{
+              formatUnclosedDate(unclosedSessionDate)
+            }}</span>
+            todavía está abierta. Realizá el cierre antes de continuar para que
+            los movimientos queden correctamente registrados.
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="modal-footer flex-col-reverse sm:flex-row">
-      <button type="button" (click)="unclosedSessionDate = null"
-        class="inline-flex justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">
+      <button
+        type="button"
+        (click)="unclosedSessionDate = null"
+        class="inline-flex justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+      >
         Recordármelo después
       </button>
-      <button type="button" (click)="goToCashRegister()"
-        class="inline-flex justify-center rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors">
+      <button
+        type="button"
+        (click)="goToCashRegister()"
+        class="inline-flex justify-center rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors"
+      >
         Ir a Cierre de Caja
       </button>
     </div>
   </div>
 </div>
 
-<div class="flex h-[100dvh] overflow-hidden bg-background transition-colors duration-300">
-  <app-sidebar [isOpen]="isSidebarOpen" (closeMenu)="isSidebarOpen = false"></app-sidebar>
+<div
+  class="flex h-[100dvh] overflow-hidden bg-background transition-colors duration-300"
+>
+  <app-sidebar
+    [isOpen]="isSidebarOpen"
+    (closeMenu)="isSidebarOpen = false"
+  ></app-sidebar>
 
   <div class="flex flex-col flex-1 min-w-0">
-    <app-toolbar [title]="currentPageTitle" [currentUser]="currentUser" (toggleMenu)="toggleSidebar()"></app-toolbar>
+    <app-toolbar
+      [title]="currentPageTitle"
+      [currentUser]="currentUser"
+      (toggleMenu)="toggleSidebar()"
+    ></app-toolbar>
 
-    <main class="flex-1 p-4 md:p-6"
-          [ngClass]="isSchedulePage ? 'overflow-hidden' : 'overflow-y-auto scroll-smooth-mobile'">
+    <main
+      class="flex-1 p-4 md:p-6"
+      [ngClass]="
+        isSchedulePage
+          ? 'overflow-hidden'
+          : 'overflow-y-auto scroll-smooth-mobile'
+      "
+    >
       <div [ngClass]="isSchedulePage ? 'h-full' : 'mx-auto max-w-7xl'">
         <router-outlet></router-outlet>
       </div>

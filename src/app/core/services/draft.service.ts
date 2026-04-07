@@ -7,14 +7,14 @@ import { Injectable } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class DraftService {
+  /** Serializa y guarda `data` en localStorage bajo `key`. */
   saveDraft(key: string, data: unknown): void {
     try {
       localStorage.setItem(key, JSON.stringify(data));
-    } catch {
-      /* storage lleno o no disponible */
-    }
+    } catch {}
   }
 
+  /** Lee y deserializa el borrador guardado bajo `key`. Devuelve null si no existe o es inválido. */
   getDraft<T>(key: string): T | null {
     try {
       const raw = localStorage.getItem(key);
@@ -24,10 +24,12 @@ export class DraftService {
     }
   }
 
+  /** Elimina el borrador almacenado bajo `key`. */
   clearDraft(key: string): void {
     localStorage.removeItem(key);
   }
 
+  /** True si existe un borrador guardado bajo `key`. */
   hasDraft(key: string): boolean {
     return localStorage.getItem(key) !== null;
   }

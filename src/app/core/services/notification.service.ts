@@ -69,25 +69,22 @@ export class NotificationService {
     this.saveToStorage([]);
   }
 
-  // ── Persistencia ──────────────────────────────────────────────────────────
-
+  /** Carga las notificaciones persistidas en localStorage al iniciar el servicio. */
   private loadFromStorage(): AppNotification[] {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as AppNotification[];
-      // Restaurar instancias Date desde las cadenas ISO serializadas
       return parsed.map((n) => ({ ...n, createdAt: new Date(n.createdAt) }));
     } catch {
       return [];
     }
   }
 
+  /** Persiste el array de notificaciones actual en localStorage. */
   private saveToStorage(notifications: AppNotification[]): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(notifications));
-    } catch {
-      // Cuota excedida — ignorar sin romper el flujo
-    }
+    } catch {}
   }
 }

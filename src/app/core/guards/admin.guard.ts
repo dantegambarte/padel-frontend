@@ -35,7 +35,6 @@ export class AdminGuard implements CanActivate {
         if (user?.role === 'admin') {
           return true;
         }
-        // Empleado sin permiso → redirigir al dashboard silenciosamente
         return this.router.createUrlTree(['/app/dashboard']);
       }),
     );

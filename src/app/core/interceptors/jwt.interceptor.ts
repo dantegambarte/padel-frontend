@@ -66,8 +66,6 @@ export class JwtInterceptor implements HttpInterceptor {
           return this.handle401Error(request, next, error);
         }
 
-        // 403 en rutas protegidas: el usuario no tiene permisos pero su sesión ES válida.
-        // NO se dispara logout — propagar el error para que el componente lo maneje.
         return throwError(() => error);
       }),
     );
@@ -96,7 +94,6 @@ export class JwtInterceptor implements HttpInterceptor {
       return throwError(() => error);
     }
 
-    // 401 genérico: intentar renovar con el refresh token
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
@@ -109,15 +106,12 @@ export class JwtInterceptor implements HttpInterceptor {
         }),
         catchError((refreshError) => {
           this.isRefreshing = false;
-          // El refresh falló → el refresh token también expiró o es inválido.
-          // Logout inmediato para evitar UI en estado parcial.
           this.forceLogout('TOKEN_EXPIRED');
           return throwError(() => refreshError);
         }),
       );
     }
 
-    // Ya hay un refresh en curso — encolar esta request
     return this.refreshTokenSubject.pipe(
       filter((token) => token !== null),
       take(1),
@@ -135,15 +129,9 @@ export class JwtInterceptor implements HttpInterceptor {
    */
   private forceLogout(alertType: 'SESSION_OVERRIDDEN' | 'TOKEN_EXPIRED'): void {
     if (!this.authService.isLoggedIn) {
-      // Sesión ya fue limpiada por otra request concurrente → no hacer nada.
       return;
     }
-    // 1. Limpia todo el estado local y navega a /auth/login de forma inmediata.
-    //    Esto destruye los componentes parcialmente renderizados.
     this.authService.logout();
-    // 2. Muestra la alerta encima de la pantalla de login.
-    //    El usuario confirma y `SessionAlertComponent.confirm()` llama
-    //    a logout() nuevamente (operación idempotente).
     this.sessionAlertService.show(alertType);
   }
 
@@ -157,14 +145,11 @@ export class JwtInterceptor implements HttpInterceptor {
       if (typeof body === 'object' && body?.error) {
         return body.error as string;
       }
-      // Algunos backends anidan el mensaje en body.message como JSON
       if (typeof body?.message === 'string') {
         const parsed = JSON.parse(body.message);
         return parsed?.error ?? null;
       }
-    } catch {
-      // no parseable
-    }
+    } catch {}
     return null;
   }
 

@@ -28,7 +28,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** Si se pasa un Expense existente, el formulario trabaja en modo edición. */
   @Input() expense: Expense | null = null;
 
-  @Output() saved     = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
 
   form!: FormGroup;
@@ -81,7 +81,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const d     = new Date();
+    const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     this.form = this.fb.group({
@@ -93,30 +93,23 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         this.expense?.description ?? '',
         [Validators.required, Validators.maxLength(255)],
       ],
-      category: [
-        this.expense?.category ?? 'Otro',
-        Validators.required,
-      ],
+      category: [this.expense?.category ?? 'Otro', Validators.required],
       paymentMethod: [
         this.expense?.paymentMethod ?? 'Efectivo',
         Validators.required,
       ],
-      date: [
-        this.expense?.date ?? today,
-        Validators.required,
-      ],
+      date: [this.expense?.date ?? today, Validators.required],
     });
 
-    // Draft solo en modo creación.
     if (!this.isEditMode) {
-      // Si existe un borrador, guardarlo en variable temporal y mostrar banner de confirmación.
-      const draft = this.draftService.getDraft<Record<string, unknown>>(this.DRAFT_KEY);
+      const draft = this.draftService.getDraft<Record<string, unknown>>(
+        this.DRAFT_KEY,
+      );
       if (draft) {
         this.pendingDraft = draft;
         this.draftRestored = true;
       }
 
-      // Auto-save con debounce a cada cambio del formulario.
       this.sub.add(
         this.form.valueChanges.pipe(debounceTime(500)).subscribe((value) => {
           this.draftService.saveDraft(this.DRAFT_KEY, value);
@@ -129,6 +122,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Aplica el borrador guardado al formulario y oculta el banner de restauración. */
   applyDraft(): void {
     if (this.pendingDraft) {
       this.form.patchValue(this.pendingDraft);
@@ -137,12 +131,14 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     this.draftRestored = false;
   }
 
+  /** Descarta el borrador guardado sin aplicarlo al formulario. */
   dismissDraftBadge(): void {
     this.draftService.clearDraft(this.DRAFT_KEY);
     this.pendingDraft = null;
     this.draftRestored = false;
   }
 
+  /** Valida el formulario y envía la creación o actualización del egreso. Detecta error de caja cerrada. */
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -169,7 +165,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.submitting = false;
         const errorCode: string = err?.error?.errorCode ?? '';
-        const message: string   = err?.error?.message   ?? '';
+        const message: string = err?.error?.message ?? '';
         const isCajaCerrada =
           errorCode === 'CAJA_CERRADA' ||
           message.toLowerCase().includes('abrir la caja');
@@ -183,18 +179,22 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Navega a Cierre de Caja cuando el egreso fue rechazado por caja cerrada. */
   irAbrirCaja(): void {
     this.router.navigate(['/app/cash-register']);
   }
 
+  /** Oculta el panel de apertura de caja sin navegar. */
   cancelarAperturaCaja(): void {
     this.showOpenCashPanel = false;
   }
 
+  /** Emite el evento de cancelación para cerrar el modal desde el padre. */
   onCancel(): void {
     this.cancelled.emit();
   }
 
+  /** True si el campo fue tocado y tiene el error indicado. */
   hasError(field: string, error: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl?.touched && ctrl.hasError(error));

@@ -1,34 +1,36 @@
 <div class="space-y-6 p-4 sm:p-6">
-
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Liquidación de Profesores</h1>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">
+      Liquidación de Profesores
+    </h1>
     <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
       Consultá los turnos completados y el monto a liquidar de cada docente.
     </p>
   </div>
 
-  <!-- ── Filtros ─────────────────────────────────────────────────────────── -->
-  <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+  <div
+    class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+  >
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-      <!-- Profesor -->
       <div class="flex flex-col gap-1.5 lg:col-span-2">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400">Profesor</label>
+        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+          >Profesor</label
+        >
         <select
           [(ngModel)]="selectedTeacherId"
           class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
         >
           <option value="" disabled>Seleccioná un profesor...</option>
           <option *ngFor="let t of teachers" [value]="t.id">
-            {{ t.fullName }}{{ !t.isActive ? ' (inactivo)' : '' }}
+            {{ t.fullName }}{{ !t.isActive ? " (inactivo)" : "" }}
           </option>
         </select>
       </div>
 
-      <!-- Fecha desde -->
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400">Desde</label>
+        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+          >Desde</label
+        >
         <input
           type="date"
           [(ngModel)]="startDate"
@@ -36,9 +38,10 @@
         />
       </div>
 
-      <!-- Fecha hasta -->
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400">Hasta</label>
+        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+          >Hasta</label
+        >
         <input
           type="date"
           [(ngModel)]="endDate"
@@ -54,54 +57,88 @@
         [disabled]="!canSearch || isLoading"
         class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
-        <svg *ngIf="!isLoading" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        <svg
+          *ngIf="!isLoading"
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
         </svg>
-        <svg *ngIf="isLoading" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        <svg
+          *ngIf="isLoading"
+          class="h-4 w-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-        {{ isLoading ? 'Generando...' : 'Generar Reporte' }}
+        {{ isLoading ? "Generando..." : "Generar Reporte" }}
       </button>
     </div>
   </div>
 
-  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
   <div *ngIf="isLoading" class="space-y-4">
     <div class="grid gap-4 sm:grid-cols-3">
-      <div *ngFor="let _ of [1,2,3]" class="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"></div>
+      <div
+        *ngFor="let _ of [1, 2, 3]"
+        class="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
+      ></div>
     </div>
-    <div class="h-64 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"></div>
+    <div
+      class="h-64 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
+    ></div>
   </div>
 
-  <!-- ── Sin resultados ──────────────────────────────────────────────────── -->
-  <div *ngIf="hasSearched && !isLoading && report && report.bookings.length === 0"
-       class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900">
-    <svg class="mb-4 h-12 w-12 text-gray-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect width="18" height="18" x="3" y="4" rx="2"/>
-      <path d="M16 2v4M8 2v4M3 10h18"/>
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
+  <div
+    *ngIf="hasSearched && !isLoading && report && report.bookings.length === 0"
+    class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900"
+  >
+    <svg
+      class="mb-4 h-12 w-12 text-gray-300 dark:text-slate-600"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
     </svg>
-    <p class="font-medium text-gray-500 dark:text-slate-400">Sin turnos completados en el período</p>
+    <p class="font-medium text-gray-500 dark:text-slate-400">
+      Sin turnos completados en el período
+    </p>
     <p class="mt-1 text-sm text-gray-400 dark:text-slate-500">
       {{ report.teacher.fullName }} no tiene turnos completados entre
-      {{ fmtDate(report.period.startDate) }} y {{ fmtDate(report.period.endDate) }}.
+      {{ fmtDate(report.period.startDate) }} y
+      {{ fmtDate(report.period.endDate) }}.
     </p>
   </div>
 
-  <!-- ── Resultado ───────────────────────────────────────────────────────── -->
   <ng-container *ngIf="report && report.bookings.length > 0 && !isLoading">
-
-    <!-- Área imprimible -->
     <div id="print-area" class="teacher-report-print-area space-y-6">
-
-      <!-- Encabezado del reporte (visible al imprimir) -->
-      <div class="hidden print:flex print:items-start print:justify-between print:border-b print:pb-4">
+      <div
+        class="hidden print:flex print:items-start print:justify-between print:border-b print:pb-4"
+      >
         <div>
-          <h2 class="text-xl font-bold">Liquidación — {{ report.teacher.fullName }}</h2>
-          <p class="text-sm text-gray-500">Período: {{ fmtDateRange(report.period.startDate, report.period.endDate) }}</p>
+          <h2 class="text-xl font-bold">
+            Liquidación — {{ report.teacher.fullName }}
+          </h2>
+          <p class="text-sm text-gray-500">
+            Período:
+            {{ fmtDateRange(report.period.startDate, report.period.endDate) }}
+          </p>
         </div>
         <div class="text-right text-sm text-gray-500">
           <p>La Caldera — Club de Pádel</p>
@@ -109,42 +146,68 @@
         </div>
       </div>
 
-      <!-- Summary Cards -->
       <div class="grid gap-4 sm:grid-cols-3">
-
-        <!-- Total Turnos -->
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500">Turnos</p>
-          <p class="mt-2 text-4xl font-extrabold text-gray-900 dark:text-slate-100">
+        <div
+          class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        >
+          <p
+            class="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500"
+          >
+            Turnos
+          </p>
+          <p
+            class="mt-2 text-4xl font-extrabold text-gray-900 dark:text-slate-100"
+          >
             {{ report.summary.totalBookings }}
           </p>
-          <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">turnos completados</p>
+          <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
+            turnos completados
+          </p>
         </div>
 
-        <!-- Total Horas -->
-        <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/30">
-          <p class="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400">Horas trabajadas</p>
-          <p class="mt-2 text-4xl font-extrabold text-indigo-700 dark:text-indigo-300">
+        <div
+          class="rounded-xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/30"
+        >
+          <p
+            class="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400"
+          >
+            Horas trabajadas
+          </p>
+          <p
+            class="mt-2 text-4xl font-extrabold text-indigo-700 dark:text-indigo-300"
+          >
             {{ fmtHours(report.summary.totalMinutes) }}
           </p>
-          <p class="mt-1 text-sm text-indigo-500 dark:text-indigo-400">en el período seleccionado</p>
+          <p class="mt-1 text-sm text-indigo-500 dark:text-indigo-400">
+            en el período seleccionado
+          </p>
         </div>
 
-        <!-- Total a Liquidar -->
-        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30">
-          <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Total a liquidar</p>
-          <p class="mt-2 text-4xl font-extrabold text-emerald-700 dark:text-emerald-300">
+        <div
+          class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
+        >
+          <p
+            class="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400"
+          >
+            Total a liquidar
+          </p>
+          <p
+            class="mt-2 text-4xl font-extrabold text-emerald-700 dark:text-emerald-300"
+          >
             ${{ fmt(report.summary.totalAmount) }}
           </p>
-          <p class="mt-1 text-sm text-emerald-600 dark:text-emerald-400">según tarifas registradas</p>
+          <p class="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
+            según tarifas registradas
+          </p>
         </div>
       </div>
 
-      <!-- Tabla detalle -->
-      <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-
-        <!-- Cabecera de tabla con botón imprimir -->
-        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800 print:hidden">
+      <div
+        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      >
+        <div
+          class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800 print:hidden"
+        >
           <div>
             <p class="font-semibold text-gray-900 dark:text-slate-100">
               Detalle de turnos — {{ report.teacher.fullName }}
@@ -158,11 +221,20 @@
             (click)="print()"
             class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"/>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-              <rect width="12" height="8" x="6" y="14"/>
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path
+                d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+              />
+              <rect width="12" height="8" x="6" y="14" />
             </svg>
             Imprimir / PDF
           </button>
@@ -171,7 +243,9 @@
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+              <tr
+                class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+              >
                 <th class="px-5 py-3">Fecha</th>
                 <th class="px-5 py-3">Horario</th>
                 <th class="px-5 py-3">Duración</th>
@@ -180,9 +254,13 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
-              <tr *ngFor="let b of report.bookings"
-                  class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                <td class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">
+              <tr
+                *ngFor="let b of report.bookings"
+                class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
+              >
+                <td
+                  class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100"
+                >
                   {{ fmtDate(b.date) }}
                 </td>
                 <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
@@ -194,22 +272,33 @@
                 <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
                   {{ b.courtName }}
                 </td>
-                <td class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100">
+                <td
+                  class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100"
+                >
                   ${{ fmt(b.teacherAmount) }}
                 </td>
               </tr>
             </tbody>
-            <!-- Fila totales -->
+
             <tfoot>
-              <tr class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800">
-                <td colspan="2" class="px-5 py-3 text-gray-700 dark:text-slate-300">
-                  TOTAL — {{ report.summary.totalBookings }} turno{{ report.summary.totalBookings !== 1 ? 's' : '' }}
+              <tr
+                class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
+              >
+                <td
+                  colspan="2"
+                  class="px-5 py-3 text-gray-700 dark:text-slate-300"
+                >
+                  TOTAL — {{ report.summary.totalBookings }} turno{{
+                    report.summary.totalBookings !== 1 ? "s" : ""
+                  }}
                 </td>
                 <td class="px-5 py-3 text-gray-700 dark:text-slate-300">
                   {{ fmtHours(report.summary.totalMinutes) }}
                 </td>
                 <td></td>
-                <td class="px-5 py-3 text-right font-mono text-emerald-700 dark:text-emerald-400">
+                <td
+                  class="px-5 py-3 text-right font-mono text-emerald-700 dark:text-emerald-400"
+                >
                   ${{ fmt(report.summary.totalAmount) }}
                 </td>
               </tr>
@@ -217,9 +306,6 @@
           </table>
         </div>
       </div>
-
-    </div><!-- /print-area -->
+    </div>
   </ng-container>
-
 </div>
-

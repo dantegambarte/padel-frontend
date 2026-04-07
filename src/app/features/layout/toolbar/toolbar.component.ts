@@ -9,14 +9,23 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, Subscription, EMPTY } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  switchMap,
+} from 'rxjs/operators';
 
 import { User } from '../../../core/models/user.model';
 import { AppNotification } from '../../../core/models/notification.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CalculatorService } from '../../../core/services/calculator.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { SearchService, SearchResponse, SearchResultItem } from '../../../core/services/search.service';
+import {
+  SearchService,
+  SearchResponse,
+  SearchResultItem,
+} from '../../../core/services/search.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { HolidayService } from '../../../core/services/holiday.service';
 
@@ -29,14 +38,11 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   @Input() currentUser: User | null = null;
   @Output() toggleMenu = new EventEmitter<void>();
 
-  // ── Estado de dropdowns ──────────────────────────────────────────────────
   isNotifOpen = false;
   isUserMenuOpen = false;
 
-  // ── Estado de notificaciones ─────────────────────────────────────────────
   notifications: AppNotification[] = [];
 
-  // ── Estado del buscador ──────────────────────────────────────────────────
   searchQuery = '';
   isSearchOpen = false;
   isSearchLoading = false;
@@ -62,14 +68,12 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Suscribirse al stream de notificaciones reactivas
     this.sub.add(
       this.notificationService.notifications$.subscribe((notifs) => {
         this.notifications = notifs;
       }),
     );
 
-    // Pipeline de búsqueda con debounce y deduplicación
     this.sub.add(
       this.searchSubject
         .pipe(
@@ -103,8 +107,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-  // ── Getters ──────────────────────────────────────────────────────────────
-
+  /** Iniciales del usuario autenticado (máx. 2 letras) para el avatar de la toolbar. */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
     return name
@@ -117,10 +120,12 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       .slice(0, 2);
   }
 
+  /** Cantidad de notificaciones no leídas para el badge del ícono de campana. */
   get notifCount(): number {
     return this.notifications.length;
   }
 
+  /** True si el dropdown de búsqueda tiene al menos un resultado en cualquier categoría. */
   get hasSearchResults(): boolean {
     return (
       this.searchResults.products.length > 0 ||
@@ -129,7 +134,12 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     );
   }
 
-  get groupedNotifications(): { category: string; label: string; items: AppNotification[] }[] {
+  /** Notificaciones agrupadas por categoría (TURNOS, STOCK, CAJA, SISTEMA) para el panel desplegable. */
+  get groupedNotifications(): {
+    category: string;
+    label: string;
+    items: AppNotification[];
+  }[] {
     const LABELS: Record<string, string> = {
       TURNOS: 'Turnos',
       STOCK: 'Stock',
@@ -149,6 +159,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     }));
   }
 
+  /** Clase de color del indicador circular por categoría de notificación. */
   categoryDotClass(category: string): string {
     const map: Record<string, string> = {
       TURNOS: 'bg-amber-500',
@@ -159,20 +170,21 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     return map[category] ?? 'bg-slate-400';
   }
 
-  // ── Buscador ─────────────────────────────────────────────────────────────
-
+  /** Propaga el valor del input al Subject de búsqueda para el pipeline de debounce. */
   onSearchInput(event: Event): void {
     const q = (event.target as HTMLInputElement).value;
     this.searchQuery = q;
     this.searchSubject.next(q);
   }
 
+  /** Reabre el dropdown si ya hay resultados cuando el input recupera el foco. */
   onSearchFocus(): void {
     if (this.searchQuery.trim() && this.hasSearchResults) {
       this.isSearchOpen = true;
     }
   }
 
+  /** Limpia el input de búsqueda, resetea resultados y cierra el dropdown. */
   clearSearch(): void {
     this.searchQuery = '';
     this.searchResults = { products: [], bookings: [], sales: [] };
@@ -190,11 +202,15 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.clearSearch();
   }
 
+  /** Navega al catálogo de productos resaltando el ítem seleccionado desde la búsqueda. */
   navigateToProduct(item: SearchResultItem): void {
     this.clearSearch();
-    this.router.navigate(['/app/products'], { queryParams: { highlight: item.id } });
+    this.router.navigate(['/app/products'], {
+      queryParams: { highlight: item.id },
+    });
   }
 
+  /** Navega a la agenda en la fecha y reserva indicadas por el resultado de búsqueda. */
   navigateToBooking(item: SearchResultItem): void {
     this.clearSearch();
     this.router.navigate(['/app/schedule'], {
@@ -202,24 +218,24 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Abre el ticket de una venta desde el resultado de búsqueda navegando a reportes. */
   openSaleTicket(item: SearchResultItem): void {
     this.clearSearch();
     this.globalTicketSaleId = item.id;
-    // Navegar a Reportes (historial de movimientos) como contexto de la venta.
     this.router.navigate(['/app/reports']);
   }
 
+  /** Cierra el overlay de ticket de venta global. */
   closeSaleTicket(): void {
     this.globalTicketSaleId = null;
   }
-
-  // ── Notificaciones ───────────────────────────────────────────────────────
 
   /** `true` si el admin ya abrió WhatsApp para esta notificación (1er clic realizado). */
   hasClickedWA(notifId: string): boolean {
     return localStorage.getItem(`wa_clicked_${notifId}`) === 'true';
   }
 
+  /** Abre o cierra el panel de notificaciones, cerrando los otros dropdowns. */
   toggleNotif(): void {
     this.isNotifOpen = !this.isNotifOpen;
     if (this.isNotifOpen) {
@@ -228,20 +244,24 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Cierra el panel de notificaciones. */
   closeNotif(): void {
     this.isNotifOpen = false;
   }
 
+  /** Elimina una notificación individual sin cerrar el panel. */
   dismissNotification(id: string, event: MouseEvent): void {
     event.stopPropagation();
     this.notificationService.removeById(id);
   }
 
+  /** Elimina todas las notificaciones del panel. */
   clearAllNotifications(event: MouseEvent): void {
     event.stopPropagation();
     this.notificationService.clearAllNotifications();
   }
 
+  /** Navega a la ruta de la notificación; si tiene URL de WhatsApp, la abre en la primera interacción. */
   navigateFromNotification(notif: AppNotification): void {
     this.isNotifOpen = false;
 
@@ -250,20 +270,14 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       const alreadyClicked = localStorage.getItem(clickedKey) === 'true';
 
       if (!alreadyClicked) {
-        // 1er clic: abrir WhatsApp y marcar. La notificación persiste
-        // hasta que el admin confirme la asistencia desde el modal.
         localStorage.setItem(clickedKey, 'true');
         window.open(notif.whatsappUrl, '_blank');
         return;
       }
 
-      // 2do+ clic: navegar al turno para confirmar asistencia.
-      // Se inyecta _t para forzar una nueva emisión del Router aunque los
-      // queryParams base sean idénticos a la navegación anterior.
-      this.router.navigate(
-        notif.actionRoute,
-        { queryParams: { ...notif.queryParams, _t: Date.now() } },
-      );
+      this.router.navigate(notif.actionRoute, {
+        queryParams: { ...notif.queryParams, _t: Date.now() },
+      });
       return;
     }
 
@@ -273,13 +287,13 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ── Menú de usuario ──────────────────────────────────────────────────────
-
+  /** Cierra el menú de usuario y navega a la página de perfil. */
   goToAccount(): void {
     this.isUserMenuOpen = false;
     this.router.navigate(['/app/account']);
   }
 
+  /** Abre o cierra el menú desplegable del usuario, cerrando los otros paneles. */
   toggleUserMenu(): void {
     this.isUserMenuOpen = !this.isUserMenuOpen;
     if (this.isUserMenuOpen) {
@@ -288,18 +302,19 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Cierra el menú desplegable del usuario. */
   closeUserMenu(): void {
     this.isUserMenuOpen = false;
   }
 
+  /** Cierra la sesión y redirige al login. */
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }
 
-  // ── Cierre global al hacer clic fuera ────────────────────────────────────
-
   @HostListener('document:click')
+  /** Cierra todos los paneles desplegables al hacer clic fuera de ellos. */
   onDocumentClick(): void {
     this.isUserMenuOpen = false;
     this.isNotifOpen = false;

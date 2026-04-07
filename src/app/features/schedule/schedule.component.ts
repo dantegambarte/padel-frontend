@@ -1,7 +1,21 @@
-import { Component, OnInit, OnDestroy, HostListener, NgZone, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  NgZone,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, forkJoin, timer, of } from 'rxjs';
-import { finalize, filter, take, catchError, debounceTime } from 'rxjs/operators';
+import {
+  finalize,
+  filter,
+  take,
+  catchError,
+  debounceTime,
+} from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -52,7 +66,7 @@ interface CartItem {
 export class ScheduleComponent implements OnInit, OnDestroy {
   selectedDate = (() => {
     const d = new Date();
-    if(d.getHours() < 2) {
+    if (d.getHours() < 2) {
       d.setDate(d.getDate() - 1);
     }
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -67,7 +81,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Productos marcados como destacados, disponibles para agregar rápidamente. */
   get featuredProducts(): Product[] {
     return this.allProducts.filter(
-      (p) => p.isFeatured && (p.stock > 0 || (p.category?.name ?? '').toLowerCase().includes('alquiler')),
+      (p) =>
+        p.isFeatured &&
+        (p.stock > 0 ||
+          (p.category?.name ?? '').toLowerCase().includes('alquiler')),
     );
   }
   isLoading = false;
@@ -76,7 +93,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   bookingMap = new Map<string, BookingResponse>();
 
   horarioApertura = '09:00';
-  horarioCierre   = '23:00';
+  horarioCierre = '23:00';
 
   /** Slots de 30 minutos generados dinámicamente según horario de apertura/cierre. */
   HOURS: string[] = this.buildHoursFromRange('09:00', '23:00');
@@ -85,17 +102,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private buildHoursFromRange(apertura: string, cierre: string): string[] {
     const [oh, om] = apertura.split(':').map(Number);
     const [ch, cm] = cierre.split(':').map(Number);
-    const openMin  = oh * 60 + om;
+    const openMin = oh * 60 + om;
     const closeMin = ch * 60 + cm;
-    const totalMin = closeMin > openMin
-      ? closeMin - openMin
-      : (24 * 60 - openMin) + closeMin;
+    const totalMin =
+      closeMin > openMin ? closeMin - openMin : 24 * 60 - openMin + closeMin;
     const slots: string[] = [];
     for (let i = 0; i < totalMin; i += 30) {
       const abs = (openMin + i) % (24 * 60);
-      const h   = Math.floor(abs / 60);
-      const m   = abs % 60;
-      slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      const h = Math.floor(abs / 60);
+      const m = abs % 60;
+      slots.push(
+        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
+      );
     }
     return slots;
   }
@@ -119,8 +137,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   selectedSlot: { court: Court; hour: string } | null = null;
   selectedBooking: BookingResponse | null = null;
 
-
-
   clientName = '';
   phoneNumber = '';
   priceType: PriceType = 'standard';
@@ -142,27 +158,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   isAutoSavingItems = false;
   /** Verdadero cuando al menos un ítem del carrito está tildado para cobro parcial. */
   get hasSelectedProducts(): boolean {
-    return this.detailCart.some(i => !i.isPaid && i.selectedForPayment);
+    return this.detailCart.some((i) => !i.isPaid && i.selectedForPayment);
   }
   /** Cantidad de ítems (líneas) del carrito tildados para cobro parcial. */
   get selectedProductsCount(): number {
-    return this.detailCart.filter(i => !i.isPaid && i.selectedForPayment).length;
+    return this.detailCart.filter((i) => !i.isPaid && i.selectedForPayment)
+      .length;
   }
   /** Total de los productos tildados para cobro parcial. Calculado en tiempo real. */
   get pendingProductPaymentAmount(): number {
     return this.detailCart
-      .filter(i => !i.isPaid && i.selectedForPayment)
+      .filter((i) => !i.isPaid && i.selectedForPayment)
       .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
   /** Tab activo en el panel de cobro del modal de detalle: pago rápido o dividir por jugador. */
   detailPaymentTab: 'quick' | 'split' = 'quick';
 
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
-  @ViewChild('cobroParcialPanel') cobroParcialPanel!: ElementRef<HTMLDivElement>;
+  @ViewChild('cobroParcialPanel')
+  cobroParcialPanel!: ElementRef<HTMLDivElement>;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('headerRow') headerRow!: ElementRef<HTMLDivElement>;
 
-  // ── Drag-to-scroll (escritorio) ───────────────────────────────────────────
   private isScrollDragging = false;
   private scrollDragStartX = 0;
   private scrollDragOriginLeft = 0;
@@ -172,7 +189,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   confirmDialogMessage = '';
   private confirmCallback: (() => void) | null = null;
 
-  // ── Diálogo Mover / Duplicar ──────────────────────────────────────────────
   /** Turno pendiente de mover/duplicar (drag-drop o botón móvil). */
   rescheduleDialogOpen = false;
   /** `true` cuando el diálogo es iniciado desde el botón móvil dentro del modal de detalle. */
@@ -195,7 +211,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Contador de pagados al abrir el modal — usado para el dirty check al cerrar. */
   private initialPaidCount = 0;
   /** Historial de pagos por jugador en la sesión actual del modal (LIFO para deshacer). */
-  private playerPaymentHistory: { method: 'cash' | 'transfer'; amount: number }[] = [];
+  private playerPaymentHistory: {
+    method: 'cash' | 'transfer';
+    amount: number;
+  }[] = [];
   /** Contadores por método para el deshacer selectivo. */
   partialCashCount = 0;
   partialTransferCount = 0;
@@ -214,17 +233,20 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   setSplitMode(mode: 'court' | 'court+items'): void {
     if (this.splitMode === mode) return;
     if (this.playerPaymentHistory.length > 0) {
-      // Revertir solo los montos sumados por los botones "+1 Efectivo/Transf."
-      // ya que sus valores dependen del modo anterior. Los montos ingresados
-      // manualmente en los inputs se preservan.
       let cashFromButtons = 0;
       let transferFromButtons = 0;
       for (const p of this.playerPaymentHistory) {
         if (p.method === 'cash') cashFromButtons += p.amount;
         else transferFromButtons += p.amount;
       }
-      this.detailAmountCash = Math.max(0, (Number(this.detailAmountCash) || 0) - cashFromButtons);
-      this.detailAmountTransfer = Math.max(0, (Number(this.detailAmountTransfer) || 0) - transferFromButtons);
+      this.detailAmountCash = Math.max(
+        0,
+        (Number(this.detailAmountCash) || 0) - cashFromButtons,
+      );
+      this.detailAmountTransfer = Math.max(
+        0,
+        (Number(this.detailAmountTransfer) || 0) - transferFromButtons,
+      );
       this.playerPaymentHistory = [];
       this.partialCashCount = 0;
       this.partialTransferCount = 0;
@@ -276,7 +298,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.listenToDateQueryParam();
     this.checkCashStatus();
 
-    // Auto-save del formulario de creación de reserva con debounce.
     this.sub.add(
       this.bookingDraftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_BOOKING, {
@@ -322,14 +343,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           const date: string = params['date'];
           const openBookingId: string | undefined = params['openBooking'];
 
-          // Actualizar fecha seleccionada si el param es válido
           if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
             this.selectedDate = date;
           }
 
-          // Siempre recargar y abrir el modal en el callback.
-          // Esto garantiza que funcione tanto cuando el componente acaba de
-          // montarse como cuando ya estaba activo (navegación con _t).
           this.loadBookings(() => {
             if (openBookingId) {
               this.tryOpenBookingById(openBookingId);
@@ -357,14 +374,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!timeStr) return;
     const cleanTime = timeStr.replace('hs', '').trim();
     const targetId = `time-row-${cleanTime}`;
-    setTimeout(() => {
-      const element = document.getElementById(targetId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (attempt < 8) {
-        this.scrollToTime(timeStr, attempt + 1);
-      }
-    }, attempt === 0 ? 300 : 400);
+    setTimeout(
+      () => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (attempt < 8) {
+          this.scrollToTime(timeStr, attempt + 1);
+        }
+      },
+      attempt === 0 ? 300 : 400,
+    );
   }
 
   ngOnDestroy(): void {
@@ -392,12 +412,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // Solo aplica cuando la grilla muestra el día de hoy
     if (this.selectedDate !== todayStr) return;
 
     const nowMin = today.getHours() * 60 + today.getMinutes();
     const processed = new Set<string>();
-    const newlyLate: string[] = [];           // etiquetas "Cancha X (HH:MM)" de los turnos nuevos
+    const newlyLate: string[] = [];
 
     this.bookingMap.forEach((booking) => {
       if (processed.has(booking.id)) return;
@@ -409,12 +428,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       const [h, m] = booking.hour.split(':').map(Number);
       const delayMin = nowMin - (h * 60 + m);
 
-      // Ventana: entre 5 min (ya debería haber arrancado) y 120 min (2 h máximo)
       if (delayMin >= 5 && delayMin <= 120) {
         this.notifiedBookingIds.add(booking.id);
         newlyLate.push(`${booking.court.name} (${booking.hour}hs)`);
 
-        // Emite notificación persistente en la campanita del Topbar
         this.notificationService.add({
           id: `delay-${booking.id}`,
           title: 'Turno con retraso',
@@ -430,12 +447,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     if (newlyLate.length === 0) return;
 
-    // Un único toast agrupado para todos los turnos atrasados detectados en este tick
     const count = newlyLate.length;
     const detail =
-      count === 1
-        ? newlyLate[0]
-        : `${count} turnos: ${newlyLate.join(', ')}`;
+      count === 1 ? newlyLate[0] : `${count} turnos: ${newlyLate.join(', ')}`;
 
     this.toast.info(
       `🔔 ${count === 1 ? 'Turno atrasado' : `${count} turnos atrasados`}`,
@@ -474,7 +488,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get activeShift(): PricingShift | null {
     if (!this.selectedSlot || !this.pricingShifts.length) return null;
     const [year, month, day] = this.selectedDate.split('-').map(Number);
-    // En modo feriado se fuerza el día a sábado (6) para aplicar tarifa de fin de semana.
     const realDay = new Date(year, month - 1, day).getDay();
     const dayOfWeek = this.holidayService.isHoliday ? 6 : realDay;
     const bookingMin = this.timeToMinutes(this.selectedSlot.hour);
@@ -483,8 +496,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         const days = (s.daysOfWeek as number[]).map(Number);
         if (!days.includes(dayOfWeek)) return false;
         const startMin = this.timeToMinutes(s.startTime);
-        const endMin   = this.timeToMinutes(s.endTime);
-        // Franja normal (mismo día) vs. franja que cruza medianoche
+        const endMin = this.timeToMinutes(s.endTime);
         return startMin <= endMin
           ? bookingMin >= startMin && bookingMin < endMin
           : bookingMin >= startMin || bookingMin < endMin;
@@ -498,8 +510,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   getPriceLabel(booking: BookingResponse): string {
     if (booking.priceType === 'professor') return 'Profesor';
-    // Prefer the persisted shift name (snapshot taken at booking creation time).
-    // Fall back to live shift-matching for historical bookings that predate the column.
     if (booking.appliedShiftName) return booking.appliedShiftName;
     if (this.pricingShifts.length) {
       const [year, month, day] = booking.date.split('-').map(Number);
@@ -509,7 +519,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         const days = (s.daysOfWeek as number[]).map(Number);
         if (!days.includes(dayOfWeek)) return false;
         const startMin = this.timeToMinutes(s.startTime);
-        const endMin   = this.timeToMinutes(s.endTime);
+        const endMin = this.timeToMinutes(s.endTime);
         return startMin <= endMin
           ? bookingMin >= startMin && bookingMin < endMin
           : bookingMin >= startMin || bookingMin < endMin;
@@ -545,13 +555,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         return Number(shift.teacherPricePerHour) * (this.durationMinutes / 60);
       }
       switch (this.durationMinutes) {
-        case 30:  return Number(shift.price30min)  || 0;
-        case 90:  return Number(shift.price90min)  || 0;
-        case 120: return Number(shift.price120min) || 0;
-        default:  return Number(shift.price60min)  || 0;
+        case 30:
+          return Number(shift.price30min) || 0;
+        case 90:
+          return Number(shift.price90min) || 0;
+        case 120:
+          return Number(shift.price120min) || 0;
+        default:
+          return Number(shift.price60min) || 0;
       }
     }
-    // Sin franja horaria activa → precio 0 (el operador deberá ajustarlo).
     return 0;
   }
 
@@ -610,17 +623,24 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       forkJoin({
-        courts:        this.courtsService.findAll(),
-        products:      this.productsService.findAll(),
-        config:        this.configService.getAll().pipe(catchError(() => of([]))),
-        teachers:      this.teachersService.findAll().pipe(catchError(() => of([]))),
-        pricingShifts: this.pricingShiftsService.getActive().pipe(catchError(() => of([]))),
+        courts: this.courtsService.findAll(),
+        products: this.productsService.findAll(),
+        config: this.configService.getAll().pipe(catchError(() => of([]))),
+        teachers: this.teachersService.findAll().pipe(catchError(() => of([]))),
+        pricingShifts: this.pricingShiftsService
+          .getActive()
+          .pipe(catchError(() => of([]))),
       }).subscribe({
         next: ({ courts, products, config, teachers, pricingShifts }) => {
           const cfgMap = new Map(config.map((e) => [e.key, e.value]));
-          if (cfgMap.has('hora_apertura')) this.horarioApertura = cfgMap.get('hora_apertura')!;
-          if (cfgMap.has('hora_cierre'))   this.horarioCierre   = cfgMap.get('hora_cierre')!;
-          this.HOURS = this.buildHoursFromRange(this.horarioApertura, this.horarioCierre);
+          if (cfgMap.has('hora_apertura'))
+            this.horarioApertura = cfgMap.get('hora_apertura')!;
+          if (cfgMap.has('hora_cierre'))
+            this.horarioCierre = cfgMap.get('hora_cierre')!;
+          this.HOURS = this.buildHoursFromRange(
+            this.horarioApertura,
+            this.horarioCierre,
+          );
 
           this.courts = courts.filter((c) => c.isActive);
           this.allProducts = products.filter((p) => p.isActive);
@@ -698,7 +718,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const targetId = `time-row-${h.toString().padStart(2, '0')}:${slot}`;
     const fallbackId = `time-row-${this.horarioApertura}`;
 
-    // 150ms da margen suficiente al render cycle de Angular
     setTimeout(() => {
       const targetElement = document.getElementById(targetId);
       if (targetElement) {
@@ -706,7 +725,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       } else {
         const fallbackElement = document.getElementById(fallbackId);
         if (fallbackElement) {
-          fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          fallbackElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
         }
       }
     }, 150);
@@ -782,19 +804,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Al usar rem la altura escala junto con el font-size global sin desincronizarse.
    * Ejemplo: 60 min = 2 slots → 2*3 + 1*0.5 = 6.5rem.
    */
-  private readonly SLOT_H_REM = 3;      // h-12 = 3rem
-  private readonly SLOT_GAP_REM = 0.5;  // space-y-2 = 0.5rem
+  private readonly SLOT_H_REM = 3;
+  private readonly SLOT_GAP_REM = 0.5;
 
+  /** Altura rem del bloque exterior de la tarjeta de reserva según su duración. */
   getBookingBlockHeight(booking: BookingResponse): string {
     const numSlots = (booking.durationMinutes ?? 60) / 30;
-    const total = numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
+    const total =
+      numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
     return `${total}rem`;
   }
 
+  /** Altura rem del bloque interior de la tarjeta (2px menos por cada lado de inset). */
   getBookingBlockHeightInner(booking: BookingResponse): string {
     const numSlots = (booking.durationMinutes ?? 60) / 30;
-    const total = numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
-    // 2px inset on each side (inset-[2px]) = 4px subtracted from the outer height
+    const total =
+      numSlots * this.SLOT_H_REM + (numSlots - 1) * this.SLOT_GAP_REM;
     return `calc(${total}rem - 4px)`;
   }
 
@@ -897,6 +922,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return status === 'playing' || status === 'completed';
   }
 
+  /** Monto base para el split de pago: solo cancha o cancha + ítems no pagados según el modo activo. */
   private get splitBase(): number {
     const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
     return this.splitMode === 'court'
@@ -912,7 +938,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Deuda restante (según el modo activo) dividida entre los jugadores que aún no pagaron. */
   get detailDebtPerPlayer(): number {
-    const remaining = Math.max(1, this.detailPlayerCount - this.detailPaidCount);
+    const remaining = Math.max(
+      1,
+      this.detailPlayerCount - this.detailPaidCount,
+    );
     return Math.ceil(this.detailSaldoPendiente / remaining);
   }
 
@@ -953,7 +982,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     )
       return;
     const amount = this.perPlayerAmount;
-    this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + amount;
+    this.detailAmountTransfer =
+      (Number(this.detailAmountTransfer) || 0) + amount;
     this.playerPaymentHistory.push({ method: 'transfer', amount });
     this.partialTransferCount++;
     this.detailPaidCount++;
@@ -965,16 +995,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   undoPartialPayment(method: 'cash' | 'transfer'): void {
     if (this.detailPaidCount <= 0) return;
-    // Buscar el último entry del método indicado
-    const idx = [...this.playerPaymentHistory].reverse().findIndex(e => e.method === method);
+    const idx = [...this.playerPaymentHistory]
+      .reverse()
+      .findIndex((e) => e.method === method);
     if (idx === -1) return;
     const realIdx = this.playerPaymentHistory.length - 1 - idx;
     const entry = this.playerPaymentHistory.splice(realIdx, 1)[0];
     if (method === 'cash') {
-      this.detailAmountCash = Math.max(0, (Number(this.detailAmountCash) || 0) - entry.amount);
+      this.detailAmountCash = Math.max(
+        0,
+        (Number(this.detailAmountCash) || 0) - entry.amount,
+      );
       this.partialCashCount = Math.max(0, this.partialCashCount - 1);
     } else {
-      this.detailAmountTransfer = Math.max(0, (Number(this.detailAmountTransfer) || 0) - entry.amount);
+      this.detailAmountTransfer = Math.max(
+        0,
+        (Number(this.detailAmountTransfer) || 0) - entry.amount,
+      );
       this.partialTransferCount = Math.max(0, this.partialTransferCount - 1);
     }
     this.detailPaidCount--;
@@ -1077,8 +1114,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   getStatusBadgeClass(status: BookingStatus): string {
     const map: Record<BookingStatus, string> = {
       booked: 'bg-primary/15 text-primary dark:bg-primary/25',
-      playing: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-      completed: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
+      playing:
+        'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+      completed:
+        'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
       cancelled: 'bg-destructive/15 text-destructive',
     };
     return map[status] ?? 'bg-muted text-muted-foreground';
@@ -1090,7 +1129,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Los slots de continuación (donde la reserva inició antes) son ignorados.
    */
   onSlotClick(court: Court, hour: string): void {
-    // Ignorar clicks durante drag o cuando el diálogo de mover/duplicar ya está abierto.
     if (this.isDragging || this.rescheduleDialogOpen) return;
 
     const booking = this.getBooking(court.id, hour);
@@ -1108,8 +1146,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.selectedBooking = null;
     this.resetForm();
     this.isDialogOpen = true;
-    // Mostrar banner si existe un borrador de una reserva previa inconclusa.
-    this.showBookingDraftBanner = this.draftService.hasDraft(this.DRAFT_KEY_BOOKING);
+    this.showBookingDraftBanner = this.draftService.hasDraft(
+      this.DRAFT_KEY_BOOKING,
+    );
   }
 
   /** Abre el diálogo en modo detalle pre-cargando los datos de la reserva. */
@@ -1131,17 +1170,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * restaurar el estado visual y evitar el bug de "jugadores pagados perdidos".
    */
   private initDetailState(booking: BookingResponse): void {
-    // Calcular el total guardado ANTES de mapear el carrito para poder
-    // marcar los ítems como pagados si ya existe un pago en la BD.
     const savedTotal =
       Number(booking.payment?.amountCash ?? 0) +
       Number(booking.payment?.amountTransfer ?? 0);
 
-    // Los ítems siempre empiezan como no pagados al abrir el modal.
-    // Un ítem solo pasa a isPaid=true cuando el cajero lo marca con "selectedForPayment"
-    // y confirma con "Registrar Pago". Así detailUnpaidItemsSubtotal refleja
-    // correctamente lo que aún falta cobrar, evitando el bug de "Saldo Completo $0"
-    // cuando solo se había registrado un pago parcial de cancha.
     this.detailCart = booking.items.map((item) => ({
       productId: item.productId,
       name: item.product.name,
@@ -1151,8 +1183,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       selectedForPayment: false,
     }));
 
-    // savedAmount* = acumulado ya persistido en DB (solo lectura para cálculo de saldo).
-    // detailAmount* = lo que el cajero ingresa en ESTA sesión (empieza en 0).
     this.savedAmountCash = Number(booking.payment?.amountCash ?? 0);
     this.savedAmountTransfer = Number(booking.payment?.amountTransfer ?? 0);
     this.detailAmountCash = 0;
@@ -1160,8 +1190,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailPlayerCount = 4;
     this.detailPaymentTab = 'quick';
 
-    // Infiere cuántos jugadores ya pagaron a partir del monto guardado en DB.
-    // Esto restaura el estado visual (puntos verdes) al reabrir un turno con pago parcial.
     if (savedTotal > 0) {
       const itemsSubtotal = this.detailCart.reduce(
         (s, i) => s + i.unitPrice * i.quantity,
@@ -1170,12 +1198,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       const totalBooking = Number(booking.priceAmount ?? 0) + itemsSubtotal;
       const costPerPlayer =
         this.detailPlayerCount > 0 ? totalBooking / this.detailPlayerCount : 1;
-      this.detailPaidCount = costPerPlayer > 0
-        ? Math.min(
-            Math.round(savedTotal / costPerPlayer),
-            this.detailPlayerCount,
-          )
-        : 0;
+      this.detailPaidCount =
+        costPerPlayer > 0
+          ? Math.min(
+              Math.round(savedTotal / costPerPlayer),
+              this.detailPlayerCount,
+            )
+          : 0;
     } else {
       this.detailPaidCount = 0;
     }
@@ -1211,13 +1240,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     const phone = booking.fixedBooking?.phoneNumber?.replace(/\D/g, '');
     if (!phone) {
-      this.toast.info('Sin número registrado', 'Este turno fijo no tiene un teléfono registrado.');
+      this.toast.info(
+        'Sin número registrado',
+        'Este turno fijo no tiene un teléfono registrado.',
+      );
       return;
     }
 
     const courtName = booking.court?.name ?? 'la cancha';
     const message = `Hola *${booking.clientName}*, te escribimos desde la Caldera Padel para confirmar tu turno fijo de hoy a las *${booking.hour}*hs en la *${courtName}*. ¿Nos confirmás tu asistencia?`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+      '_blank',
+    );
   }
 
   /**
@@ -1232,14 +1267,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.bookingsService.confirm(booking.id).subscribe({
       next: (updated) => {
         this.isConfirmingBooking = false;
-        // Actualizar el turno en el modal y en el mapa
         this.selectedBooking = { ...booking, isConfirmed: true };
         this.addToBookingMap({ ...booking, isConfirmed: true });
-        // Limpiar notificación y flag de WA del localStorage
         this.notificationService.removeByEntityId(booking.id);
         localStorage.removeItem(`wa_clicked_reminder-today-${booking.id}`);
         localStorage.removeItem(`wa_clicked_reminder-tomorrow-${booking.id}`);
-        this.toast.success('Asistencia confirmada', `${booking.clientName} confirmó su turno.`);
+        this.toast.success(
+          'Asistencia confirmada',
+          `${booking.clientName} confirmó su turno.`,
+        );
       },
       error: () => {
         this.isConfirmingBooking = false;
@@ -1248,6 +1284,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Cierra el diálogo de detalle o creación, solicitando confirmación si hay cambios sin guardar. */
   closeDialog(): void {
     if (this.confirmDialogOpen) return;
 
@@ -1302,7 +1339,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
     this.splitMode = 'court+items';
-    // hasSelectedProducts y pendingProductPaymentAmount son getters: se resetean con detailCart
   }
 
   /** Resetea el formulario de creación a sus valores iniciales. */
@@ -1348,12 +1384,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!this.selectedSlot || this.isSaving) return;
 
     if (!this.clientName.trim()) {
-      this.toast.error('Campo requerido', 'Por favor ingresá el nombre del cliente.');
+      this.toast.error(
+        'Campo requerido',
+        'Por favor ingresá el nombre del cliente.',
+      );
       return;
     }
 
     if (this.isFixedBookingMode && !this.phoneNumber.trim()) {
-      this.toast.error('Teléfono requerido', 'El número de WhatsApp es obligatorio para turnos fijos.');
+      this.toast.error(
+        'Teléfono requerido',
+        'El número de WhatsApp es obligatorio para turnos fijos.',
+      );
       return;
     }
 
@@ -1376,46 +1418,52 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
-    // ── Modo Turno Fijo ──────────────────────────────────────────────────────
     if (this.isFixedBookingMode) {
-      // Calcular dayOfWeek ISO (1=Lun…7=Dom) a partir de selectedDate
       const [y, mo, dy] = this.selectedDate.split('-').map(Number);
-      const jsDay = new Date(y, mo - 1, dy).getDay(); // 0=Dom…6=Sáb
+      const jsDay = new Date(y, mo - 1, dy).getDay();
       const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
       this.sub.add(
-        this.fixedBookingsService.create({
-          clientName: this.clientName.trim(),
-          phoneNumber: this.phoneNumber.trim(),
-          dayOfWeek,
-          hour: this.selectedSlot.hour,
-          durationMinutes: this.durationMinutes,
-          courtId: this.selectedSlot.court.id,
-          startDate: this.selectedDate,
-          teacherId: this.isTeacherBooking ? (this.selectedTeacherId || null) : null,
-        }).subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
-            this.showBookingDraftBanner = false;
-            this.toast.success(
-              '⭐ Turno Fijo creado',
-              `${this.clientName.trim()} — ${this.selectedSlot!.court.name} los ${this.selectedDate} a las ${this.selectedSlot!.hour}hs y todas las semanas.`,
-            );
-            this.closeDialog();
-            this.loadBookings();
-          },
-          error: (err) => {
-            this.isSaving = false;
-            const msg = err?.error?.message;
-            this.toast.error('Error al crear turno fijo', Array.isArray(msg) ? msg.join(' ') : (msg ?? 'Intente nuevamente.'));
-          },
-        }),
+        this.fixedBookingsService
+          .create({
+            clientName: this.clientName.trim(),
+            phoneNumber: this.phoneNumber.trim(),
+            dayOfWeek,
+            hour: this.selectedSlot.hour,
+            durationMinutes: this.durationMinutes,
+            courtId: this.selectedSlot.court.id,
+            startDate: this.selectedDate,
+            teacherId: this.isTeacherBooking
+              ? this.selectedTeacherId || null
+              : null,
+          })
+          .subscribe({
+            next: () => {
+              this.isSaving = false;
+              this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
+              this.showBookingDraftBanner = false;
+              this.toast.success(
+                '⭐ Turno Fijo creado',
+                `${this.clientName.trim()} — ${this.selectedSlot!.court.name} los ${this.selectedDate} a las ${this.selectedSlot!.hour}hs y todas las semanas.`,
+              );
+              this.closeDialog();
+              this.loadBookings();
+            },
+            error: (err) => {
+              this.isSaving = false;
+              const msg = err?.error?.message;
+              this.toast.error(
+                'Error al crear turno fijo',
+                Array.isArray(msg)
+                  ? msg.join(' ')
+                  : (msg ?? 'Intente nuevamente.'),
+              );
+            },
+          }),
       );
       return;
     }
 
-    // ── Modo Reserva Normal ──────────────────────────────────────────────────
     const dto: CreateBookingDto = {
       courtId: this.selectedSlot.court.id,
       date: this.selectedDate,
@@ -1430,8 +1478,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         quantity: i.quantity,
       })),
     };
-    // Solo incluir teacherId en el payload cuando realmente es un turno de profesor,
-    // para evitar el error 400 "property teacherId should not exist" del ValidationPipe.
     if (this.isTeacherBooking && this.selectedTeacherId) {
       dto.teacherId = this.selectedTeacherId;
     }
@@ -1452,7 +1498,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.isSaving = false;
           if (err.status === 409) {
-            this.toast.error('Turno ocupado', 'Ese horario ya fue reservado. Actualizando grilla...');
+            this.toast.error(
+              'Turno ocupado',
+              'Ese horario ya fue reservado. Actualizando grilla...',
+            );
             this.loadBookings();
           } else if (err.error?.errorCode === 'CAJA_CERRADA') {
             Swal.fire({
@@ -1469,9 +1518,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
               }
             });
           } else if (err.status === 400) {
-            this.toast.error('Stock insuficiente', err.error?.message ?? 'Verificá el stock de productos.');
+            this.toast.error(
+              'Stock insuficiente',
+              err.error?.message ?? 'Verificá el stock de productos.',
+            );
           } else {
-            this.toast.error('Error', err.error?.message ?? 'No se pudo guardar la reserva.');
+            this.toast.error(
+              'Error',
+              err.error?.message ?? 'No se pudo guardar la reserva.',
+            );
           }
         },
       }),
@@ -1510,31 +1565,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         next: (updated) => {
           this.isSavingDetail = false;
 
-          // Solo marcar como pagados los ítems que el cajero seleccionó para este cobro.
-          // El resto queda pendiente para el siguiente "Registrar Pago".
           this.detailCart = this.detailCart.map((i) => ({
             ...i,
-            isPaid: i.isPaid || (i.selectedForPayment === true),
+            isPaid: i.isPaid || i.selectedForPayment === true,
             selectedForPayment: false,
           }));
 
-          // Limpiar el historial de pagos parciales de esta sesión
           this.playerPaymentHistory = [];
           this.partialCashCount = 0;
           this.partialTransferCount = 0;
 
-          // Actualizar booking desde la respuesta del servidor
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
 
-          // Recalcular cuántos jugadores pagaron para que los puntos verdes persistan.
-          // Usamos el acumulado total guardado en la BD (updated.payment), no los inputs.
           const dbCash = Number(updated.payment?.amountCash ?? 0);
           const dbTransfer = Number(updated.payment?.amountTransfer ?? 0);
 
-          // Anclar savedAmount* al total persistido en DB; limpiar los inputs de sesión.
-          // Así el saldo muestra el acumulado real y hasUnsavedPaymentChanges vuelve a false.
           this.savedAmountCash = dbCash;
           this.savedAmountTransfer = dbTransfer;
           this.detailAmountCash = 0;
@@ -1591,17 +1638,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (method === 'cash') {
       this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
     } else {
-      this.detailAmountTransfer = (Number(this.detailAmountTransfer) || 0) + amount;
+      this.detailAmountTransfer =
+        (Number(this.detailAmountTransfer) || 0) + amount;
     }
-    // Desmarcar los ítems seleccionados — el panel desaparece solo porque hasSelectedProducts → false
-    this.detailCart = this.detailCart.map(i =>
-      !i.isPaid && i.selectedForPayment ? { ...i, selectedForPayment: false } : i,
+    this.detailCart = this.detailCart.map((i) =>
+      !i.isPaid && i.selectedForPayment
+        ? { ...i, selectedForPayment: false }
+        : i,
     );
   }
 
   /** Descarta la selección de productos (destilda todos). */
   dismissProductPaymentPrompt(): void {
-    this.detailCart = this.detailCart.map(i =>
+    this.detailCart = this.detailCart.map((i) =>
       !i.isPaid ? { ...i, selectedForPayment: false } : i,
     );
   }
@@ -1611,13 +1660,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!this.selectedBooking || this.isAutoSavingItems) return;
     this.isAutoSavingItems = true;
 
-    // Agrupar por productId ya que puede haber entradas separadas (pagado + pendiente)
     const grouped = new Map<string, number>();
     for (const i of this.detailCart) {
       grouped.set(i.productId, (grouped.get(i.productId) ?? 0) + i.quantity);
     }
     const dto: UpdateBookingDto = {
-      items: Array.from(grouped, ([productId, quantity]) => ({ productId, quantity })),
+      items: Array.from(grouped, ([productId, quantity]) => ({
+        productId,
+        quantity,
+      })),
     };
 
     this.sub.add(
@@ -1627,14 +1678,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // Preservar la separación paid/unpaid al recargar del servidor.
-          // El servidor agrupa por productId, pero localmente podemos tener
-          // un ítem pagado y otro pendiente del mismo producto.
           const prevItems = this.detailCart;
           const newCart: CartItem[] = [];
           for (const serverItem of updated.items) {
-            const localPaid = prevItems.filter(i => i.productId === serverItem.productId && i.isPaid);
-            const localUnpaid = prevItems.filter(i => i.productId === serverItem.productId && !i.isPaid);
+            const localPaid = prevItems.filter(
+              (i) => i.productId === serverItem.productId && i.isPaid,
+            );
+            const localUnpaid = prevItems.filter(
+              (i) => i.productId === serverItem.productId && !i.isPaid,
+            );
             const paidQty = localPaid.reduce((s, i) => s + i.quantity, 0);
             const unpaidQty = serverItem.quantity - paidQty;
             if (paidQty > 0) {
@@ -1686,7 +1738,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // Auto-limpieza: elimina la alerta de retraso si estaba activa
           this.notificationService.removeByEntityId(booking.id);
           this.toast.success(
             'Partido iniciado',
@@ -1721,15 +1772,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          // El backend descontó stock al finalizar — invalidar caché para que
-          // la próxima carga de productos muestre los valores reales.
           this.productsService.clearCache();
           this.toast.success(
             'Turno finalizado',
             `Turno de ${booking.clientName} completado.`,
           );
-          // Marcar los importes como guardados antes de cerrar para que
-          // closeDialog() no detecte "cambios sin guardar" y dispare la advertencia.
           this.detailAmountCash = 0;
           this.detailAmountTransfer = 0;
           this.detailPaidCount = this.initialPaidCount;
@@ -1760,31 +1807,40 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isSavingDetail = true;
 
     this.sub.add(
-      this.bookingsService.cancel(booking.id).pipe(
-        finalize(() => { this.isSavingDetail = false; }),
-      ).subscribe({
-        next: () => {
-          this.removeFromBookingMap(booking);
+      this.bookingsService
+        .cancel(booking.id)
+        .pipe(
+          finalize(() => {
+            this.isSavingDetail = false;
+          }),
+        )
+        .subscribe({
+          next: () => {
+            this.removeFromBookingMap(booking);
 
-          // Si era un turno fijo, limpiar la notificación pendiente de la campanita
-          // y el flag de WA del localStorage para cerrar el ciclo de confirmación.
-          if (booking.fixedBookingId) {
-            this.notificationService.removeByEntityId(booking.id);
-            localStorage.removeItem(`wa_clicked_reminder-today-${booking.id}`);
-            localStorage.removeItem(`wa_clicked_reminder-tomorrow-${booking.id}`);
-          }
+            if (booking.fixedBookingId) {
+              this.notificationService.removeByEntityId(booking.id);
+              localStorage.removeItem(
+                `wa_clicked_reminder-today-${booking.id}`,
+              );
+              localStorage.removeItem(
+                `wa_clicked_reminder-tomorrow-${booking.id}`,
+              );
+            }
 
-          const label = booking.fixedBookingId ? 'Turno de esta semana cancelado' : 'Reserva cancelada';
-          this.toast.info(label, `Turno de ${booking.clientName} cancelado.`);
-          this.forceCloseDialog();
-        },
-        error: (err) => {
-          this.toast.error(
-            'Error',
-            err.error?.message ?? 'No se pudo cancelar la reserva.',
-          );
-        },
-      }),
+            const label = booking.fixedBookingId
+              ? 'Turno de esta semana cancelado'
+              : 'Reserva cancelada';
+            this.toast.info(label, `Turno de ${booking.clientName} cancelado.`);
+            this.forceCloseDialog();
+          },
+          error: (err) => {
+            this.toast.error(
+              'Error',
+              err.error?.message ?? 'No se pudo cancelar la reserva.',
+            );
+          },
+        }),
     );
   }
 
@@ -1836,7 +1892,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Elimina diacríticos para comparación insensible a tildes. */
   private normalize(s: string): string {
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   /** Filtra los productos disponibles según el término de búsqueda del formulario de creación (ignora tildes). */
@@ -1853,12 +1912,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Agrega un producto al carrito de detalle y dispara el auto-guardado. */
   addToDetailCart(product: Product): void {
-    // Calcular la cantidad total de este producto ya en el carrito (pagado + pendiente)
     const totalInCart = this.detailCart
-      .filter(i => i.productId === product.id)
+      .filter((i) => i.productId === product.id)
       .reduce((s, i) => s + i.quantity, 0);
 
-    const isRental = (product.category?.name ?? '').toLowerCase().includes('alquiler');
+    const isRental = (product.category?.name ?? '')
+      .toLowerCase()
+      .includes('alquiler');
     if (!isRental && totalInCart >= product.stock) {
       this.toast.info(
         'Stock máximo alcanzado',
@@ -1867,8 +1927,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Buscar un ítem pendiente (no pagado) del mismo producto para incrementar.
-    // Los ítems ya pagados se mantienen separados.
     const unpaidIdx = this.detailCart.findIndex(
       (i) => i.productId === product.id && !i.isPaid,
     );
@@ -1907,10 +1965,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     } else {
       const item = this.detailCart[index];
       if (item) {
-        // Limitar al stock disponible considerando otras entradas del mismo producto
-        const product = this.allProducts.find(p => p.id === item.productId);
+        const product = this.allProducts.find((p) => p.id === item.productId);
         if (product) {
-          const isRental = (product.category?.name ?? '').toLowerCase().includes('alquiler');
+          const isRental = (product.category?.name ?? '')
+            .toLowerCase()
+            .includes('alquiler');
           if (!isRental) {
             const otherQty = this.detailCart
               .filter((it, i) => i !== index && it.productId === item.productId)
@@ -1946,6 +2005,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:keydown.escape')
+  /** Cierra el diálogo de confirmación o el modal principal al presionar Escape. */
   onEscape(): void {
     if (this.confirmDialogOpen) {
       this.confirmDialogCancel();
@@ -1962,7 +2022,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const duration = booking.durationMinutes ?? 60;
     const [h, m] = booking.hour.split(':').map(Number);
     const startMin = h * 60 + m;
-    const endMin   = startMin + duration;
+    const endMin = startMin + duration;
 
     this.bookingMap.set(`${booking.courtId}-${booking.hour}`, booking);
 
@@ -1981,7 +2041,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const duration = booking.durationMinutes ?? 60;
     const [h, m] = booking.hour.split(':').map(Number);
     const startMin = h * 60 + m;
-    const endMin   = startMin + duration;
+    const endMin = startMin + duration;
 
     this.bookingMap.delete(`${booking.courtId}-${booking.hour}`);
 
@@ -2033,19 +2093,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return Number(n).toLocaleString('es-AR');
   }
 
+  /** TrackBy para el *ngFor de horas — mejora el rendimiento del renderizado de la grilla. */
   trackByHour(_: number, hour: string): string {
     return hour;
   }
+  /** TrackBy para el *ngFor de canchas. */
   trackByCourt(_: number, court: Court): string {
     return court.id;
   }
+  /** TrackBy para el *ngFor de ítems del carrito de detalle. */
   trackByProductId(_: number, item: CartItem): string {
     return item.productId;
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // DRAG-TO-SCROLL (escritorio) — arrastar la grilla con el mouse
-  // ─────────────────────────────────────────────────────────────────────────
 
   /**
    * Inicia el drag-to-scroll solo si el click NO fue sobre una tarjeta
@@ -2060,10 +2119,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.scrollDragOriginLeft = el.scrollLeft;
   }
 
+  /** Cancela el drag-to-scroll cuando el cursor sale del contenedor. */
   onScrollMouseLeave(): void {
     this.isScrollDragging = false;
   }
 
+  /** Finaliza el drag-to-scroll al soltar el botón del mouse. */
   onScrollMouseUp(): void {
     this.isScrollDragging = false;
   }
@@ -2085,13 +2146,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Sincroniza el scroll horizontal del header row con el grid. */
   syncHeaderScroll(): void {
     if (this.headerRow && this.scrollContainer) {
-      this.headerRow.nativeElement.scrollLeft = this.scrollContainer.nativeElement.scrollLeft;
+      this.headerRow.nativeElement.scrollLeft =
+        this.scrollContainer.nativeElement.scrollLeft;
     }
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // DRAG & DROP — Mover / Duplicar turno
-  // ─────────────────────────────────────────────────────────────────────────
 
   /** Marca inicio de arrastre — bloquea clicks accidentales en slots. */
   onDragStarted(): void {
@@ -2129,7 +2187,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.rescheduleFromModal = false;
 
     setTimeout(() => {
-      this.zone.run(() => { this.rescheduleDialogOpen = true; });
+      this.zone.run(() => {
+        this.rescheduleDialogOpen = true;
+      });
     });
   }
 
@@ -2155,8 +2215,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Construye y lanza la petición de mover o duplicar según la acción elegida. */
   confirmReschedule(action: 'move' | 'duplicate'): void {
-    if (!this.rescheduleTargetCourtId || !this.rescheduleTargetDate || !this.rescheduleTargetHour) {
-      this.toast.error('Datos incompletos', 'Seleccioná la cancha, fecha y hora de destino.');
+    if (
+      !this.rescheduleTargetCourtId ||
+      !this.rescheduleTargetDate ||
+      !this.rescheduleTargetHour
+    ) {
+      this.toast.error(
+        'Datos incompletos',
+        'Seleccioná la cancha, fecha y hora de destino.',
+      );
       return;
     }
 
@@ -2167,24 +2234,30 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     };
 
     this.isRescheduling = true;
-    const request$ = action === 'move'
-      ? this.bookingsService.move(this.rescheduleSourceId, dto)
-      : this.bookingsService.duplicate(this.rescheduleSourceId, dto);
+    const request$ =
+      action === 'move'
+        ? this.bookingsService.move(this.rescheduleSourceId, dto)
+        : this.bookingsService.duplicate(this.rescheduleSourceId, dto);
 
     request$.pipe(finalize(() => (this.isRescheduling = false))).subscribe({
       next: () => {
         const label = action === 'move' ? 'Turno movido' : 'Turno duplicado';
         this.toast.success(label, 'La agenda fue actualizada.');
         this.closeRescheduleDialog();
-        // Si el diálogo fue desde el modal de detalle, cerrarlo también
         if (this.rescheduleFromModal) this.forceCloseDialog();
         this.loadBookings();
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error('Slot ocupado', 'Ese horario ya tiene un turno reservado.');
+          this.toast.error(
+            'Slot ocupado',
+            'Ese horario ya tiene un turno reservado.',
+          );
         } else {
-          this.toast.error('Error', 'No se pudo completar la operación. Intentá de nuevo.');
+          this.toast.error(
+            'Error',
+            'No se pudo completar la operación. Intentá de nuevo.',
+          );
         }
       },
     });

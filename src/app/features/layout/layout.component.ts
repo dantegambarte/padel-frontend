@@ -104,11 +104,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.remindersApiService.getUpcoming().subscribe({
         next: ({ today, tomorrow }) => {
           for (const item of today) {
-            // Eliminar AMBAS variantes (today y tomorrow) antes de re-agregar.
-            // Garantiza unicidad cuando el turno transiciona de "mañana" a "hoy":
-            // la notificación vieja de mañana queda huérfana si no se limpia aquí.
-            this.notificationService.removeById(`reminder-today-${item.bookingId}`);
-            this.notificationService.removeById(`reminder-tomorrow-${item.bookingId}`);
+            this.notificationService.removeById(
+              `reminder-today-${item.bookingId}`,
+            );
+            this.notificationService.removeById(
+              `reminder-tomorrow-${item.bookingId}`,
+            );
             this.notificationService.add({
               id: `reminder-today-${item.bookingId}`,
               title: 'Turno Fijo Hoy',
@@ -122,9 +123,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
             });
           }
           for (const item of tomorrow) {
-            // Ídem: limpiar ambas variantes para evitar duplicados.
-            this.notificationService.removeById(`reminder-tomorrow-${item.bookingId}`);
-            this.notificationService.removeById(`reminder-today-${item.bookingId}`);
+            this.notificationService.removeById(
+              `reminder-tomorrow-${item.bookingId}`,
+            );
+            this.notificationService.removeById(
+              `reminder-today-${item.bookingId}`,
+            );
             this.notificationService.add({
               id: `reminder-tomorrow-${item.bookingId}`,
               title: 'Confirmar Turno Fijo',
@@ -138,13 +142,18 @@ export class LayoutComponent implements OnInit, OnDestroy {
             });
           }
         },
-        error: () => { /* silencioso: no bloquear el layout */ },
+        error: () => {},
       }),
     );
   }
 
   private buildWhatsappUrl(
-    item: { clientName: string; phoneNumber: string | null; hour: string; courtName: string },
+    item: {
+      clientName: string;
+      phoneNumber: string | null;
+      hour: string;
+      courtName: string;
+    },
     type: 'today' | 'tomorrow',
   ): string | undefined {
     if (!item.phoneNumber) return undefined;
@@ -157,7 +166,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkUnclosedSession(): void {
-    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD hora local
+    const todayStr = new Date().toLocaleDateString('en-CA');
     this.sub.add(
       this.cashService.getCurrent().subscribe({
         next: (data) => {
@@ -169,9 +178,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             this.unclosedSessionDate = data.sessionDate;
           }
         },
-        error: () => {
-          /* silencioso: no bloquear el layout si la consulta falla */
-        },
+        error: () => {},
       }),
     );
   }

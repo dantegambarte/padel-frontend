@@ -20,29 +20,37 @@ interface ProductForm {
 }
 
 const ICON_OPTIONS = [
-  { value: 'water_bottle',  label: 'Bebidas / Gatorade' },
-  { value: 'lunch_dining',  label: 'Comida / Sándwiches' },
+  { value: 'water_bottle', label: 'Bebidas / Gatorade' },
+  { value: 'lunch_dining', label: 'Comida / Sándwiches' },
   { value: 'sports_tennis', label: 'Paletas / Deporte' },
-  { value: 'apparel',       label: 'Indumentaria' },
-  { value: 'inventory_2',   label: 'Otro / Genérico' },
+  { value: 'apparel', label: 'Indumentaria' },
+  { value: 'inventory_2', label: 'Otro / Genérico' },
 ];
 
 /** Devuelve el icono sugerido según palabras clave del nombre de categoría. */
 function iconForCategory(categoryName: string): string {
   const n = categoryName.toLowerCase();
-  if (/bebida|agua|gatorade|jugo|isotónico|isotonico|refresco|energizante|soda/.test(n)) return 'water_bottle';
-  if (/comida|sandwich|sándwich|snack|lunch|alimento|food/.test(n))                      return 'lunch_dining';
-  if (/paleta|raqueta|alquiler|pelota|deporte|sport|equipo/.test(n))                     return 'sports_tennis';
-  if (/ropa|indumentaria|remera|camiseta|short|calzado|apparel/.test(n))                 return 'apparel';
+  if (
+    /bebida|agua|gatorade|jugo|isotónico|isotonico|refresco|energizante|soda/.test(
+      n,
+    )
+  )
+    return 'water_bottle';
+  if (/comida|sandwich|sándwich|snack|lunch|alimento|food/.test(n))
+    return 'lunch_dining';
+  if (/paleta|raqueta|alquiler|pelota|deporte|sport|equipo/.test(n))
+    return 'sports_tennis';
+  if (/ropa|indumentaria|remera|camiseta|short|calzado|apparel/.test(n))
+    return 'apparel';
   return 'inventory_2';
 }
 
 const ICON_COLORS: Record<string, { bg: string; text: string }> = {
-  water_bottle:  { bg: 'bg-sky-100',     text: 'text-sky-600'     },
-  lunch_dining:  { bg: 'bg-amber-100',   text: 'text-amber-600'   },
+  water_bottle: { bg: 'bg-sky-100', text: 'text-sky-600' },
+  lunch_dining: { bg: 'bg-amber-100', text: 'text-amber-600' },
   sports_tennis: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
-  apparel:       { bg: 'bg-violet-100',  text: 'text-violet-600'  },
-  inventory_2:   { bg: 'bg-slate-100',   text: 'text-slate-500'   },
+  apparel: { bg: 'bg-violet-100', text: 'text-violet-600' },
+  inventory_2: { bg: 'bg-slate-100', text: 'text-slate-500' },
 };
 
 type DialogMode = 'create' | 'edit' | 'view';
@@ -77,7 +85,13 @@ export class ProductsComponent implements OnInit {
   /** Mapa de colores expuesto al template para el preview del modal. */
   readonly ICON_COLORS = ICON_COLORS;
   /** Campos que fueron "tocados" para mostrar errores inline. */
-  formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
+  formTouched = {
+    name: false,
+    category: false,
+    salePrice: false,
+    costPrice: false,
+    stock: false,
+  };
 
   /** `true` cuando el usuario seleccionó "Nueva categoría" en el selector. */
   get isNewCategory(): boolean {
@@ -111,7 +125,6 @@ export class ProductsComponent implements OnInit {
       this.form.stock = '0';
     }
 
-    // Autocompletar icono según la categoría seleccionada
     const categoryName = this.isNewCategory
       ? this.newCategoryName.trim()
       : (this.categories.find((c) => c.id === this.form.category)?.name ?? '');
@@ -123,13 +136,21 @@ export class ProductsComponent implements OnInit {
   }
 
   /** Marca un campo como tocado para activar la validación visual. */
-  touchField(field: 'name' | 'category' | 'salePrice' | 'costPrice' | 'stock'): void {
+  touchField(
+    field: 'name' | 'category' | 'salePrice' | 'costPrice' | 'stock',
+  ): void {
     this.formTouched[field] = true;
   }
 
   /** Resetea el estado de touched junto con el formulario. */
   private resetTouched(): void {
-    this.formTouched = { name: false, category: false, salePrice: false, costPrice: false, stock: false };
+    this.formTouched = {
+      name: false,
+      category: false,
+      salePrice: false,
+      costPrice: false,
+      stock: false,
+    };
   }
 
   constructor(
@@ -149,14 +170,16 @@ export class ProductsComponent implements OnInit {
     }
   }
 
+  /** Desplaza la vista hasta el producto con el id dado y lo resalta brevemente. */
   private scrollAndHighlight(id: string): void {
-    // Esperar a que la lista de productos esté renderizada antes de hacer scroll.
     const attempt = (retries: number) => {
       const el = document.getElementById(`product-${id}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         this.highlightedProductId = id;
-        setTimeout(() => { this.highlightedProductId = null; }, 3000);
+        setTimeout(() => {
+          this.highlightedProductId = null;
+        }, 3000);
       } else if (retries > 0) {
         setTimeout(() => attempt(retries - 1), 200);
       }
@@ -169,7 +192,6 @@ export class ProductsComponent implements OnInit {
     this.productsService.getCategories().subscribe({
       next: (cats) => (this.categories = cats),
       error: () => {
-        // No bloquea la pantalla — el usuario puede escribir categoría nueva
         this.toast.error('Aviso', 'No se pudieron cargar las categorías');
       },
     });
@@ -213,7 +235,11 @@ export class ProductsComponent implements OnInit {
    * tiene unidades disponibles pero llegó al umbral de alerta.
    */
   isLowStock(product: Product): boolean {
-    return product.minStock > 0 && product.stock > 0 && product.stock <= product.minStock;
+    return (
+      product.minStock > 0 &&
+      product.stock > 0 &&
+      product.stock <= product.minStock
+    );
   }
 
   /** Cantidad de productos activos con stock = 0 y minStock > 0. */
@@ -257,7 +283,9 @@ export class ProductsComponent implements OnInit {
 
   /** `true` cuando hay al menos un filtro activo distinto del valor por defecto. */
   get hasActiveFilters(): boolean {
-    return !!this.searchQuery.trim() || !!this.filterCategory || !!this.filterStock;
+    return (
+      !!this.searchQuery.trim() || !!this.filterCategory || !!this.filterStock
+    );
   }
 
   /** Título del diálogo según el modo activo. */
@@ -359,6 +387,7 @@ export class ProductsComponent implements OnInit {
     this.resetTouched();
   }
 
+  /** Cierra el modal de producto al presionar Escape. */
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.isDialogOpen) this.closeDialog();
@@ -370,7 +399,13 @@ export class ProductsComponent implements OnInit {
    * Para la categoría "Alquileres", costPrice y stock no son requeridos (se envían como 0).
    */
   saveProduct(): void {
-    this.formTouched = { name: true, category: true, salePrice: true, costPrice: true, stock: true };
+    this.formTouched = {
+      name: true,
+      category: true,
+      salePrice: true,
+      costPrice: true,
+      stock: true,
+    };
 
     const rental = this.isRentalCategory;
 
@@ -390,19 +425,20 @@ export class ProductsComponent implements OnInit {
       (!rental && !this.form.costPrice) ||
       (!rental && !this.form.stock)
     ) {
-      this.toast.error('Error', 'Por favor complete todos los campos requeridos');
+      this.toast.error(
+        'Error',
+        'Por favor complete todos los campos requeridos',
+      );
       return;
     }
 
     this.isSubmitting = true;
 
     if (this.isNewCategory) {
-      // Crear la categoría primero y luego guardar el producto con el ID real
       this.productsService
         .createCategory(this.newCategoryName.trim())
         .subscribe({
           next: (cat) => {
-            // Agregar al listado local si no estaba (idempotente)
             if (!this.categories.find((c) => c.id === cat.id)) {
               this.categories = [...this.categories, cat];
             }
@@ -446,10 +482,16 @@ export class ProductsComponent implements OnInit {
           this.products = this.products.map((p) =>
             p.id === this.editingProductId ? saved : p,
           );
-          this.toast.success('Producto actualizado', `${saved.name} se actualizó correctamente`);
+          this.toast.success(
+            'Producto actualizado',
+            `${saved.name} se actualizó correctamente`,
+          );
         } else {
           this.products = [...this.products, saved];
-          this.toast.success('Producto agregado', `${saved.name} se agregó al inventario`);
+          this.toast.success(
+            'Producto agregado',
+            `${saved.name} se agregó al inventario`,
+          );
         }
         this.products = [...this.products].sort((a, b) =>
           a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
@@ -458,7 +500,10 @@ export class ProductsComponent implements OnInit {
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error('Ya existe', 'Un producto con ese nombre ya está registrado');
+          this.toast.error(
+            'Ya existe',
+            'Un producto con ese nombre ya está registrado',
+          );
         } else {
           this.toast.error('Error al guardar', 'Intente nuevamente');
         }
@@ -523,7 +568,6 @@ export class ProductsComponent implements OnInit {
     if (this.isReadOnly || this.togglingFeaturedIds.has(product.id)) return;
 
     const newValue = !product.isFeatured;
-    // Actualización optimista
     product.isFeatured = newValue;
     this.togglingFeaturedIds.add(product.id);
 
@@ -532,12 +576,10 @@ export class ProductsComponent implements OnInit {
       .pipe(finalize(() => this.togglingFeaturedIds.delete(product.id)))
       .subscribe({
         next: (saved) => {
-          // Sincronizar con la respuesta real del servidor
           const idx = this.products.findIndex((p) => p.id === saved.id);
           if (idx !== -1) this.products[idx] = saved;
         },
         error: () => {
-          // Revertir estado visual si la petición falló
           product.isFeatured = !newValue;
           this.toast.error(
             'Error al actualizar',

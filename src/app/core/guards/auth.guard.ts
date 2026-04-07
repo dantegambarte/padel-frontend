@@ -54,23 +54,13 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     return this.authService.currentUser$.pipe(
       take(1),
       map((user) => {
-        // Sin usuario en memoria → sesión no iniciada, redirigir al login silenciosamente.
         if (!user) {
           return this.router.createUrlTree(['/auth/login']);
         }
 
-        // CAPA 1 — Verificación de expiración JWT mid-session:
-        // El token puede expirar mientras la app está abierta sin que se haya
-        // realizado ninguna request HTTP que active el interceptor.
-        // El guard comprueba el JWT en cada navegación como segunda red de seguridad.
         if (this.authService.isTokenExpired()) {
-          // Mostrar alerta bloqueante ANTES del logout para que el componente
-          // SessionAlertComponent quede visible sobre la pantalla de login.
           this.sessionAlertService.show('TOKEN_EXPIRED');
-          // logout() limpia localStorage, invalida cachés y navega a /auth/login.
           this.authService.logout();
-          // Retornar false cancela la navegación actual de Angular;
-          // authService.logout() ya inició una nueva navegación al login.
           return false;
         }
 

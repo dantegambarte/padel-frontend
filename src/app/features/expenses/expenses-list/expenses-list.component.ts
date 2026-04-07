@@ -19,7 +19,7 @@ export class ExpensesListComponent implements OnInit {
 
   /** Filtros de fecha (solo admin). */
   dateFrom = '';
-  dateTo   = '';
+  dateTo = '';
 
   get isAdmin(): boolean {
     return this.authService.isAdmin;
@@ -31,13 +31,12 @@ export class ExpensesListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Inicializar rango de fechas al mes actual (solo relevante para admin).
     if (this.isAdmin) {
       const now = new Date();
-      const y   = now.getFullYear();
-      const m   = String(now.getMonth() + 1).padStart(2, '0');
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
       this.dateFrom = `${y}-${m}-01`;
-      this.dateTo   = `${y}-${m}-${String(new Date(y, now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
+      this.dateTo = `${y}-${m}-${String(new Date(y, now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
     }
     this.loadExpenses();
   }
@@ -112,11 +111,11 @@ export class ExpensesListComponent implements OnInit {
   /** Clases Tailwind por categoría para los badges de la lista. */
   categoryClass(category: string): string {
     const map: Record<string, string> = {
-      'Insumos':       'bg-blue-100 text-blue-700',
-      'Mantenimiento': 'bg-amber-100 text-amber-700',
-      'Sueldos':       'bg-violet-100 text-violet-700',
-      'Servicios':     'bg-teal-100 text-teal-700',
-      'Otro':          'bg-gray-100 text-gray-600',
+      Insumos: 'bg-blue-100 text-blue-700',
+      Mantenimiento: 'bg-amber-100 text-amber-700',
+      Sueldos: 'bg-violet-100 text-violet-700',
+      Servicios: 'bg-teal-100 text-teal-700',
+      Otro: 'bg-gray-100 text-gray-600',
     };
     return map[category] ?? 'bg-secondary text-secondary-foreground';
   }

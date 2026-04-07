@@ -7,10 +7,6 @@ import { PricingShiftsComponent } from './pricing-shifts.component';
 
 @NgModule({
   declarations: [PricingShiftsComponent],
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    PricingShiftsRoutingModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, PricingShiftsRoutingModule],
 })
 export class PricingShiftsModule {}

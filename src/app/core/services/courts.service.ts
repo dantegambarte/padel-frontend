@@ -24,9 +24,7 @@ export class CourtsService {
   /** Obtiene todas las canchas. Sirve desde caché si está disponible. */
   findAll(): Observable<Court[]> {
     if (!this.courtsCache$) {
-      this.courtsCache$ = this.http.get<Court[]>(this.url).pipe(
-        shareReplay(1),
-      );
+      this.courtsCache$ = this.http.get<Court[]>(this.url).pipe(shareReplay(1));
     }
     return this.courtsCache$;
   }
@@ -41,9 +39,9 @@ export class CourtsService {
    * @param dto - Payload de creación de la cancha.
    */
   create(dto: CreateCourtDto): Observable<Court> {
-    return this.http.post<Court>(this.url, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .post<Court>(this.url, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /**
@@ -52,15 +50,15 @@ export class CourtsService {
    * @param dto - Payload de actualización parcial.
    */
   update(id: string, dto: UpdateCourtDto): Observable<Court> {
-    return this.http.patch<Court>(`${this.url}/${id}`, dto).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .patch<Court>(`${this.url}/${id}`, dto)
+      .pipe(tap(() => this.clearCache()));
   }
 
   /** Elimina una cancha por ID e invalida la caché. */
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${id}`).pipe(
-      tap(() => this.clearCache()),
-    );
+    return this.http
+      .delete<void>(`${this.url}/${id}`)
+      .pipe(tap(() => this.clearCache()));
   }
 }

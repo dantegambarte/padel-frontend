@@ -50,30 +50,114 @@ export class SidebarComponent implements OnInit, OnDestroy {
     {
       label: 'Operaciones',
       items: [
-        { id: 'dashboard',     label: 'Inicio',           icon: 'layout-dashboard', route: '/app/dashboard',     roles: ['admin', 'employee'] },
-        { id: 'schedule',      label: 'Agenda de Turnos', icon: 'calendar-check',   route: '/app/schedule',      roles: ['admin', 'employee'] },
-        { id: 'pos',           label: 'Nueva Venta',      icon: 'shopping-cart',    route: '/app/pos',           roles: ['admin', 'employee'] },
-        { id: 'cash-register', label: 'Cierre de Caja',  icon: 'credit-card',      route: '/app/cash-register', roles: ['admin', 'employee'] },
-        { id: 'expenses',      label: 'Egresos',          icon: 'money-off',        route: '/app/expenses',      roles: ['admin', 'employee'] },
+        {
+          id: 'dashboard',
+          label: 'Inicio',
+          icon: 'layout-dashboard',
+          route: '/app/dashboard',
+          roles: ['admin', 'employee'],
+        },
+        {
+          id: 'schedule',
+          label: 'Agenda de Turnos',
+          icon: 'calendar-check',
+          route: '/app/schedule',
+          roles: ['admin', 'employee'],
+        },
+        {
+          id: 'pos',
+          label: 'Nueva Venta',
+          icon: 'shopping-cart',
+          route: '/app/pos',
+          roles: ['admin', 'employee'],
+        },
+        {
+          id: 'cash-register',
+          label: 'Cierre de Caja',
+          icon: 'credit-card',
+          route: '/app/cash-register',
+          roles: ['admin', 'employee'],
+        },
+        {
+          id: 'expenses',
+          label: 'Egresos',
+          icon: 'money-off',
+          route: '/app/expenses',
+          roles: ['admin', 'employee'],
+        },
       ],
     },
     {
       label: 'Gestión',
       items: [
-        { id: 'fixed-bookings',    label: 'Turnos Fijos',  icon: 'repeat',          route: '/app/fixed-bookings',      roles: ['admin'] },
-        { id: 'products',          label: 'Productos',     icon: 'package',         route: '/app/products',            roles: ['admin', 'employee'] },
-        { id: 'inventory-alerts',  label: 'Stock Bajo', icon: 'alert-triangle',  route: '/app/inventory/alerts',    roles: ['admin'] },
-        { id: 'teachers',          label: 'Profesores',    icon: 'graduation-cap',  route: '/app/teachers',            roles: ['admin'] },
-        { id: 'teachers-report',   label: 'Liquidación',   icon: 'receipt',         route: '/app/teachers/report',     roles: ['admin'] },
+        {
+          id: 'fixed-bookings',
+          label: 'Turnos Fijos',
+          icon: 'repeat',
+          route: '/app/fixed-bookings',
+          roles: ['admin'],
+        },
+        {
+          id: 'products',
+          label: 'Productos',
+          icon: 'package',
+          route: '/app/products',
+          roles: ['admin', 'employee'],
+        },
+        {
+          id: 'inventory-alerts',
+          label: 'Stock Bajo',
+          icon: 'alert-triangle',
+          route: '/app/inventory/alerts',
+          roles: ['admin'],
+        },
+        {
+          id: 'teachers',
+          label: 'Profesores',
+          icon: 'graduation-cap',
+          route: '/app/teachers',
+          roles: ['admin'],
+        },
+        {
+          id: 'teachers-report',
+          label: 'Liquidación',
+          icon: 'receipt',
+          route: '/app/teachers/report',
+          roles: ['admin'],
+        },
       ],
     },
     {
       label: 'Administración',
       items: [
-        { id: 'reports',        label: 'Reportes',      icon: 'bar-chart', route: '/app/reports',        roles: ['admin'] },
-        { id: 'users',          label: 'Usuarios',      icon: 'users',     route: '/app/users',          roles: ['admin'] },
-        { id: 'pricing-shifts', label: 'Tarifas',       icon: 'tag',       route: '/app/pricing-shifts', roles: ['admin'] },
-        { id: 'settings',       label: 'Configuración', icon: 'settings',  route: '/app/settings',       roles: ['admin'] },
+        {
+          id: 'reports',
+          label: 'Reportes',
+          icon: 'bar-chart',
+          route: '/app/reports',
+          roles: ['admin'],
+        },
+        {
+          id: 'users',
+          label: 'Usuarios',
+          icon: 'users',
+          route: '/app/users',
+          roles: ['admin'],
+        },
+        {
+          id: 'pricing-shifts',
+          label: 'Tarifas',
+          icon: 'tag',
+          route: '/app/pricing-shifts',
+          roles: ['admin'],
+        },
+        {
+          id: 'settings',
+          label: 'Configuración',
+          icon: 'settings',
+          route: '/app/settings',
+          roles: ['admin'],
+        },
       ],
     },
   ];
@@ -116,11 +200,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
           this.productsService.getLowStock().subscribe({
             next: (list) => {
               this.outOfStockCount = list.filter((p) => p.stock === 0).length;
-              this.lowStockCount   = list.filter((p) => p.stock > 0).length;
+              this.lowStockCount = list.filter((p) => p.stock > 0).length;
             },
             error: () => {
               this.outOfStockCount = 0;
-              this.lowStockCount   = 0;
+              this.lowStockCount = 0;
             },
           });
         }

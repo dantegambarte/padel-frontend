@@ -31,7 +31,10 @@ export class InventoryAlertsComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => {
-        this.toast.error('Error', 'No se pudieron cargar las alertas de stock.');
+        this.toast.error(
+          'Error',
+          'No se pudieron cargar las alertas de stock.',
+        );
         this.isLoading = false;
       },
     });
@@ -52,7 +55,9 @@ export class InventoryAlertsComponent implements OnInit {
   }
 
   goToProduct(p: LowStockProduct): void {
-    this.router.navigate(['/app/products'], { queryParams: { highlight: p.id } });
+    this.router.navigate(['/app/products'], {
+      queryParams: { highlight: p.id },
+    });
   }
 
   refresh(): void {

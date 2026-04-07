@@ -10,7 +10,6 @@ async function globalSetup(config: FullConfig) {
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click();
   await page.waitForURL('**/app/dashboard', { timeout: 10000 });
 
-  // Guarda la sesión autenticada
   await page.context().storageState({ path: 'e2e/auth-state.json' });
   await browser.close();
 }
