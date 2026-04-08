@@ -578,15 +578,16 @@
 
 <div
   *ngIf="selectedFixedBooking"
-  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50"
+  appModalScrollLock
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50"
   (click)="closeDetail()"
 >
   <div
-    class="relative w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden dark:bg-slate-900"
+    class="relative w-full max-w-sm rounded-2xl bg-white shadow-xl flex flex-col max-h-[85vh] overflow-hidden dark:bg-slate-900"
     (click)="$event.stopPropagation()"
   >
     <div
-      class="px-5 py-4 flex items-start justify-between gap-3"
+      class="flex-shrink-0 px-5 py-4 flex items-start justify-between gap-3"
       [ngClass]="courtColorClass(selectedFixedBooking.courtId)"
     >
       <div class="min-w-0">
@@ -620,7 +621,7 @@
     </div>
 
     <div
-      class="px-5 py-4 space-y-3 border-b border-gray-100 dark:border-slate-800"
+      class="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-3 border-b border-gray-100 dark:border-slate-800"
     >
       <div class="flex items-center gap-3">
         <div
@@ -795,7 +796,7 @@
       </div>
     </div>
 
-    <div class="px-5 py-4 flex items-center gap-2">
+    <div class="flex-shrink-0 px-5 py-4 flex items-center gap-2">
       <button
         *ngIf="selectedFixedBooking.phoneNumber"
         type="button"
@@ -837,15 +838,16 @@
 
 <div
   *ngIf="isDialogOpen"
-  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50"
+  appModalScrollLock
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50"
   (click)="closeDialog()"
 >
   <div
-    class="relative w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-slate-900"
+    class="relative w-full max-w-lg rounded-2xl bg-white shadow-xl flex flex-col max-h-[85vh] overflow-hidden dark:bg-slate-900"
     (click)="$event.stopPropagation()"
   >
     <div
-      class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800"
+      class="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800"
     >
       <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
         {{ dialogTitle }}
@@ -872,7 +874,7 @@
 
     <form
       (ngSubmit)="submitForm()"
-      class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto"
+      class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-4"
     >
       <div
         *ngIf="formError"
@@ -1027,7 +1029,7 @@
     </form>
 
     <div
-      class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-slate-800"
+      class="flex-shrink-0 flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-slate-800"
     >
       <button
         type="button"
