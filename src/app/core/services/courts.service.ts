@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 
 import { Court, CreateCourtDto, UpdateCourtDto } from '../models/court.model';
 import { environment } from '../../../environments/environment';
@@ -39,15 +39,17 @@ export class CourtsService {
   }
 
   /**
-   * Obtiene la lista de canchas. Si el subject ya tiene datos los devuelve
-   * directamente; si está vacío dispara la carga desde el servidor.
-   * Retorna el Observable para suscripciones puntuales (ej. forkJoin en Settings).
+   * Obtiene la lista de canchas como Observable que completa (apto para forkJoin).
+   * Si el subject ya tiene datos los emite de inmediato sin ir al servidor.
+   * Si está vacío, consulta el servidor, actualiza el subject y completa.
    */
   findAll(): Observable<Court[]> {
-    if (this._courts$.value.length === 0) {
-      this.loadCourts();
+    if (this._courts$.value.length > 0) {
+      return of(this._courts$.value);
     }
-    return this.courts$;
+    return this.http.get<Court[]>(this.url).pipe(
+      tap((courts) => this._courts$.next(courts)),
+    );
   }
 
   /** Crea una nueva cancha y la inserta en el estado local al confirmar. */
