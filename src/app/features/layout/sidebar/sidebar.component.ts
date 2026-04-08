@@ -261,6 +261,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return this.currentUser?.role === 'admin' ? 'Administrador' : 'Empleado';
   }
 
+  /** Clase de color de fondo del avatar según el rol: verde para admin, azul para empleado. */
+  get avatarColorClass(): string {
+    return this.currentUser?.role === 'admin' ? 'bg-emerald-600' : 'bg-indigo-600';
+  }
+
   /** Devuelve `true` si la URL actual comienza con la ruta dada. */
   isActive(route: string): boolean {
     return this.currentUrl.startsWith(route);

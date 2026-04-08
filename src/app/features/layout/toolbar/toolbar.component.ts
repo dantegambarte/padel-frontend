@@ -107,6 +107,11 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
+  /** Clase de color de fondo del avatar según el rol: verde para admin, azul para empleado. */
+  get avatarColorClass(): string {
+    return this.currentUser?.role === 'admin' ? 'bg-emerald-600' : 'bg-indigo-600';
+  }
+
   /** Iniciales del usuario autenticado (máx. 2 letras) para el avatar de la toolbar. */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';

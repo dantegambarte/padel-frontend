@@ -486,7 +486,8 @@
         >
           <div class="relative">
             <div
-              class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+              [ngClass]="avatarColorClass"
+              class="flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-semibold"
             >
               {{ userInitials }}
             </div>

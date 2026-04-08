@@ -13,6 +13,11 @@ export class LoginComponent {
   form: FormGroup;
   errorMessage = '';
   isLoading = false;
+  showPassword = false;
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   /**
    * Inicializa el formulario reactivo con los campos `username` y `password`.

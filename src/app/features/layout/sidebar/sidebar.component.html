@@ -307,7 +307,8 @@
       class="w-full flex items-center justify-start gap-3 rounded-md px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
       <div
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-semibold flex-shrink-0"
+        [ngClass]="avatarColorClass"
+        class="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold flex-shrink-0"
       >
         {{ userInitials }}
       </div>
