@@ -39,12 +39,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   currentUrl = '';
   isUserMenuOpen = false;
-  /** Productos con 0 < stock < minStock (necesitan reposición pronto). */
   lowStockCount = 0;
-  /** Productos con stock === 0 (agotados, urgente). */
   outOfStockCount = 0;
 
   private sub = new Subscription();
+  filteredNavGroups: NavGroup[] = [];
 
   readonly navGroups: NavGroup[] = [
     {
@@ -196,6 +195,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
         this.currentUser = user;
+        const role = user?.role;
+        this.filteredNavGroups = role
+          ? this.navGroups
+              .map((group) => ({
+                label: group.label,
+                items: group.items.filter((item) => item.roles.includes(role)),
+              }))
+              .filter((group) => group.items.length > 0)
+          : [];
+
         if (user) {
           this.productsService.getLowStock().subscribe({
             next: (list) => {
@@ -229,22 +238,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.documentClickHandler);
   }
 
-  /**
-   * Devuelve los grupos de navegación con sus ítems filtrados por el rol del usuario.
-   * Los grupos que queden sin ítems son excluidos completamente para no renderizar
-   * cabeceras huérfanas en el DOM.
-   */
-  get filteredNavGroups(): NavGroup[] {
-    const role = this.currentUser?.role;
-    if (!role) return [];
-    return this.navGroups
-      .map((group) => ({
-        label: group.label,
-        items: group.items.filter((item) => item.roles.includes(role)),
-      }))
-      .filter((group) => group.items.length > 0);
-  }
-
   /** Devuelve las dos primeras iniciales del nombre completo del usuario, en mayúsculas. */
   get userInitials(): string {
     const name = this.currentUser?.fullName ?? '';
@@ -263,12 +256,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   /** Clase de color de fondo del avatar según el rol: verde para admin, azul para empleado. */
   get avatarColorClass(): string {
-    return this.currentUser?.role === 'admin' ? 'bg-emerald-600' : 'bg-indigo-600';
+    return this.currentUser?.role === 'admin'
+      ? 'bg-emerald-600'
+      : 'bg-indigo-600';
   }
 
-  /** Devuelve `true` si la URL actual comienza con la ruta dada. */
+  /**
+   * Devuelve `true` si la URL actual coincide exactamente con la ruta del ítem.
+   * Se usa comparación exacta para evitar que /app/teachers quede activo
+   * cuando la URL es /app/teachers/report (ruta distinta en el nav).
+   */
   isActive(route: string): boolean {
-    return this.currentUrl.startsWith(route);
+    return this.currentUrl.split('?')[0] === route;
   }
 
   /** Devuelve las clases CSS del ítem de navegación según su estado activo/inactivo. */
