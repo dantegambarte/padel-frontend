@@ -82,7 +82,7 @@
         type="text"
         [(ngModel)]="searchTerm"
         name="searchTerm"
-        placeholder="Buscar por nombre o tel\xc3\xa9fono..."
+        placeholder="Buscar por nombre o teléfono..."
         class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500"
       />
     </div>
@@ -337,15 +337,16 @@
 
 <div
   *ngIf="isDialogOpen"
-  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50"
+  appModalScrollLock
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50"
   (click)="closeDialog()"
 >
   <div
-    class="relative w-full max-w-md rounded-2xl bg-white shadow-xl dark:bg-slate-900"
+    class="relative w-full max-w-md rounded-2xl bg-white shadow-xl flex flex-col max-h-[85vh] overflow-hidden dark:bg-slate-900"
     (click)="$event.stopPropagation()"
   >
     <div
-      class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800"
+      class="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800"
     >
       <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
         {{ dialogTitle }}
@@ -370,7 +371,7 @@
       </button>
     </div>
 
-    <form (ngSubmit)="submitForm()" class="px-6 py-5 space-y-4">
+    <form (ngSubmit)="submitForm()" class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-4">
       <div
         *ngIf="formError"
         class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
@@ -409,7 +410,7 @@
     </form>
 
     <div
-      class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-slate-800"
+      class="flex-shrink-0 flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-slate-800"
     >
       <button
         type="button"
