@@ -392,6 +392,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Navega a la pantalla de configuración de canchas. El operador puede usar esta ruta para resolver rápidamente cualquier inconsistencia de canchas (ej. cancha asignada a reserva pero luego desactivada) sin perder el contexto del día ni la hora que estaba viendo.
+   */
+  goToCourtSettings(): void {
+    this.router.navigate(['/app/settings']);
+  }
+
+  /**
    * Inicia un timer que evalúa cada 60 s si hay turnos con estado 'booked'
    * que ya deberían haber comenzado (≥ 5 min de retraso).
    * La suscripción se agrega a `this.sub` para destruirse en ngOnDestroy.
