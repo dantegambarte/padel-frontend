@@ -30,6 +30,7 @@ package-lock.json
 .agents
 skills-lock.json
 .environment.ts
+.environment.prod.ts
 
 # Visual Studio Code
 .vscode/*
