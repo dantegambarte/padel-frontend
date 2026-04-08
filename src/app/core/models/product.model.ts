@@ -33,4 +33,5 @@ export interface LowStockProduct {
   name: string;
   stock: number;
   minStock: number;
+  category?: { id: string; name: string };
 }
