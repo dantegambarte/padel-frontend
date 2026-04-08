@@ -12,7 +12,7 @@ export interface FixedBooking {
   hour: string;
   durationMinutes: number;
   courtId: string;
-  court: { id: string; name: string };
+  court: { id: string; name: string; isActive: boolean };
   isActive: boolean;
   startDate: string;
   notes: string | null;

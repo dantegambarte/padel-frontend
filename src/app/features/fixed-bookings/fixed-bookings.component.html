@@ -201,19 +201,26 @@
           </tr>
           <tr
             *ngFor="let item of filteredBookings"
-            [ngClass]="item.isActive ? '' : 'opacity-50'"
+            [ngClass]="{
+              'opacity-50': !item.isActive,
+              'bg-red-50/60 dark:bg-red-950/30': isCourtInactive(item)
+            }"
             class="hover:bg-gray-50 transition-colors dark:hover:bg-slate-800"
           >
             <td class="px-4 py-3">
-              <p class="font-semibold text-gray-900 dark:text-slate-100">
-                {{ item.clientName }}
-              </p>
-              <p
-                *ngIf="item.phoneNumber"
-                class="text-xs text-gray-400 dark:text-slate-500 mt-0.5"
-              >
-                {{ item.phoneNumber }}
-              </p>
+              <div class="flex items-center gap-2">
+                <div>
+                  <p class="font-semibold text-gray-900 dark:text-slate-100">
+                    {{ item.clientName }}
+                  </p>
+                  <p
+                    *ngIf="item.phoneNumber"
+                    class="text-xs text-gray-400 dark:text-slate-500 mt-0.5"
+                  >
+                    {{ item.phoneNumber }}
+                  </p>
+                </div>
+              </div>
             </td>
             <td class="px-4 py-3">
               <span class="font-medium text-gray-700 dark:text-slate-200">{{
@@ -223,8 +230,21 @@
                 — {{ item.hour }}hs</span
               >
             </td>
-            <td class="px-4 py-3 text-gray-700 dark:text-slate-300">
-              {{ item?.court?.name }}
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-gray-700 dark:text-slate-300 min-w-0 truncate">{{ item?.court?.name }}</span>
+                <span
+                  *ngIf="isCourtInactive(item)"
+                  title="Esta cancha está inactiva. Reubicá el cliente antes de editar."
+                  class="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-900/50 dark:text-red-400"
+                >
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  Cancha inactiva
+                </span>
+              </div>
             </td>
             <td class="px-4 py-3 text-gray-600 dark:text-slate-400">
               {{ item.durationMinutes }} min
@@ -285,9 +305,13 @@
 
                 <button
                   type="button"
-                  (click)="openEditDialog(item)"
-                  title="Editar"
-                  class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-700"
+                  (click)="!isCourtInactive(item) && openEditDialog(item)"
+                  [disabled]="isCourtInactive(item)"
+                  [title]="isCourtInactive(item) ? 'No se puede editar un turno de una cancha inactiva' : 'Editar'"
+                  [ngClass]="isCourtInactive(item)
+                    ? 'cursor-not-allowed opacity-35 text-gray-400 dark:text-slate-600'
+                    : 'text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-700'"
+                  class="rounded-md p-1.5 transition-colors"
                 >
                   <svg
                     class="h-4 w-4"
@@ -346,7 +370,10 @@
       </div>
       <div
         *ngFor="let item of filteredBookings"
-        [ngClass]="item.isActive ? '' : 'opacity-50'"
+        [ngClass]="{
+          'opacity-50': !item.isActive,
+          'border-red-300 bg-red-50/60 dark:border-red-800/60 dark:bg-red-950/30': isCourtInactive(item)
+        }"
         class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3 dark:border-slate-700 dark:bg-slate-900/50"
       >
         <div class="flex items-start justify-between gap-2">
@@ -361,18 +388,32 @@
               {{ item.phoneNumber }}
             </p>
           </div>
+          <!-- Badge de cancha inactiva (prioridad visual sobre estado del turno) -->
           <span
-            *ngIf="item.isActive"
-            class="shrink-0 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+            *ngIf="isCourtInactive(item); else statusBadgeMobile"
+            title="Reubicá al cliente antes de editar"
+            class="shrink-0 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/50 dark:text-red-400"
           >
-            Activo
+            <svg class="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Cancha inactiva
           </span>
-          <span
-            *ngIf="!item.isActive"
-            class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500 dark:bg-slate-700 dark:text-slate-400"
-          >
-            Inactivo
-          </span>
+          <ng-template #statusBadgeMobile>
+            <span
+              *ngIf="item.isActive"
+              class="shrink-0 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+            >
+              Activo
+            </span>
+            <span
+              *ngIf="!item.isActive"
+              class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500 dark:bg-slate-700 dark:text-slate-400"
+            >
+              Inactivo
+            </span>
+          </ng-template>
         </div>
         <div
           class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-slate-400"
@@ -426,9 +467,13 @@
             </button>
             <button
               type="button"
-              (click)="openEditDialog(item)"
-              title="Editar"
-              class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
+              (click)="!isCourtInactive(item) && openEditDialog(item)"
+              [disabled]="isCourtInactive(item)"
+              [title]="isCourtInactive(item) ? 'No se puede editar un turno de una cancha inactiva' : 'Editar'"
+              [ngClass]="isCourtInactive(item)
+                ? 'cursor-not-allowed opacity-35 text-gray-400 dark:text-slate-600'
+                : 'text-gray-500 hover:bg-gray-100'"
+              class="rounded-md p-1.5 transition-colors"
             >
               <svg
                 class="h-4 w-4"
@@ -474,6 +519,32 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div
+    *ngIf="!isLoading && activeTab === 'grilla'"
+    class="flex flex-wrap items-center gap-2"
+  >
+    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mr-1">
+      Cancha:
+    </span>
+    <button
+      *ngFor="let court of availableCourts"
+      type="button"
+      (click)="selectCourt(court.id)"
+      [ngClass]="
+        selectedCourtId === court.id
+          ? 'bg-accent text-accent-foreground shadow-sm'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+      "
+      class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all"
+    >
+      <span
+        class="inline-block h-2 w-2 rounded-full flex-shrink-0"
+        [ngClass]="courtColorDot(court.id)"
+      ></span>
+      {{ court.name }}
+    </button>
   </div>
 
   <div
@@ -529,14 +600,17 @@
           <ng-container *ngIf="getSlotData(d, hour) as slot">
             <div
               *ngIf="slot.isStart"
-              class="p-1 border-r border-gray-100 cursor-pointer group"
+              class="p-1 border-r border-gray-100 group"
+              [ngClass]="isCourtInactive(slot.booking) ? 'cursor-not-allowed' : 'cursor-pointer'"
               [style.gridColumn]="di + 2"
               [style.gridRow]="hi + 2 + ' / span ' + slot.rowSpan"
               (click)="openDetail(slot.booking)"
             >
               <div
-                class="h-full rounded border-l-4 px-1.5 py-1 shadow-sm flex flex-col justify-start gap-px overflow-hidden"
-                [ngClass]="courtColorClass(slot.booking.courtId)"
+                class="h-full rounded border-l-4 px-1.5 py-1 shadow-sm flex flex-col justify-start gap-px overflow-hidden relative"
+                [ngClass]="isCourtInactive(slot.booking)
+                  ? 'opacity-50 border-red-400 bg-red-50 text-red-900 dark:bg-red-950/60 dark:border-red-600 dark:text-red-300'
+                  : courtColorClass(slot.booking.courtId)"
               >
                 <p class="text-[10px] font-bold leading-tight truncate">
                   {{ slot.booking.clientName }}
@@ -550,6 +624,15 @@
                 >
                   {{ slot.booking.durationMinutes }} min
                 </p>
+                <svg
+                  *ngIf="isCourtInactive(slot.booking)"
+                  class="absolute top-1 right-1 h-2.5 w-2.5 text-red-500 dark:text-red-400"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
               </div>
             </div>
           </ng-container>
@@ -883,19 +966,85 @@
         {{ formError }}
       </div>
 
+      <div
+        *ngIf="teachers.length > 0"
+        class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800"
+      >
+        <div>
+          <p class="text-sm font-semibold text-gray-700 dark:text-slate-200">
+            ¿Es clase con profesor?
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            Asigna el turno a un profesor y autocompleta el nombre.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          [attr.aria-checked]="form.isTeacherClass"
+          (click)="form.isTeacherClass = !form.isTeacherClass; onIsTeacherClassChange()"
+          class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          [ngClass]="form.isTeacherClass ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-slate-600'"
+        >
+          <span
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+            [ngClass]="form.isTeacherClass ? 'translate-x-5' : 'translate-x-0'"
+          ></span>
+        </button>
+      </div>
+
+      <div *ngIf="form.isTeacherClass && teachers.length > 0">
+        <label
+          class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1"
+        >
+          Profesor <span class="text-red-500">*</span>
+        </label>
+        <select
+          [(ngModel)]="form.teacherId"
+          name="teacherId"
+          (ngModelChange)="onTeacherSelectChange($event)"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100"
+        >
+          <option value="">— Seleccionar profesor —</option>
+          <option *ngFor="let t of teachers" [value]="t.id">
+            {{ t.fullName }}
+          </option>
+        </select>
+      </div>
+
       <div>
         <label
           class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1"
         >
           Nombre del cliente <span class="text-red-500">*</span>
         </label>
-        <input
-          type="text"
-          [(ngModel)]="form.clientName"
-          name="clientName"
-          placeholder="Ej: Rodrigo Pérez"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500"
-        />
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="form.clientName"
+            name="clientName"
+            placeholder="Ej: Rodrigo Pérez"
+            [readonly]="form.isTeacherClass"
+            [ngClass]="
+              form.isTeacherClass
+                ? 'cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400'
+                : 'bg-white dark:bg-slate-950 dark:text-slate-100'
+            "
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:placeholder-slate-500"
+          />
+          <span
+            *ngIf="form.isTeacherClass"
+            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
+          >
+            <svg class="h-3.5 w-3.5 text-gray-400 dark:text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+        </div>
+        <p *ngIf="form.isTeacherClass" class="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
+          Completado automáticamente desde el profesor seleccionado.
+        </p>
       </div>
 
       <div>
@@ -910,24 +1059,6 @@
           placeholder="Ej: +5491155556666"
           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500"
         />
-      </div>
-
-      <div *ngIf="teachers.length > 0">
-        <label
-          class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1"
-          >Profesor (opcional)</label
-        >
-        <select
-          [(ngModel)]="form.teacherId"
-          name="teacherId"
-          (ngModelChange)="onTeacherSelectChange($event)"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500"
-        >
-          <option value="">— Sin asignar —</option>
-          <option *ngFor="let t of teachers" [value]="t.id">
-            {{ t.fullName }}
-          </option>
-        </select>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
