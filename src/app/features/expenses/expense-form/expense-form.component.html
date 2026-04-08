@@ -1,9 +1,10 @@
 <div
-  class="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4"
+  appModalScrollLock
+  class="modal-backdrop"
   (click)="onCancel()"
 >
   <div
-    class="relative w-full max-w-md rounded-lg border bg-background shadow-xl flex flex-col max-h-[calc(100vh-2rem)]"
+    class="modal-card max-w-md border bg-background"
     (click)="$event.stopPropagation()"
   >
     <div class="flex items-center justify-between border-b px-6 py-4">
@@ -225,7 +226,8 @@
 
 <div
   *ngIf="showOpenCashPanel"
-  class="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4"
+  appModalScrollLock
+  class="modal-backdrop"
 >
   <div
     class="relative w-full max-w-sm rounded-xl bg-background shadow-xl p-6 space-y-4 text-center"
