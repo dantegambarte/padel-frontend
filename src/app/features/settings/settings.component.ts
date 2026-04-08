@@ -1,6 +1,6 @@
-import { Component, OnInit, HostListener } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { of, Subject } from 'rxjs';
+import { catchError, finalize, takeUntil } from 'rxjs/operators';
 
 import { ConfigService, ConfigEntry } from '../../core/services/config.service';
 import { CourtsService } from '../../core/services/courts.service';
@@ -16,7 +16,8 @@ import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard'
   selector: 'app-settings',
   templateUrl: './settings.component.html',
 })
-export class SettingsComponent implements OnInit, CanComponentDeactivate {
+export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactivate {
+  private readonly destroy$ = new Subject<void>();
   isLoading = true;
   isSubmitting = false;
 
@@ -55,7 +56,18 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   ) {}
 
   ngOnInit(): void {
+    // Suscripción reactiva: la lista se actualiza automáticamente ante cualquier
+    // mutación (create/update/delete/toggle) sin necesidad de recargar.
+    this.courtsService.courts$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((courts) => (this.courts = courts));
+
     this.loadAll();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   @HostListener('document:keydown.escape')
@@ -70,26 +82,28 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
-  /** Carga la configuración y la lista de canchas en paralelo. */
+  /** Carga la configuración y dispara la carga de canchas en paralelo. */
   private loadAll(): void {
     this.isLoading = true;
-    forkJoin({
-      config: this.configService.getAll().pipe(catchError(() => of([]))),
-      courts: this.courtsService.findAll().pipe(catchError(() => of([]))),
-    }).subscribe({
-      next: ({ config, courts }) => {
-        this.isLoading = false;
-        this.courts = courts as Court[];
-        this.applyConfig(config as ConfigEntry[]);
-      },
-      error: () => {
-        this.isLoading = false;
-        this.toast.error(
-          'Error al cargar configuración',
-          'Intente recargar la página',
-        );
-      },
-    });
+    // Las canchas llegan vía courts$ (suscripción en ngOnInit).
+    // Aquí solo cargamos la configuración de horarios.
+    this.courtsService.loadCourts();
+    this.configService
+      .getAll()
+      .pipe(catchError(() => of([])))
+      .subscribe({
+        next: (config) => {
+          this.isLoading = false;
+          this.applyConfig(config as ConfigEntry[]);
+        },
+        error: () => {
+          this.isLoading = false;
+          this.toast.error(
+            'Error al cargar configuración',
+            'Intente recargar la página',
+          );
+        },
+      });
   }
 
   /**
@@ -192,9 +206,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
         next: (created) => {
           this.isCourtSubmitting = false;
           this.isCourtModalOpen = false;
-          this.courts = [...this.courts, created].sort((a, b) =>
-            a.name.localeCompare(b.name),
-          );
+          // courts[] se actualiza vía courts$ — no se muta localmente.
           this.toast.success(
             'Cancha creada',
             `"${created.name}" fue agregada al sistema`,
@@ -217,9 +229,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
         next: (updated) => {
           this.isCourtSubmitting = false;
           this.isCourtModalOpen = false;
-          this.courts = this.courts
-            .map((c) => (c.id === updated.id ? updated : c))
-            .sort((a, b) => a.name.localeCompare(b.name));
+          // courts[] se actualiza vía courts$ — no se muta localmente.
           this.toast.success(
             'Cancha actualizada',
             `"${updated.name}" fue modificada`,
@@ -252,7 +262,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
     this.courtToDelete = null;
     this.courtsService.delete(id).subscribe({
       next: () => {
-        this.courts = this.courts.filter((c) => c.id !== id);
+        // courts[] se actualiza vía courts$ — no se muta localmente.
         this.toast.success(
           'Cancha eliminada',
           `"${name}" fue eliminada del sistema`,

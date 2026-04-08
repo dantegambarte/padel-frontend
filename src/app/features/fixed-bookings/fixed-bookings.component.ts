@@ -1,4 +1,6 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import {
@@ -31,6 +33,7 @@ type FormState = {
   startDate: string;
   notes: string;
   teacherId: string;
+  isTeacherClass: boolean;
 };
 
 const EMPTY_FORM = (): FormState => ({
@@ -43,17 +46,24 @@ const EMPTY_FORM = (): FormState => ({
   startDate: new Date().toISOString().slice(0, 10),
   notes: '',
   teacherId: '',
+  isTeacherClass: false,
 });
 
 @Component({
   selector: 'app-fixed-bookings',
   templateUrl: './fixed-bookings.component.html',
 })
-export class FixedBookingsComponent implements OnInit {
+export class FixedBookingsComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   fixedBookings: FixedBooking[] = [];
   courts: Court[] = [];
   teachers: Teacher[] = [];
   isLoading = true;
+
+  availableCourts: { id: string; name: string }[] = [];
+
+  readonly selectedCourtId$ = new BehaviorSubject<string>('');
+
   isSubmitting = false;
   generatingId: string | null = null;
   deletingId: string | null = null;
@@ -70,6 +80,17 @@ export class FixedBookingsComponent implements OnInit {
   activeTab: 'lista' | 'grilla' = 'lista';
   private slotMap = new Map<string, SlotData>();
   selectedFixedBooking: FixedBooking | null = null;
+
+  /** Cancha actualmente seleccionada (shortcut para el template). */
+  get selectedCourtId(): string {
+    return this.selectedCourtId$.value;
+  }
+
+  /** Cambia la cancha seleccionada y reconstruye el mapa de la grilla. */
+  selectCourt(courtId: string): void {
+    this.selectedCourtId$.next(courtId);
+    this.buildGrid();
+  }
 
   /** Paleta de colores por cancha (clases completas para que Tailwind las incluya). */
   readonly COURT_COLORS: string[] = [
@@ -133,10 +154,31 @@ export class FixedBookingsComponent implements OnInit {
     });
   }
 
+  /** Paleta de colores para el dot del pill (debe coincidir visualmente con COURT_COLORS). */
+  private readonly COURT_DOT_COLORS: string[] = [
+    'bg-indigo-400',
+    'bg-violet-400',
+    'bg-sky-400',
+    'bg-teal-400',
+    'bg-amber-400',
+    'bg-rose-400',
+  ];
+
   /** Devuelve la clase CSS de color asignada a una cancha, rotando la paleta. */
   courtColorClass(courtId: string): string {
     const idx = this.courts.findIndex((c) => c.id === courtId);
     return this.COURT_COLORS[Math.max(0, idx) % this.COURT_COLORS.length];
+  }
+
+  /** Devuelve la clase del dot de color para los pills del selector de cancha. */
+  courtColorDot(courtId: string): string {
+    const idx = this.availableCourts.findIndex((c) => c.id === courtId);
+    return this.COURT_DOT_COLORS[Math.max(0, idx) % this.COURT_DOT_COLORS.length];
+  }
+
+  /** Devuelve true si la cancha del turno está actualmente inactiva. */
+  isCourtInactive(item: FixedBooking): boolean {
+    return item.court != null && !item.court.isActive;
   }
 
   /** Devuelve el dato de la celda (inicio o cobertura de span) o undefined si está libre. */
@@ -158,6 +200,13 @@ export class FixedBookingsComponent implements OnInit {
 
   /** Abre el panel de detalle lateral para el turno fijo seleccionado. */
   openDetail(booking: FixedBooking): void {
+    if (this.isCourtInactive(booking)) {
+      this.toast.info(
+        'Cancha inactiva',
+        'No se puede editar un turno de una cancha inactiva.',
+      );
+      return;
+    }
     this.selectedFixedBooking = booking;
   }
 
@@ -185,7 +234,18 @@ export class FixedBookingsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.courtsSvc.courts$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((courts) => {
+        this.courts = courts.filter((c) => c.isActive);
+      });
+
     this.loadAll();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   @HostListener('document:keydown.escape')
@@ -262,6 +322,7 @@ export class FixedBookingsComponent implements OnInit {
       startDate: item.startDate,
       notes: item.notes ?? '',
       teacherId: item.teacherId ?? '',
+      isTeacherClass: !!item.teacherId,
     };
     this.formError = '';
     this.isDialogOpen = true;
@@ -273,10 +334,25 @@ export class FixedBookingsComponent implements OnInit {
     this.editingId = null;
   }
 
-  /** Al seleccionar un profesor, autocompleta el nombre del cliente. */
+  /**
+   * Se dispara al cambiar el toggle "¿Es clase con profesor?".
+   * Si se desactiva, limpia el profesor y el nombre del cliente para
+   * que el administrador ingrese un nombre libre.
+   */
+  onIsTeacherClassChange(): void {
+    if (!this.form.isTeacherClass) {
+      this.form.teacherId = '';
+      this.form.clientName = '';
+    }
+  }
+
+  /**
+   * Al seleccionar un profesor, autocompleta clientName con el formato
+   * estándar "Clase - Prof. {nombre}". Si se deselecciona, limpia el campo.
+   */
   onTeacherSelectChange(teacherId: string): void {
     const teacher = this.teachers.find((t) => t.id === teacherId);
-    this.form.clientName = teacher ? `Clase - ${teacher.fullName}` : '';
+    this.form.clientName = teacher ? `Clase - Prof. ${teacher.fullName}` : '';
   }
 
   /** Valida el formulario y envía el DTO de creación o actualización al servicio. */
@@ -399,11 +475,13 @@ export class FixedBookingsComponent implements OnInit {
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   }
 
-  /** Construye el mapa de slots de la grilla semanal a partir de los turnos fijos activos. */
+  /** Construye el mapa de slots de la grilla semanal filtrando por la cancha seleccionada. */
   private buildGrid(): void {
     this.slotMap.clear();
+    const courtId = this.selectedCourtId$.value;
     for (const b of this.fixedBookings) {
       if (!b.isActive) continue;
+      if (courtId && b.courtId !== courtId) continue;
       const startIdx = this.validHours.indexOf(b.hour);
       if (startIdx === -1) continue;
 
@@ -434,6 +512,30 @@ export class FixedBookingsComponent implements OnInit {
     this.fixedSvc.findAll().subscribe({
       next: (data) => {
         this.fixedBookings = data;
+        // Extrae canchas únicas presentes en los turnos, ordenadas por nombre.
+        const seen = new Set<string>();
+        this.availableCourts = data
+          .filter((b) => b.isActive && b.court)
+          .reduce(
+            (acc, b) => {
+              if (!seen.has(b.courtId)) {
+                seen.add(b.courtId);
+                acc.push({ id: b.courtId, name: b.court.name });
+              }
+              return acc;
+            },
+            [] as { id: string; name: string }[],
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        // Selecciona la primera cancha disponible si no hay ninguna seleccionada.
+        if (
+          this.availableCourts.length > 0 &&
+          !this.availableCourts.find((c) => c.id === this.selectedCourtId$.value)
+        ) {
+          this.selectedCourtId$.next(this.availableCourts[0].id);
+        }
+
         this.buildGrid();
         this.isLoading = false;
       },
@@ -443,10 +545,8 @@ export class FixedBookingsComponent implements OnInit {
       },
     });
 
-    this.courtsSvc.findAll().subscribe({
-      next: (data) => (this.courts = data.filter((c) => c.isActive)),
-      error: () => {},
-    });
+    // courts se actualiza vía courts$ (suscripción en ngOnInit).
+    this.courtsSvc.loadCourts();
 
     this.teachersSvc.findAll().subscribe({
       next: (data) => (this.teachers = data),
