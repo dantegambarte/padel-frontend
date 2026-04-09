@@ -500,8 +500,22 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         error: (err) => {
           const msg: string = err.error?.message ?? 'Intente nuevamente';
           if (err.status === 409) {
-            this.toast.error('Conflicto al abrir caja', msg);
-            this.loadCurrentSession();
+            const isOrphanedDay = msg.includes('pendiente de cierre');
+            if (isOrphanedDay) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Jornada anterior pendiente',
+                html:
+                  `${msg}<br><br>` +
+                  `Presioná <strong>"Finalizar Jornada"</strong> que aparecerá a continuación para destrabar el sistema.`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f59e0b',
+              });
+              this.loadCurrentSession();
+            } else {
+              this.toast.error('Conflicto al abrir caja', msg);
+              this.loadCurrentSession();
+            }
           } else {
             this.toast.error('Error al abrir caja', msg);
           }
@@ -1386,16 +1400,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cierre de Jornada Completa — solo Admin.
-   * Pide confirmación con Swal, llama al backend (que valida que no haya turno abierto)
-   * y muestra el consolidado del día. Si hay turno abierto, el backend responde 409.
+   * Cierre de Jornada Comercial.
+   * Pide confirmación con Swal, llama al backend (que valida que no haya turno abierto
+   * y cierra solo la jornada más antigua pendiente).
+   * Tras el éxito recarga el estado desde el backend: si quedan más jornadas huérfanas
+   * el botón "Finalizar Jornada" seguirá visible para que el operador las cierre una a una.
    */
   async closeDaySession(): Promise<void> {
     const result = await Swal.fire({
       icon: 'warning',
       title: '¿Cerrar Jornada Completa?',
       html:
-        'Esta acción confirma el <strong>Cierre de Jornada</strong> del día de hoy.<br>' +
+        'Esta acción confirma el <strong>Cierre de Jornada</strong>.<br>' +
         'Se verificará que todos los turnos estén cerrados.',
       showCancelButton: true,
       confirmButtonText: 'Sí, cerrar jornada',
@@ -1420,8 +1436,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               `Total recaudado: <strong>$${totalStr}</strong><br>` +
               `Turnos: ${summary.sessions.length}`,
           });
-          this.isBusinessDayClosed = true;
-          this.cdr.detectChanges();
+          this.loadCurrentSession();
         },
         error: (err) => {
           if (err.status === 409) {
@@ -1430,8 +1445,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               'Cerrá el turno activo antes de realizar el Cierre de Jornada.',
             );
           } else if (err.status === 400) {
-            this.isBusinessDayClosed = true;
-            this.cdr.detectChanges();
+            this.loadCurrentSession();
           } else {
             this.toast.error('Error al cerrar jornada', 'Intente nuevamente.');
           }
