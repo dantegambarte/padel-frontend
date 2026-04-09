@@ -163,7 +163,8 @@
     >
       <div
         #headerRow
-        class="flex flex-nowrap flex-shrink-0 overflow-hidden z-20 bg-card border-b border-slate-200 pb-2 select-none cursor-default dark:bg-slate-950 dark:border-slate-800"
+        class="schedule-header-row flex flex-nowrap flex-shrink-0 z-20 bg-card border-b border-slate-200 pb-2 select-none cursor-default dark:bg-slate-950 dark:border-slate-800"
+        style="overflow-x: hidden; overflow-y: scroll"
       >
         <div
           class="flex-none w-16 bg-card border-r border-slate-200 flex items-end pb-1 pl-1 h-8 dark:bg-slate-950 dark:border-slate-800"
@@ -185,10 +186,10 @@
         </div>
       </div>
 
-      <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="flex-1 min-h-0 schedule-body-scroll">
         <div
           #scrollContainer
-          class="relative w-full overflow-x-auto flex flex-nowrap snap-x snap-mandatory md:snap-none select-none cursor-grab active:cursor-grabbing scroll-hint-x pb-4"
+          class="relative w-full flex-1 overflow-x-auto flex flex-nowrap snap-x snap-mandatory md:snap-none select-none cursor-grab active:cursor-grabbing scroll-hint-x pb-4"
           style="scroll-padding-left: 4rem"
           cdkDropListGroup
           (mousedown)="onScrollMouseDown($event)"
@@ -198,9 +199,9 @@
           (scroll)="syncHeaderScroll()"
         >
           <div
-            class="sticky left-0 z-20 flex-none w-16 bg-card border-r border-slate-200 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.10)] dark:bg-slate-900 dark:border-slate-800"
+            class="sticky left-0 z-20 flex-none w-16 flex flex-col bg-card border-r border-slate-200 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.10)] dark:bg-slate-900 dark:border-slate-800"
           >
-            <div class="space-y-2">
+            <div class="space-y-2 flex-shrink-0">
               <div
                 *ngFor="let hour of HOURS; trackBy: trackByHour"
                 [id]="'time-row-' + hour"
@@ -218,9 +219,9 @@
 
           <div
             *ngFor="let court of courts; trackBy: trackByCourt"
-            class="flex-none snap-start flex flex-col px-1 w-[calc(100%-4rem)] md:flex-1 md:w-auto md:min-w-[220px]"
+            class="flex-none snap-start flex flex-col px-1 w-[calc(100%-4rem)] md:flex-1 md:w-auto md:min-w-[220px] bg-card dark:bg-slate-950"
           >
-            <div class="space-y-2">
+            <div class="space-y-2 flex-shrink-0">
               <div
                 *ngFor="let hour of HOURS; trackBy: trackByHour"
                 class="relative h-12 overflow-visible"
@@ -1357,6 +1358,38 @@
                       </svg>
                       Confirmado
                     </span>
+
+                    <button
+                      *ngIf="selectedBooking.expectedDepositAmount"
+                      type="button"
+                      (click)="confirmExpectedDeposit()"
+                      [disabled]="isConfirmingDeposit"
+                      title="Confirmar seña habitual por transferencia (${{ selectedBooking.expectedDepositAmount | number:'1.0-0' }})"
+                      class="flex items-center gap-1 px-2 h-7 rounded-full bg-violet-500 text-white hover:bg-violet-600 transition-colors text-xs font-semibold disabled:opacity-50"
+                    >
+                      <svg
+                        *ngIf="!isConfirmingDeposit"
+                        class="h-3 w-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <svg
+                        *ngIf="isConfirmingDeposit"
+                        class="h-3 w-3 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Seña ${{ selectedBooking.expectedDepositAmount | number:'1.0-0' }}
+                    </button>
                   </div>
                 </div>
                 <div class="flex justify-between px-4 py-2.5 text-base">

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import {
   BookingResponse,
@@ -17,6 +18,8 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class BookingsService {
   private readonly url = `${environment.apiUrl}/bookings`;
+
+  readonly bookingUpdated$ = new Subject<BookingResponse>();
 
   constructor(private http: HttpClient) {}
 
@@ -103,5 +106,26 @@ export class BookingsService {
     return this.http.patch<BookingResponse>(`${this.url}/${id}`, {
       isConfirmed: true,
     });
+  }
+
+  /**
+   * Confirma la seña recurrente esperada de un turno fijo (1 clic).
+   * Registra expectedDepositAmount como transferencia sin requerir caja abierta.
+   * @param id - ID de la reserva.
+   */
+  confirmExpectedDeposit(id: string): Observable<BookingResponse> {
+    return this.http
+      .post<BookingResponse>(`${this.url}/${id}/confirm-expected-deposit`, {})
+      .pipe(tap((updated) => this.bookingUpdated$.next(updated)));
+  }
+
+  /**
+   * Retorna los bookings con seña recurrente pendiente de confirmación
+   * (expectedDepositAmount > 0, no cancelados/completados, fecha >= hoy).
+   */
+  getPendingExpectedDeposits(): Observable<BookingResponse[]> {
+    return this.http.get<BookingResponse[]>(
+      `${this.url}/pending-expected-deposits`,
+    );
   }
 }

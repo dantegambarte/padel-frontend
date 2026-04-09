@@ -21,6 +21,31 @@ html {
   ::-webkit-scrollbar-thumb:hover {
     background: #475569;
   }
+
+  .scroll-hint-x {
+    &::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #475569;
+      &:hover {
+        background: #64748b;
+      }
+    }
+    scrollbar-color: #475569 #1e293b;
+  }
+
+  .schedule-body-scroll {
+    &::-webkit-scrollbar-thumb {
+      background: #334155;
+      background-clip: padding-box;
+      &:hover {
+        background: #475569;
+        background-clip: padding-box;
+      }
+    }
+    scrollbar-color: #334155 transparent;
+  }
 }
 
 @keyframes router-progress {
@@ -414,7 +439,7 @@ input[type="week"] {
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      background: #f1f5f9;
+      background: #e2e8f0;
       border-radius: 999px;
     }
     &::-webkit-scrollbar-thumb {
@@ -426,7 +451,46 @@ input[type="week"] {
     }
 
     scrollbar-width: thin;
-    scrollbar-color: #94a3b8 #f1f5f9;
+    scrollbar-color: #94a3b8 #e2e8f0;
+  }
+
+  .schedule-header-row {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: transparent;
+    }
+  }
+
+  .schedule-body-scroll {
+    scrollbar-gutter: stable;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      &:hover {
+        background: #94a3b8;
+        background-clip: padding-box;
+      }
+    }
+
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
   }
 }
 

@@ -18,6 +18,7 @@ export interface FixedBooking {
   notes: string | null;
   teacherId: string | null;
   teacher: { id: string; fullName: string } | null;
+  recurringDepositAmount: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +33,7 @@ export interface CreateFixedBookingDto {
   startDate: string;
   notes?: string;
   teacherId?: string | null;
+  recurringDepositAmount?: number | null;
 }
 
 export interface UpdateFixedBookingDto extends Partial<CreateFixedBookingDto> {
@@ -97,9 +99,9 @@ export class FixedBookingsService {
   }
 
   /** Elimina el turno fijo y todas sus ocurrencias futuras; invalida la caché. */
-  deleteFixedBookingCascade(id: string): Observable<{ deleted: number }> {
+  deleteFixedBookingCascade(id: string): Observable<{ deleted: number; preserved: number }> {
     return this.http
-      .delete<{ deleted: number }>(`${this.url}/${id}/cascade`)
+      .delete<{ deleted: number; preserved: number }>(`${this.url}/${id}/cascade`)
       .pipe(tap(() => this.clearCache()));
   }
 

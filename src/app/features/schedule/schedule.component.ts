@@ -299,6 +299,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.checkCashStatus();
 
     this.sub.add(
+      this.bookingsService.bookingUpdated$.subscribe((updated) => {
+        if (updated.date !== this.selectedDate) return;
+
+        this.addToBookingMap(updated);
+
+        if (this.selectedBooking?.id === updated.id) {
+          this.selectedBooking = updated;
+        }
+      }),
+    );
+
+    this.sub.add(
       this.bookingDraftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_BOOKING, {
           clientName: this.clientName,
@@ -1291,6 +1303,37 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Confirma la seña recurrente esperada del turno fijo con 1 clic.
+   * Llama a POST /bookings/:id/confirm-expected-deposit.
+   * No requiere caja abierta (es transferencia).
+   * Actualiza el booking en el mapa para que el botón desaparezca inmediatamente.
+   */
+  isConfirmingDeposit = false;
+
+  confirmExpectedDeposit(): void {
+    const booking = this.selectedBooking;
+    if (!booking || this.isConfirmingDeposit) return;
+
+    this.isConfirmingDeposit = true;
+    this.bookingsService.confirmExpectedDeposit(booking.id).subscribe({
+      next: (updated) => {
+        this.isConfirmingDeposit = false;
+        this.selectedBooking = updated;
+        this.addToBookingMap(updated);
+        this.toast.success(
+          'Seña confirmada',
+          `$${booking.expectedDepositAmount?.toLocaleString('es-AR')} registrado por transferencia.`,
+        );
+      },
+      error: (err) => {
+        this.isConfirmingDeposit = false;
+        const msg = err?.error?.message ?? 'No se pudo confirmar la seña.';
+        this.toast.error('Error', Array.isArray(msg) ? msg.join(' ') : msg);
+      },
+    });
+  }
+
   /** Cierra el diálogo de detalle o creación, solicitando confirmación si hay cambios sin guardar. */
   closeDialog(): void {
     if (this.confirmDialogOpen) return;
@@ -1406,10 +1449,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isCashRegisterOpen) {
+    if (!this.isCashRegisterOpen && Number(this.pagoEfectivo) > 0) {
       Swal.fire({
         title: '¡Caja Cerrada!',
-        text: 'Necesitas abrir un turno en la caja para poder registrar cobros.',
+        text: 'Necesitas abrir un turno en la caja para poder registrar cobros en efectivo.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Ir a Abrir Caja',
@@ -1542,10 +1585,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Registra el pago (efectivo/transferencia) SIN cambiar estado ni items. */
   saveDetailChanges(): void {
-    if (!this.isCashRegisterOpen) {
+    const prevCash = Number(this.selectedBooking?.payment?.amountCash ?? 0);
+    const newCash = Math.max(0, this.totalPagadoEfectivo);
+    if (!this.isCashRegisterOpen && newCash > prevCash) {
       Swal.fire({
         title: '¡Caja Cerrada!',
-        text: 'Necesitas abrir un turno en la caja para poder registrar pagos.',
+        text: 'Necesitas abrir un turno en la caja para poder registrar pagos en efectivo.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Ir a Abrir Caja',
@@ -2220,7 +2265,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.rescheduleSourceId = '';
   }
 
-  /** Construye y lanza la petición de mover o duplicar según la acción elegida. */
+  /**
+   * Construye y lanza la petición de mover o duplicar según la acción elegida.
+   * Si el turno pertenece a una serie fija y la acción es 'move', muestra
+   * primero un diálogo de decisión (solo este turno vs. toda la serie).
+   */
   confirmReschedule(action: 'move' | 'duplicate'): void {
     if (
       !this.rescheduleTargetCourtId ||
@@ -2240,6 +2289,53 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       hour: this.rescheduleTargetHour,
     };
 
+    // Buscar el booking fuente en el mapa para saber si pertenece a una serie.
+    const sourceBooking = [...this.bookingMap.values()].find(
+      (b) => b.id === this.rescheduleSourceId,
+    );
+    const isRecurring = action === 'move' && !!sourceBooking?.fixedBookingId;
+
+    if (isRecurring) {
+      Swal.fire({
+        title: 'Turno recurrente',
+        html:
+          `<b>${sourceBooking!.clientName}</b> tiene un turno fijo configurado.<br><br>` +
+          `¿Querés mover <b>solo esta semana</b> o <b>toda la serie</b> de turnos?`,
+        icon: 'question',
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonColor: '#4f46e5',
+        denyButtonColor: '#0891b2',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Solo esta semana',
+        denyButtonText: 'Toda la serie',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Mover solo esta instancia (Booking individual).
+          this.executeMove(dto);
+        } else if (result.isDenied) {
+          // Actualizar el turno fijo padre → el backend regenera las instancias futuras.
+          this.closeRescheduleDialog();
+          if (this.rescheduleFromModal) this.forceCloseDialog();
+          this.router.navigate(['/app/fixed-bookings']);
+          this.toast.info(
+            'Editar serie completa',
+            'Buscá el turno fijo en la lista y editalo para mover toda la serie.',
+          );
+        }
+        // Si cancela, no hace nada.
+      });
+      return;
+    }
+
+    // Caso no-recurrente o acción duplicate: ejecutar directamente.
+    this.executeMove(dto, action);
+  }
+
+  /** Ejecuta la petición HTTP de mover o duplicar el booking. */
+  private executeMove(dto: RescheduleBookingDto, action: 'move' | 'duplicate' = 'move'): void {
     this.isRescheduling = true;
     const request$ =
       action === 'move'
@@ -2256,15 +2352,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error(
-            'Slot ocupado',
-            'Ese horario ya tiene un turno reservado.',
-          );
+          this.toast.error('Slot ocupado', 'Ese horario ya tiene un turno reservado.');
         } else {
-          this.toast.error(
-            'Error',
-            'No se pudo completar la operación. Intentá de nuevo.',
-          );
+          this.toast.error('Error', 'No se pudo completar la operación. Intentá de nuevo.');
         }
       },
     });

@@ -51,6 +51,12 @@ export interface BookingResponse {
   fixedBooking: { phoneNumber: string | null } | null;
   /** true cuando el cliente confirmó su asistencia al turno fijo. */
   isConfirmed: boolean;
+  /**
+   * Monto de seña recurrente pendiente de confirmación.
+   * Presente solo en bookings de turnos fijos con recurringDepositAmount.
+   * Se pone a null una vez que el admin confirma la seña (1 clic).
+   */
+  expectedDepositAmount: number | null;
 }
 
 /** Payload para crear una nueva reserva. */

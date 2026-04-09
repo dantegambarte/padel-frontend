@@ -34,6 +34,7 @@ type FormState = {
   notes: string;
   teacherId: string;
   isTeacherClass: boolean;
+  recurringDepositAmount: number | null;
 };
 
 const EMPTY_FORM = (): FormState => ({
@@ -47,6 +48,7 @@ const EMPTY_FORM = (): FormState => ({
   notes: '',
   teacherId: '',
   isTeacherClass: false,
+  recurringDepositAmount: null,
 });
 
 @Component({
@@ -77,7 +79,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
   filterDay = '';
   filterCourt = '';
 
-  activeTab: 'lista' | 'grilla' = 'lista';
+  activeTab: 'lista' | 'grilla' = 'grilla';
   private slotMap = new Map<string, SlotData>();
   selectedFixedBooking: FixedBooking | null = null;
 
@@ -215,12 +217,20 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     this.selectedFixedBooking = null;
   }
 
-  /** Abre el diálogo de creación pre-poblado con día y hora desde la grilla. */
+  /** Abre el diálogo de creación pre-poblado con día, hora y cancha desde la grilla. */
   openCreateFromGrid(day: number, hour: string): void {
     this.editingId = null;
     this.form = EMPTY_FORM();
     this.form.dayOfWeek = day;
     this.form.hour = hour;
+
+    // Pre-selecciona la cancha actualmente visible en la grilla.
+    // selectedCourtId$ es un BehaviorSubject: su valor es siempre sincrónico.
+    const courtId = this.selectedCourtId$.value;
+    if (courtId) {
+      this.form.courtId = courtId;
+    }
+
     this.onDayOfWeekChange();
     this.formError = '';
     this.isDialogOpen = true;
@@ -323,6 +333,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       notes: item.notes ?? '',
       teacherId: item.teacherId ?? '',
       isTeacherClass: !!item.teacherId,
+      recurringDepositAmount: item.recurringDepositAmount ?? null,
     };
     this.formError = '';
     this.isDialogOpen = true;
@@ -353,9 +364,14 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
   onTeacherSelectChange(teacherId: string): void {
     const teacher = this.teachers.find((t) => t.id === teacherId);
     this.form.clientName = teacher ? `Clase - Prof. ${teacher.fullName}` : '';
+    this.form.phoneNumber = teacher?.phoneNumber ?? '';
   }
 
-  /** Valida el formulario y envía el DTO de creación o actualización al servicio. */
+  /**
+   * Valida el formulario y, si se está editando con cambios estructurales
+   * (día, hora, duración o cancha), pide confirmación antes de aplicar
+   * la cascada que regenera los turnos futuros.
+   */
   submitForm(): void {
     if (!this.form.clientName.trim()) {
       this.formError = 'El nombre del cliente es obligatorio.';
@@ -371,7 +387,6 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     }
 
     this.formError = '';
-    this.isSubmitting = true;
 
     const dto: CreateFixedBookingDto = {
       clientName: this.form.clientName.trim(),
@@ -383,7 +398,48 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       startDate: this.form.startDate,
       notes: this.form.notes.trim() || undefined,
       teacherId: this.form.teacherId || null,
+      recurringDepositAmount: this.form.recurringDepositAmount ?? undefined,
     };
+
+    // Detectar si se modificó algún campo estructural en modo edición.
+    if (this.editingId) {
+      const original = this.fixedBookings.find((f) => f.id === this.editingId);
+      const hasStructuralChange =
+        original &&
+        (dto.dayOfWeek !== original.dayOfWeek ||
+          dto.hour !== original.hour ||
+          dto.durationMinutes !== original.durationMinutes ||
+          dto.courtId !== original.courtId);
+
+      if (hasStructuralChange) {
+        Swal.fire({
+          title: 'Modificar serie recurrente',
+          html:
+            `Cambiaste el <strong>día, hora, duración o cancha</strong> del turno fijo.<br><br>` +
+            `Esto <strong>eliminará y regenerará</strong> todos los turnos futuros sin pago asociado.<br>` +
+            `<span style="color:#d97706">Los turnos con seña o pago registrado no se tocarán.</span>`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#4f46e5',
+          cancelButtonColor: '#6b7280',
+          confirmButtonText: 'Sí, actualizar toda la serie',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.executeUpdate(dto);
+          }
+        });
+        return;
+      }
+    }
+
+    this.executeUpdate(dto);
+  }
+
+  /** Envía la petición de creación o actualización al servicio. */
+  private executeUpdate(dto: CreateFixedBookingDto): void {
+    this.isSubmitting = true;
 
     const op = this.editingId
       ? this.fixedSvc.update(this.editingId, dto)
@@ -394,7 +450,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
         this.toast.success(
           this.editingId ? 'Turno fijo actualizado' : 'Turno fijo creado',
           this.editingId
-            ? 'Los cambios fueron guardados.'
+            ? 'Los cambios fueron guardados. Los turnos futuros fueron regenerados.'
             : 'Se generaron los turnos para las próximas 8 semanas.',
         );
         this.closeDialog();
@@ -450,10 +506,10 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       this.deletingId = item.id;
       this.fixedSvc.deleteFixedBookingCascade(item.id).subscribe({
         next: (res) => {
-          this.toast.success(
-            'Turno fijo eliminado',
-            `${item.clientName} — ${res.deleted} reserva(s) futura(s) borrada(s).`,
-          );
+          const detail = res.preserved > 0
+            ? `${res.deleted} turno(s) borrado(s). ${res.preserved} conservado(s) por tener pago — revisalos en la agenda.`
+            : `${res.deleted} turno(s) futuro(s) eliminado(s).`;
+          this.toast.success('Turno fijo eliminado', `${item.clientName} — ${detail}`);
           this.deletingId = null;
           this.loadAll();
         },
