@@ -1715,7 +1715,7 @@
               >
                 <div
                   *ngIf="selectedBooking.items.length > 0"
-                  class="rounded-lg border border-border bg-white p-4"
+                  class="rounded-lg border border-accent/50 bg-accent/5 p-4 space-y-2"
                 >
                   <p class="mb-3 text-sm font-medium">Productos consumidos</p>
                   <div class="space-y-2">
@@ -1723,7 +1723,7 @@
                       *ngFor="let item of selectedBooking.items"
                       class="flex justify-between text-sm"
                     >
-                      <span>{{ item.quantity }}× {{ item.product.name }}</span>
+                      <span class="text-muted-foreground">{{ item.quantity }}× {{ item.product.name }}</span>
                       <span class="font-medium"
                         >${{ fmt(item.unitPrice * item.quantity) }}</span
                       >
