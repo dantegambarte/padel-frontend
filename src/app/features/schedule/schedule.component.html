@@ -2033,12 +2033,16 @@
                         <button
                           type="button"
                           (click)="setSplitMode('court+items')"
+                          [disabled]="!hasUnpaidItems"
+                          [title]="!hasUnpaidItems ? 'Sin consumos pendientes de cobro' : ''"
                           [ngClass]="
-                            splitMode === 'court+items'
+                            splitMode === 'court+items' && hasUnpaidItems
                               ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200 dark:bg-slate-700 dark:text-indigo-300 dark:border-indigo-700'
-                              : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
+                              : hasUnpaidItems
+                                ? 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                : 'text-gray-300 cursor-not-allowed dark:text-slate-600'
                           "
-                          class="rounded-md px-2.5 py-1 transition-all flex-1"
+                          class="rounded-md px-2.5 py-1 transition-all flex-1 disabled:pointer-events-none"
                         >
                           Cancha + consumos
                         </button>
@@ -2118,24 +2122,28 @@
                       <div
                         class="rounded-md bg-blue-50 px-3 py-2.5 text-sm space-y-1 dark:bg-blue-950/30"
                       >
-                        <div class="flex justify-between">
+                        <div class="flex justify-between items-center">
                           <span
                             class="text-blue-700 font-medium dark:text-blue-400"
                             >Total por jugador:</span
                           >
                           <span
-                            class="font-bold text-base text-blue-900 dark:text-blue-200"
+                            [ngClass]="
+                              hasPriorPayment && detailSaldoPendiente > 0
+                                ? 'text-base text-blue-900 dark:text-blue-200'
+                                : 'text-2xl font-extrabold text-blue-900 dark:text-blue-200'
+                            "
                             >${{ fmt(detailCostPerPlayer) }} c/u</span
                           >
                         </div>
                         <div
                           *ngIf="hasPriorPayment && detailSaldoPendiente > 0"
-                          class="flex justify-between"
+                          class="flex justify-between items-center"
                         >
-                          <span class="text-blue-600"
+                          <span class="text-blue-600 font-medium"
                             >Deuda restante por jugador:</span
                           >
-                          <span class="font-semibold text-base text-destructive"
+                          <span class="text-2xl font-extrabold text-destructive"
                             >${{ fmt(detailDebtPerPlayer) }} c/u</span
                           >
                         </div>
@@ -2359,7 +2367,8 @@
                   *ngIf="selectedBooking.status === 'booked'"
                   type="button"
                   (click)="onStartPlaying(selectedBooking)"
-                  [disabled]="isSavingDetail"
+                  [disabled]="isSavingDetail || !isCashRegisterOpen"
+                  [title]="!isCashRegisterOpen ? 'Abrí la caja antes de iniciar el partido' : ''"
                   class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-3.5 text-base font-bold hover:bg-emerald-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 >
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">

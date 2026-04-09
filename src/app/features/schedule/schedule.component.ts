@@ -231,6 +231,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * inconsistentes al deshacer. Los montos ya persistidos en DB se preservan.
    */
   setSplitMode(mode: 'court' | 'court+items'): void {
+    if (mode === 'court+items' && !this.hasUnpaidItems) mode = 'court';
     if (this.splitMode === mode) return;
     if (this.playerPaymentHistory.length > 0) {
       let cashFromButtons = 0;
@@ -930,10 +931,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
 
+  /** true cuando hay al menos un consumo sin pagar — habilita el modo 'court+items'. */
+  get hasUnpaidItems(): boolean {
+    return this.detailUnpaidItemsSubtotal > 0;
+  }
+
   /**
    * Base de cálculo para la división entre jugadores según el modo elegido:
    * - 'court': solo el precio de cancha.
    * - 'court+items': precio de cancha + consumos pendientes de cobro.
+   * Si no hay consumos pendientes, siempre usa solo cancha independientemente del modo.
    */
   /** División de cuenta habilitada solo cuando el partido está en curso o finalizado. */
   get canSplitAccount(): boolean {
@@ -944,7 +951,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Monto base para el split de pago: solo cancha o cancha + ítems no pagados según el modo activo. */
   private get splitBase(): number {
     const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
-    return this.splitMode === 'court'
+    return this.splitMode === 'court' || !this.hasUnpaidItems
       ? courtPrice
       : courtPrice + this.detailUnpaidItemsSubtotal;
   }
@@ -1612,6 +1619,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       amountTransfer: Math.max(0, this.totalPagadoTransferencia),
     };
 
+    const cartSnapshot = this.detailCart.map((i) => ({ ...i }));
+
     this.sub.add(
       this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
         next: (updated) => {
@@ -1659,6 +1668,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isSavingDetail = false;
+          this.detailCart = cartSnapshot;
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo guardar el pago.',
@@ -1695,7 +1705,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
     this.detailCart = this.detailCart.map((i) =>
       !i.isPaid && i.selectedForPayment
-        ? { ...i, selectedForPayment: false }
+        ? { ...i, isPaid: true, selectedForPayment: false }
         : i,
     );
   }
