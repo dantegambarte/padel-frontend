@@ -94,7 +94,7 @@ const routes: Routes = [
         loadChildren: () =>
           import('../expenses/expenses.module').then((m) => m.ExpensesModule),
         canActivate: [AdminGuard],
-        data: { title: 'Egresos', roles: ['admin'] },
+        data: { title: 'Egresos', roles: ['admin', 'employee'] },
       },
 
       {

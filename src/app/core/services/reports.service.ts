@@ -64,6 +64,7 @@ export interface ExpenseReportItem {
   category: string;
   paymentMethod: string;
   amount: number;
+  createdByUser: { id: string; fullName: string; role: string } | null;
 }
 
 export interface ExpensesReport {

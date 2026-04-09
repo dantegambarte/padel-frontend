@@ -580,6 +580,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       Descripción: e.description,
       Categoría: e.category,
       Método: e.paymentMethod,
+      'Registrado por': e.createdByUser?.fullName ?? 'Desconocido',
       Monto: e.amount,
     }));
     rows.push({
@@ -587,6 +588,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       Descripción: '',
       Categoría: '',
       Método: '',
+      'Registrado por': '',
       Monto: this.expensesReport.totalAmount,
     });
 
@@ -603,6 +605,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       { wch: 36 },
       { wch: 16 },
       { wch: 16 },
+      { wch: 22 },
       { wch: 14 },
     ];
 
@@ -610,7 +613,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const dataStart = 5;
     const dataEnd = dataStart + rows.length - 1;
     for (let r = dataStart; r <= dataEnd; r++) {
-      const ref = `E${r}`;
+      const ref = `F${r}`;
       if (ws[ref]) ws[ref].z = moneyFmt;
     }
 
@@ -632,7 +635,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   exportExpensesCSV(): void {
     if (!this.expensesReport || this.isExporting) return;
 
-    const header = ['Fecha', 'Descripción', 'Categoría', 'Método', 'Monto'];
+    const header = ['Fecha', 'Descripción', 'Categoría', 'Método', 'Registrado por', 'Monto'];
     const escape = (v: string | number) => {
       const s = String(v ?? '');
       return s.includes(',') || s.includes('"') || s.includes('\n')
@@ -645,9 +648,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
       e.description,
       e.category,
       e.paymentMethod,
+      e.createdByUser?.fullName ?? 'Desconocido',
       e.amount,
     ]);
-    rows.push(['TOTAL', '', '', '', this.expensesReport.totalAmount]);
+    rows.push(['TOTAL', '', '', '', '', this.expensesReport.totalAmount]);
 
     const csv = [
       header.map(escape).join(','),

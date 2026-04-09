@@ -82,7 +82,9 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       }),
     );
 
-    this.loadPendingDeposits();
+    if (this.authService.isAdmin) {
+      this.loadPendingDeposits();
+    }
 
     this.sub.add(
       this.searchSubject

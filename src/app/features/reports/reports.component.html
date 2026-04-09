@@ -1574,6 +1574,11 @@
                   Método
                 </th>
                 <th
+                  class="px-4 py-3 text-left font-medium text-muted-foreground"
+                >
+                  Registrado por
+                </th>
+                <th
                   class="px-4 py-3 text-right font-medium text-muted-foreground"
                 >
                   Monto
@@ -1605,6 +1610,9 @@
                 <td class="px-4 py-3 text-muted-foreground">
                   {{ e.paymentMethod }}
                 </td>
+                <td class="px-4 py-3 text-muted-foreground">
+                  {{ e.createdByUser?.fullName || 'Desconocido' }}
+                </td>
                 <td
                   class="px-4 py-3 text-right font-medium tabular-nums text-destructive"
                 >
@@ -1615,7 +1623,7 @@
             <tfoot class="bg-muted/50 border-t border-border">
               <tr>
                 <td
-                  colspan="4"
+                  colspan="5"
                   class="px-4 py-3 text-sm font-semibold text-right text-muted-foreground"
                 >
                   Total:
@@ -1642,6 +1650,9 @@
               <p class="font-medium text-sm truncate">{{ e.description }}</p>
               <p class="text-xs text-muted-foreground mt-0.5">
                 {{ e.date }} · {{ e.paymentMethod }}
+              </p>
+              <p class="text-xs text-muted-foreground/70 mt-0.5">
+                {{ e.createdByUser?.fullName || 'Desconocido' }}
               </p>
               <span
                 class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1"
