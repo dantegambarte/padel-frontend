@@ -836,7 +836,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         .map((tx, i) => {
           const method =
             tx.amountCash > 0 && tx.amountTransfer > 0
-              ? 'Efectivo + Transf.'
+              ? 'Efectivo + Transferencia'
               : tx.amountCash > 0
                 ? 'Efectivo'
                 : 'Transferencia';
@@ -872,7 +872,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               <span style="font-weight:600;color:#374151;">${cur(cambio)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#059669;margin-top:6px;">
-              <span>Total cobrado</span><span>${cur(group.totalMonto)}</span>
+              <span>Total cobrado</span><span>${cur(group.totalCash + group.totalTransfer)}</span>
             </div>
           </div>
         </div>`;
@@ -978,7 +978,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         .map((tx, i) => {
           const method =
             tx.amountCash > 0 && tx.amountTransfer > 0
-              ? 'Efectivo + Transf.'
+              ? 'Efectivo + Transferencia'
               : tx.amountCash > 0
                 ? 'Efectivo'
                 : 'Transferencia';
@@ -1005,7 +1005,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         <h3>Cobros</h3>
         ${payLines}
         <p class="cambio">Vuelto: ${cur(cambio)}</p>
-        <p class="total">TOTAL: ${cur(group.totalMonto)}</p>`;
+        ${group.totalCash > 0 ? `<p>💵 Efectivo: ${cur(group.totalCash)}</p>` : ''}
+        ${group.totalTransfer > 0 ? `<p>📱 Transferencia: ${cur(group.totalTransfer)}</p>` : ''}
+        <p class="total">TOTAL: ${cur(group.totalCash + group.totalTransfer)}</p>`;
     } else {
       const method =
         group.totalCash > 0 && group.totalTransfer > 0
