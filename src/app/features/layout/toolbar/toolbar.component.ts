@@ -18,7 +18,9 @@ import {
 
 import { User } from '../../../core/models/user.model';
 import { AppNotification } from '../../../core/models/notification.model';
+import { BookingResponse } from '../../../core/models/booking.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { BookingsService } from '../../../core/services/bookings.service';
 import { CalculatorService } from '../../../core/services/calculator.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
@@ -40,8 +42,13 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   isNotifOpen = false;
   isUserMenuOpen = false;
+  isDepositsOpen = false;
 
   notifications: AppNotification[] = [];
+
+  pendingDeposits: BookingResponse[] = [];
+  isLoadingDeposits = false;
+  confirmingDepositId: string | null = null;
 
   searchQuery = '';
   isSearchOpen = false;
@@ -65,6 +72,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private notificationService: NotificationService,
     private searchService: SearchService,
+    private bookingsService: BookingsService,
   ) {}
 
   ngOnInit(): void {
@@ -73,6 +81,8 @@ export class ToolbarComponent implements OnInit, OnDestroy {
         this.notifications = notifs;
       }),
     );
+
+    this.loadPendingDeposits();
 
     this.sub.add(
       this.searchSubject
@@ -318,11 +328,69 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/auth/login']);
   }
 
+  /** Cantidad de señas pendientes para el badge. */
+  get pendingDepositsCount(): number {
+    return this.pendingDeposits.length;
+  }
+
+  /** Carga (o recarga) la lista de señas pendientes desde la API. */
+  loadPendingDeposits(): void {
+    this.isLoadingDeposits = true;
+    this.bookingsService.getPendingExpectedDeposits().subscribe({
+      next: (deposits) => {
+        this.pendingDeposits = deposits;
+        this.isLoadingDeposits = false;
+      },
+      error: () => {
+        this.isLoadingDeposits = false;
+      },
+    });
+  }
+
+  /** Abre o cierra el panel de señas pendientes, cerrando los otros paneles. */
+  toggleDeposits(): void {
+    this.isDepositsOpen = !this.isDepositsOpen;
+    if (this.isDepositsOpen) {
+      this.isNotifOpen = false;
+      this.isUserMenuOpen = false;
+      this.isSearchOpen = false;
+      this.loadPendingDeposits();
+    }
+  }
+
+  /**
+   * Confirma una seña pendiente desde el panel del header.
+   * Elimina el item de la lista localmente tras confirmar (optimistic UI).
+   */
+  confirmDeposit(deposit: BookingResponse): void {
+    if (this.confirmingDepositId) return;
+    this.confirmingDepositId = deposit.id;
+
+    this.bookingsService.confirmExpectedDeposit(deposit.id).subscribe({
+      next: () => {
+        this.pendingDeposits = this.pendingDeposits.filter((d) => d.id !== deposit.id);
+        this.confirmingDepositId = null;
+      },
+      error: () => {
+        this.confirmingDepositId = null;
+      },
+    });
+  }
+
+  /** Navega a la agenda en la fecha del depósito pendiente. */
+  navigateToDeposit(deposit: BookingResponse): void {
+    this.isDepositsOpen = false;
+    this.router.navigate(['/app/schedule'], {
+      queryParams: { date: deposit.date, openBooking: deposit.id },
+    });
+  }
+
   @HostListener('document:click')
   /** Cierra todos los paneles desplegables al hacer clic fuera de ellos. */
   onDocumentClick(): void {
     this.isUserMenuOpen = false;
     this.isNotifOpen = false;
+    this.isDepositsOpen = false;
     this.isSearchOpen = false;
     this.isMobileSearchOpen = false;
     this.clearSearch();

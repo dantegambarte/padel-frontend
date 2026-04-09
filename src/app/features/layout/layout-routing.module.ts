@@ -49,19 +49,22 @@ const routes: Routes = [
         path: 'reports',
         loadChildren: () =>
           import('../reports/reports.module').then((m) => m.ReportsModule),
-        data: { title: 'Reports' },
+        canActivate: [AdminGuard],
+        data: { title: 'Reports', roles: ['admin'] },
       },
       {
         path: 'users',
         loadChildren: () =>
           import('../users/users.module').then((m) => m.UsersModule),
-        data: { title: 'Users' },
+        canActivate: [AdminGuard],
+        data: { title: 'Users', roles: ['admin'] },
       },
       {
         path: 'settings',
         loadChildren: () =>
           import('../settings/settings.module').then((m) => m.SettingsModule),
-        data: { title: 'Settings' },
+        canActivate: [AdminGuard],
+        data: { title: 'Settings', roles: ['admin'] },
       },
       {
         path: 'fixed-bookings',
@@ -69,13 +72,15 @@ const routes: Routes = [
           import('../fixed-bookings/fixed-bookings.module').then(
             (m) => m.FixedBookingsModule,
           ),
-        data: { title: 'Turnos Fijos' },
+        canActivate: [AdminGuard],
+        data: { title: 'Turnos Fijos', roles: ['admin'] },
       },
       {
         path: 'teachers',
         loadChildren: () =>
           import('../teachers/teachers.module').then((m) => m.TeachersModule),
-        data: { title: 'Profesores' },
+        canActivate: [AdminGuard],
+        data: { title: 'Profesores', roles: ['admin'] },
       },
       {
         path: 'account',
@@ -88,7 +93,8 @@ const routes: Routes = [
         path: 'expenses',
         loadChildren: () =>
           import('../expenses/expenses.module').then((m) => m.ExpensesModule),
-        data: { title: 'Egresos' },
+        canActivate: [AdminGuard],
+        data: { title: 'Egresos', roles: ['admin'] },
       },
 
       {
@@ -98,7 +104,7 @@ const routes: Routes = [
             (m) => m.InventoryModule,
           ),
         canActivate: [AdminGuard],
-        data: { title: 'Stock Bajo' },
+        data: { title: 'Stock Bajo', roles: ['admin'] },
       },
 
       {
@@ -108,7 +114,7 @@ const routes: Routes = [
             (m) => m.PricingShiftsModule,
           ),
         canActivate: [AdminGuard],
-        data: { title: 'Franjas Horarias' },
+        data: { title: 'Franjas Horarias', roles: ['admin'] },
       },
     ],
   },

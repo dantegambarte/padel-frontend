@@ -32,7 +32,6 @@
     </button>
   </div>
 
-  <!-- Barra de búsqueda y filtro de categoría -->
   <div
     *ngIf="!isLoading && allAlerts.length > 0"
     class="flex flex-col gap-3 sm:flex-row sm:items-center"
@@ -89,7 +88,6 @@
     </button>
   </div>
 
-  <!-- Estado vacío por filtros (hay alertas pero ninguna coincide) -->
   <div
     *ngIf="!isLoading && allAlerts.length > 0 && filteredAlerts.length === 0"
     class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 py-12 text-center dark:border-slate-700 dark:bg-slate-800/50"

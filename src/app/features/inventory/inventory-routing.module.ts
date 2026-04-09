@@ -9,6 +9,7 @@ const routes: Routes = [
     path: 'alerts',
     component: InventoryAlertsComponent,
     canActivate: [AdminGuard],
+    data: { roles: ['admin'] },
   },
   { path: '', redirectTo: 'alerts', pathMatch: 'full' },
 ];
