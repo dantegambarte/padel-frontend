@@ -1179,16 +1179,23 @@
               <span class="text-xl font-bold text-foreground tabular-nums">
                 ${{ fmt(tx.total) }}
               </span>
-              <span
-                [ngClass]="
-                  tx.cash > 0
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                "
-                class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-              >
-                {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
-              </span>
+              <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentMobile">
+                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 border-purple-200">
+                  Mixto
+                </span>
+              </ng-container>
+              <ng-template #singlePaymentMobile>
+                <span
+                  [ngClass]="
+                    tx.cash > 0
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  "
+                  class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                >
+                  {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
+                </span>
+              </ng-template>
             </div>
           </div>
 
@@ -1298,16 +1305,23 @@
                   ${{ fmt(tx.total) }}
                 </td>
                 <td class="p-3">
-                  <span
-                    [ngClass]="
-                      tx.cash > 0
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-indigo-50 text-indigo-700'
-                    "
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                  >
-                    {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
-                  </span>
+                  <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentDesktop">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700">
+                      Mixto
+                    </span>
+                  </ng-container>
+                  <ng-template #singlePaymentDesktop>
+                    <span
+                      [ngClass]="
+                        tx.cash > 0
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-indigo-50 text-indigo-700'
+                      "
+                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    >
+                      {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
+                    </span>
+                  </ng-template>
                 </td>
               </tr>
             </tbody>

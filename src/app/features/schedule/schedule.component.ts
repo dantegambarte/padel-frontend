@@ -57,6 +57,13 @@ interface CartItem {
   isPaid?: boolean;
   /** `true` cuando el cajero marcó este ítem para incluirlo en el cobro actual. */
   selectedForPayment?: boolean;
+  /**
+   * `true` cuando el ítem fue comprometido localmente al registrar el pago de un
+   * jugador en modo "Dividir por Jugador", pero aún NO fue guardado en la base de datos.
+   * Se usa para ocultarlo del panel de consumos del siguiente jugador sin mostrarlo
+   * como "✓ Pagado" en el panel izquierdo antes de confirmar con "Registrar Pago".
+   */
+  committedBySplit?: boolean;
 }
 
 @Component({
@@ -173,6 +180,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
   /** Tab activo en el panel de cobro del modal de detalle: pago rápido o dividir por jugador. */
   detailPaymentTab: 'quick' | 'split' = 'quick';
+  /** Método seleccionado en el panel "Cobrar producto" antes de confirmar. null = sin selección. */
+  pendingProductPaymentMethod: 'cash' | 'transfer' | null = null;
 
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
   @ViewChild('cobroParcialPanel')
@@ -214,10 +223,58 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private playerPaymentHistory: {
     method: 'cash' | 'transfer';
     amount: number;
+    /** Índices de detailCart comprometidos como parte de este pago (para restaurar al deshacer). */
+    committedIndices: number[];
   }[] = [];
   /** Contadores por método para el deshacer selectivo. */
   partialCashCount = 0;
   partialTransferCount = 0;
+
+  /**
+   * Índices del detailCart seleccionados individualmente para incluir en el
+   * pago del jugador actual en la pestaña "Dividir por Jugador".
+   * Se vacía automáticamente después de registrar cada pago.
+   */
+  selectedConsumableIndices = new Set<number>();
+
+  /** Total de los consumos seleccionados individualmente para el jugador actual. */
+  get selectedConsumablesTotal(): number {
+    let total = 0;
+    for (const idx of this.selectedConsumableIndices) {
+      const item = this.detailCart[idx];
+      if (item && !item.isPaid) {
+        total += Number(item.unitPrice) * Number(item.quantity);
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Monto total que pagará el jugador actual.
+   * Cuota fija de cancha + consumos que el cajero seleccionó para este jugador.
+   * Se calcula sobre `baseCanchaSplit` (siempre fijo) para que los consumos
+   * de otros jugadores no subsidien ni reduzcan la cuota de cancha propia.
+   */
+  get currentPlayerTotal(): number {
+    return this.baseCanchaSplit + this.selectedConsumablesTotal;
+  }
+
+  /** Alterna la selección de un consumo para el pago del jugador actual. */
+  toggleConsumableForPlayer(idx: number): void {
+    if (this.selectedConsumableIndices.has(idx)) {
+      this.selectedConsumableIndices.delete(idx);
+    } else {
+      this.selectedConsumableIndices.add(idx);
+    }
+    // Forzar detección de cambios en el Set
+    this.selectedConsumableIndices = new Set(this.selectedConsumableIndices);
+    // Sincronizar selectedForPayment para que el checkbox del panel izquierdo refleje la selección
+    this.detailCart = this.detailCart.map((item, i) =>
+      i === idx
+        ? { ...item, selectedForPayment: this.selectedConsumableIndices.has(idx) }
+        : item,
+    );
+  }
 
   /**
    * Modo de división: 'court' divide solo el precio de cancha,
@@ -253,6 +310,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.partialTransferCount = 0;
       this.detailPaidCount = this.initialPaidCount;
     }
+    this.selectedConsumableIndices = new Set();
     this.splitMode = mode;
   }
 
@@ -272,6 +330,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   showBookingDraftBanner = false;
   private readonly DRAFT_KEY_BOOKING = 'draft_booking_create';
   private bookingDraftSave$ = new Subject<void>();
+
+  /** Auto-save de cantidad de jugadores: emite el nuevo valor con debounce. */
+  private playerCountSave$ = new Subject<number>();
+  isSavingPlayerCount = false;
 
   constructor(
     private authService: AuthService,
@@ -321,6 +383,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           pagoEfectivo: this.pagoEfectivo,
           pagoTransferencia: this.pagoTransferencia,
         });
+      }),
+    );
+
+    this.sub.add(
+      this.playerCountSave$.pipe(debounceTime(400)).subscribe((count) => {
+        if (!this.selectedBooking) return;
+        this.isSavingPlayerCount = true;
+        this.bookingsService
+          .update(this.selectedBooking.id, { playerCount: count })
+          .subscribe({
+            next: (updated) => {
+              this.addToBookingMap(updated);
+              this.selectedBooking = updated;
+            },
+            complete: () => (this.isSavingPlayerCount = false),
+          });
       }),
     );
   }
@@ -937,6 +1015,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * true cuando hay consumos sin pagar O consumos comprometidos localmente
+   * en el modo "Dividir por Jugador" (pendientes de guardar).
+   * Se usa para mostrar el panel de consumos en la vista derecha.
+   */
+  get hasUnpaidOrCommittedItems(): boolean {
+    return this.hasUnpaidItems || this.detailCart.some((i) => i.committedBySplit);
+  }
+
+  /**
    * Base de cálculo para la división entre jugadores según el modo elegido:
    * - 'court': solo el precio de cancha.
    * - 'court+items': precio de cancha + consumos pendientes de cobro.
@@ -971,6 +1058,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return Math.ceil(this.detailSaldoPendiente / remaining);
   }
 
+  /**
+   * Cuota FIJA de cancha por jugador. Inmutable: no varía por pagos parciales
+   * previos ni por consumos adicionales de otros jugadores.
+   * Es la única base válida para cobrar la parte proporcional de cancha.
+   */
+  get baseCanchaSplit(): number {
+    const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
+    const n = this.detailPlayerCount || 1;
+    return Math.ceil(courtPrice / n);
+  }
+
   /** `true` si ya existe un pago parcial previo registrado en la base de datos. */
   get hasPriorPayment(): boolean {
     return this.savedAmountCash + this.savedAmountTransfer > 0;
@@ -978,12 +1076,31 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /**
    * Monto que se suma al input de pago cuando un jugador paga.
-   * Con seña previa usa la deuda por jugador restante; sin seña usa el costo total por jugador.
+   * Siempre es la cuota fija de cancha — no se recalcula sobre el saldo restante
+   * para evitar que los consumos pagados por otros jugadores bajen la cuota.
    */
   get perPlayerAmount(): number {
-    return this.hasPriorPayment
-      ? this.detailDebtPerPlayer
-      : this.detailCostPerPlayer;
+    return this.baseCanchaSplit;
+  }
+
+  /**
+   * Marca los consumos seleccionados como asignados al pago del jugador actual.
+   * Los oculta del panel derecho (isPaid: true) pero NO los muestra como "✓ Pagado"
+   * en el panel izquierdo hasta que se confirme con "Registrar Pago" (committedBySplit: true).
+   * Retorna los índices comprometidos para poder deshacer la operación.
+   */
+  private commitSelectedConsumables(): number[] {
+    if (this.selectedConsumableIndices.size === 0) return [];
+    const committed: number[] = [];
+    this.detailCart = this.detailCart.map((item, idx) => {
+      if (!item.isPaid && this.selectedConsumableIndices.has(idx)) {
+        committed.push(idx);
+        return { ...item, isPaid: true, committedBySplit: true, selectedForPayment: false };
+      }
+      return item;
+    });
+    this.selectedConsumableIndices = new Set();
+    return committed;
   }
 
   /** Registra el pago en efectivo de un jugador e incrementa el contador de pagados. */
@@ -993,9 +1110,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
-    const amount = this.perPlayerAmount;
+    const amount = this.currentPlayerTotal;
     this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
-    this.playerPaymentHistory.push({ method: 'cash', amount });
+    const committedIndices = this.commitSelectedConsumables();
+    this.playerPaymentHistory.push({ method: 'cash', amount, committedIndices });
     this.partialCashCount++;
     this.detailPaidCount++;
   }
@@ -1007,10 +1125,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
-    const amount = this.perPlayerAmount;
+    const amount = this.currentPlayerTotal;
     this.detailAmountTransfer =
       (Number(this.detailAmountTransfer) || 0) + amount;
-    this.playerPaymentHistory.push({ method: 'transfer', amount });
+    const committedIndices = this.commitSelectedConsumables();
+    this.playerPaymentHistory.push({ method: 'transfer', amount, committedIndices });
     this.partialTransferCount++;
     this.detailPaidCount++;
   }
@@ -1041,6 +1160,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.partialTransferCount = Math.max(0, this.partialTransferCount - 1);
     }
     this.detailPaidCount--;
+    // Restaurar consumos que fueron comprometidos localmente por este pago
+    if (entry.committedIndices.length > 0) {
+      const toRestore = new Set(entry.committedIndices);
+      this.detailCart = this.detailCart.map((item, idx) =>
+        toRestore.has(idx) && item.committedBySplit
+          ? { ...item, isPaid: false, committedBySplit: false }
+          : item,
+      );
+    }
   }
 
   /** Completa el saldo pendiente con efectivo y marca todos los jugadores como pagados. */
@@ -1205,7 +1333,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       name: item.product.name,
       unitPrice: Number(item.unitPrice),
       quantity: item.quantity,
-      isPaid: false,
+      isPaid: item.isPaid ?? false,
       selectedForPayment: false,
     }));
 
@@ -1213,7 +1341,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.savedAmountTransfer = Number(booking.payment?.amountTransfer ?? 0);
     this.detailAmountCash = 0;
     this.detailAmountTransfer = 0;
-    this.detailPlayerCount = 4;
+    this.detailPlayerCount = booking.playerCount ?? 4;
     this.detailPaymentTab = 'quick';
 
     if (savedTotal > 0) {
@@ -1395,6 +1523,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.playerPaymentHistory = [];
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
+    this.selectedConsumableIndices = new Set();
     this.splitMode = 'court+items';
   }
 
@@ -1614,12 +1743,30 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!this.selectedBooking || this.isSavingDetail) return;
     this.isSavingDetail = true;
 
+    // Construir items con el estado isPaid actualizado.
+    // En modo split, los items se marcan pagados solo a través de committedBySplit (vía addPaidByCash/Transfer).
+    // selectedForPayment en modo split es solo sincronización visual y NO debe marcar items como pagados.
+    const cartAfterPayment = this.detailCart.map((i) => ({
+      ...i,
+      isPaid: i.isPaid || (this.detailPaymentTab !== 'split' && i.selectedForPayment === true),
+    }));
+    const groupedPaidPay = new Map<string, number>();
+    const groupedUnpaidPay = new Map<string, number>();
+    for (const i of cartAfterPayment) {
+      if (i.isPaid) {
+        groupedPaidPay.set(i.productId, (groupedPaidPay.get(i.productId) ?? 0) + i.quantity);
+      } else {
+        groupedUnpaidPay.set(i.productId, (groupedUnpaidPay.get(i.productId) ?? 0) + i.quantity);
+      }
+    }
     const dto: UpdateBookingDto = {
       amountCash: Math.max(0, this.totalPagadoEfectivo),
       amountTransfer: Math.max(0, this.totalPagadoTransferencia),
+      items: [
+        ...Array.from(groupedPaidPay, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
+        ...Array.from(groupedUnpaidPay, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+      ],
     };
-
-    const cartSnapshot = this.detailCart.map((i) => ({ ...i }));
 
     this.sub.add(
       this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
@@ -1630,11 +1777,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             ...i,
             isPaid: i.isPaid || i.selectedForPayment === true,
             selectedForPayment: false,
+            committedBySplit: false,
           }));
 
           this.playerPaymentHistory = [];
           this.partialCashCount = 0;
           this.partialTransferCount = 0;
+          this.selectedConsumableIndices = new Set();
 
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
@@ -1668,7 +1817,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isSavingDetail = false;
-          this.detailCart = cartSnapshot;
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo guardar el pago.',
@@ -1683,6 +1831,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Si la selección pasa de 0 a 1, hace scroll suave al panel de cobro parcial
    * para que el cajero lo vea sin tener que scrollear manualmente.
    */
+  /** Actualiza la cantidad de jugadores y dispara el auto-save con debounce. */
+  changePlayerCount(newCount: number): void {
+    this.detailPlayerCount = newCount;
+    this.playerCountSave$.next(newCount);
+  }
+
   onProductCheckChange(): void {
     if (this.selectedProductsCount === 1) {
       setTimeout(() => {
@@ -1694,27 +1848,97 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** El cajero eligió pagar los productos tildados con un método específico. */
-  applyProductPayment(method: 'cash' | 'transfer'): void {
+  /** Paso 1: el cajero elige el método de pago para los productos tildados (sin enviar al backend). */
+  selectProductPaymentMethod(method: 'cash' | 'transfer'): void {
+    this.pendingProductPaymentMethod =
+      this.pendingProductPaymentMethod === method ? null : method;
+  }
+
+  /** Paso 2: confirma y persiste el cobro de los productos tildados con el método elegido. */
+  confirmProductPayment(): void {
+    const method = this.pendingProductPaymentMethod;
+    if (!method || !this.selectedBooking || this.isSavingDetail) return;
+
     const amount = this.pendingProductPaymentAmount;
-    if (method === 'cash') {
-      this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
-    } else {
-      this.detailAmountTransfer =
-        (Number(this.detailAmountTransfer) || 0) + amount;
-    }
-    this.detailCart = this.detailCart.map((i) =>
+
+    // Marcar los ítems seleccionados como pagados en el carrito local
+    const updatedCart = this.detailCart.map((i) =>
       !i.isPaid && i.selectedForPayment
         ? { ...i, isPaid: true, selectedForPayment: false }
         : i,
     );
+    this.pendingProductPaymentMethod = null;
+
+    // Calcular los montos acumulados a enviar al backend
+    const newCash = method === 'cash'
+      ? this.savedAmountCash + amount
+      : this.savedAmountCash;
+    const newTransfer = method === 'transfer'
+      ? this.savedAmountTransfer + amount
+      : this.savedAmountTransfer;
+
+    // Construir DTO con items separados por isPaid
+    const groupedPaid = new Map<string, number>();
+    const groupedUnpaid = new Map<string, number>();
+    for (const i of updatedCart) {
+      if (i.isPaid) {
+        groupedPaid.set(i.productId, (groupedPaid.get(i.productId) ?? 0) + i.quantity);
+      } else {
+        groupedUnpaid.set(i.productId, (groupedUnpaid.get(i.productId) ?? 0) + i.quantity);
+      }
+    }
+    const dto: UpdateBookingDto = {
+      amountCash: newCash,
+      amountTransfer: newTransfer,
+      items: [
+        ...Array.from(groupedPaid, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
+        ...Array.from(groupedUnpaid, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+      ],
+    };
+
+    this.isSavingDetail = true;
+    this.sub.add(
+      this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
+        next: (updated) => {
+          this.isSavingDetail = false;
+          this.removeFromBookingMap(this.selectedBooking!);
+          this.addToBookingMap(updated);
+          this.selectedBooking = updated;
+
+          // Actualizar carrito desde el servidor (fuente de verdad)
+          this.detailCart = updated.items.map((serverItem) => ({
+            productId: serverItem.productId,
+            name: serverItem.product.name,
+            unitPrice: Number(serverItem.unitPrice),
+            quantity: serverItem.quantity,
+            isPaid: serverItem.isPaid ?? false,
+            selectedForPayment: false,
+          }));
+
+          // Resetear SOLO los contadores de esta sesión de pago de productos.
+          // NO se tocan detailPaidCount, playerPaymentHistory ni partialCounts
+          // para no corromper el estado del modo "dividir por jugador".
+          this.savedAmountCash = Number(updated.payment?.amountCash ?? 0);
+          this.savedAmountTransfer = Number(updated.payment?.amountTransfer ?? 0);
+          this.detailAmountCash = 0;
+          this.detailAmountTransfer = 0;
+
+          this.toast.success('Producto cobrado', `$${this.fmt(amount)} registrado.`);
+        },
+        error: (err) => {
+          this.isSavingDetail = false;
+          this.toast.error('Error', err.error?.message ?? 'No se pudo guardar el cobro.');
+        },
+      }),
+    );
   }
 
-  /** Descarta la selección de productos (destilda todos). */
+  /** Descarta la selección de productos (destilda todos) y limpia el método pendiente. */
   dismissProductPaymentPrompt(): void {
     this.detailCart = this.detailCart.map((i) =>
       !i.isPaid ? { ...i, selectedForPayment: false } : i,
     );
+    this.pendingProductPaymentMethod = null;
   }
 
   /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */
@@ -1722,16 +1946,34 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!this.selectedBooking || this.isAutoSavingItems) return;
     this.isAutoSavingItems = true;
 
-    const grouped = new Map<string, number>();
+    // Agrupar por (productId, isPaid) por separado para no fusionar items pagados con impagos
+    const groupedPaid = new Map<string, number>();
+    const groupedUnpaid = new Map<string, number>();
     for (const i of this.detailCart) {
-      grouped.set(i.productId, (grouped.get(i.productId) ?? 0) + i.quantity);
+      if (i.isPaid) {
+        groupedPaid.set(i.productId, (groupedPaid.get(i.productId) ?? 0) + i.quantity);
+      } else {
+        groupedUnpaid.set(i.productId, (groupedUnpaid.get(i.productId) ?? 0) + i.quantity);
+      }
     }
-    const dto: UpdateBookingDto = {
-      items: Array.from(grouped, ([productId, quantity]) => ({
-        productId,
-        quantity,
-      })),
-    };
+    const dtoItems = [
+      ...Array.from(groupedPaid, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
+      ...Array.from(groupedUnpaid, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+    ];
+    const dto: UpdateBookingDto = { items: dtoItems };
+
+    // Preservar estado local de UI para restaurar tras guardar.
+    // Clave compuesta productId_isPaid para distinguir el mismo producto pagado vs impago.
+    const prevSelectedForPayment = new Map<string, boolean>();
+    const prevCommittedBySplit = new Map<string, boolean>();
+    for (const i of this.detailCart) {
+      if (!i.isPaid && i.selectedForPayment) {
+        prevSelectedForPayment.set(`${i.productId}_${i.isPaid}`, true);
+      }
+      if (i.committedBySplit) {
+        prevCommittedBySplit.set(`${i.productId}_paid`, true);
+      }
+    }
 
     this.sub.add(
       this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
@@ -1740,39 +1982,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
-          const prevItems = this.detailCart;
-          const newCart: CartItem[] = [];
-          for (const serverItem of updated.items) {
-            const localPaid = prevItems.filter(
-              (i) => i.productId === serverItem.productId && i.isPaid,
-            );
-            const localUnpaid = prevItems.filter(
-              (i) => i.productId === serverItem.productId && !i.isPaid,
-            );
-            const paidQty = localPaid.reduce((s, i) => s + i.quantity, 0);
-            const unpaidQty = serverItem.quantity - paidQty;
-            if (paidQty > 0) {
-              newCart.push({
-                productId: serverItem.productId,
-                name: serverItem.product.name,
-                unitPrice: Number(serverItem.unitPrice),
-                quantity: paidQty,
-                isPaid: true,
-                selectedForPayment: false,
-              });
-            }
-            if (unpaidQty > 0) {
-              newCart.push({
-                productId: serverItem.productId,
-                name: serverItem.product.name,
-                unitPrice: Number(serverItem.unitPrice),
-                quantity: unpaidQty,
-                isPaid: false,
-                selectedForPayment: localUnpaid[0]?.selectedForPayment ?? false,
-              });
-            }
-          }
-          this.detailCart = newCart;
+          // Reconstruir carrito desde la respuesta del servidor (incluye isPaid persistido en BD).
+          // Restaurar committedBySplit y selectedForPayment del estado local previo.
+          this.detailCart = updated.items.map((serverItem) => ({
+            productId: serverItem.productId,
+            name: serverItem.product.name,
+            unitPrice: Number(serverItem.unitPrice),
+            quantity: serverItem.quantity,
+            isPaid: serverItem.isPaid ?? false,
+            committedBySplit: serverItem.isPaid
+              ? (prevCommittedBySplit.get(`${serverItem.productId}_paid`) ?? false)
+              : false,
+            selectedForPayment: !serverItem.isPaid &&
+              (prevSelectedForPayment.get(`${serverItem.productId}_${serverItem.isPaid}`) ?? false),
+          }));
+          // Los índices pueden haber cambiado tras el rebuild; limpiar selección para evitar
+          // que selectedConsumableIndices apunte a ítems incorrectos.
+          this.selectedConsumableIndices = new Set();
         },
         error: (err) => {
           this.isAutoSavingItems = false;

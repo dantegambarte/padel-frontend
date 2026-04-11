@@ -13,6 +13,7 @@ export interface BookingItem {
   productId: string;
   quantity: number;
   unitPrice: number;
+  isPaid: boolean;
   product: Pick<Product, 'id' | 'name'>;
 }
 
@@ -57,6 +58,8 @@ export interface BookingResponse {
    * Se pone a null una vez que el admin confirma la seña (1 clic).
    */
   expectedDepositAmount: number | null;
+  /** Cantidad de jugadores en cancha, persistida. null = no configurado (default 4). */
+  playerCount: number | null;
 }
 
 /** Payload para crear una nueva reserva. */
@@ -86,7 +89,7 @@ export interface UpdateBookingDto {
   clientName?: string;
   amountCash?: number;
   amountTransfer?: number;
-  items?: { productId: string; quantity: number }[];
+  items?: { productId: string; quantity: number; isPaid?: boolean }[];
   /** Mover turno: cancha destino */
   courtId?: string;
   /** Mover turno: fecha destino (YYYY-MM-DD) */
@@ -95,6 +98,8 @@ export interface UpdateBookingDto {
   hour?: string;
   /** Confirmar asistencia de turno fijo */
   isConfirmed?: boolean;
+  /** Cantidad de jugadores en cancha */
+  playerCount?: number;
 }
 
 /** Payload compartido para Mover y Duplicar una reserva. */

@@ -458,10 +458,40 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       },
       error: (err) => {
+        this.isSubmitting = false;
+
+        // Solapamiento en la fecha de inicio → ofrecer semana siguiente.
+        if (err?.status === 409 && err?.error?.message === 'CONFLICT_START_DATE') {
+          const nextDate: string = err.error.nextAvailableDate;
+          const [year, month, day] = nextDate.split('-');
+          const formatted = `${day}/${month}/${year}`;
+
+          Swal.fire({
+            title: 'Horario ocupado',
+            html: `El horario seleccionado ya está ocupado para el día de hoy.<br><br>
+                   ¿Desea que el turno fijo comience a partir de la semana siguiente
+                   <strong>(${formatted})</strong>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, usar esa fecha',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Actualizar el form y el dto con la nueva fecha y reintentar.
+              this.form.startDate = nextDate;
+              const retryDto: CreateFixedBookingDto = { ...dto, startDate: nextDate };
+              this.executeUpdate(retryDto);
+            }
+          });
+          return;
+        }
+
         const msg =
           err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
         this.formError = Array.isArray(msg) ? msg.join(' ') : msg;
-        this.isSubmitting = false;
       },
     });
   }
