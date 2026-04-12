@@ -1181,7 +1181,7 @@
               </span>
               <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentMobile">
                 <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 border-purple-200">
-                  Mixto
+                  Efecitvo + Transferencia
                 </span>
               </ng-container>
               <ng-template #singlePaymentMobile>
@@ -1307,7 +1307,7 @@
                 <td class="p-3">
                   <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentDesktop">
                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700">
-                      Mixto
+                      Efectivo + Transferencia
                     </span>
                   </ng-container>
                   <ng-template #singlePaymentDesktop>
