@@ -73,6 +73,11 @@ export interface CashCurrentResponse {
    * Fuente de verdad: tabla `daily_closures` del backend.
    */
   isBusinessDayClosed: boolean;
+  /**
+   * true cuando hay turnos cerrados sin Cierre de Jornada formal.
+   * false en días nuevos sin ninguna sesión (distinto de !isBusinessDayClosed).
+   */
+  hasPendingClosures: boolean;
 }
 
 /** Detalle de un turno individual dentro del consolidado diario. */
@@ -143,6 +148,8 @@ interface CashApiResponse {
   staleSession: boolean;
   /** true cuando la jornada comercial fue cerrada formalmente vía daily_closures. */
   isBusinessDayClosed: boolean;
+  /** true cuando hay turnos cerrados sin Cierre de Jornada formal. */
+  hasPendingClosures?: boolean;
 }
 
 /** Payload para abrir una nueva sesión de caja. */
@@ -212,6 +219,7 @@ export class CashService {
       closedNotes: null,
       staleSession: false,
       isBusinessDayClosed: false,
+      hasPendingClosures: false,
     };
 
     this.currentCache$ = this.http
@@ -244,6 +252,7 @@ export class CashService {
             closedNotes: res.session?.notes ?? null,
             staleSession: res.staleSession ?? false,
             isBusinessDayClosed: res.isBusinessDayClosed ?? false,
+            hasPendingClosures: res.hasPendingClosures ?? false,
             movimientos: (res.transactions ?? []).map((t) => {
               const isExpense = t.type === 'expense';
               return {

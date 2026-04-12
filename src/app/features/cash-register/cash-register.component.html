@@ -214,7 +214,7 @@
 
       <!-- Bloqueo: jornada anterior sin cerrar -->
       <div
-        *ngIf="!isBusinessDayClosed"
+        *ngIf="hasPendingClosures"
         class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800 ring-1 ring-red-200"
       >
         <p class="font-semibold mb-1">⚠ Jornada anterior pendiente de cierre</p>
@@ -226,7 +226,7 @@
       </div>
 
       <button
-        *ngIf="!isBusinessDayClosed"
+        *ngIf="hasPendingClosures"
         type="button"
         (click)="closeDaySession()"
         [disabled]="isClosingDay"
@@ -260,7 +260,7 @@
       <button
         type="button"
         (click)="abrirJornada()"
-        [disabled]="isOpening || !isBusinessDayClosed"
+        [disabled]="isOpening || hasPendingClosures"
         class="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <svg

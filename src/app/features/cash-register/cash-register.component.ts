@@ -106,6 +106,12 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    */
   isBusinessDayClosed = false;
 
+  /**
+   * `true` cuando hay turnos cerrados sin Cierre de Jornada formal (sesiones huérfanas).
+   * Distinto de !isBusinessDayClosed: en un día nuevo sin sesiones este campo es false.
+   */
+  hasPendingClosures = false;
+
   /** Pendientes que viajarán al siguiente turno (resultado de check-pendings). */
   pendingBookings = 0;
   unpaidSales = 0;
@@ -356,6 +362,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           if (res.noSession) {
             this.isSessionOpen = false;
             this.isBusinessDayClosed = res.isBusinessDayClosed;
+            this.hasPendingClosures = res.hasPendingClosures ?? false;
             this.cashService
               .getLastClosedSuggestion()
               .subscribe(({ cashCounted }) => {
@@ -389,6 +396,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               this.fondoInicialSugerido = true;
             }
             this.isBusinessDayClosed = res.isBusinessDayClosed;
+            this.hasPendingClosures = res.hasPendingClosures ?? !res.isBusinessDayClosed;
             if (!res.isBusinessDayClosed) {
               this.cashService.checkPendings().subscribe({
                 next: (data) => {
@@ -400,6 +408,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           } else {
             this.isClosed = false;
             this.isBusinessDayClosed = res.isBusinessDayClosed;
+            this.hasPendingClosures = res.hasPendingClosures ?? false;
             this.closedCashCounted = null;
             this.closedDifference = null;
           }
