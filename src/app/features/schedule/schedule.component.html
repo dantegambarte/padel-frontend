@@ -1630,8 +1630,8 @@
                       <input
                         *ngIf="!item.isPaid"
                         type="checkbox"
-                        [(ngModel)]="item.selectedForPayment"
-                        (change)="onProductCheckChange(); $event.stopPropagation()"
+                        [checked]="item.selectedForPayment"
+                        (change)="toggleDetailCartItem(cartIdx, $any($event.target).checked)"
                         (click)="$event.stopPropagation()"
                         [disabled]="detailPaymentTab === 'split'"
                         class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
@@ -2155,74 +2155,99 @@
                       <div
                         class="rounded-md bg-blue-50 px-3 py-2.5 text-sm space-y-1 dark:bg-blue-950/30"
                       >
-                        <div class="flex justify-between items-center">
-                          <span class="text-blue-700 font-medium dark:text-blue-400"
-                            >Cuota de cancha:</span
+                        <ng-container *ngIf="splitMode === 'court'">
+                          <div class="flex justify-between items-center">
+                            <span class="text-blue-700 font-medium dark:text-blue-400"
+                              >Cuota de cancha:</span
+                            >
+                            <span class="text-2xl font-extrabold text-blue-900 dark:text-blue-200"
+                              >${{ fmt(baseCanchaSplit) }} c/u</span
+                            >
+                          </div>
+                          <div
+                            *ngIf="selectedConsumablesTotal > 0"
+                            class="flex justify-between items-center"
                           >
-                          <span class="text-2xl font-extrabold text-blue-900 dark:text-blue-200"
-                            >${{ fmt(baseCanchaSplit) }} c/u</span
+                            <span class="text-amber-600 font-medium dark:text-amber-400"
+                              >+ Consumos seleccionados:</span
+                            >
+                            <span class="text-base font-bold text-amber-700 dark:text-amber-300"
+                              >+${{ fmt(selectedConsumablesTotal) }}</span
+                            >
+                          </div>
+                          <div
+                            *ngIf="selectedConsumablesTotal > 0"
+                            class="flex justify-between items-center border-t border-blue-200 pt-1 dark:border-blue-800"
                           >
-                        </div>
-                        <div
-                          *ngIf="selectedConsumablesTotal > 0"
-                          class="flex justify-between items-center"
-                        >
-                          <span class="text-amber-600 font-medium dark:text-amber-400"
-                            >+ Consumos seleccionados:</span
-                          >
-                          <span class="text-base font-bold text-amber-700 dark:text-amber-300"
-                            >+${{ fmt(selectedConsumablesTotal) }}</span
-                          >
-                        </div>
-                        <div
-                          *ngIf="selectedConsumablesTotal > 0"
-                          class="flex justify-between items-center border-t border-blue-200 pt-1 dark:border-blue-800"
-                        >
-                          <span class="text-blue-700 font-semibold dark:text-blue-300"
-                            >Total este jugador:</span
-                          >
-                          <span class="text-xl font-extrabold text-blue-900 dark:text-blue-200"
-                            >${{ fmt(currentPlayerTotal) }}</span
-                          >
-                        </div>
+                            <span class="text-blue-700 font-semibold dark:text-blue-300"
+                              >Total este jugador:</span
+                            >
+                            <span class="text-xl font-extrabold text-blue-900 dark:text-blue-200"
+                              >${{ fmt(currentPlayerTotal) }}</span
+                            >
+                          </div>
+                        </ng-container>
+                        <ng-container *ngIf="splitMode === 'court+items'">
+                          <div class="flex justify-between items-center">
+                            <span class="text-blue-700 font-medium dark:text-blue-400"
+                              >Cuota de cancha:</span
+                            >
+                            <span class="text-base font-semibold text-blue-800 dark:text-blue-300"
+                              >${{ fmt(baseCanchaSplit) }}</span
+                            >
+                          </div>
+                          <div class="flex justify-between items-center">
+                            <span class="text-amber-600 font-medium dark:text-amber-400"
+                              >+ Consumos (divididos):</span
+                            >
+                            <span class="text-base font-semibold text-amber-700 dark:text-amber-300"
+                              >+${{ fmt(detailCostPerPlayer - baseCanchaSplit) }}</span
+                            >
+                          </div>
+                          <div class="flex justify-between items-center border-t border-blue-200 pt-1 dark:border-blue-800">
+                            <span class="text-blue-700 font-semibold dark:text-blue-300"
+                              >Total por jugador:</span
+                            >
+                            <span class="text-2xl font-extrabold text-blue-900 dark:text-blue-200"
+                              >${{ fmt(currentPlayerTotal) }} c/u</span
+                            >
+                          </div>
+                        </ng-container>
                       </div>
                     </div>
-
-                    <!-- Consumos individuales para el jugador actual (solo en modo "Solo cancha") -->
+                    <!-- TODO-> queda para refactorizar ya que al dia de hoy no se esta seleccionando el check al momento de apretarlo del lado derecho -->
                     <div
-                      *ngIf="hasUnpaidOrCommittedItems && splitMode === 'court' && detailPaidCount < detailPlayerCount"
+                      *ngIf="hasUnpaidOrCommittedItems && splitMode === 'court' && detailPaidCount < detailPlayerCount && false"
                       class="rounded-xl border border-amber-100 bg-amber-50 shadow-sm p-4 space-y-2 dark:border-amber-900/40 dark:bg-amber-950/20"
                     >
                       <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
                         Consumos a sumar a este jugador:
                       </p>
-                      <ng-container *ngFor="let item of detailCart; let idx = index">
-                        <!-- Consumo libre: seleccionable -->
+                      <ng-container *ngFor="let unit of flatUnpaidConsumables">
                         <label
-                          *ngIf="!item.isPaid"
+                          *ngIf="!unit.committed"
                           class="flex items-center gap-2.5 cursor-pointer select-none py-1"
                         >
                           <input
                             type="checkbox"
-                            [checked]="selectedConsumableIndices.has(idx)"
-                            (change)="toggleConsumableForPlayer(idx); $event.stopPropagation()"
+                            [checked]="selectedConsumableKeys.has(unit.key)"
+                            (change)="toggleConsumableUnit(unit.key); $event.stopPropagation()"
                             (click)="$event.stopPropagation()"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                           />
                           <span class="flex-1 text-sm text-gray-700 dark:text-slate-200">
-                            {{ item.name }}
-                            <span class="text-xs text-muted-foreground ml-1">x{{ item.quantity }}</span>
+                            {{ unit.name }}
+                            <span class="text-xs text-muted-foreground ml-1">x1</span>
                           </span>
                           <span
                             class="text-sm font-medium"
-                            [ngClass]="selectedConsumableIndices.has(idx) ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'"
+                            [ngClass]="selectedConsumableKeys.has(unit.key) ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'"
                           >
-                            +${{ fmt(+item.unitPrice * +item.quantity) }}
+                            +${{ fmt(unit.unitPrice) }}
                           </span>
                         </label>
-                        <!-- Consumo ya asignado a un jugador anterior (pendiente de guardar) -->
                         <div
-                          *ngIf="item.committedBySplit"
+                          *ngIf="unit.committed"
                           class="flex items-center gap-2.5 select-none py-1 opacity-60"
                         >
                           <input
@@ -2232,11 +2257,11 @@
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 cursor-not-allowed"
                           />
                           <span class="flex-1 text-sm text-gray-500 dark:text-slate-400 line-through">
-                            {{ item.name }}
-                            <span class="text-xs ml-1">x{{ item.quantity }}</span>
+                            {{ unit.name }}
+                            <span class="text-xs ml-1">x1</span>
                           </span>
                           <span class="text-sm font-medium text-gray-400 dark:text-slate-500">
-                            +${{ fmt(+item.unitPrice * +item.quantity) }}
+                            +${{ fmt(unit.unitPrice) }}
                           </span>
                         </div>
                       </ng-container>

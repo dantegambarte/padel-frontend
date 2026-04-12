@@ -178,6 +178,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       .filter((i) => !i.isPaid && i.selectedForPayment)
       .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
+
   /** Tab activo en el panel de cobro del modal de detalle: pago rápido o dividir por jugador. */
   detailPaymentTab: 'quick' | 'split' = 'quick';
   /** Método seleccionado en el panel "Cobrar producto" antes de confirmar. null = sin selección. */
@@ -223,8 +224,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private playerPaymentHistory: {
     method: 'cash' | 'transfer';
     amount: number;
-    /** Índices de detailCart comprometidos como parte de este pago (para restaurar al deshacer). */
     committedIndices: number[];
+    /** Snapshot del carrito antes de commitear, para restaurar exactamente al deshacer. */
+    cartSnapshot: CartItem[];
   }[] = [];
   /** Contadores por método para el deshacer selectivo. */
   partialCashCount = 0;
@@ -235,15 +237,66 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * pago del jugador actual en la pestaña "Dividir por Jugador".
    * Se vacía automáticamente después de registrar cada pago.
    */
-  selectedConsumableIndices = new Set<number>();
+  /**
+   * Claves de unidades seleccionadas para el jugador actual.
+   * Formato: "cartIdx:unitIdx" — permite seleccionar unidades individuales
+   * de un ítem con quantity > 1 (ej. "0:0" y "0:1" para 2 aguas en index 0).
+   */
+  selectedConsumableKeys = new Set<string>();
+
+  /**
+   * Vista "plana" del carrito: cada unidad de cada ítem impago como una entrada separada.
+   * Permite asignar individualmente cada unidad a un jugador distinto.
+   * La key usa productId + contador global para ser única y estable (no depende del orden del carrito).
+   */
+  get flatUnpaidConsumables(): {
+    key: string;
+    cartIdx: number;
+    unitIdx: number;
+    name: string;
+    unitPrice: number;
+    committed: boolean;
+  }[] {
+    const result: {
+      key: string;
+      cartIdx: number;
+      unitIdx: number;
+      name: string;
+      unitPrice: number;
+      committed: boolean;
+    }[] = [];
+    const productCounter = new Map<string, number>();
+
+    for (let cartIdx = 0; cartIdx < this.detailCart.length; cartIdx++) {
+      const item = this.detailCart[cartIdx];
+
+      if (item.isPaid && !item.committedBySplit) continue;
+
+      for (let unitIdx = 0; unitIdx < item.quantity; unitIdx++) {
+        const globalUnitIdx = productCounter.get(item.productId) ?? 0;
+        productCounter.set(item.productId, globalUnitIdx + 1);
+
+        const key = `${item.productId}:${globalUnitIdx}`;
+
+        result.push({
+          key,
+          cartIdx,
+          unitIdx,
+          name: item.name,
+          unitPrice: Number(item.unitPrice),
+          committed: item.committedBySplit === true,
+        });
+      }
+    }
+    return result;
+  }
 
   /** Total de los consumos seleccionados individualmente para el jugador actual. */
   get selectedConsumablesTotal(): number {
     let total = 0;
-    for (const idx of this.selectedConsumableIndices) {
-      const item = this.detailCart[idx];
-      if (item && !item.isPaid) {
-        total += Number(item.unitPrice) * Number(item.quantity);
+    for (const unit of this.flatUnpaidConsumables) {
+      if (!unit.committed && this.selectedConsumableKeys.has(unit.key)) {
+        total += unit.unitPrice;
       }
     }
     return total;
@@ -251,29 +304,37 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /**
    * Monto total que pagará el jugador actual.
-   * Cuota fija de cancha + consumos que el cajero seleccionó para este jugador.
-   * Se calcula sobre `baseCanchaSplit` (siempre fijo) para que los consumos
-   * de otros jugadores no subsidien ni reduzcan la cuota de cancha propia.
+   * - En modo 'court': cuota fija de cancha + consumos seleccionados individualmente.
+   * - En modo 'court+items': cuota proporcional de cancha + todos los consumos pendientes.
    */
   get currentPlayerTotal(): number {
+    if (this.splitMode === 'court+items') {
+      return this.detailCostPerPlayer;
+    }
     return this.baseCanchaSplit + this.selectedConsumablesTotal;
   }
 
-  /** Alterna la selección de un consumo para el pago del jugador actual. */
-  toggleConsumableForPlayer(idx: number): void {
-    if (this.selectedConsumableIndices.has(idx)) {
-      this.selectedConsumableIndices.delete(idx);
+  /** Alterna la selección de una unidad individual de consumo para el pago del jugador actual. */
+  toggleConsumableUnit(key: string): void {
+    const next = new Set(this.selectedConsumableKeys);
+    if (next.has(key)) {
+      next.delete(key);
     } else {
-      this.selectedConsumableIndices.add(idx);
+      next.add(key);
     }
-    // Forzar detección de cambios en el Set
-    this.selectedConsumableIndices = new Set(this.selectedConsumableIndices);
-    // Sincronizar selectedForPayment para que el checkbox del panel izquierdo refleje la selección
-    this.detailCart = this.detailCart.map((item, i) =>
-      i === idx
-        ? { ...item, selectedForPayment: this.selectedConsumableIndices.has(idx) }
-        : item,
-    );
+    this.selectedConsumableKeys = next;
+    // Sincronizar selectedForPayment usando flatUnpaidConsumables para obtener el cartIdx correcto
+    const flat = this.flatUnpaidConsumables;
+    const unit = flat.find((u) => u.key === key);
+    if (unit) {
+      const cartIdx = unit.cartIdx;
+      const anyUnitSelected = flat.some(
+        (u) => u.cartIdx === cartIdx && this.selectedConsumableKeys.has(u.key),
+      );
+      this.detailCart = this.detailCart.map((item, i) =>
+        i === cartIdx ? { ...item, selectedForPayment: anyUnitSelected } : item,
+      );
+    }
   }
 
   /**
@@ -310,7 +371,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.partialTransferCount = 0;
       this.detailPaidCount = this.initialPaidCount;
     }
-    this.selectedConsumableIndices = new Set();
+    this.selectedConsumableKeys = new Set();
     this.splitMode = mode;
   }
 
@@ -1020,7 +1081,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Se usa para mostrar el panel de consumos en la vista derecha.
    */
   get hasUnpaidOrCommittedItems(): boolean {
-    return this.hasUnpaidItems || this.detailCart.some((i) => i.committedBySplit);
+    return (
+      this.hasUnpaidItems || this.detailCart.some((i) => i.committedBySplit)
+    );
   }
 
   /**
@@ -1090,17 +1153,63 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Retorna los índices comprometidos para poder deshacer la operación.
    */
   private commitSelectedConsumables(): number[] {
-    if (this.selectedConsumableIndices.size === 0) return [];
-    const committed: number[] = [];
-    this.detailCart = this.detailCart.map((item, idx) => {
-      if (!item.isPaid && this.selectedConsumableIndices.has(idx)) {
-        committed.push(idx);
-        return { ...item, isPaid: true, committedBySplit: true, selectedForPayment: false };
+    if (this.selectedConsumableKeys.size === 0) return [];
+
+    // Calcular cuántas unidades de cada cartIdx están seleccionadas usando flatUnpaidConsumables
+    const selectedCountByIdx = new Map<number, number>();
+    for (const unit of this.flatUnpaidConsumables) {
+      if (!unit.committed && this.selectedConsumableKeys.has(unit.key)) {
+        selectedCountByIdx.set(
+          unit.cartIdx,
+          (selectedCountByIdx.get(unit.cartIdx) ?? 0) + 1,
+        );
       }
-      return item;
-    });
-    this.selectedConsumableIndices = new Set();
-    return committed;
+    }
+
+    // Construir nuevo carrito partiendo ítems cuando solo se seleccionan algunas unidades
+    const newCart: CartItem[] = [];
+    const committedNewIndices: number[] = [];
+
+    for (let i = 0; i < this.detailCart.length; i++) {
+      const item = this.detailCart[i];
+      const units = selectedCountByIdx.get(i) ?? 0;
+
+      if (!item.isPaid && units > 0) {
+        if (units >= item.quantity) {
+          // Todas las unidades → commit ítem completo
+          committedNewIndices.push(newCart.length);
+          newCart.push({
+            ...item,
+            isPaid: true,
+            committedBySplit: true,
+            selectedForPayment: false,
+          });
+        } else {
+          // Solo algunas unidades → separar en dos ítems
+          // Primero el committed (las unidades seleccionadas)
+          committedNewIndices.push(newCart.length);
+          newCart.push({
+            ...item,
+            quantity: units,
+            isPaid: true,
+            committedBySplit: true,
+            selectedForPayment: false,
+          });
+          // Luego el restante (sin pagar)
+          newCart.push({
+            ...item,
+            quantity: item.quantity - units,
+            selectedForPayment: false,
+          });
+        }
+      } else {
+        newCart.push(item);
+      }
+    }
+
+    this.detailCart = newCart;
+    this.selectedConsumableKeys = new Set();
+    return committedNewIndices;
   }
 
   /** Registra el pago en efectivo de un jugador e incrementa el contador de pagados. */
@@ -1110,10 +1219,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
+    const cartSnapshot = this.detailCart.map((i) => ({ ...i }));
     const amount = this.currentPlayerTotal;
     this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
     const committedIndices = this.commitSelectedConsumables();
-    this.playerPaymentHistory.push({ method: 'cash', amount, committedIndices });
+    this.playerPaymentHistory.push({
+      method: 'cash',
+      amount,
+      committedIndices,
+      cartSnapshot,
+    });
     this.partialCashCount++;
     this.detailPaidCount++;
   }
@@ -1125,11 +1240,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.detailSaldoPendiente <= 0
     )
       return;
+    const cartSnapshot = this.detailCart.map((i) => ({ ...i }));
     const amount = this.currentPlayerTotal;
     this.detailAmountTransfer =
       (Number(this.detailAmountTransfer) || 0) + amount;
     const committedIndices = this.commitSelectedConsumables();
-    this.playerPaymentHistory.push({ method: 'transfer', amount, committedIndices });
+    this.playerPaymentHistory.push({
+      method: 'transfer',
+      amount,
+      committedIndices,
+      cartSnapshot,
+    });
     this.partialTransferCount++;
     this.detailPaidCount++;
   }
@@ -1160,15 +1281,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.partialTransferCount = Math.max(0, this.partialTransferCount - 1);
     }
     this.detailPaidCount--;
-    // Restaurar consumos que fueron comprometidos localmente por este pago
-    if (entry.committedIndices.length > 0) {
-      const toRestore = new Set(entry.committedIndices);
-      this.detailCart = this.detailCart.map((item, idx) =>
-        toRestore.has(idx) && item.committedBySplit
-          ? { ...item, isPaid: false, committedBySplit: false }
-          : item,
-      );
-    }
+    // Restaurar el carrito al estado previo al pago usando el snapshot
+    this.detailCart = entry.cartSnapshot.map((i) => ({ ...i }));
+    this.selectedConsumableKeys = new Set();
   }
 
   /** Completa el saldo pendiente con efectivo y marca todos los jugadores como pagados. */
@@ -1523,7 +1638,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.playerPaymentHistory = [];
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
-    this.selectedConsumableIndices = new Set();
+    this.selectedConsumableKeys = new Set();
     this.splitMode = 'court+items';
   }
 
@@ -1744,27 +1859,49 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.isSavingDetail = true;
 
     // Construir items con el estado isPaid actualizado.
-    // En modo split, los items se marcan pagados solo a través de committedBySplit (vía addPaidByCash/Transfer).
-    // selectedForPayment en modo split es solo sincronización visual y NO debe marcar items como pagados.
+    // - Modo pago rápido: selectedForPayment marca items como pagados.
+    // - Modo split 'court': solo committedBySplit marca items como pagados.
+    // - Modo split 'court+items': todos los items se marcan pagados cuando todos los jugadores pagaron.
+    const allPlayersPaid =
+      this.detailPaymentTab === 'split' &&
+      this.splitMode === 'court+items' &&
+      this.detailPaidCount >= this.detailPlayerCount;
     const cartAfterPayment = this.detailCart.map((i) => ({
       ...i,
-      isPaid: i.isPaid || (this.detailPaymentTab !== 'split' && i.selectedForPayment === true),
+      isPaid:
+        i.isPaid ||
+        (this.detailPaymentTab !== 'split' && i.selectedForPayment === true) ||
+        allPlayersPaid,
     }));
     const groupedPaidPay = new Map<string, number>();
     const groupedUnpaidPay = new Map<string, number>();
     for (const i of cartAfterPayment) {
       if (i.isPaid) {
-        groupedPaidPay.set(i.productId, (groupedPaidPay.get(i.productId) ?? 0) + i.quantity);
+        groupedPaidPay.set(
+          i.productId,
+          (groupedPaidPay.get(i.productId) ?? 0) + i.quantity,
+        );
       } else {
-        groupedUnpaidPay.set(i.productId, (groupedUnpaidPay.get(i.productId) ?? 0) + i.quantity);
+        groupedUnpaidPay.set(
+          i.productId,
+          (groupedUnpaidPay.get(i.productId) ?? 0) + i.quantity,
+        );
       }
     }
     const dto: UpdateBookingDto = {
       amountCash: Math.max(0, this.totalPagadoEfectivo),
       amountTransfer: Math.max(0, this.totalPagadoTransferencia),
       items: [
-        ...Array.from(groupedPaidPay, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
-        ...Array.from(groupedUnpaidPay, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+        ...Array.from(groupedPaidPay, ([productId, quantity]) => ({
+          productId,
+          quantity,
+          isPaid: true,
+        })),
+        ...Array.from(groupedUnpaidPay, ([productId, quantity]) => ({
+          productId,
+          quantity,
+          isPaid: false,
+        })),
       ],
     };
 
@@ -1783,7 +1920,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.playerPaymentHistory = [];
           this.partialCashCount = 0;
           this.partialTransferCount = 0;
-          this.selectedConsumableIndices = new Set();
+          this.selectedConsumableKeys = new Set();
 
           this.removeFromBookingMap(this.selectedBooking!);
           this.addToBookingMap(updated);
@@ -1837,6 +1974,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.playerCountSave$.next(newCount);
   }
 
+  toggleDetailCartItem(index: number, checked: boolean): void {
+    this.detailCart = this.detailCart.map((item, i) =>
+      i === index ? { ...item, selectedForPayment: checked } : item,
+    );
+    this.onProductCheckChange();
+  }
+
   onProductCheckChange(): void {
     if (this.selectedProductsCount === 1) {
       setTimeout(() => {
@@ -1870,29 +2014,43 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.pendingProductPaymentMethod = null;
 
     // Calcular los montos acumulados a enviar al backend
-    const newCash = method === 'cash'
-      ? this.savedAmountCash + amount
-      : this.savedAmountCash;
-    const newTransfer = method === 'transfer'
-      ? this.savedAmountTransfer + amount
-      : this.savedAmountTransfer;
+    const newCash =
+      method === 'cash' ? this.savedAmountCash + amount : this.savedAmountCash;
+    const newTransfer =
+      method === 'transfer'
+        ? this.savedAmountTransfer + amount
+        : this.savedAmountTransfer;
 
     // Construir DTO con items separados por isPaid
     const groupedPaid = new Map<string, number>();
     const groupedUnpaid = new Map<string, number>();
     for (const i of updatedCart) {
       if (i.isPaid) {
-        groupedPaid.set(i.productId, (groupedPaid.get(i.productId) ?? 0) + i.quantity);
+        groupedPaid.set(
+          i.productId,
+          (groupedPaid.get(i.productId) ?? 0) + i.quantity,
+        );
       } else {
-        groupedUnpaid.set(i.productId, (groupedUnpaid.get(i.productId) ?? 0) + i.quantity);
+        groupedUnpaid.set(
+          i.productId,
+          (groupedUnpaid.get(i.productId) ?? 0) + i.quantity,
+        );
       }
     }
     const dto: UpdateBookingDto = {
       amountCash: newCash,
       amountTransfer: newTransfer,
       items: [
-        ...Array.from(groupedPaid, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
-        ...Array.from(groupedUnpaid, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+        ...Array.from(groupedPaid, ([productId, quantity]) => ({
+          productId,
+          quantity,
+          isPaid: true,
+        })),
+        ...Array.from(groupedUnpaid, ([productId, quantity]) => ({
+          productId,
+          quantity,
+          isPaid: false,
+        })),
       ],
     };
 
@@ -1919,15 +2077,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           // NO se tocan detailPaidCount, playerPaymentHistory ni partialCounts
           // para no corromper el estado del modo "dividir por jugador".
           this.savedAmountCash = Number(updated.payment?.amountCash ?? 0);
-          this.savedAmountTransfer = Number(updated.payment?.amountTransfer ?? 0);
+          this.savedAmountTransfer = Number(
+            updated.payment?.amountTransfer ?? 0,
+          );
           this.detailAmountCash = 0;
           this.detailAmountTransfer = 0;
 
-          this.toast.success('Producto cobrado', `$${this.fmt(amount)} registrado.`);
+          this.toast.success(
+            'Producto cobrado',
+            `$${this.fmt(amount)} registrado.`,
+          );
         },
         error: (err) => {
           this.isSavingDetail = false;
-          this.toast.error('Error', err.error?.message ?? 'No se pudo guardar el cobro.');
+          this.toast.error(
+            'Error',
+            err.error?.message ?? 'No se pudo guardar el cobro.',
+          );
         },
       }),
     );
@@ -1943,6 +2109,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */
   private autoSaveItems(): void {
+    // No hacer auto-save si hay pagos de jugadores pendientes de confirmar,
+    // ya que el carrito puede tener ítems partidos (committedBySplit) que el
+    // servidor consolidaría y rompería el estado local del split.
+    if (this.playerPaymentHistory.length > 0) return;
     if (!this.selectedBooking || this.isAutoSavingItems) return;
     this.isAutoSavingItems = true;
 
@@ -1951,14 +2121,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const groupedUnpaid = new Map<string, number>();
     for (const i of this.detailCart) {
       if (i.isPaid) {
-        groupedPaid.set(i.productId, (groupedPaid.get(i.productId) ?? 0) + i.quantity);
+        groupedPaid.set(
+          i.productId,
+          (groupedPaid.get(i.productId) ?? 0) + i.quantity,
+        );
       } else {
-        groupedUnpaid.set(i.productId, (groupedUnpaid.get(i.productId) ?? 0) + i.quantity);
+        groupedUnpaid.set(
+          i.productId,
+          (groupedUnpaid.get(i.productId) ?? 0) + i.quantity,
+        );
       }
     }
     const dtoItems = [
-      ...Array.from(groupedPaid, ([productId, quantity]) => ({ productId, quantity, isPaid: true })),
-      ...Array.from(groupedUnpaid, ([productId, quantity]) => ({ productId, quantity, isPaid: false })),
+      ...Array.from(groupedPaid, ([productId, quantity]) => ({
+        productId,
+        quantity,
+        isPaid: true,
+      })),
+      ...Array.from(groupedUnpaid, ([productId, quantity]) => ({
+        productId,
+        quantity,
+        isPaid: false,
+      })),
     ];
     const dto: UpdateBookingDto = { items: dtoItems };
 
@@ -1991,14 +2175,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             quantity: serverItem.quantity,
             isPaid: serverItem.isPaid ?? false,
             committedBySplit: serverItem.isPaid
-              ? (prevCommittedBySplit.get(`${serverItem.productId}_paid`) ?? false)
+              ? (prevCommittedBySplit.get(`${serverItem.productId}_paid`) ??
+                false)
               : false,
-            selectedForPayment: !serverItem.isPaid &&
-              (prevSelectedForPayment.get(`${serverItem.productId}_${serverItem.isPaid}`) ?? false),
+            selectedForPayment:
+              !serverItem.isPaid &&
+              (prevSelectedForPayment.get(
+                `${serverItem.productId}_${serverItem.isPaid}`,
+              ) ??
+                false),
           }));
           // Los índices pueden haber cambiado tras el rebuild; limpiar selección para evitar
           // que selectedConsumableIndices apunte a ítems incorrectos.
-          this.selectedConsumableIndices = new Set();
+          this.selectedConsumableKeys = new Set();
         },
         error: (err) => {
           this.isAutoSavingItems = false;
@@ -2525,7 +2714,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       hour: this.rescheduleTargetHour,
     };
 
-    // Buscar el booking fuente en el mapa para saber si pertenece a una serie.
     const sourceBooking = [...this.bookingMap.values()].find(
       (b) => b.id === this.rescheduleSourceId,
     );
@@ -2549,10 +2737,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         reverseButtons: false,
       }).then((result) => {
         if (result.isConfirmed) {
-          // Mover solo esta instancia (Booking individual).
           this.executeMove(dto);
         } else if (result.isDenied) {
-          // Actualizar el turno fijo padre → el backend regenera las instancias futuras.
           this.closeRescheduleDialog();
           if (this.rescheduleFromModal) this.forceCloseDialog();
           this.router.navigate(['/app/fixed-bookings']);
@@ -2561,17 +2747,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             'Buscá el turno fijo en la lista y editalo para mover toda la serie.',
           );
         }
-        // Si cancela, no hace nada.
       });
       return;
     }
 
-    // Caso no-recurrente o acción duplicate: ejecutar directamente.
     this.executeMove(dto, action);
   }
 
   /** Ejecuta la petición HTTP de mover o duplicar el booking. */
-  private executeMove(dto: RescheduleBookingDto, action: 'move' | 'duplicate' = 'move'): void {
+  private executeMove(
+    dto: RescheduleBookingDto,
+    action: 'move' | 'duplicate' = 'move',
+  ): void {
     this.isRescheduling = true;
     const request$ =
       action === 'move'
@@ -2588,9 +2775,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         if (err.status === 409) {
-          this.toast.error('Slot ocupado', 'Ese horario ya tiene un turno reservado.');
+          this.toast.error(
+            'Slot ocupado',
+            'Ese horario ya tiene un turno reservado.',
+          );
         } else {
-          this.toast.error('Error', 'No se pudo completar la operación. Intentá de nuevo.');
+          this.toast.error(
+            'Error',
+            'No se pudo completar la operación. Intentá de nuevo.',
+          );
         }
       },
     });
