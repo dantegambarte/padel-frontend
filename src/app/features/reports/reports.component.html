@@ -1023,6 +1023,18 @@
               >
                 Ventas
               </button>
+              <button
+                type="button"
+                (click)="txFilterType = 'expense'"
+                [ngClass]="
+                  txFilterType === 'expense'
+                    ? 'bg-red-500 text-white border-red-500'
+                    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                "
+                class="inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium transition-colors"
+              >
+                Egresos
+              </button>
             </div>
 
             <div class="flex flex-wrap gap-1">
@@ -1159,11 +1171,13 @@
                 [ngClass]="
                   tx.type === 'booking'
                     ? 'bg-orange-50 text-orange-700 border-orange-200'
-                    : 'bg-violet-50 text-violet-700 border-violet-200'
+                    : tx.type === 'expense'
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-violet-50 text-violet-700 border-violet-200'
                 "
                 class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
               >
-                {{ tx.type === "booking" ? "Alquiler" : "Venta" }}
+                {{ tx.type === "booking" ? "Alquiler" : tx.type === "expense" ? "Egreso" : "Venta" }}
               </span>
             </div>
 
@@ -1291,11 +1305,13 @@
                     [ngClass]="
                       tx.type === 'booking'
                         ? 'bg-orange-50 text-orange-700'
-                        : 'bg-violet-50 text-violet-700'
+                        : tx.type === 'expense'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-violet-50 text-violet-700'
                     "
                     class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                   >
-                    {{ tx.type === "booking" ? "Alquiler" : "Venta" }}
+                    {{ tx.type === "booking" ? "Alquiler" : tx.type === "expense" ? "Egreso" : "Venta" }}
                   </span>
                 </td>
                 <td class="p-3 text-sm text-foreground max-w-xs truncate">

@@ -80,7 +80,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   summaryData: ReportsSummaryResponse | null = null;
   lowStockProducts: LowStockProduct[] = [];
 
-  txFilterType: 'all' | 'booking' | 'sale' = 'all';
+  txFilterType: 'all' | 'booking' | 'sale' | 'expense' = 'all';
   txFilterPayment: 'all' | 'cash' | 'transfer' = 'all';
 
   isExporting = false;
@@ -820,7 +820,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
           ? 'Turno'
           : tx.type === 'sale'
             ? 'Venta cantina'
-            : tx.type,
+            : tx.type === 'expense'
+              ? 'Egreso'
+              : tx.type,
       Concepto: tx.concept,
       Efectivo: Number(tx.cash) || 0,
       Transferencia: Number(tx.transfer) || 0,
@@ -845,7 +847,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const filterParts: string[] = [];
     if (this.txFilterType !== 'all')
       filterParts.push(
-        this.txFilterType === 'booking' ? 'Tipo: Alquileres' : 'Tipo: Ventas',
+        this.txFilterType === 'booking'
+          ? 'Tipo: Alquileres'
+          : this.txFilterType === 'sale'
+            ? 'Tipo: Ventas'
+            : 'Tipo: Egresos',
       );
     if (this.txFilterPayment !== 'all')
       filterParts.push(
