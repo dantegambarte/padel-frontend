@@ -175,7 +175,9 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
   /** Devuelve la clase del dot de color para los pills del selector de cancha. */
   courtColorDot(courtId: string): string {
     const idx = this.availableCourts.findIndex((c) => c.id === courtId);
-    return this.COURT_DOT_COLORS[Math.max(0, idx) % this.COURT_DOT_COLORS.length];
+    return this.COURT_DOT_COLORS[
+      Math.max(0, idx) % this.COURT_DOT_COLORS.length
+    ];
   }
 
   /** Devuelve true si la cancha del turno está actualmente inactiva. */
@@ -460,8 +462,25 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isSubmitting = false;
 
+        if (err?.status === 409 && err?.error?.message === 'CONFLICT_OVERLAP') {
+          const detail: string =
+            err.error.detail ??
+            'El horario solicitado se superpone con un turno fijo existente en esa cancha.';
+          Swal.fire({
+            title: 'Horario superpuesto',
+            html: `No se puede guardar el turno fijo.<br><br>${detail}`,
+            icon: 'error',
+            confirmButtonColor: '#4f46e5',
+            confirmButtonText: 'Entendido',
+          });
+          return;
+        }
+
         // Solapamiento en la fecha de inicio → ofrecer semana siguiente.
-        if (err?.status === 409 && err?.error?.message === 'CONFLICT_START_DATE') {
+        if (
+          err?.status === 409 &&
+          err?.error?.message === 'CONFLICT_START_DATE'
+        ) {
           const nextDate: string = err.error.nextAvailableDate;
           const [year, month, day] = nextDate.split('-');
           const formatted = `${day}/${month}/${year}`;
@@ -480,9 +499,11 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
             reverseButtons: true,
           }).then((result) => {
             if (result.isConfirmed) {
-              // Actualizar el form y el dto con la nueva fecha y reintentar.
               this.form.startDate = nextDate;
-              const retryDto: CreateFixedBookingDto = { ...dto, startDate: nextDate };
+              const retryDto: CreateFixedBookingDto = {
+                ...dto,
+                startDate: nextDate,
+              };
               this.executeUpdate(retryDto);
             }
           });
@@ -536,10 +557,14 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       this.deletingId = item.id;
       this.fixedSvc.deleteFixedBookingCascade(item.id).subscribe({
         next: (res) => {
-          const detail = res.preserved > 0
-            ? `${res.deleted} turno(s) borrado(s). ${res.preserved} conservado(s) por tener pago — revisalos en la agenda.`
-            : `${res.deleted} turno(s) futuro(s) eliminado(s).`;
-          this.toast.success('Turno fijo eliminado', `${item.clientName} — ${detail}`);
+          const detail =
+            res.preserved > 0
+              ? `${res.deleted} turno(s) borrado(s). ${res.preserved} conservado(s) por tener pago — revisalos en la agenda.`
+              : `${res.deleted} turno(s) futuro(s) eliminado(s).`;
+          this.toast.success(
+            'Turno fijo eliminado',
+            `${item.clientName} — ${detail}`,
+          );
           this.deletingId = null;
           this.loadAll();
         },
@@ -617,7 +642,9 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
         // Selecciona la primera cancha disponible si no hay ninguna seleccionada.
         if (
           this.availableCourts.length > 0 &&
-          !this.availableCourts.find((c) => c.id === this.selectedCourtId$.value)
+          !this.availableCourts.find(
+            (c) => c.id === this.selectedCourtId$.value,
+          )
         ) {
           this.selectedCourtId$.next(this.availableCourts[0].id);
         }
