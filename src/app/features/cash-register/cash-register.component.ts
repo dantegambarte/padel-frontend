@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DraftService } from '../../core/services/draft.service';
+import { ConfigService } from '../../core/services/config.service';
 import {
   CashService,
   CashMovimiento,
@@ -90,6 +91,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   staleSession = false;
 
+  fondoCajaBase = 0;
+
   closedCashCounted: number | null = null;
   closedDifference: number | null = null;
 
@@ -148,9 +151,14 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     private router: Router,
     private draftService: DraftService,
     private cdr: ChangeDetectorRef,
+    private configService: ConfigService,
   ) {}
 
   ngOnInit(): void {
+    this.configService.getAll().subscribe((entries) => {
+      const entry = entries.find((e) => e.key === 'fondo_caja_base');
+      this.fondoCajaBase = entry ? parseFloat(entry.value) || 0 : 0;
+    });
     this.loadCurrentSession();
     this.historialDate = this.toISODate(this.logicalCommercialDate);
 
@@ -306,9 +314,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     return this.efectivoContado ?? 0;
   }
 
-  /** Diferencia entre el efectivo real contado y el esperado por el sistema. */
+  /**
+   * Total físico esperado en el cajón = GREATEST(0, fondo_inicial + ingresos - egresos).
+   * Coincide con la fórmula usada en backend y migración RecalcSessionDifferences.
+   * Es lo que el empleado debería contar al hacer el arqueo.
+   */
+  get totalEsperadoEnCajon(): number {
+    return Math.max(0, this.initialBalance + this.cashIncome - this.cashExpenseTotal);
+  }
+
+  /** Descuadre = contado - total físico esperado en cajón (fondo + ingresos - egresos). */
   get diferencia(): number {
-    return this.efectivoReal - this.efectivoEsperado;
+    return this.efectivoReal - this.totalEsperadoEnCajon;
   }
 
   /** Valor absoluto de la diferencia. */
@@ -319,6 +336,24 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   /** Muestra el panel de diferencia en cuanto el empleado ingresa algún valor (incluso 0). */
   get showDiferencia(): boolean {
     return this.efectivoContado !== null;
+  }
+
+  /**
+   * Efectivo que el cajero debe retirar del cajón (el sobre/recaudación).
+   * Es 0 si el total en cajón no alcanza para cubrir el fondo base.
+   */
+  get efectivoARetirar(): number {
+    return Math.max(0, this.totalEsperadoEnCajon - this.fondoCajaBase);
+  }
+
+  /** true cuando el total en cajón no alcanza para reponer el fondo base. */
+  get fondoInsuficiente(): boolean {
+    return this.totalEsperadoEnCajon < this.fondoCajaBase;
+  }
+
+  /** Fondo real que quedará en caja (puede ser menor al base si el día fue malo). */
+  get fondoADejar(): number {
+    return Math.min(this.totalEsperadoEnCajon, this.fondoCajaBase);
   }
 
   /** Clase CSS para colorear la diferencia según su signo. */
@@ -369,6 +404,14 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                 if (cashCounted !== null && this.fondoInicial === '') {
                   this.fondoInicial = String(cashCounted);
                   this.fondoInicialSugerido = true;
+                } else if (cashCounted === null && this.fondoInicial === '') {
+                  this.configService.getAll().subscribe((entries) => {
+                    const entry = entries.find((e) => e.key === 'fondo_caja_base');
+                    if (entry && parseFloat(entry.value) > 0) {
+                      this.fondoInicial = entry.value;
+                      this.fondoInicialSugerido = false;
+                    }
+                  });
                 }
               });
             return;

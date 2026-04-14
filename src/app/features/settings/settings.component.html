@@ -119,6 +119,67 @@
 
     <div class="rounded-lg border border-border bg-card shadow-md">
       <div class="border-b border-border p-6">
+        <div class="flex items-center gap-2">
+          <svg
+            class="h-5 w-5 text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          <h3 class="text-lg font-semibold text-card-foreground">
+            Fondo de Caja Base
+          </h3>
+        </div>
+        <p class="mt-1 text-sm text-muted-foreground">
+          Monto por defecto que se pre-carga al abrir un nuevo turno de caja (cambio inicial)
+        </p>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="space-y-1.5 max-w-xs">
+          <label class="text-sm font-medium text-foreground" for="fondo-caja-base">
+            Fondo por defecto
+          </label>
+          <div class="relative">
+            <span
+              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold"
+              >$</span
+            >
+            <input
+              id="fondo-caja-base"
+              type="number"
+              min="0"
+              step="500"
+              [(ngModel)]="fondoCajaBase"
+              class="w-full rounded-md border border-input bg-background pl-7 pr-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+          <p class="text-xs text-muted-foreground">
+            No se contabiliza como ganancia. Se incluye en el total físico del cajón al cierre.
+          </p>
+        </div>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            (click)="guardarFondoCaja()"
+            [disabled]="isSavingFondo || !isFondoDirty"
+            class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span *ngIf="isSavingFondo">Guardando…</span>
+            <span *ngIf="!isSavingFondo">Guardar Fondo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-border bg-card shadow-md">
+      <div class="border-b border-border p-6">
         <div
           class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
         >
@@ -552,7 +613,7 @@
       <button
         type="button"
         (click)="save()"
-        [disabled]="isSubmitting || !isDirty"
+        [disabled]="isSubmitting || !isHorariosDirty"
         class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span *ngIf="isSubmitting">Guardando…</span>

@@ -20,22 +20,30 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
   private readonly destroy$ = new Subject<void>();
   isLoading = true;
   isSubmitting = false;
+  isSavingFondo = false;
 
   horarioApertura = '09:00';
   horarioCierre = '23:00';
+  fondoCajaBase = 0;
 
   private savedHorarioApertura = '';
   private savedHorarioCierre = '';
+  private savedFondoCajaBase = 0;
 
-  /**
-   * `true` si algún campo difiere del snapshot guardado al cargar.
-   * Implementa dirty state manual ya que el componente no usa ReactiveFormsModule.
-   */
-  get isDirty(): boolean {
+  get isHorariosDirty(): boolean {
     return (
       this.horarioApertura !== this.savedHorarioApertura ||
       this.horarioCierre !== this.savedHorarioCierre
     );
+  }
+
+  get isFondoDirty(): boolean {
+    return this.fondoCajaBase !== this.savedFondoCajaBase;
+  }
+
+  /** @deprecated use isHorariosDirty / isFondoDirty */
+  get isDirty(): boolean {
+    return this.isHorariosDirty || this.isFondoDirty;
   }
 
   courts: Court[] = [];
@@ -116,9 +124,12 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
     if (map.has('hora_apertura'))
       this.horarioApertura = map.get('hora_apertura')!;
     if (map.has('hora_cierre')) this.horarioCierre = map.get('hora_cierre')!;
+    if (map.has('fondo_caja_base'))
+      this.fondoCajaBase = parseFloat(map.get('fondo_caja_base')!) || 0;
 
     this.savedHorarioApertura = this.horarioApertura;
     this.savedHorarioCierre = this.horarioCierre;
+    this.savedFondoCajaBase = this.fondoCajaBase;
   }
 
   /** Guarda la configuración de horarios y actualiza el snapshot. */
@@ -139,14 +150,42 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
           this.savedHorarioApertura = this.horarioApertura;
           this.savedHorarioCierre = this.horarioCierre;
           this.toast.success(
-            'Configuración guardada',
+            'Horarios guardados',
             'Los cambios se aplicarán de inmediato',
           );
         },
         error: () =>
           this.toast.error(
             'Error al guardar',
-            'No se pudo guardar la configuración',
+            'No se pudieron guardar los horarios',
+          ),
+      });
+  }
+
+  /** Guarda únicamente el fondo de caja base. */
+  guardarFondoCaja(): void {
+    if (this.isSavingFondo) return;
+    this.isSavingFondo = true;
+
+    const entries: ConfigEntry[] = [
+      { key: 'fondo_caja_base', value: String(this.fondoCajaBase) },
+    ];
+
+    this.configService
+      .updateBulk(entries)
+      .pipe(finalize(() => (this.isSavingFondo = false)))
+      .subscribe({
+        next: () => {
+          this.savedFondoCajaBase = this.fondoCajaBase;
+          this.toast.success(
+            'Fondo de caja guardado',
+            'El monto base se actualizó correctamente',
+          );
+        },
+        error: () =>
+          this.toast.error(
+            'Error al guardar',
+            'No se pudo guardar el fondo de caja',
           ),
       });
   }
@@ -284,6 +323,6 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
    * lo que dispara el modal de confirmación del UnsavedChangesGuard.
    */
   canDeactivate(): boolean {
-    return !this.isDirty;
+    return !this.isHorariosDirty && !this.isFondoDirty;
   }
 }
