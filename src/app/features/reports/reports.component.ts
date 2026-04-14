@@ -23,6 +23,9 @@ import {
 } from '../../core/services/reports.service';
 import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
+import { BookingsService } from '../../core/services/bookings.service';
+import { BookingResponse } from '../../core/models/booking.model';
+import Swal from 'sweetalert2';
 
 interface Preset {
   id: string;
@@ -84,6 +87,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
   txFilterPayment: 'all' | 'cash' | 'transfer' = 'all';
 
   isExporting = false;
+
+  ticketSaleId: string | null = null;
+  isLoadingTicket = false;
 
   cashSession: {
     sessionId: string | null;
@@ -181,6 +187,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private reportsService: ReportsService,
     private cashService: CashService,
     private toast: ToastService,
+    private bookingsService: BookingsService,
   ) {}
 
   ngOnInit(): void {
@@ -204,6 +211,143 @@ export class ReportsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Abre el modal para ver el detalle de una transacción.
+   * Si es una venta de cantina, muestra el ticket de venta; si es un turno, muestra el detalle del turno con productos consumidos y cobros.
+   * El llamado HTTP para cargar el detalle del turno se hace solo al abrir el modal, no antes, para optimizar la carga de datos.
+   * @param referenceId
+   * @param type
+   * @returns
+   */
+  openTicket(referenceId: string, type: string): void {
+    if (type === 'sale') {
+      this.ticketSaleId = referenceId;
+      return;
+    }
+
+    this.isLoadingTicket = true;
+    this.bookingsService
+      .findOne(referenceId)
+      .pipe(finalize(() => (this.isLoadingTicket = false)))
+      .subscribe({
+        next: (b) => this.openBookingDetail(b),
+        error: () =>
+          this.toast.error('No se pudo cargar el detalle del turno.'),
+      });
+  }
+
+  /**
+   * Cierra el modal de detalle de ticket, limpiando el ID de venta seleccionado para ocultar el componente del ticket.
+   */
+  closeTicket(): void {
+    this.ticketSaleId = null;
+  }
+
+  /**
+   * Abre el modal para ver el detalle de un turno.
+   * Construye el contenido HTML del modal con la información del turno, productos consumidos, métodos de pago y cálculos de totales y vuelto.
+   * El diseño del modal se hace con estilos inline para mantenerlo autocontenido y evitar dependencias de CSS externo, dado que se renderiza con SweetAlert2.
+   * El llamado HTTP para cargar el detalle del turno se hace solo al abrir el modal, no antes, para optimizar la carga de datos.
+   * @param b
+   */
+  private openBookingDetail(b: BookingResponse): void {
+    const fmt = (n: number) => n.toLocaleString('es-AR');
+    const cur = (n: number) => `$${fmt(n)}`;
+
+    const itemsTotal = b.items.reduce(
+      (s, i) => s + Number(i.unitPrice) * i.quantity,
+      0,
+    );
+
+    let sec1 = '';
+    if (b.items.length > 0) {
+      const rows = b.items
+        .map(
+          (it) => `
+          <tr>
+            <td style="padding:5px 6px;font-size:13px;">${it.product.name}</td>
+            <td style="padding:5px 6px;text-align:center;font-size:13px;">${it.quantity}</td>
+            <td style="padding:5px 6px;text-align:right;font-size:13px;">${cur(it.unitPrice)}</td>
+            <td style="padding:5px 6px;text-align:right;font-size:13px;font-weight:600;">${cur(Number(it.unitPrice) * it.quantity)}</td>
+          </tr>`,
+        )
+        .join('');
+      sec1 = `
+        <div style="margin-bottom:14px;">
+          <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;">Productos / Consumos</p>
+          <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:6px;">
+            <thead>
+              <tr style="background:#f3f4f6;">
+                <th style="padding:5px 6px;text-align:left;font-size:11px;color:#6b7280;">Producto</th>
+                <th style="padding:5px 6px;text-align:center;font-size:11px;color:#6b7280;">Cant.</th>
+                <th style="padding:5px 6px;text-align:right;font-size:11px;color:#6b7280;">P.Unit.</th>
+                <th style="padding:5px 6px;text-align:right;font-size:11px;color:#6b7280;">Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="text-align:right;font-size:12px;font-weight:600;color:#374151;margin-top:5px;">
+            Subtotal: ${cur(itemsTotal)}
+          </div>
+        </div>`;
+    }
+
+    const sec2 = `
+      <div style="margin-bottom:14px;padding:10px 12px;background:#eef2ff;border-radius:8px;border:1px solid #c7d2fe;">
+        <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#4f46e5;margin-bottom:7px;">Detalle de Cancha</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;">
+          <span style="color:#6b7280;">Cancha</span><span style="font-weight:600;">${b.court.name}</span>
+          <span style="color:#6b7280;">Horario</span><span style="font-weight:600;">${b.hour}hs (${b.durationMinutes} min)</span>
+          <span style="color:#6b7280;">Cliente</span><span style="font-weight:600;">${b.clientName}</span>
+          <span style="color:#6b7280;">Precio cancha</span><span style="font-weight:600;">${cur(Number(b.priceAmount))}</span>
+          ${itemsTotal > 0 ? `<span style="color:#6b7280;">Extras</span><span style="font-weight:600;">${cur(itemsTotal)}</span>` : ''}
+        </div>
+      </div>`;
+
+    const amountCash = Number(b.payment?.amountCash ?? 0);
+    const amountTransfer = Number(b.payment?.amountTransfer ?? 0);
+    const totalCobrado = amountCash + amountTransfer;
+    const totalReserva = Number(b.priceAmount) + itemsTotal;
+    const cambio =
+      totalCobrado > totalReserva ? totalCobrado - totalReserva : 0;
+
+    const method =
+      amountCash > 0 && amountTransfer > 0
+        ? 'Efectivo + Transferencia'
+        : amountCash > 0
+          ? 'Efectivo'
+          : amountTransfer > 0
+            ? 'Transferencia'
+            : 'Sin cobro registrado';
+
+    const sec3 = `
+      <div>
+        <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;">Historial de Cobros</p>
+        <div style="padding:7px 10px;margin-bottom:5px;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb;">
+          <span style="font-size:13px;color:#374151;font-weight:500;">${method}</span>
+        </div>
+        <div style="border-top:2px solid #e5e7eb;margin-top:8px;padding-top:8px;">
+          ${amountCash > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;"><span style="color:#6b7280;">Efectivo</span><span style="font-weight:600;">${cur(amountCash)}</span></div>` : ''}
+          ${amountTransfer > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;"><span style="color:#6b7280;">Transferencia</span><span style="font-weight:600;">${cur(amountTransfer)}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">
+            <span style="color:#6b7280;">Vuelto</span>
+            <span style="font-weight:600;color:#374151;">${cur(cambio)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#059669;margin-top:6px;">
+            <span>Total cobrado</span><span>${cur(totalCobrado)}</span>
+          </div>
+        </div>
+      </div>`;
+
+    Swal.fire({
+      title: 'Detalle del Turno',
+      html: `<div style="text-align:left;">${sec1}${sec2}${sec3}</div>`,
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#4f46e5',
+      width: 540,
+    });
   }
 
   /** Suma total de ingresos (alquileres + ventas) del período seleccionado. */
@@ -635,7 +779,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
   exportExpensesCSV(): void {
     if (!this.expensesReport || this.isExporting) return;
 
-    const header = ['Fecha', 'Descripción', 'Categoría', 'Método', 'Registrado por', 'Monto'];
+    const header = [
+      'Fecha',
+      'Descripción',
+      'Categoría',
+      'Método',
+      'Registrado por',
+      'Monto',
+    ];
     const escape = (v: string | number) => {
       const s = String(v ?? '');
       return s.includes(',') || s.includes('"') || s.includes('\n')

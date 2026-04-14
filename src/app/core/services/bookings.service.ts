@@ -68,6 +68,14 @@ export class BookingsService {
   }
 
   /**
+   * Obtiene el detalle completo de una reserva por su ID.
+   * @param id - Identificador de la reserva.
+   */
+  findOne(id: string): Observable<BookingResponse> {
+    return this.http.get<BookingResponse>(`${this.url}/${id}`);
+  }
+
+  /**
    * Cancela una reserva (solo admin).
    * @param id - Identificador de la reserva.
    */

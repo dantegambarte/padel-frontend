@@ -53,6 +53,7 @@ export interface TransactionExport {
   transfer: number;
   total: number;
   createdBy: string;
+  referenceId: string | null;
 }
 
 export type GroupBy = 'day' | 'week' | 'month';
