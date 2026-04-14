@@ -53,6 +53,7 @@ export interface GroupedMovimiento {
   hasCourt: boolean;
   hasCantina: boolean;
   expenseCategory: string | null;
+  latestCreatedAt: string;
 }
 @Component({
   selector: 'app-cash-register',
@@ -672,10 +673,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    */
   get groupedMovimientos(): GroupedMovimiento[] {
     const result: GroupedMovimiento[] = [];
-    const txs = [...this.movimientos].reverse();
     const bookingMap = new Map<string, GroupedMovimiento>();
 
-    for (const mov of txs) {
+    for (const mov of this.movimientos) {
       if (mov.movType === 'BOOKING') {
         const existing = bookingMap.get(mov.referenceId);
         if (existing) {
@@ -686,6 +686,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           existing.hasMultiplePayments = true;
           existing.hasCash = existing.hasCash || mov.amountCash > 0;
           existing.hasTransfer = existing.hasTransfer || mov.amountTransfer > 0;
+          if (mov.createdAt > existing.latestCreatedAt) {
+            existing.latestCreatedAt = mov.createdAt;
+          }
         } else {
           const rawItems = mov.bookingItems ?? [];
           const group: GroupedMovimiento = {
@@ -712,6 +715,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             hasCourt: true,
             hasCantina: rawItems.length > 0,
             expenseCategory: null,
+            latestCreatedAt: mov.createdAt,
           };
           bookingMap.set(mov.referenceId, group);
           result.push(group);
@@ -741,6 +745,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           hasCourt: false,
           hasCantina: false,
           expenseCategory: mov.expenseCategory ?? null,
+          latestCreatedAt: mov.createdAt,
         });
       } else {
         const rawItems = mov.saleItems ?? [];
@@ -768,11 +773,12 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           hasCourt: false,
           hasCantina: rawItems.length > 0,
           expenseCategory: null,
+          latestCreatedAt: mov.createdAt,
         });
       }
     }
 
-    return result.reverse();
+    return result.sort((a, b) => b.latestCreatedAt.localeCompare(a.latestCreatedAt));
   }
 
   /**

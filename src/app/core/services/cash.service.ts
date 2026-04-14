@@ -39,6 +39,8 @@ export interface CashMovimiento {
   saleItems?: ItemDetail[] | null;
   /** Categoría del egreso (solo cuando movType === 'EXPENSE'). */
   expenseCategory?: string | null;
+  /** ISO timestamp original del backend, para ordenamiento preciso. */
+  createdAt: string;
 }
 
 /** Estructura normalizada consumida por el componente de caja. */
@@ -287,6 +289,7 @@ export class CashService {
                 saleTotal: t.saleTotal != null ? Number(t.saleTotal) : null,
                 saleItems: t.saleItems ?? null,
                 expenseCategory: t.expenseCategory ?? null,
+                createdAt: t.createdAt,
               };
             }),
           }),
