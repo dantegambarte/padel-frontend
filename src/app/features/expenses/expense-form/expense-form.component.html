@@ -158,6 +158,30 @@
           </p>
         </div>
 
+        <div *ngIf="authService.isAdmin" class="space-y-2">
+          <label class="block text-sm font-medium">
+            Origen de los fondos <span class="text-destructive">*</span>
+          </label>
+          <div class="flex gap-4">
+            <label
+              *ngFor="let fs of fundSources"
+              class="flex items-center gap-2 cursor-pointer text-sm"
+            >
+              <input
+                type="radio"
+                formControlName="fundSource"
+                [value]="fs.value"
+                class="accent-primary"
+              />
+              {{ fs.label }}
+            </label>
+          </div>
+          <p *ngIf="isGeneralFunds" class="text-xs text-muted-foreground">
+            Este egreso <strong>no</strong> afectará el arqueo de caja del día.
+            Se reflejará en los balances generales del club.
+          </p>
+        </div>
+
         <div class="space-y-1">
           <label for="date" class="block text-sm font-medium"
             >Fecha <span class="text-destructive">*</span></label
@@ -195,7 +219,7 @@
           </button>
           <button
             type="submit"
-            [disabled]="submitting || showOpenCashPanel"
+            [disabled]="submitting || (showOpenCashPanel && !isGeneralFunds)"
             class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg

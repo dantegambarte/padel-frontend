@@ -353,7 +353,9 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
    * que el administrador ingrese un nombre libre.
    */
   onIsTeacherClassChange(): void {
-    if (!this.form.isTeacherClass) {
+    if (this.form.isTeacherClass) {
+      this.form.durationMinutes = 60;
+    } else {
       this.form.teacherId = '';
       this.form.clientName = '';
     }
