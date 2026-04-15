@@ -73,10 +73,15 @@ export class ProductsService {
     return this.http.get<Product[]>(this.url, { params });
   }
 
-  /** Invalida toda la caché de productos. */
+  /** Invalida toda la caché de productos (lista completa, destacados y low-stock). */
   clearCache(): void {
     this.allCache$ = null;
     this.featuredCache$ = null;
+    this.lowStockSubject$.next(null);
+  }
+
+  /** Invalida solo la caché de low-stock, forzando una nueva petición HTTP en la próxima suscripción. */
+  clearLowStockCache(): void {
     this.lowStockSubject$.next(null);
   }
 
