@@ -1653,6 +1653,69 @@
                   </div>
 
                   <div
+                    *ngIf="detailPaymentTab === 'split' && (finalizedPaymentHistory.length > 0 || playerPaymentHistory.length > 0)"
+                    class="rounded-xl border border-green-200 bg-green-50/60 dark:border-green-800 dark:bg-green-950/20 overflow-hidden"
+                  >
+                    <p class="px-3 py-2 text-xs font-semibold text-green-800 dark:text-green-400 bg-green-100/70 dark:bg-green-900/30 border-b border-green-200 dark:border-green-800">
+                      Jugadores que pagaron
+                    </p>
+                    <div class="divide-y divide-green-100 dark:divide-green-900/40 max-h-48 overflow-y-auto">
+                      <div
+                        *ngFor="let entry of finalizedPaymentHistory; let i = index"
+                        class="px-3 py-2.5 space-y-1 opacity-80"
+                      >
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                            {{ entry.method === 'cash' ? '💵' : '📱' }} Jugador {{ i + 1 }}
+                          </span>
+                          <span class="text-sm font-bold text-green-700 dark:text-green-400">
+                            ${{ fmt(entry.amount) }}
+                          </span>
+                        </div>
+                        <div class="text-xs text-muted-foreground space-y-0.5">
+                          <div class="flex justify-between">
+                            <span>Cancha</span>
+                            <span>${{ fmt(entry.courtAmount) }}</span>
+                          </div>
+                          <div *ngFor="let c of entry.consumableItems" class="flex justify-between">
+                            <span>{{ c.name }}<span *ngIf="c.qty > 1"> x{{ c.qty }}</span></span>
+                            <span>+${{ fmt(c.unitPrice * c.qty) }}</span>
+                          </div>
+                          <div class="text-xs font-medium">
+                            <span>{{ entry.method === 'cash' ? 'Efectivo' : 'Transferencia' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        *ngFor="let entry of playerPaymentHistory; let i = index"
+                        class="px-3 py-2.5 space-y-1"
+                      >
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                            {{ entry.method === 'cash' ? '💵' : '📱' }} Jugador {{ finalizedPaymentHistory.length + i + 1 }}
+                          </span>
+                          <span class="text-sm font-bold text-green-700 dark:text-green-400">
+                            ${{ fmt(entry.amount) }}
+                          </span>
+                        </div>
+                        <div class="text-xs text-muted-foreground space-y-0.5">
+                          <div class="flex justify-between">
+                            <span>Cancha</span>
+                            <span>${{ fmt(entry.courtAmount) }}</span>
+                          </div>
+                          <div *ngFor="let c of entry.consumableItems" class="flex justify-between">
+                            <span>{{ c.name }}<span *ngIf="c.qty > 1"> x{{ c.qty }}</span></span>
+                            <span>+${{ fmt(c.unitPrice * c.qty) }}</span>
+                          </div>
+                          <div class="text-xs font-medium">
+                            <span>{{ entry.method === 'cash' ? 'Efectivo' : 'Transferencia' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
                     *ngIf="hasSelectedProducts && detailPaymentTab !== 'split'"
                     #cobroParcialPanel
                     class="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 space-y-3 animate-in fade-in duration-200 dark:border-indigo-800 dark:bg-indigo-950/40"
@@ -1842,7 +1905,8 @@
 
                 <div
                   *ngIf="
-                    totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0
+                    (totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0) &&
+                    playerPaymentHistory.length === 0
                   "
                   class="space-y-0.5 pt-1"
                 >
@@ -1859,7 +1923,7 @@
                     *ngIf="totalPagadoTransferencia > 0"
                     class="flex justify-between text-sm text-blue-600"
                   >
-                    <span>📱 Transf. cobrada</span
+                    <span>📱 Transferencia cobrada</span
                     ><span class="font-semibold"
                       >${{ fmt(totalPagadoTransferencia) }}</span
                     >
@@ -1874,7 +1938,7 @@
                 </div>
 
                 <div
-                  *ngIf="vuelto > 0"
+                  *ngIf="vuelto > 0 && playerPaymentHistory.length === 0"
                   class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 mt-1 dark:border-amber-700 dark:bg-amber-900/20"
                 >
                   <span
@@ -2041,7 +2105,7 @@
                           (click)="settleInTransfer()"
                           class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
                         >
-                          📱 Liquidar Transf.
+                          📱 Liquidar Transferencia
                           <span class="opacity-70"
                             >(${{ fmt(detailSaldoPendiente) }})</span
                           >
@@ -2153,6 +2217,7 @@
                       </div>
 
                       <div
+                        #playerCostBlock
                         class="rounded-md bg-blue-50 px-3 py-2.5 text-sm space-y-1 dark:bg-blue-950/30"
                       >
                         <ng-container *ngIf="splitMode === 'court'">
@@ -2161,29 +2226,28 @@
                               >Cuota de cancha:</span
                             >
                             <span class="text-2xl font-extrabold text-blue-900 dark:text-blue-200"
-                              >${{ fmt(baseCanchaSplit) }} c/u</span
+                              >${{ fmt(lastPaidSummary ? lastPaidSummary.courtAmount : baseCanchaSplit) }} c/u</span
                             >
                           </div>
                           <div
-                            *ngIf="selectedConsumablesTotal > 0"
+                            *ngIf="(lastPaidSummary ? lastPaidSummary.consumablesTotal : selectedConsumablesTotal) > 0"
                             class="flex justify-between items-center"
                           >
                             <span class="text-amber-600 font-medium dark:text-amber-400"
                               >+ Consumos seleccionados:</span
                             >
                             <span class="text-base font-bold text-amber-700 dark:text-amber-300"
-                              >+${{ fmt(selectedConsumablesTotal) }}</span
+                              >+${{ fmt(lastPaidSummary ? lastPaidSummary.consumablesTotal : selectedConsumablesTotal) }}</span
                             >
                           </div>
                           <div
-                            *ngIf="selectedConsumablesTotal > 0"
                             class="flex justify-between items-center border-t border-blue-200 pt-1 dark:border-blue-800"
                           >
                             <span class="text-blue-700 font-semibold dark:text-blue-300"
                               >Total este jugador:</span
                             >
                             <span class="text-xl font-extrabold text-blue-900 dark:text-blue-200"
-                              >${{ fmt(currentPlayerTotal) }}</span
+                              >${{ fmt(lastPaidSummary ? lastPaidSummary.total : currentPlayerTotal) }}</span
                             >
                           </div>
                         </ng-container>
@@ -2215,9 +2279,8 @@
                         </ng-container>
                       </div>
                     </div>
-                    <!-- TODO-> queda para refactorizar ya que al dia de hoy no se esta seleccionando el check al momento de apretarlo del lado derecho -->
                     <div
-                      *ngIf="hasUnpaidOrCommittedItems && splitMode === 'court' && detailPaidCount < detailPlayerCount && false"
+                      *ngIf="hasUnpaidOrCommittedItems && splitMode === 'court' && detailPaidCount < detailPlayerCount"
                       class="rounded-xl border border-amber-100 bg-amber-50 shadow-sm p-4 space-y-2 dark:border-amber-900/40 dark:bg-amber-950/20"
                     >
                       <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
@@ -2227,13 +2290,12 @@
                         <label
                           *ngIf="!unit.committed"
                           class="flex items-center gap-2.5 cursor-pointer select-none py-1"
+                          (click)="toggleConsumableUnit(unit.key); $event.preventDefault(); $event.stopPropagation()"
                         >
                           <input
                             type="checkbox"
                             [checked]="selectedConsumableKeys.has(unit.key)"
-                            (change)="toggleConsumableUnit(unit.key); $event.stopPropagation()"
-                            (click)="$event.stopPropagation()"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
                           />
                           <span class="flex-1 text-sm text-gray-700 dark:text-slate-200">
                             {{ unit.name }}
@@ -2275,7 +2337,27 @@
                       class="rounded-xl border border-gray-100 bg-white shadow-sm p-4 dark:border-slate-700 dark:bg-slate-800"
                     >
                       <div class="flex flex-col gap-2">
+                        <ng-container *ngIf="playerPaymentHistory.length > 0">
+                          <div class="space-y-1 pb-2 border-b border-gray-100 dark:border-slate-600">
+                            <div
+                              *ngFor="let entry of playerPaymentHistory; let i = index"
+                              class="flex items-center justify-between text-sm rounded-md px-2 py-1.5"
+                              [ngClass]="entry.method === 'cash' ? 'bg-green-50/80 dark:bg-green-900/20' : 'bg-blue-50/80 dark:bg-blue-900/20'"
+                            >
+                              <span class="font-medium text-gray-600 dark:text-slate-300">
+                                {{ entry.method === 'cash' ? '💵' : '📱' }} Jugador {{ i + 1 }}
+                              </span>
+                              <div class="text-right">
+                                <span class="font-bold" [ngClass]="entry.method === 'cash' ? 'text-green-700 dark:text-green-400' : 'text-blue-700 dark:text-blue-400'">${{ fmt(entry.amount) }}</span>
+                                <span *ngIf="entry.consumablesTotal > 0" class="block text-xs text-amber-600 dark:text-amber-400">
+                                  ${{ fmt(entry.courtAmount) }} + consumo ${{ fmt(entry.consumablesTotal) }}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </ng-container>
                         <p
+                          *ngIf="detailPaidCount < detailPlayerCount"
                           class="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-1"
                         >
                           Registrar pago de 1 jugador:
@@ -2304,7 +2386,7 @@
                           "
                           class="w-full h-11 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
                         >
-                          + 1 en 📱 Transf.
+                          + 1 en 📱 Transferencia
                           <span
                             class="text-sm text-muted-foreground dark:text-slate-400"
                             >(+${{ fmt(currentPlayerTotal) }})</span
@@ -2421,7 +2503,7 @@
                         (click)="settleInTransfer()"
                         class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors"
                       >
-                        📱 Liquidar Transf.
+                        📱 Liquidar Transferencia
                         <span class="opacity-70"
                           >(${{ fmt(detailSaldoPendiente) }})</span
                         >

@@ -950,7 +950,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     } else {
       const method =
         group.totalCash > 0 && group.totalTransfer > 0
-          ? 'Efectivo + Transf.'
+          ? 'Efectivo + Transferencia'
           : group.totalCash > 0
             ? 'Efectivo'
             : 'Transferencia';
@@ -1069,7 +1069,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     } else {
       const method =
         group.totalCash > 0 && group.totalTransfer > 0
-          ? 'Efectivo + Transf.'
+          ? 'Efectivo + Transferencia'
           : group.totalCash > 0
             ? 'Efectivo'
             : 'Transferencia';
@@ -1322,7 +1322,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       Empleado: nombre,
       Operaciones: acc.operaciones,
       'Total Efectivo ($)': fmt(acc.totalEfectivo),
-      'Total Transf. ($)': fmt(acc.totalTransfer),
+      'Total Transferencia ($)': fmt(acc.totalTransfer),
       'Total Recaudado ($)': fmt(acc.totalEfectivo + acc.totalTransfer),
     }));
 
@@ -1334,7 +1334,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               'Empleado',
               'Operaciones',
               'Total Efectivo ($)',
-              'Total Transf. ($)',
+              'Total Transferencia ($)',
               'Total Recaudado ($)',
             ],
             ['Sin movimientos registrados', '', '', '', ''],
