@@ -19,8 +19,9 @@ import {
   GroupBy,
   ExpensesReport,
   ReportsSummaryResponse,
-  LowStockProduct,
 } from '../../core/services/reports.service';
+import { ProductsService } from '../../core/services/products.service';
+import { LowStockProduct } from '../../core/models/product.model';
 import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
 import { BookingsService } from '../../core/services/bookings.service';
@@ -185,6 +186,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   constructor(
     private reportsService: ReportsService,
+    private productsService: ProductsService,
     private cashService: CashService,
     private toast: ToastService,
     private bookingsService: BookingsService,
@@ -551,7 +553,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       summary: this.reportsService
         .getSummary(this.dateFrom, this.dateTo)
         .pipe(catchError(() => of(null))),
-      stock: this.reportsService.getLowStock().pipe(catchError(() => of([]))),
+      stock: this.productsService.getLowStock().pipe(catchError(() => of([]))),
     })
       .pipe(finalize(() => (this.isLoadingKpis = false)))
       .subscribe({

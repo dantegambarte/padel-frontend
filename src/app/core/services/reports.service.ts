@@ -29,13 +29,6 @@ export interface ReportsSummaryResponse {
   netProfit: number;
 }
 
-export interface LowStockProduct {
-  id: string;
-  name: string;
-  stock: number;
-  minStock: number;
-}
-
 export interface ProductRanking {
   rank: number;
   productId: string;
@@ -162,11 +155,6 @@ export class ReportsService {
     return this.http.get<ReportsSummaryResponse>(`${this.url}/summary`, {
       params,
     });
-  }
-
-  /** Devuelve los productos activos cuyo stock es igual o inferior al umbral mínimo. */
-  getLowStock(): Observable<LowStockProduct[]> {
-    return this.http.get<LowStockProduct[]>(`${this.url}/low-stock`);
   }
 
   /**
