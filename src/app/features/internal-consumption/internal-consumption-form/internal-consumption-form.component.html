@@ -1,0 +1,263 @@
+<div *ngIf="showWhatsAppPrompt" appModalScrollLock class="modal-backdrop" style="z-index:10001">
+  <div class="relative w-full max-w-sm rounded-2xl bg-card shadow-2xl p-6 space-y-4 text-center border border-border">
+    <div class="flex justify-center">
+      <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500">
+        <span class="material-symbols-rounded text-green-500 text-2xl">chat</span>
+      </div>
+    </div>
+    <h3 class="text-base font-semibold">¿Notificar a {{ savedTeacherName }}?</h3>
+    <p class="text-sm text-muted-foreground">
+      Se abrirá WhatsApp con el resumen del consumo del mes para que el profesor esté al tanto de su deuda.
+    </p>
+    <div class="flex gap-3 pt-1">
+      <button
+        type="button"
+        (click)="confirmWhatsApp(false)"
+        class="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent/10 transition-colors"
+      >
+        Ahora no
+      </button>
+      <button
+        type="button"
+        (click)="confirmWhatsApp(true)"
+        class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+      >
+        <span class="material-symbols-rounded text-base">send</span>
+        Enviar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div appModalScrollLock class="modal-backdrop" (click)="onCancel()">
+  <div class="modal-card max-w-lg" (click)="$event.stopPropagation()">
+
+    <div class="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
+      <h2 class="text-lg font-semibold">Registrar Consumo Interno</h2>
+      <button
+        type="button"
+        (click)="onCancel()"
+        class="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-accent/20 transition-colors"
+        aria-label="Cerrar"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div *ngIf="loadingData" class="flex justify-center py-12">
+      <svg class="h-8 w-8 animate-spin text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+    </div>
+
+    <form
+      *ngIf="!loadingData"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      class="flex flex-col flex-1 min-h-0 overflow-hidden"
+      (click)="closeDropdowns()"
+    >
+      <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">
+            Tipo de consumidor <span class="text-destructive">*</span>
+          </label>
+          <div class="flex rounded-lg border border-border overflow-hidden">
+            <button
+              type="button"
+              (click)="form.get('consumerType')!.setValue('teacher')"
+              class="flex-1 py-2 text-sm font-medium transition-colors"
+              [class.bg-accent]="isTeacher"
+              [class.text-accent-foreground]="isTeacher"
+              [class.text-muted-foreground]="!isTeacher"
+            >
+              <span class="material-symbols-rounded text-base align-middle mr-1">school</span>
+              Profesor
+            </button>
+            <button
+              type="button"
+              (click)="form.get('consumerType')!.setValue('staff')"
+              class="flex-1 py-2 text-sm font-medium transition-colors border-l border-border"
+              [class.bg-accent]="!isTeacher"
+              [class.text-accent-foreground]="!isTeacher"
+              [class.text-muted-foreground]="isTeacher"
+            >
+              <span class="material-symbols-rounded text-base align-middle mr-1">badge</span>
+              Empleado
+            </button>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            <ng-container *ngIf="isTeacher">Genera deuda en cuenta corriente. Se liquida a fin de mes.</ng-container>
+            <ng-container *ngIf="!isTeacher">Consumo gratuito. Solo descuenta stock.</ng-container>
+          </p>
+        </div>
+
+        <div class="space-y-1 relative" (click)="$event.stopPropagation()">
+          <label class="block text-sm font-medium">
+            {{ isTeacher ? 'Profesor' : 'Empleado' }} <span class="text-destructive">*</span>
+          </label>
+          <div class="relative">
+            <input
+              type="text"
+              [placeholder]="isTeacher ? 'Buscar profesor...' : 'Buscar empleado...'"
+              [value]="consumerSearch"
+              (input)="onConsumerSearch($any($event.target).value)"
+              (focus)="showConsumerDropdown = true"
+              autocomplete="off"
+              class="w-full rounded-md border bg-background px-3 py-2 pr-8 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button *ngIf="selectedConsumerName" type="button" (click)="clearConsumer()"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <div *ngIf="showConsumerDropdown"
+            class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+            <ng-container *ngIf="isTeacher">
+              <div *ngIf="filteredTeachers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+              <button *ngFor="let t of filteredTeachers" type="button" (click)="selectTeacher(t)"
+                class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                {{ t.fullName }}
+              </button>
+            </ng-container>
+            <ng-container *ngIf="!isTeacher">
+              <div *ngIf="filteredUsers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+              <button *ngFor="let u of filteredUsers" type="button" (click)="selectUser(u)"
+                class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                {{ u.fullName }}
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="space-y-3" formArrayName="items">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium">
+              Productos <span class="text-destructive">*</span>
+            </label>
+            <button
+              type="button"
+              (click)="addRow()"
+              class="flex items-center gap-1 text-xs text-accent font-medium hover:text-accent/80 transition-colors"
+            >
+              <span class="material-symbols-rounded text-sm">add_circle</span>
+              Agregar producto
+            </button>
+          </div>
+
+          <div
+            *ngFor="let row of itemControls; let i = index"
+            [formGroupName]="i"
+            class="flex items-start gap-2 p-3 rounded-lg border border-border bg-muted/30"
+          >
+            <div class="flex-1 min-w-0 relative" (click)="$event.stopPropagation()">
+              <div class="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar producto..."
+                  [value]="rowStates[i].search"
+                  (input)="onRowProductSearch(i, $any($event.target).value)"
+                  (focus)="rowStates[i].showDropdown = true"
+                  autocomplete="off"
+                  class="w-full rounded-md border bg-background px-3 py-2 pr-7 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  [class.border-destructive]="rowHasError(i, 'productId', 'required')"
+                />
+                <button *ngIf="rowStates[i].selectedName" type="button" (click)="clearRowProduct(i)"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+              <div *ngIf="rowStates[i].showDropdown"
+                class="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                <div *ngIf="rowStates[i].filtered.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+                <button *ngFor="let p of rowStates[i].filtered" type="button" (click)="selectRowProduct(i, p)"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between">
+                  <span>{{ p.name }}</span>
+                  <span class="text-xs text-muted-foreground">Stock: {{ p.stock }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="w-16 shrink-0">
+              <input
+                type="number"
+                formControlName="quantity"
+                min="1"
+                step="1"
+                placeholder="Cant."
+                class="w-full rounded-md border bg-background px-2 py-2 text-sm text-center shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                [class.border-destructive]="rowHasError(i, 'quantity', 'min')"
+              />
+            </div>
+
+            <button
+              type="button"
+              (click)="removeRow(i)"
+              [disabled]="itemControls.length === 1"
+              class="mt-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-30"
+              title="Quitar fila"
+            >
+              <span class="material-symbols-rounded text-base">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label for="date" class="block text-sm font-medium">
+              Fecha <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="date"
+              type="date"
+              formControlName="date"
+              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+          <div class="space-y-1">
+            <label for="notes" class="block text-sm font-medium text-muted-foreground">Notas</label>
+            <input
+              id="notes"
+              type="text"
+              formControlName="notes"
+              maxlength="255"
+              placeholder="Opcional..."
+              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+        </div>
+
+        <div *ngIf="serverError"
+          class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {{ serverError }}
+        </div>
+
+      </div>
+
+      <div class="flex gap-3 border-t border-border px-6 shrink-0" style="padding-top:1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom))">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="flex-1 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent/10 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="!canSubmit"
+          class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg *ngIf="submitting" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          {{ submitting ? 'Guardando...' : 'Registrar ' + itemControls.length + ' producto' + (itemControls.length !== 1 ? 's' : '') }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
