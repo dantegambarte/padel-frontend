@@ -89,7 +89,12 @@ export interface UpdateBookingDto {
   clientName?: string;
   amountCash?: number;
   amountTransfer?: number;
-  items?: { productId: string; quantity: number; isPaid?: boolean }[];
+  items?: {
+    id?: string;
+    productId: string;
+    quantity: number;
+    isPaid?: boolean;
+  }[];
   /** Mover turno: cancha destino */
   courtId?: string;
   /** Mover turno: fecha destino (YYYY-MM-DD) */
