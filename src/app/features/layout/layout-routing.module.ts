@@ -98,6 +98,16 @@ const routes: Routes = [
       },
 
       {
+        path: 'internal-consumption',
+        loadChildren: () =>
+          import('../internal-consumption/internal-consumption.module').then(
+            (m) => m.InternalConsumptionModule,
+          ),
+        canActivate: [AdminGuard],
+        data: { title: 'Consumo Interno', roles: ['admin'] },
+      },
+
+      {
         path: 'inventory',
         loadChildren: () =>
           import('../inventory/inventory.module').then(

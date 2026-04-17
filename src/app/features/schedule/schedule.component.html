@@ -1006,7 +1006,7 @@
             >
               <div class="flex items-center justify-between text-lg font-bold">
                 <span>Total a Pagar:</span>
-                <span>${{ fmt(totalReserva) }}</span>
+                <span>${{ fmt(totalReservation) }}</span>
               </div>
 
               <div class="grid gap-3 md:grid-cols-2">
@@ -1020,7 +1020,7 @@
                   <input
                     id="efectivo"
                     type="number"
-                    [(ngModel)]="pagoEfectivo"
+                    [(ngModel)]="cashPayment"
                     (ngModelChange)="triggerBookingDraftSave()"
                     min="0"
                     placeholder="0"
@@ -1038,7 +1038,7 @@
                   <input
                     id="transferencia"
                     type="number"
-                    [(ngModel)]="pagoTransferencia"
+                    [(ngModel)]="cashTransfer"
                     (ngModelChange)="triggerBookingDraftSave()"
                     min="0"
                     placeholder="0"
@@ -1872,8 +1872,8 @@
                 <div
                   *ngIf="
                     canSplitAccount ||
-                    totalPagadoEfectivo > 0 ||
-                    totalPagadoTransferencia > 0
+                    totalPaidCash > 0 ||
+                    totalPaidTransfer > 0
                   "
                   class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700 mt-2"
                 >
@@ -1905,40 +1905,40 @@
 
                 <div
                   *ngIf="
-                    (totalPagadoEfectivo > 0 || totalPagadoTransferencia > 0) &&
+                    (totalPaidCash > 0 || totalPaidTransfer > 0) &&
                     playerPaymentHistory.length === 0
                   "
                   class="space-y-0.5 pt-1"
                 >
                   <div
-                    *ngIf="totalPagadoEfectivo > 0"
+                    *ngIf="totalPaidCash > 0"
                     class="flex justify-between text-sm text-emerald-600"
                   >
                     <span>💵 Efectivo cobrado</span
                     ><span class="font-semibold"
-                      >${{ fmt(totalPagadoEfectivo) }}</span
+                      >${{ fmt(totalPaidCash) }}</span
                     >
                   </div>
                   <div
-                    *ngIf="totalPagadoTransferencia > 0"
+                    *ngIf="totalPaidTransfer > 0"
                     class="flex justify-between text-sm text-blue-600"
                   >
                     <span>📱 Transferencia cobrada</span
                     ><span class="font-semibold"
-                      >${{ fmt(totalPagadoTransferencia) }}</span
+                      >${{ fmt(totalPaidTransfer) }}</span
                     >
                   </div>
                   <div
-                    *ngIf="totalPagadoEfectivo > 0 && totalPagadoTransferencia > 0"
+                    *ngIf="totalPaidCash > 0 && totalPaidTransfer > 0"
                     class="flex justify-between text-sm font-semibold text-gray-600 dark:text-slate-300 border-t border-gray-200 dark:border-slate-600 pt-1 mt-0.5"
                   >
                     <span>Total cobrado</span>
-                    <span>${{ fmt(totalPagadoEfectivo + totalPagadoTransferencia) }}</span>
+                    <span>${{ fmt(totalPaidCash + totalPaidTransfer) }}</span>
                   </div>
                 </div>
 
                 <div
-                  *ngIf="vuelto > 0 && playerPaymentHistory.length === 0"
+                  *ngIf="refund > 0 && playerPaymentHistory.length === 0"
                   class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 mt-1 dark:border-amber-700 dark:bg-amber-900/20"
                 >
                   <span
@@ -1947,7 +1947,7 @@
                   >
                   <span
                     class="text-2xl font-black text-amber-700 dark:text-amber-400"
-                    >${{ fmt(vuelto) }}</span
+                    >${{ fmt(refund) }}</span
                   >
                 </div>
               </div>
@@ -2097,7 +2097,7 @@
                         >
                           💵 Liquidar Efectivo
                           <span class="opacity-70"
-                            >(${{ fmt(detailSaldoPendiente) }})</span
+                            >(${{ fmt(detailSaldoPendienteReal) }})</span
                           >
                         </button>
                         <button
@@ -2107,7 +2107,7 @@
                         >
                           📱 Liquidar Transferencia
                           <span class="opacity-70"
-                            >(${{ fmt(detailSaldoPendiente) }})</span
+                            >(${{ fmt(detailSaldoPendienteReal) }})</span
                           >
                         </button>
                       </div>
@@ -2495,7 +2495,7 @@
                       >
                         💵 Liquidar Efectivo
                         <span class="opacity-70"
-                          >(${{ fmt(detailSaldoPendiente) }})</span
+                          >(${{ fmt(detailSaldoPendienteReal) }})</span
                         >
                       </button>
                       <button
@@ -2505,7 +2505,7 @@
                       >
                         📱 Liquidar Transferencia
                         <span class="opacity-70"
-                          >(${{ fmt(detailSaldoPendiente) }})</span
+                          >(${{ fmt(detailSaldoPendienteReal) }})</span
                         >
                       </button>
                     </div>
