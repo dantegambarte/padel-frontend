@@ -1539,45 +1539,15 @@
                   >
                     <div
                       *ngFor="let item of detailCart; let cartIdx = index"
-                      class="flex items-center gap-2 px-2 py-2 rounded-lg border-b border-gray-100 last:border-0 w-full transition-colors"
+                      class="flex flex-col md:flex-row md:items-center gap-2 px-2 py-2 rounded-lg border-b border-gray-100 last:border-0 w-full transition-colors"
                       [ngClass]="{
                         'bg-indigo-50 dark:bg-indigo-950/30': !item.isPaid && item.selectedForPayment,
                         'opacity-60': item.isPaid && !item.committedBySplit
                       }"
                     >
-                      <!-- Cantidad -->
-                      <div
-                        *ngIf="!item.isPaid"
-                        class="flex items-center border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden dark:border-slate-700 dark:bg-slate-800"
-                      >
-                        <button
-                          type="button"
-                          (click)="updateDetailQtyByIndex(cartIdx, item.quantity - 1)"
-                          class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600"
-                        >
-                          -
-                        </button>
-                        <span class="w-6 text-center text-xs font-bold text-gray-800 dark:text-slate-100">{{ item.quantity }}</span>
-                        <button
-                          type="button"
-                          (click)="updateDetailQtyByIndex(cartIdx, item.quantity + 1)"
-                          class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      <div
-                        *ngIf="item.isPaid"
-                        class="flex items-center justify-center w-7 h-7 flex-shrink-0 text-xs font-bold text-gray-400 border border-gray-100 rounded-lg bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
-                      >
-                        {{ item.quantity }}
-                      </div>
-
-                      <!-- Nombre -->
-                      <div class="flex-1 min-w-0">
+                      <div class="w-full md:w-1/3 font-medium text-left">
                         <p
-                          class="text-sm sm:text-base font-medium leading-tight line-clamp-2"
+                          class="text-sm font-medium whitespace-normal break-words leading-tight"
                           [ngClass]="
                             item.isPaid && !item.committedBySplit
                               ? 'line-through text-gray-400 dark:text-slate-600'
@@ -1588,8 +1558,35 @@
                         </p>
                       </div>
 
-                      <!-- Precio + acciones -->
-                      <div class="flex items-center gap-2 flex-shrink-0">
+                      <div class="flex flex-row items-center justify-between w-full md:w-2/3 gap-3">
+                        <div
+                          *ngIf="!item.isPaid"
+                          class="flex items-center border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden dark:border-slate-700 dark:bg-slate-800"
+                        >
+                          <button
+                            type="button"
+                            (click)="updateDetailQtyByIndex(cartIdx, item.quantity - 1)"
+                            class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600"
+                          >
+                            -
+                          </button>
+                          <span class="w-6 text-center text-xs font-bold text-gray-800 dark:text-slate-100">{{ item.quantity }}</span>
+                          <button
+                            type="button"
+                            (click)="updateDetailQtyByIndex(cartIdx, item.quantity + 1)"
+                            class="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors dark:text-slate-300 dark:hover:bg-slate-700 dark:active:bg-slate-600"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div
+                          *ngIf="item.isPaid"
+                          class="flex items-center justify-center w-7 h-7 flex-shrink-0 text-xs font-bold text-gray-400 border border-gray-100 rounded-lg bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                        >
+                          {{ item.quantity }}
+                        </div>
+
                         <span
                           class="text-base font-bold"
                           [ngClass]="
@@ -1600,49 +1597,50 @@
                         >
                           ${{ fmt(item.unitPrice * item.quantity) }}
                         </span>
-                        <span
-                          *ngIf="item.isPaid && !item.committedBySplit"
-                          class="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200"
-                        >
-                          ✓ Pagado
-                        </span>
-                        <span
-                          *ngIf="item.committedBySplit"
-                          class="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200"
-                        >
-                          ⏳ Pendiente
-                        </span>
-                        <button
-                          *ngIf="!item.isPaid"
-                          type="button"
-                          (click)="removeFromDetailCartByIndex(cartIdx)"
-                          class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                          title="Quitar producto"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
-                          </svg>
-                        </button>
-                      </div>
 
-                      <!-- Checkbox a la derecha -->
-                      <input
-                        *ngIf="!item.isPaid"
-                        type="checkbox"
-                        [checked]="item.selectedForPayment"
-                        (change)="toggleDetailCartItem(cartIdx, $any($event.target).checked)"
-                        (click)="$event.stopPropagation()"
-                        [disabled]="detailPaymentTab === 'split'"
-                        class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                        [title]="
-                          detailPaymentTab === 'split'
-                            ? 'Deshabilitado en modo división por jugador'
-                            : item.selectedForPayment
-                              ? 'Quitar del cobro actual'
-                              : 'Incluir en cobro actual'
-                        "
-                      />
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          <span
+                            *ngIf="item.isPaid && !item.committedBySplit"
+                            class="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200"
+                          >
+                            ✓ Pagado
+                          </span>
+                          <span
+                            *ngIf="item.committedBySplit"
+                            class="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200"
+                          >
+                            ⏳ Pendiente
+                          </span>
+                          <button
+                            *ngIf="!item.isPaid"
+                            type="button"
+                            (click)="removeFromDetailCartByIndex(cartIdx)"
+                            class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            title="Quitar producto"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                              <path d="M18 6 6 18" />
+                              <path d="m6 6 12 12" />
+                            </svg>
+                          </button>
+                          <input
+                            *ngIf="!item.isPaid"
+                            type="checkbox"
+                            [checked]="item.selectedForPayment"
+                            (change)="toggleDetailCartItem(cartIdx, $any($event.target).checked)"
+                            (click)="$event.stopPropagation()"
+                            [disabled]="detailPaymentTab === 'split'"
+                            class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                            [title]="
+                              detailPaymentTab === 'split'
+                                ? 'Deshabilitado en modo división por jugador'
+                                : item.selectedForPayment
+                                  ? 'Quitar del cobro actual'
+                                  : 'Incluir en cobro actual'
+                            "
+                          />
+                        </div>
+                      </div>
                     </div>
                     <div
                       class="flex justify-between border-t border-border pt-2 text-base font-bold"
@@ -2052,11 +2050,11 @@
                           Limpiar
                         </button>
                       </div>
-                      <div class="grid gap-3 grid-cols-2">
-                        <div class="space-y-1.5">
+                      <div class="flex flex-col md:grid md:grid-cols-2 gap-4 w-full">
+                        <div class="flex flex-col w-full m-0 p-0">
                           <label
                             for="det-efectivo"
-                            class="text-sm font-medium leading-none"
+                            class="text-sm font-medium leading-none mb-1.5"
                             >💵 Efectivo</label
                           >
                           <input
@@ -2069,10 +2067,10 @@
                             class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-950 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"
                           />
                         </div>
-                        <div class="space-y-1.5">
+                        <div class="flex flex-col w-full m-0 p-0">
                           <label
                             for="det-transferencia"
-                            class="text-sm font-medium leading-none"
+                            class="text-sm font-medium leading-none mb-1.5"
                             >📱 Transferencia</label
                           >
                           <input
@@ -2088,14 +2086,14 @@
                       </div>
                       <div
                         *ngIf="detailSaldoPendiente > 0"
-                        class="grid grid-cols-2 gap-2"
+                        class="flex flex-col md:grid md:grid-cols-2 gap-3 w-full mt-4"
                       >
                         <button
                           type="button"
                           (click)="settleInCash()"
-                          class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700"
+                          class="w-full m-0 h-full min-h-[3rem] flex justify-center items-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700"
                         >
-                          💵 Liquidar Efectivo
+                          💵 Liquidar <br class="block md:hidden" /> Efectivo
                           <span class="opacity-70"
                             >(${{ fmt(detailSaldoPendienteReal) }})</span
                           >
@@ -2103,9 +2101,9 @@
                         <button
                           type="button"
                           (click)="settleInTransfer()"
-                          class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
+                          class="w-full m-0 h-full min-h-[3rem] flex justify-center items-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
                         >
-                          📱 Liquidar Transferencia
+                          📱 Liquidar <br class="block md:hidden" /> Transferencia
                           <span class="opacity-70"
                             >(${{ fmt(detailSaldoPendienteReal) }})</span
                           >
@@ -2246,7 +2244,7 @@
                             <span class="text-blue-700 font-semibold dark:text-blue-300"
                               >Total este jugador:</span
                             >
-                            <span class="text-xl font-extrabold text-blue-900 dark:text-blue-200"
+                            <span class="text-base md:text-xl font-extrabold text-blue-900 dark:text-blue-200"
                               >${{ fmt(lastPaidSummary ? lastPaidSummary.total : currentPlayerTotal) }}</span
                             >
                           </div>
@@ -2272,7 +2270,7 @@
                             <span class="text-blue-700 font-semibold dark:text-blue-300"
                               >Total por jugador:</span
                             >
-                            <span class="text-2xl font-extrabold text-blue-900 dark:text-blue-200"
+                            <span class="text-lg md:text-2xl font-extrabold text-blue-900 dark:text-blue-200"
                               >${{ fmt(currentPlayerTotal) }} c/u</span
                             >
                           </div>
@@ -2369,7 +2367,7 @@
                             detailPaidCount >= detailPlayerCount ||
                             detailSaldoPendiente <= 0
                           "
-                          class="w-full h-11 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700"
+                          class="w-full px-3 py-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-green-300 dark:hover:bg-green-900/30 dark:hover:border-green-700"
                         >
                           + 1 en 💵 Efectivo
                           <span
@@ -2384,7 +2382,7 @@
                             detailPaidCount >= detailPlayerCount ||
                             detailSaldoPendiente <= 0
                           "
-                          class="w-full h-11 px-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
+                          class="w-full px-3 py-3 inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background hover:bg-accent transition-colors text-base disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-700 dark:border-slate-600 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
                         >
                           + 1 en 📱 Transferencia
                           <span
@@ -2452,9 +2450,9 @@
                         Limpiar
                       </button>
                     </div>
-                    <div class="grid gap-3 grid-cols-2">
-                      <div class="space-y-1.5">
-                        <label for="det-efectivo-p" class="text-sm font-medium"
+                    <div class="flex flex-col md:grid md:grid-cols-2 gap-4 w-full">
+                      <div class="flex flex-col w-full m-0 p-0">
+                        <label for="det-efectivo-p" class="text-sm font-medium mb-1.5"
                           >💵 Efectivo</label
                         >
                         <input
@@ -2467,10 +2465,10 @@
                           class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         />
                       </div>
-                      <div class="space-y-1.5">
+                      <div class="flex flex-col w-full m-0 p-0">
                         <label
                           for="det-transferencia-p"
-                          class="text-sm font-medium"
+                          class="text-sm font-medium mb-1.5"
                           >📱 Transferencia</label
                         >
                         <input
@@ -2486,12 +2484,12 @@
                     </div>
                     <div
                       *ngIf="detailSaldoPendiente > 0"
-                      class="grid grid-cols-2 gap-2"
+                      class="flex flex-col md:grid md:grid-cols-2 gap-3 w-full mt-4"
                     >
                       <button
                         type="button"
                         (click)="settleInCash()"
-                        class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors"
+                        class="w-full m-0 flex justify-center items-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-green-50 hover:border-green-400 hover:text-green-800 transition-colors"
                       >
                         💵 Liquidar Efectivo
                         <span class="opacity-70"
@@ -2501,7 +2499,7 @@
                       <button
                         type="button"
                         (click)="settleInTransfer()"
-                        class="inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors"
+                        class="w-full m-0 flex justify-center items-center gap-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 hover:text-blue-800 transition-colors"
                       >
                         📱 Liquidar Transferencia
                         <span class="opacity-70"
