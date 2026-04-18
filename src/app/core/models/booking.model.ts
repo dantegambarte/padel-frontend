@@ -17,11 +17,20 @@ export interface BookingItem {
   product: Pick<Product, 'id' | 'name'>;
 }
 
+export interface PlayerPaymentDetail {
+  method: 'cash' | 'transfer';
+  amount: number;
+  courtAmount: number;
+  consumablesTotal: number;
+  consumableItems: { name: string; unitPrice: number; qty: number }[];
+}
+
 /** Registro de pago vinculado a una reserva. */
 export interface BookingPayment {
   id: string;
   amountCash: number;
   amountTransfer: number;
+  playerPaymentDetails: PlayerPaymentDetail[] | null;
 }
 
 /** Entidad completa de reserva devuelta por la API. */
@@ -105,6 +114,8 @@ export interface UpdateBookingDto {
   isConfirmed?: boolean;
   /** Cantidad de jugadores en cancha */
   playerCount?: number;
+  /** Nuevas entradas del historial de pagos por jugador (solo las de esta sesión) */
+  playerPaymentDetails?: PlayerPaymentDetail[];
 }
 
 /** Payload compartido para Mover y Duplicar una reserva. */

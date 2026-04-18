@@ -741,8 +741,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Clases CSS del badge de balance según el estado del pago. */
   get balanceClass(): string {
-    if (this.outstandingBalance === 0) return 'bg-accent text-accent-foreground';
-    if (this.outstandingBalance > 0) return 'bg-destructive/10 text-destructive';
+    if (this.outstandingBalance === 0)
+      return 'bg-accent text-accent-foreground';
+    if (this.outstandingBalance > 0)
+      return 'bg-destructive/10 text-destructive';
     return 'bg-yellow-500/10 text-yellow-700';
   }
 
@@ -1524,7 +1526,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
 
     this.playerPaymentHistory = [];
-    this.finalizedPaymentHistory = [];
+    this.finalizedPaymentHistory = (
+      booking.payment?.playerPaymentDetails ?? []
+    ).map((e) => ({
+      method: e.method,
+      amount: e.amount,
+      courtAmount: e.courtAmount,
+      consumablesTotal: e.consumablesTotal,
+      consumableItems: e.consumableItems,
+    }));
     this.partialCashCount = 0;
     this.partialTransferCount = 0;
     this.lastPaidSummary = null;
@@ -1943,6 +1953,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         quantity: i.quantity,
         isPaid: i.isPaid ?? false,
       })),
+      playerPaymentDetails:
+        this.playerPaymentHistory.length > 0
+          ? this.playerPaymentHistory.map((e) => ({
+              method: e.method,
+              amount: e.amount,
+              courtAmount: e.courtAmount,
+              consumablesTotal: e.consumablesTotal,
+              consumableItems: e.consumableItems,
+            }))
+          : undefined,
     };
 
     this.sub.add(
