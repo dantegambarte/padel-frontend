@@ -5,9 +5,16 @@ import { NgChartsModule } from 'ng2-charts';
 
 import { ReportsRoutingModule } from './reports-routing.module';
 import { ReportsComponent } from './reports.component';
+import { TicketModalModule } from '../cash-register/ticket-modal.module';
 
 @NgModule({
   declarations: [ReportsComponent],
-  imports: [CommonModule, FormsModule, NgChartsModule, ReportsRoutingModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NgChartsModule,
+    ReportsRoutingModule,
+    TicketModalModule,
+  ],
 })
 export class ReportsModule {}

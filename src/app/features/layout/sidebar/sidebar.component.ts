@@ -84,6 +84,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
           route: '/app/expenses',
           roles: ['admin', 'employee'],
         },
+        {
+          id: 'internal-consumption',
+          label: 'Consumo Interno',
+          icon: 'restaurant',
+          route: '/app/internal-consumption',
+          roles: ['admin'],
+        },
       ],
     },
     {

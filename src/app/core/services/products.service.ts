@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, Observable, shareReplay, tap } from 'rxjs';
 
 import {
   Product,
@@ -25,6 +25,9 @@ export class ProductsService {
 
   private allCache$: Observable<Product[]> | null = null;
   private featuredCache$: Observable<Product[]> | null = null;
+  private readonly lowStockSubject$ = new BehaviorSubject<
+    LowStockProduct[] | null
+  >(null);
 
   constructor(private http: HttpClient) {}
 
@@ -70,10 +73,16 @@ export class ProductsService {
     return this.http.get<Product[]>(this.url, { params });
   }
 
-  /** Invalida toda la caché de productos. */
+  /** Invalida toda la caché de productos (lista completa, destacados y low-stock). */
   clearCache(): void {
     this.allCache$ = null;
     this.featuredCache$ = null;
+    this.lowStockSubject$.next(null);
+  }
+
+  /** Invalida solo la caché de low-stock, forzando una nueva petición HTTP en la próxima suscripción. */
+  clearLowStockCache(): void {
+    this.lowStockSubject$.next(null);
   }
 
   /**
@@ -107,8 +116,22 @@ export class ProductsService {
       .pipe(tap(() => this.clearCache()));
   }
 
-  /** Devuelve los productos con stock por debajo del mínimo — sin caché (dato volátil). */
+  /**
+   * Devuelve los productos con stock por debajo del mínimo.
+   * Cachea el resultado en un BehaviorSubject para evitar llamadas HTTP duplicadas
+   * entre componentes que cargan simultáneamente (sidebar, dashboard, reports).
+   * La caché se invalida con `clearCache()` tras mutaciones de stock.
+   */
   getLowStock(): Observable<LowStockProduct[]> {
-    return this.http.get<LowStockProduct[]>(`${this.url}/low-stock`);
+    const cached = this.lowStockSubject$.getValue();
+    if (cached !== null) {
+      return new Observable((observer) => {
+        observer.next(cached);
+        observer.complete();
+      });
+    }
+    return this.http
+      .get<LowStockProduct[]>(`${this.url}/low-stock`)
+      .pipe(tap((list) => this.lowStockSubject$.next(list)));
   }
 }

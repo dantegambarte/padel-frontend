@@ -1023,6 +1023,18 @@
               >
                 Ventas
               </button>
+              <button
+                type="button"
+                (click)="txFilterType = 'expense'"
+                [ngClass]="
+                  txFilterType === 'expense'
+                    ? 'bg-red-500 text-white border-red-500'
+                    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                "
+                class="inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium transition-colors"
+              >
+                Egresos
+              </button>
             </div>
 
             <div class="flex flex-wrap gap-1">
@@ -1159,11 +1171,13 @@
                 [ngClass]="
                   tx.type === 'booking'
                     ? 'bg-orange-50 text-orange-700 border-orange-200'
-                    : 'bg-violet-50 text-violet-700 border-violet-200'
+                    : tx.type === 'expense'
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-violet-50 text-violet-700 border-violet-200'
                 "
                 class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
               >
-                {{ tx.type === "booking" ? "Alquiler" : "Venta" }}
+                {{ tx.type === "booking" ? "Alquiler" : tx.type === "expense" ? "Egreso" : "Venta" }}
               </span>
             </div>
 
@@ -1181,7 +1195,7 @@
               </span>
               <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentMobile">
                 <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 border-purple-200">
-                  Mixto
+                  Efecitvo + Transferencia
                 </span>
               </ng-container>
               <ng-template #singlePaymentMobile>
@@ -1196,6 +1210,18 @@
                   {{ tx.cash > 0 ? "Efectivo" : "Transferencia" }}
                 </span>
               </ng-template>
+              <button
+                *ngIf="(tx.type === 'sale' || tx.type === 'booking') && tx.referenceId"
+                type="button"
+                (click)="openTicket(tx.referenceId, tx.type)"
+                title="Ver detalle"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -1274,6 +1300,11 @@
                 >
                   Método
                 </th>
+                <th
+                  class="p-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1291,11 +1322,13 @@
                     [ngClass]="
                       tx.type === 'booking'
                         ? 'bg-orange-50 text-orange-700'
-                        : 'bg-violet-50 text-violet-700'
+                        : tx.type === 'expense'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-violet-50 text-violet-700'
                     "
                     class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                   >
-                    {{ tx.type === "booking" ? "Alquiler" : "Venta" }}
+                    {{ tx.type === "booking" ? "Alquiler" : tx.type === "expense" ? "Egreso" : "Venta" }}
                   </span>
                 </td>
                 <td class="p-3 text-sm text-foreground max-w-xs truncate">
@@ -1307,7 +1340,7 @@
                 <td class="p-3">
                   <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentDesktop">
                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700">
-                      Mixto
+                      Efectivo + Transferencia
                     </span>
                   </ng-container>
                   <ng-template #singlePaymentDesktop>
@@ -1323,6 +1356,20 @@
                     </span>
                   </ng-template>
                 </td>
+                <td class="p-3 text-center">
+                  <button
+                    *ngIf="(tx.type === 'sale' || tx.type === 'booking') && tx.referenceId"
+                    type="button"
+                    (click)="openTicket(tx.referenceId, tx.type)"
+                    title="Ver detalle"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </td>
               </tr>
             </tbody>
             <tfoot
@@ -1336,6 +1383,7 @@
                 <td class="p-3 text-right font-mono text-base font-bold">
                   ${{ fmt(transactionTotal) }}
                 </td>
+                <td class="p-3"></td>
                 <td class="p-3"></td>
               </tr>
             </tfoot>
@@ -1377,6 +1425,22 @@
           </p>
         </div>
       </ng-container>
+
+      <div
+        *ngIf="isLoadingTicket"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      >
+        <svg class="h-10 w-10 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+
+      <app-ticket-modal
+        *ngIf="ticketSaleId"
+        [saleId]="ticketSaleId"
+        (closeModal)="closeTicket()"
+      ></app-ticket-modal>
     </div>
 
     <div *ngIf="isTab(4)" class="p-4 sm:p-6 space-y-4 sm:space-y-6">

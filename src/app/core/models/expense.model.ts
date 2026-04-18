@@ -24,6 +24,8 @@ export interface Expense {
   updatedAt: string;
 }
 
+export type FundSource = 'cash_register' | 'general_funds';
+
 /** DTO para crear un egreso. */
 export interface CreateExpenseDto {
   amount: number;
@@ -31,6 +33,7 @@ export interface CreateExpenseDto {
   category: ExpenseCategory;
   paymentMethod: PaymentMethod;
   date: string;
+  fundSource?: FundSource;
 }
 
 /** DTO para editar parcialmente un egreso. */

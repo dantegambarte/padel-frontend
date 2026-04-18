@@ -14,6 +14,7 @@ import { debounceTime } from 'rxjs/operators';
 import {
   Expense,
   ExpenseCategory,
+  FundSource,
   PaymentMethod,
 } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
@@ -68,6 +69,19 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     'Otro',
   ];
 
+  readonly fundSources: { value: FundSource; label: string }[] = [
+    { value: 'cash_register', label: 'Caja Diaria' },
+    { value: 'general_funds', label: 'Fondos del Complejo' },
+  ];
+
+  /** True cuando admin elige fondos generales → caja no requerida. */
+  get isGeneralFunds(): boolean {
+    return (
+      this.authService.isAdmin &&
+      this.form?.get('fundSource')?.value === 'general_funds'
+    );
+  }
+
   get isEditMode(): boolean {
     return !!this.expense;
   }
@@ -99,6 +113,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         Validators.required,
       ],
       date: [this.expense?.date ?? today, Validators.required],
+      fundSource: ['cash_register'],
     });
 
     if (!this.isEditMode) {
@@ -169,7 +184,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         const isCajaCerrada =
           errorCode === 'CAJA_CERRADA' ||
           message.toLowerCase().includes('abrir la caja');
-        if (isCajaCerrada) {
+        if (isCajaCerrada && !this.isGeneralFunds) {
           this.showOpenCashPanel = true;
           this.serverError = null;
         } else {
