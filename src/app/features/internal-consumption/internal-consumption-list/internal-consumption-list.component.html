@@ -24,7 +24,7 @@
           <p class="text-sm font-semibold truncate">{{ summary.teacherName }}</p>
           <p class="text-xs text-muted-foreground mt-0.5">
             {{ summary.totalItems }} ítem(s) ·
-            <span class="font-medium text-yellow-500">${{ summary.totalCost | number:'1.0-0' }}</span>
+            <span class="font-medium text-yellow-500">${{ summary.totalCost | number:'1.0-0':'es-AR' }}</span>
           </p>
         </div>
         <span class="material-symbols-rounded text-yellow-500 shrink-0 group-hover:scale-110 transition-transform">payments</span>
@@ -124,7 +124,7 @@
               {{ statusLabels[consumption.status] }}
             </span>
           </td>
-          <td data-label="Costo unit." class="px-4 py-3 text-muted-foreground text-center">${{ consumption.unitCostPrice | number:'1.0-0' }}</td>
+          <td data-label="Costo unit." class="px-4 py-3 text-muted-foreground text-center">${{ consumption.unitCostPrice | number:'1.0-0':'es-AR' }}</td>
           <td class="ic-actions-cell px-4 py-3">
             <button
               *ngIf="consumption.consumerType === 'teacher' && consumption.status === 'pending_payment' && consumption.teacher?.phoneNumber"
