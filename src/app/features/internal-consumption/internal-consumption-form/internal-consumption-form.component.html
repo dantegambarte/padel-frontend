@@ -100,38 +100,51 @@
           <label class="block text-sm font-medium">
             {{ isTeacher ? 'Profesor' : 'Empleado' }} <span class="text-destructive">*</span>
           </label>
-          <div class="relative">
+          <!-- Employee in staff mode: static read-only display -->
+          <ng-container *ngIf="isEmployeeRole && !isTeacher; else searchableConsumer">
             <input
               type="text"
-              [placeholder]="isTeacher ? 'Buscar profesor...' : 'Buscar empleado...'"
-              [value]="consumerSearch"
-              (input)="onConsumerSearch($any($event.target).value)"
-              (focus)="showConsumerDropdown = true"
-              autocomplete="off"
-              class="w-full rounded-md border bg-background px-3 py-2 pr-8 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [value]="selectedConsumerName"
+              disabled
+              class="w-full rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed opacity-75 shadow-sm"
             />
-            <button *ngIf="selectedConsumerName" type="button" (click)="clearConsumer()"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
-          </div>
-          <div *ngIf="showConsumerDropdown"
-            class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
-            <ng-container *ngIf="isTeacher">
-              <div *ngIf="filteredTeachers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
-              <button *ngFor="let t of filteredTeachers" type="button" (click)="selectTeacher(t)"
-                class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
-                {{ t.fullName }}
+          </ng-container>
+
+          <!-- Admin, or employee selecting a teacher: searchable dropdown -->
+          <ng-template #searchableConsumer>
+            <div class="relative">
+              <input
+                type="text"
+                [placeholder]="isTeacher ? 'Buscar profesor...' : 'Buscar empleado...'"
+                [value]="consumerSearch"
+                (input)="onConsumerSearch($any($event.target).value)"
+                (focus)="showConsumerDropdown = true"
+                autocomplete="off"
+                class="w-full rounded-md border bg-background px-3 py-2 pr-8 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <button *ngIf="selectedConsumerName" type="button" (click)="clearConsumer()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
-            </ng-container>
-            <ng-container *ngIf="!isTeacher">
-              <div *ngIf="filteredUsers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
-              <button *ngFor="let u of filteredUsers" type="button" (click)="selectUser(u)"
-                class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
-                {{ u.fullName }}
-              </button>
-            </ng-container>
-          </div>
+            </div>
+            <div *ngIf="showConsumerDropdown"
+              class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+              <ng-container *ngIf="isTeacher">
+                <div *ngIf="filteredTeachers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+                <button *ngFor="let t of filteredTeachers" type="button" (click)="selectTeacher(t)"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                  {{ t.fullName }}
+                </button>
+              </ng-container>
+              <ng-container *ngIf="!isTeacher">
+                <div *ngIf="filteredUsers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+                <button *ngFor="let u of filteredUsers" type="button" (click)="selectUser(u)"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                  {{ u.fullName }}
+                </button>
+              </ng-container>
+            </div>
+          </ng-template>
         </div>
 
         <div class="space-y-3" formArrayName="items">

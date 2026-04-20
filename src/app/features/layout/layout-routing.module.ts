@@ -104,7 +104,7 @@ const routes: Routes = [
             (m) => m.InternalConsumptionModule,
           ),
         canActivate: [AdminGuard],
-        data: { title: 'Consumo Interno', roles: ['admin'] },
+        data: { title: 'Consumo Interno', roles: ['admin', 'employee'] },
       },
 
       {

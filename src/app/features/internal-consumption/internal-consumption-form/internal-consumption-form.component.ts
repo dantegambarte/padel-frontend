@@ -6,12 +6,13 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 
 import { RowState } from 'src/app/core/models/internal-consumption.model';
 import { Product } from '../../../core/models/product.model';
 import { Teacher } from '../../../core/models/teacher.model';
 import { User } from '../../../core/models/user.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { TeachersService } from '../../../core/services/teachers.service';
@@ -89,6 +90,7 @@ export class InternalConsumptionFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private authService: AuthService,
     private service: InternalConsumptionService,
     private productsService: ProductsService,
     private teachersService: TeachersService,
@@ -99,8 +101,10 @@ export class InternalConsumptionFormComponent implements OnInit {
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+    const defaultType =
+      this.authService.currentUser?.role === 'employee' ? 'staff' : 'teacher';
     this.form = this.fb.group({
-      consumerType: ['teacher', Validators.required],
+      consumerType: [defaultType, Validators.required],
       userId: [null],
       teacherId: [null],
       notes: [''],
@@ -108,19 +112,25 @@ export class InternalConsumptionFormComponent implements OnInit {
       items: this.fb.array([]),
     });
 
+    const isEmployee = this.authService.currentUser?.role === 'employee';
+    const usersCall = isEmployee ? of([]) : this.usersService.findAll();
+
     forkJoin({
       products: this.productsService.findAll(),
       teachers: this.teachersService.findAll(false),
-      users: this.usersService.findAll(),
+      users: usersCall,
     }).subscribe({
       next: ({ products, teachers, users }) => {
         this.products = products.filter((p) => p.isActive && p.stock > 0);
         this.teachers = teachers;
-        this.users = users.filter((u) => u.isActive);
+        this.users = isEmployee
+          ? (this.authService.currentUser ? [this.authService.currentUser] : [])
+          : users.filter((u) => u.isActive);
         this.filteredTeachers = this.teachers;
         this.filteredUsers = this.users;
         this.loadingData = false;
         this.addRow();
+        this.tryAutofillEmployee();
       },
       error: () => {
         this.serverError = 'No se pudieron cargar los datos. Intente de nuevo.';
@@ -135,7 +145,28 @@ export class InternalConsumptionFormComponent implements OnInit {
       this.showConsumerDropdown = false;
       this.filteredTeachers = this.teachers;
       this.filteredUsers = this.users;
+      this.tryAutofillEmployee();
     });
+  }
+
+  /**
+   * Método para intentar autocompletar el consumidor si el usuario logueado es un empleado y el tipo de consumidor seleccionado es "staff". Busca una coincidencia entre el ID del usuario logueado y la lista de usuarios activos, y si encuentra una coincidencia, selecciona automáticamente ese usuario como consumidor. Esto mejora la experiencia del usuario al reducir la cantidad de pasos necesarios para registrar un consumo interno para ellos mismos.
+   */
+  get isEmployeeRole(): boolean {
+    return this.authService.currentUser?.role === 'employee';
+  }
+
+  private tryAutofillEmployee(): void {
+    const loggedUser = this.authService.currentUser;
+    if (loggedUser?.role === 'employee' && this.consumerType === 'staff') {
+      const match = this.users.find((u) => u.id === loggedUser.id);
+      if (match) {
+        this.selectUser(match);
+        this.form.get('userId')?.disable();
+      }
+    } else {
+      this.form.get('userId')?.enable();
+    }
   }
 
   /**

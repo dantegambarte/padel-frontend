@@ -5,9 +5,10 @@ import {
   EnrichedDebtSummary,
   InternalConsumption,
   InternalConsumptionFilters,
-  InternalConsumptionStatus
+  InternalConsumptionStatus,
 } from '../../../core/models/internal-consumption.model';
 import { Teacher } from '../../../core/models/teacher.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 
@@ -44,6 +45,7 @@ export class InternalConsumptionListComponent implements OnInit {
   };
 
   constructor(
+    private authService: AuthService,
     private service: InternalConsumptionService,
     private teachersService: TeachersService,
   ) {}
@@ -69,7 +71,9 @@ export class InternalConsumptionListComponent implements OnInit {
         dateTo: this.dateTo || undefined,
       }),
       summary: this.service.getTeacherDebtSummary(),
-      teachers: this.teachersService.findAll(true),
+      teachers: this.teachersService.findAll(
+        this.authService.currentUser?.role === 'admin',
+      ),
     }).subscribe({
       next: ({ consumptions, summary, teachers }) => {
         this.consumptions = consumptions;

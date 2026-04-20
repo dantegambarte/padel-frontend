@@ -89,7 +89,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           label: 'Consumo Interno',
           icon: 'restaurant',
           route: '/app/internal-consumption',
-          roles: ['admin'],
+          roles: ['admin', 'employee'],
         },
       ],
     },

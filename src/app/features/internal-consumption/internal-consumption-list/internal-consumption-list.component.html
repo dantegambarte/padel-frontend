@@ -2,13 +2,23 @@
 
   <div class="flex items-center justify-between">
     <h1 class="text-xl font-semibold">Consumo Interno</h1>
-    <button
-      (click)="showForm = true"
-      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors"
-    >
-      <span class="material-symbols-rounded text-base">add</span>
-      Registrar consumo
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="loadAll()"
+        [disabled]="loading"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-accent/50 transition-colors disabled:opacity-50"
+      >
+        <span class="material-symbols-rounded text-base" [class.animate-spin]="loading">refresh</span>
+        Actualizar
+      </button>
+      <button
+        (click)="showForm = true"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors"
+      >
+        <span class="material-symbols-rounded text-base">add</span>
+        Registrar consumo
+      </button>
+    </div>
   </div>
 
   <div *ngIf="debtSummary.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
