@@ -1,10 +1,11 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 
-import { ToastComponent } from './toast/toast.component';
 import { CalculatorComponent } from './calculator/calculator.component';
+import { DisableScrollDirective } from './directives/disable-scroll.directive';
 import { ModalScrollLockDirective } from './modal-scroll-lock.directive';
 import { SessionAlertComponent } from './session-alert/session-alert.component';
+import { ToastComponent } from './toast/toast.component';
 
 @NgModule({
   declarations: [
@@ -12,6 +13,7 @@ import { SessionAlertComponent } from './session-alert/session-alert.component';
     CalculatorComponent,
     ModalScrollLockDirective,
     SessionAlertComponent,
+    DisableScrollDirective,
   ],
   imports: [CommonModule],
   exports: [
@@ -19,6 +21,7 @@ import { SessionAlertComponent } from './session-alert/session-alert.component';
     CalculatorComponent,
     ModalScrollLockDirective,
     SessionAlertComponent,
+    DisableScrollDirective,
   ],
 })
 export class SharedModule {}

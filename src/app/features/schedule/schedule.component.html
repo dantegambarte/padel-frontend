@@ -1020,6 +1020,7 @@
                   <input
                     id="efectivo"
                     type="number"
+                    appDisableScroll
                     [(ngModel)]="cashPayment"
                     (ngModelChange)="triggerBookingDraftSave()"
                     min="0"
@@ -1038,6 +1039,7 @@
                   <input
                     id="transferencia"
                     type="number"
+                    appDisableScroll
                     [(ngModel)]="cashTransfer"
                     (ngModelChange)="triggerBookingDraftSave()"
                     min="0"
@@ -2060,6 +2062,7 @@
                           <input
                             id="det-efectivo"
                             type="number"
+                            appDisableScroll
                             [(ngModel)]="detailAmountCash"
                             min="0"
                             placeholder="0"
@@ -2076,6 +2079,7 @@
                           <input
                             id="det-transferencia"
                             type="number"
+                            appDisableScroll
                             [(ngModel)]="detailAmountTransfer"
                             min="0"
                             placeholder="0"
@@ -2458,6 +2462,7 @@
                         <input
                           id="det-efectivo-p"
                           type="number"
+                          appDisableScroll
                           [(ngModel)]="detailAmountCash"
                           min="0"
                           placeholder="0"
@@ -2474,6 +2479,7 @@
                         <input
                           id="det-transferencia-p"
                           type="number"
+                          appDisableScroll
                           [(ngModel)]="detailAmountTransfer"
                           min="0"
                           placeholder="0"
@@ -2573,14 +2579,14 @@
                   *ngIf="selectedBooking.status === 'booked'"
                   type="button"
                   (click)="onStartPlaying(selectedBooking)"
-                  [disabled]="isSavingDetail || !isCashRegisterOpen"
-                  [title]="!isCashRegisterOpen ? 'Abrí la caja antes de iniciar el partido' : ''"
+                  [disabled]="isSavingDetail || (!isCashRegisterOpen && selectedBooking.priceType !== 'professor')"
+                  [title]="!isCashRegisterOpen && selectedBooking.priceType !== 'professor' ? 'Abrí la caja antes de iniciar el partido' : ''"
                   class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-3.5 text-base font-bold hover:bg-emerald-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 >
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
-                  Iniciar Partido
+                  {{ selectedBooking.priceType === 'professor' ? 'Registrar Clase' : 'Iniciar Partido' }}
                 </button>
 
                 <div
