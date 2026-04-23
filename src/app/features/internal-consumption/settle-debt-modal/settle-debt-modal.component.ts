@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import Swal from 'sweetalert2';
 
 import {
   InternalConsumption,
@@ -22,7 +23,6 @@ export class SettleDebtModalComponent implements OnInit {
   consumptions: InternalConsumption[] = [];
   loading = true;
   settling = false;
-  error: string | null = null;
   paymentMethod: PaymentMethod = 'cash';
 
   get total(): number {
@@ -46,8 +46,12 @@ export class SettleDebtModalComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.error = 'No se pudieron cargar los consumos.';
           this.loading = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron cargar los consumos.',
+          });
         },
       });
   }
@@ -57,7 +61,6 @@ export class SettleDebtModalComponent implements OnInit {
    */
   onSettle(): void {
     this.settling = true;
-    this.error = null;
 
     this.service
       .settleTeacherDebt({
@@ -73,11 +76,18 @@ export class SettleDebtModalComponent implements OnInit {
           this.settling = false;
           const errorCode = err?.error?.errorCode;
           if (errorCode === 'CAJA_CERRADA') {
-            this.error =
-              'La caja está cerrada. Abrí un turno de caja antes de registrar este cobro.';
+            Swal.fire({
+              icon: 'error',
+              title: 'Caja Cerrada',
+              text: 'La caja está cerrada. Abrí un turno de caja antes de registrar este cobro.',
+            });
           } else {
-            this.error =
-              err?.error?.message ?? 'Error al liquidar. Intentá de nuevo.';
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text:
+                err?.error?.message ?? 'Error al liquidar. Intentá de nuevo.',
+            });
           }
         },
       });

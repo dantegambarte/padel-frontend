@@ -24,7 +24,7 @@
 
       <div class="overflow-y-auto flex-1 px-6 py-4 space-y-2">
 
-        <div *ngIf="consumptions.length === 0 && !error" class="text-center py-6 text-muted-foreground text-sm">
+        <div *ngIf="consumptions.length === 0" class="text-center py-6 text-muted-foreground text-sm">
           No hay consumos pendientes.
         </div>
 
@@ -33,7 +33,7 @@
           class="flex items-center justify-between rounded-lg bg-muted/40 border border-border px-3 py-2.5"
         >
           <div class="flex items-center gap-2 min-w-0">
-            <span class="material-symbols-rounded text-sm text-muted-foreground shrink-0">local_dining</span>
+            <span class="material-symbols-rounded text-sm text-muted-foreground shrink-0">restaurant</span>
             <div class="min-w-0">
               <p class="text-sm font-medium truncate">{{ consumption.product.name }}</p>
               <p class="text-xs text-muted-foreground">{{ consumption.date }} · x{{ consumption.quantity }}</p>
@@ -44,10 +44,6 @@
           </span>
         </div>
 
-        <div *ngIf="error"
-          class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {{ error }}
-        </div>
 
       </div>
 
