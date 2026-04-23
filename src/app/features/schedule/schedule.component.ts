@@ -719,6 +719,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
   }
 
+  /**
+   * Devuelve `true` si la hora de fin del turno excede el horario de cierre del club.
+   */
+  get exceedsClosingTime(): boolean {
+    if (!this.selectedSlot) return false;
+    const [oh, om] = this.horarioApertura.split(':').map(Number);
+    const [ch, cm] = this.horarioCierre.split(':').map(Number);
+    const [sh, sm] = this.selectedSlot.hour.split(':').map(Number);
+    const openMin = oh * 60 + om;
+    let closeMin = ch * 60 + cm;
+    if (closeMin <= openMin) closeMin += 1440;
+    let startMin = sh * 60 + sm;
+    if (startMin < openMin) startMin += 1440;
+    return startMin + this.durationMinutes > closeMin;
+  }
+
   /** Subtotal de los ítems del carrito de creación. */
   get cartSubtotal(): number {
     return this.cart.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);

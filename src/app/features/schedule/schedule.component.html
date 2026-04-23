@@ -250,7 +250,7 @@
                 <ng-container *ngIf="isStartSlot(court.id, hour)">
                   <ng-container *ngIf="getBooking(court.id, hour) as booking">
                     <div
-                      class="absolute inset-x-0 top-0"
+                      class="absolute inset-x-0 top-0 overflow-hidden"
                       [style.height]="getBookingBlockHeight(booking)"
                       cdkDrag
                       [cdkDragData]="booking"
@@ -709,6 +709,9 @@
                   </button>
                 </ng-container>
               </div>
+              <p *ngIf="exceedsClosingTime" class="text-xs text-destructive font-medium">
+                El turno excede el horario de cierre ({{ horarioCierre }}hs).
+              </p>
               <p class="text-xs text-muted-foreground">
                 De
                 <span class="font-semibold">{{ selectedSlot?.hour }}hs</span> a
@@ -1071,7 +1074,7 @@
           <button
             type="button"
             (click)="saveBooking()"
-            [disabled]="isSaving || isTariffMissing"
+            [disabled]="isSaving || isTariffMissing || exceedsClosingTime"
             class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-5 py-3 text-base font-bold hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
           >
             <ng-container *ngIf="isSaving; else guardarLabel2">
