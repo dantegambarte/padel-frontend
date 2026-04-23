@@ -69,6 +69,8 @@ export interface BookingResponse {
   expectedDepositAmount: number | null;
   /** Cantidad de jugadores en cancha, persistida. null = no configurado (default 4). */
   playerCount: number | null;
+  /** Tarifa por hora del profesor congelada al crear el turno. null para turnos no-profesor. */
+  teacherRateSnapshot: number | null;
 }
 
 /** Payload para crear una nueva reserva. */

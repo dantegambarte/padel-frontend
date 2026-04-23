@@ -117,9 +117,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
           route: '/app/inventory/alerts',
           roles: ['admin'],
         },
+      ],
+    },
+    {
+      label: 'Profesores',
+      items: [
         {
           id: 'teachers',
-          label: 'Profesores',
+          label: 'Lista',
           icon: 'graduation-cap',
           route: '/app/teachers',
           roles: ['admin'],

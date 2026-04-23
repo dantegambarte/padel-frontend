@@ -2237,9 +2237,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Cambia el estado de la reserva a "jugando". */
+  /** Cambia el estado de la reserva a "jugando" (o auto-completa para Profesores). */
   onStartPlaying(booking: BookingResponse): void {
     this.isSavingDetail = true;
+    const isProfessor = booking.priceType === 'professor';
 
     const dto: UpdateBookingDto = {
       status: 'playing',
@@ -2253,10 +2254,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.addToBookingMap(updated);
           this.selectedBooking = updated;
           this.notificationService.removeByEntityId(booking.id);
-          this.toast.success(
-            'Partido iniciado',
-            `${booking.clientName} está jugando.`,
-          );
+          if (isProfessor) {
+            this.toast.success(
+              'Clase registrada',
+              `Clase de ${booking.clientName} registrada para liquidación.`,
+            );
+            this.closeDialog();
+          } else {
+            this.toast.success(
+              'Partido iniciado',
+              `${booking.clientName} está jugando.`,
+            );
+          }
         },
         error: (err) => {
           this.isSavingDetail = false;

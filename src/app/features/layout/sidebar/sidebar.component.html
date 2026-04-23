@@ -1,12 +1,12 @@
 <div
   *ngIf="isOpen"
-  class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+  class="fixed inset-0 bg-black/50 z-40 xl:hidden"
   (click)="closeMenu.emit()"
 ></div>
 
 <aside
   [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed top-0 left-0 h-[100dvh] w-64 z-50 transition-transform duration-300 ease-in-out lg:[transform:none] lg:static lg:h-[100dvh] flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+  class="fixed top-0 left-0 h-[100dvh] w-64 z-50 transition-transform duration-300 ease-in-out xl:[transform:none] xl:static xl:h-[100dvh] flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
 >
   <div class="border-b border-sidebar-border p-4">
     <div class="flex items-center gap-3">

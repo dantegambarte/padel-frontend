@@ -321,12 +321,15 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Es lo que el empleado debería contar al hacer el arqueo.
    */
   get totalEsperadoEnCajon(): number {
-    return Math.max(0, this.initialBalance + this.cashIncome - this.cashExpenseTotal);
+    return Math.max(
+      0,
+      this.initialBalance + this.cashIncome - this.cashExpenseTotal,
+    );
   }
 
-  /** Descuadre = contado - total físico esperado en cajón (fondo + ingresos - egresos). */
+  /** Descuadre = contado - recaudación neta (sin fondo inicial). */
   get diferencia(): number {
-    return this.efectivoReal - this.totalEsperadoEnCajon;
+    return this.efectivoReal - this.efectivoEsperado;
   }
 
   /** Valor absoluto de la diferencia. */
@@ -407,7 +410,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                   this.fondoInicialSugerido = true;
                 } else if (cashCounted === null && this.fondoInicial === '') {
                   this.configService.getAll().subscribe((entries) => {
-                    const entry = entries.find((e) => e.key === 'fondo_caja_base');
+                    const entry = entries.find(
+                      (e) => e.key === 'fondo_caja_base',
+                    );
                     if (entry && parseFloat(entry.value) > 0) {
                       this.fondoInicial = entry.value;
                       this.fondoInicialSugerido = false;
@@ -440,7 +445,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
               this.fondoInicialSugerido = true;
             }
             this.isBusinessDayClosed = res.isBusinessDayClosed;
-            this.hasPendingClosures = res.hasPendingClosures ?? !res.isBusinessDayClosed;
+            this.hasPendingClosures =
+              res.hasPendingClosures ?? !res.isBusinessDayClosed;
             if (!res.isBusinessDayClosed) {
               this.cashService.checkPendings().subscribe({
                 next: (data) => {
@@ -821,7 +827,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       }
     }
 
-    return result.sort((a, b) => b.latestCreatedAt.localeCompare(a.latestCreatedAt));
+    return result.sort((a, b) =>
+      b.latestCreatedAt.localeCompare(a.latestCreatedAt),
+    );
   }
 
   /**
@@ -890,6 +898,17 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       const cambio =
         group.totalMonto > totalReserva ? group.totalMonto - totalReserva : 0;
 
+      const bookingStart = (() => {
+        const base = new Date(group.latestCreatedAt);
+        const [bh, bm] = (group.bookingHour ?? '00:00').split(':').map(Number);
+        base.setHours(bh, bm, 0, 0);
+        return base;
+      })();
+      const isPreBooking = (tx: CashMovimiento) =>
+        new Date(tx.createdAt) < bookingStart;
+      const anyPreBooking =
+        group.hasMultiplePayments && group.transactions.some(isPreBooking);
+
       const payRows = group.transactions
         .map((tx, i) => {
           const method =
@@ -900,11 +919,13 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                 : 'Transferencia';
           const label = !group.hasMultiplePayments
             ? 'Pago Completo'
-            : i === 0
-              ? 'Seña / Parcial'
-              : i === group.transactions.length - 1
-                ? 'Pago Final'
-                : 'Pago Parcial';
+            : !anyPreBooking
+              ? `Cobro en ${method}`
+              : isPreBooking(tx)
+                ? 'Seña / Parcial'
+                : i === group.transactions.length - 1
+                  ? 'Pago Final'
+                  : 'Pago Parcial';
           return `
             <div style="display:flex;justify-content:space-between;align-items:center;
                         padding:7px 10px;margin-bottom:5px;background:#f9fafb;
@@ -1032,6 +1053,17 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       const hour = group.bookingHour ? `${group.bookingHour}hs` : '—';
       const client = group.bookingClientName ?? group.customerName ?? '—';
       const canchaPrice = group.bookingPriceAmount ?? 0;
+      const printBookingStart = (() => {
+        const base = new Date(group.latestCreatedAt);
+        const [bh, bm] = (group.bookingHour ?? '00:00').split(':').map(Number);
+        base.setHours(bh, bm, 0, 0);
+        return base;
+      })();
+      const isPrintPreBooking = (tx: CashMovimiento) =>
+        new Date(tx.createdAt) < printBookingStart;
+      const printAnyPreBooking =
+        group.hasMultiplePayments && group.transactions.some(isPrintPreBooking);
+
       const payLines = group.transactions
         .map((tx, i) => {
           const method =
@@ -1042,11 +1074,13 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                 : 'Transferencia';
           const label = !group.hasMultiplePayments
             ? 'Pago Completo'
-            : i === 0
-              ? 'Seña'
-              : i === group.transactions.length - 1
-                ? 'Pago Final'
-                : 'Pago Parcial';
+            : !printAnyPreBooking
+              ? `Cobro en ${method}`
+              : isPrintPreBooking(tx)
+                ? 'Seña'
+                : i === group.transactions.length - 1
+                  ? 'Pago Final'
+                  : 'Pago Parcial';
           return `<p>${tx.hora}hs &mdash; ${label} (${method}): <strong>${cur(tx.monto)}</strong></p>`;
         })
         .join('');

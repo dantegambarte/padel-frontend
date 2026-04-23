@@ -7,6 +7,8 @@ import {
   CreateTeacherDto,
   UpdateTeacherDto,
   TeacherReport,
+  LiquidateTeacherDto,
+  LiquidationResult,
 } from '../models/teacher.model';
 import { environment } from '../../../environments/environment';
 
@@ -93,5 +95,10 @@ export class TeachersService {
     return this.http.get<TeacherReport>(`${this.base}/${id}/report`, {
       params,
     });
+  }
+
+  /** Liquida turnos y consumos de un profesor en una sola transacción de caja. */
+  liquidate(dto: LiquidateTeacherDto): Observable<LiquidationResult> {
+    return this.http.post<LiquidationResult>(`${this.base}/liquidate`, dto);
   }
 }

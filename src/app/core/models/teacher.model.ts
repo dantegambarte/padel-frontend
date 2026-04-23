@@ -22,7 +22,22 @@ export interface TeacherReportBooking {
   hour: string;
   durationMinutes: number;
   courtName: string;
+  hourlyRate: number;
   teacherAmount: number;
+}
+
+export type PaymentMethod = 'cash' | 'transfer';
+
+export interface LiquidateTeacherDto {
+  teacherId: string;
+  bookingIds: string[];
+  consumptionIds: string[];
+  paymentMethod: PaymentMethod;
+}
+
+export interface LiquidationResult {
+  settled: boolean;
+  totalAmount: number;
 }
 
 export interface TeacherReport {
