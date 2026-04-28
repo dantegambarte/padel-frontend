@@ -523,6 +523,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Abre la jornada de caja con el fondo inicial declarado por el empleado.
    * Llama a POST /cash/open y recarga el estado de la sesión.
    */
+  // TODO -> validar que el fondo, corresponde al fondo que realmente se dejo en la caja, y no al que se recaudo, ya que acabo de cerrar con $144.000 y el fondo de caja es $25.000 y vi ls $144.000 en el fondo inicial, lo cual no es correcto, ya que el fondo inicial deberia ser $25.000 y no $144.000
   abrirJornada(): void {
     const fondo = parseFloat(this.fondoInicial || '0');
     if (isNaN(fondo) || fondo < 0) {

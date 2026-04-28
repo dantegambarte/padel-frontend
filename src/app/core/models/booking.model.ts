@@ -126,3 +126,16 @@ export interface RescheduleBookingDto {
   date: string;
   hour: string;
 }
+
+export interface TicketTransaction {
+  id: string;
+  concept: string;
+  amountCash: number;
+  amountTransfer: number;
+  createdAt: string;
+}
+
+export interface TicketSummary {
+  booking: BookingResponse;
+  transactions: TicketTransaction[];
+}

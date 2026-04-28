@@ -231,10 +231,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     this.isLoadingTicket = true;
     this.bookingsService
-      .findOne(referenceId)
+      .getTicketSummary(referenceId)
       .pipe(finalize(() => (this.isLoadingTicket = false)))
       .subscribe({
-        next: (b) => this.openBookingDetail(b),
+        next: (s) => this.openBookingDetail(s.booking),
         error: () =>
           this.toast.error('No se pudo cargar el detalle del turno.'),
       });
