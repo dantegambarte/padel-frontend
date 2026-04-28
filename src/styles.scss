@@ -127,7 +127,7 @@ app-toast > div,
 @layer components {
   .modal-backdrop {
     @apply fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm
-           flex items-center justify-center p-4 sm:p-6 touch-none;
+           flex items-center justify-center p-4 sm:p-6 touch-none cursor-pointer;
     height: 100vh;
     height: 100dvh;
     height: -webkit-fill-available;
@@ -141,7 +141,7 @@ app-toast > div,
 
   .modal-card {
     @apply bg-card rounded-2xl shadow-2xl w-full max-w-lg
-           flex flex-col overflow-hidden;
+           flex flex-col overflow-hidden relative z-[10000] cursor-auto;
     max-height: calc(100dvh - 2rem);
     max-height: calc(100svh - 2rem);
   }
