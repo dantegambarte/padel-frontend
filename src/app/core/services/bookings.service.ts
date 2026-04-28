@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { shareReplay, tap } from 'rxjs/operators';
 
 import {
   BookingResponse,
@@ -9,6 +9,7 @@ import {
   UpdateBookingStatusDto,
   UpdateBookingDto,
   RescheduleBookingDto,
+  TicketSummary,
 } from '../models/booking.model';
 import { environment } from '../../../environments/environment';
 
@@ -20,6 +21,8 @@ export class BookingsService {
   private readonly url = `${environment.apiUrl}/bookings`;
 
   readonly bookingUpdated$ = new Subject<BookingResponse>();
+
+  private readonly ticketCache = new Map<string, Observable<TicketSummary>>();
 
   constructor(private http: HttpClient) {}
 
@@ -135,5 +138,19 @@ export class BookingsService {
     return this.http.get<BookingResponse[]>(
       `${this.url}/pending-expected-deposits`,
     );
+  }
+
+  getTicketSummary(id: string): Observable<TicketSummary> {
+    if (!this.ticketCache.has(id)) {
+      const req$ = this.http
+        .get<TicketSummary>(`${this.url}/${id}/ticket-summary`)
+        .pipe(shareReplay(1));
+      this.ticketCache.set(id, req$);
+    }
+    return this.ticketCache.get(id)!;
+  }
+
+  clearTicketCache(): void {
+    this.ticketCache.clear();
   }
 }

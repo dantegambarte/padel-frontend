@@ -1,4 +1,4 @@
-<div class="space-y-4 px-3 sm:px-0">
+<div class="space-y-4 px-3 sm:px-0 overflow-x-hidden max-w-[100vw]">
   <div class="rounded-xl border border-border bg-card shadow-sm">
     <div class="p-4 space-y-4">
       <div class="flex items-center gap-2">
@@ -150,7 +150,7 @@
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <p class="text-sm font-semibold text-foreground whitespace-nowrap">
+            <p class="text-sm font-semibold text-foreground min-w-0">
               Última Jornada Comercial
             </p>
             <span
@@ -199,10 +199,10 @@
   </ng-container>
 
   <div
-    class="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
+    class="rounded-xl border border-border bg-card shadow-sm overflow-hidden w-full max-w-full"
   >
     <div
-      class="tabs-nav flex overflow-x-auto border-b border-border"
+      class="tabs-nav flex flex-nowrap overflow-x-auto border-b border-border w-full max-w-full"
       style="
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
@@ -337,7 +337,9 @@
       </div>
 
       <ng-container *ngIf="!isLoadingKpis">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Balance Financiero</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div
             class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5 space-y-2 dark:border-emerald-800/40 dark:bg-emerald-950/20"
           >
@@ -472,147 +474,76 @@
               {{ periodoLabel }}
             </p>
           </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div
-            class="rounded-xl border border-border bg-background p-3.5 sm:p-5 space-y-2"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                >Alquileres</span
-              >
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10"
-              >
-                <svg
-                  class="h-4 w-4 text-cyan-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                  <polyline points="17 6 23 6 23 12" />
-                </svg>
-              </div>
-            </div>
-            <p class="text-2xl font-bold text-foreground">
-              ${{ fmt(totalAlquileres) }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{ pctAlquileres }}% del total
-            </p>
-          </div>
-
-          <div
-            class="rounded-xl border border-border bg-background p-3.5 sm:p-5 space-y-2"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                >Productos</span
-              >
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10"
-              >
-                <svg
-                  class="h-4 w-4 text-orange-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-                  />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-              </div>
-            </div>
-            <p class="text-2xl font-bold text-foreground">
-              ${{ fmt(totalProductos) }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{ pctProductos }}% del total
-            </p>
-          </div>
-
-          <div
-            class="rounded-xl border border-border bg-background p-3.5 sm:p-5 space-y-2"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                >Efectivo</span
-              >
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"
-              >
-                <svg
-                  class="h-4 w-4 text-emerald-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                  <line x1="1" y1="10" x2="23" y2="10" />
-                </svg>
-              </div>
-            </div>
-            <p class="text-2xl font-bold text-foreground">
-              ${{ fmt(paymentData?.cash?.total ?? 0) }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{ paymentData?.cash?.percentage ?? 0 }}% del total
-            </p>
-          </div>
-
-          <div
-            class="rounded-xl border border-border bg-background p-3.5 sm:p-5 space-y-2"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                >Transferencia</span
-              >
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"
-              >
-                <svg
-                  class="h-4 w-4 text-indigo-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="17 1 21 5 17 9" />
-                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                  <polyline points="7 23 3 19 7 15" />
-                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                </svg>
-              </div>
-            </div>
-            <p class="text-2xl font-bold text-foreground">
-              ${{ fmt(paymentData?.transfer?.total ?? 0) }}
-            </p>
-            <p class="text-xs text-muted-foreground">
-              {{ paymentData?.transfer?.percentage ?? 0 }}% del total
-            </p>
           </div>
         </div>
 
+        <hr class="border-border my-6 sm:my-8">
+        <div>
+          <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Desglose de Operaciones</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
+            <div class="min-w-0 flex-1">
+              <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Alquileres</span>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalAlquileres) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ pctAlquileres }}% del total</p>
+            </div>
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 ml-3">
+              <svg class="h-4 w-4 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
+            <div class="min-w-0 flex-1">
+              <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Productos</span>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalProductos) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ pctProductos }}% del total</p>
+            </div>
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 ml-3">
+              <svg class="h-4 w-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Efectivo -->
+          <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
+            <div class="min-w-0 flex-1">
+              <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Efectivo</span>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData?.cash?.total ?? 0) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData?.cash?.percentage ?? 0 }}% del total</p>
+            </div>
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 ml-3">
+              <svg class="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
+            <div class="min-w-0 flex-1">
+              <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Transferencia</span>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData?.transfer?.total ?? 0) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData?.transfer?.percentage ?? 0 }}% del total</p>
+            </div>
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 ml-3">
+              <svg class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <hr class="border-border my-6 sm:my-8">
         <div
           *ngIf="revenueData.length > 0"
           class="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-border bg-background p-5 space-y-3"
@@ -986,7 +917,7 @@
             *ngIf="!isLoadingTransactions && transactions.length > 0"
             class="flex flex-wrap gap-2"
           >
-            <div class="flex flex-wrap gap-1">
+            <div class="w-full flex flex-wrap gap-1">
               <button
                 type="button"
                 (click)="txFilterType = 'all'"
@@ -1037,7 +968,7 @@
               </button>
             </div>
 
-            <div class="flex flex-wrap gap-1">
+            <div class="w-full flex flex-wrap gap-1">
               <button
                 type="button"
                 (click)="txFilterPayment = 'all'"
@@ -1188,14 +1119,14 @@
             </p>
 
             <div
-              class="flex items-center justify-between px-4 pt-3 pb-4 mt-1 border-t border-border bg-muted/20"
+              class="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 pt-3 pb-4 mt-1 border-t border-border bg-muted/20"
             >
               <span class="text-xl font-bold text-foreground tabular-nums">
                 ${{ fmt(tx.total) }}
               </span>
               <ng-container *ngIf="tx.cash > 0 && tx.transfer > 0; else singlePaymentMobile">
                 <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 border-purple-200">
-                  Efecitvo + Transferencia
+                  Efectivo + Transferencia
                 </span>
               </ng-container>
               <ng-template #singlePaymentMobile>
