@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
@@ -32,7 +33,13 @@ export class TeacherReportComponent implements OnInit {
   constructor(
     private teachersSvc: TeachersService,
     private toast: ToastService,
+    private authService: AuthService,
   ) {}
+
+  /** True cuando el usuario logueado tiene rol 'employee'. */
+  get isEmployeeRole(): boolean {
+    return this.authService.currentUser?.role === 'employee';
+  }
 
   ngOnInit(): void {
     this.recalcDates();
@@ -161,6 +168,12 @@ export class TeacherReportComponent implements OnInit {
   /** Dispara la impresión del reporte visible en pantalla. */
   print(): void {
     window.print();
+  }
+
+  /** Total a pagar al profesor: clases dictadas menos consumos internos pendientes. */
+  get netTotal(): number {
+    if (!this.report) return 0;
+    return this.report.summary.totalAmount - this.report.summary.consumptionsTotal;
   }
 
   /** Formatea un número al estilo local argentino. */
