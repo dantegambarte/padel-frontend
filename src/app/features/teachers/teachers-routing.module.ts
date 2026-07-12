@@ -15,7 +15,7 @@ const routes: Routes = [
     path: 'report',
     component: TeacherReportComponent,
     canActivate: [AdminGuard],
-    data: { roles: ['admin'] },
+    data: { roles: ['admin', 'employee'] },
   },
 ];
 

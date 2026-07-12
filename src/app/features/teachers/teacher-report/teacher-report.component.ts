@@ -29,6 +29,7 @@ export class TeacherReportComponent implements OnInit {
   hasSearched = false;
   showSettlementModal = false;
   settlementMode: 'clases' | 'completa' = 'completa';
+  showConsumptions = true;
 
   constructor(
     private teachersSvc: TeachersService,
@@ -125,6 +126,7 @@ export class TeacherReportComponent implements OnInit {
     this.isLoading = true;
     this.hasSearched = true;
     this.report = null;
+    this.showConsumptions = true;
 
     this.teachersSvc
       .getReport(this.selectedTeacherId, this.startDate, this.endDate)
@@ -170,10 +172,20 @@ export class TeacherReportComponent implements OnInit {
     window.print();
   }
 
-  /** Total a pagar al profesor: clases dictadas menos consumos internos pendientes. */
+  /** Alterna la visibilidad de la tabla de consumos internos. */
+  toggleConsumptions(): void {
+    this.showConsumptions = !this.showConsumptions;
+  }
+
+  /**
+   * Deuda total del profesor: horas de cancha usadas más consumos internos
+   * pendientes, si estos últimos están visibles en pantalla.
+   */
   get netTotal(): number {
     if (!this.report) return 0;
-    return this.report.summary.totalAmount - this.report.summary.consumptionsTotal;
+    return this.showConsumptions
+      ? this.report.summary.grandTotal
+      : this.report.summary.totalAmount;
   }
 
   /** Formatea un número al estilo local argentino. */

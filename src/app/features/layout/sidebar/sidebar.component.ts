@@ -134,7 +134,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           label: 'Liquidación',
           icon: 'receipt',
           route: '/app/teachers/report',
-          roles: ['admin'],
+          roles: ['admin', 'employee'],
         },
       ],
     },
