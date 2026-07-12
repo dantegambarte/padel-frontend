@@ -124,6 +124,24 @@ app-toast > div,
   z-index: 99999 !important;
 }
 
+.dark .swal2-popup {
+  background: var(--card);
+  color: var(--card-foreground);
+}
+.dark .swal2-title,
+.dark .swal2-html-container {
+  color: var(--card-foreground);
+}
+.dark .swal2-input {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.dark .swal2-input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(0.55 0.18 281 / 0.3);
+}
+
 @layer components {
   .modal-backdrop {
     @apply fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm
