@@ -13,7 +13,12 @@ import { debounceTime } from 'rxjs/operators';
 
 import { Product } from '../../core/models/product.model';
 import { ProductsService } from '../../core/services/products.service';
-import { SalesService, CreateSaleDto } from '../../core/services/sales.service';
+import {
+  SalesService,
+  CreateSaleDto,
+  SaleDetail,
+  SaleItemDetail,
+} from '../../core/services/sales.service';
 import { CashService } from '../../core/services/cash.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DraftService } from '../../core/services/draft.service';
@@ -69,6 +74,19 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   isCashRegisterOpen = true;
 
+  /** Vista activa del panel izquierdo: catálogo de productos o cuentas abiertas. */
+  mainView: 'catalog' | 'open-accounts' = 'catalog';
+  openSales: SaleDetail[] = [];
+  isLoadingOpenSales = false;
+
+  /** Cuenta abierta cargada en el ticket actual (null = venta directa nueva). */
+  activeSaleId: string | null = null;
+  activeSaleCustomerName: string | null = null;
+  /** Foto del carrito al cargar la cuenta, para calcular el delta a enviar por PATCH. */
+  private originalCartSnapshot: PosCartItem[] = [];
+  /** Índice de productos (incluye inactivos) para resolver stock real de ítems de cuentas abiertas. */
+  private allProductsById = new Map<string, Product>();
+
   /** Draft del carrito POS. */
   showCartDraftBanner = false;
   cartDraftItemCount = 0;
@@ -89,6 +107,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadProducts();
     this.checkCashStatus();
+    this.loadOpenSales();
 
     this.sub.add(
       this.cartDraftSave$.pipe(debounceTime(500)).subscribe(() => {
@@ -139,8 +158,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     this.draftService.clearDraft(this.DRAFT_KEY_CART);
   }
 
-  /** Dispara el auto-save del carrito (con debounce). */
+  /**
+   * Dispara el auto-save del carrito (con debounce).
+   * No aplica mientras se edita una cuenta abierta: esa se persiste en el
+   * backend con `add-items`/`pay`, guardarla en el draft local pisaría
+   * el draft real de una venta directa a medio armar.
+   */
   triggerCartDraftSave(): void {
+    if (this.isEditingOpenAccount) return;
     this.cartDraftSave$.next();
   }
 
@@ -190,6 +215,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       .pipe(finalize(() => (this.isLoadingProducts = false)))
       .subscribe({
         next: (products) => {
+          this.allProductsById = new Map(products.map((p) => [p.id, p]));
           this.products = products.filter((p) => p.isActive);
           this.applyFilter();
         },
@@ -200,6 +226,149 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
           );
         },
       });
+  }
+
+  /** Carga la lista de cuentas abiertas para el tab lateral. */
+  loadOpenSales(): void {
+    this.isLoadingOpenSales = true;
+    this.salesService
+      .findOpen()
+      .pipe(finalize(() => (this.isLoadingOpenSales = false)))
+      .subscribe({
+        next: (sales) => (this.openSales = sales),
+        error: () => {
+          this.toast.error('Error', 'No se pudieron cargar las cuentas abiertas');
+        },
+      });
+  }
+
+  /** `true` cuando el ticket actual corresponde a una cuenta abierta cargada. */
+  get isEditingOpenAccount(): boolean {
+    return this.activeSaleId !== null;
+  }
+
+  /** Etiqueta del botón naranja según haya o no una cuenta abierta cargada. */
+  get leaveOpenLabel(): string {
+    return this.isEditingOpenAccount ? 'Actualizar Cuenta' : 'Dejar Abierta';
+  }
+
+  /**
+   * Carga una cuenta abierta de la lista lateral en el ticket actual.
+   * `findOpen()` ya trae los items con producto incluido — no hace falta un
+   * segundo request, evita una vuelta de red innecesaria por cada click.
+   * El stock de cada ítem se resuelve contra el catálogo en memoria, no contra
+   * la venta: el stock es responsabilidad del producto, no del ítem histórico.
+   */
+  selectOpenSale(sale: SaleDetail): void {
+    this.cart = sale.items.map((i) => this.toCartItem(i));
+    this.originalCartSnapshot = this.cart.map((i) => ({ ...i }));
+    this.activeSaleId = sale.id;
+    this.activeSaleCustomerName = sale.customerName;
+    this.mainView = 'catalog';
+    this.desktopStep = 1;
+    this.checkoutStep = 1;
+  }
+
+  /** Mapea un ítem histórico de venta a ítem de carrito, resolviendo stock actual. */
+  private toCartItem(saleItem: SaleItemDetail): PosCartItem {
+    const product = this.allProductsById.get(saleItem.productId);
+    return {
+      productId: saleItem.productId,
+      name: product?.name ?? saleItem.product.name,
+      salePrice: Number(saleItem.unitPrice),
+      quantity: saleItem.quantity,
+      stock: product?.stock ?? Number.POSITIVE_INFINITY,
+      minStock: product?.minStock ?? 0,
+      category: product?.category?.name ?? '',
+    };
+  }
+
+  /** Cancela la edición de la cuenta abierta actual y vacía el ticket. */
+  cancelOpenAccountEdit(): void {
+    this.cart = [];
+    this.activeSaleId = null;
+    this.activeSaleCustomerName = null;
+    this.originalCartSnapshot = [];
+    this.triggerCartDraftSave();
+  }
+
+  /** `true` cuando el botón "Actualizar Cuenta" debe estar deshabilitado. */
+  get isLeaveOpenDisabled(): boolean {
+    if (this.cart.length === 0 || this.isSubmitting) return true;
+    return this.isEditingOpenAccount && this.diffNewItems().length === 0;
+  }
+
+  /** Cantidades agregadas desde que se cargó la cuenta abierta (delta a enviar por PATCH). */
+  private diffNewItems(): { productId: string; quantity: number }[] {
+    return this.cart
+      .map((item) => {
+        const original = this.originalCartSnapshot.find(
+          (o) => o.productId === item.productId,
+        );
+        const delta = item.quantity - (original?.quantity ?? 0);
+        return delta > 0 ? { productId: item.productId, quantity: delta } : null;
+      })
+      .filter(
+        (x): x is { productId: string; quantity: number } => x !== null,
+      );
+  }
+
+  /**
+   * Botón "Dejar Abierta" / "Actualizar Cuenta".
+   * Sin cuenta cargada: crea una venta 'open' pidiendo nombre de cliente/mesa.
+   * Con cuenta cargada: envía solo el delta de ítems nuevos por PATCH.
+   */
+  leaveOpenAccount(): void {
+    if (this.cart.length === 0) return;
+
+    if (this.isEditingOpenAccount) {
+      const newItems = this.diffNewItems();
+      if (newItems.length === 0) {
+        this.toast.error('Sin cambios', 'No agregaste productos nuevos');
+        return;
+      }
+      this.salesService.addItems(this.activeSaleId!, { items: newItems }).subscribe({
+        next: () => {
+          this.originalCartSnapshot = this.cart.map((i) => ({ ...i }));
+          this.toast.success('Cuenta actualizada', '');
+          this.loadOpenSales();
+        },
+        error: () => this.toast.error('Error', 'No se pudo actualizar la cuenta'),
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Dejar cuenta abierta',
+      input: 'text',
+      inputLabel: 'Nombre del Cliente / Mesa',
+      inputPlaceholder: 'Ej: Mesa 3, Juan Pérez',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f59e0b',
+      inputValidator: (value) => (!value?.trim() ? 'Ingresá un nombre' : undefined),
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const customerName = (result.value as string).trim();
+      this.salesService
+        .createOpen(
+          customerName,
+          this.cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        )
+        .subscribe({
+          next: () => {
+            this.cart = [];
+            this.draftService.clearDraft(this.DRAFT_KEY_CART);
+            this.checkoutStep = 1;
+            this.desktopStep = 1;
+            this.isMobileCartOpen = false;
+            this.toast.success('Cuenta abierta', `Se guardó para ${customerName}`);
+            this.loadOpenSales();
+          },
+          error: () => this.toast.error('Error', 'No se pudo dejar la cuenta abierta'),
+        });
+    });
   }
 
   /** Elimina diacríticos (tildes) para comparación insensible a acentos. */
@@ -523,23 +692,27 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const dto: CreateSaleDto = {
-      items: this.cart.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-      })),
-      amountCash: this.efectivo,
-      amountTransfer: this.transferencia,
-      ...(this.customerName.trim() && {
-        customerName: this.customerName.trim(),
-      }),
-    };
-
     const totalStr = this.fmt(this.total);
 
+    const request$ = this.isEditingOpenAccount
+      ? this.salesService.pay(this.activeSaleId!, {
+          amountCash: this.efectivo,
+          amountTransfer: this.transferencia,
+        })
+      : this.salesService.create({
+          items: this.cart.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+          })),
+          amountCash: this.efectivo,
+          amountTransfer: this.transferencia,
+          ...(this.customerName.trim() && {
+            customerName: this.customerName.trim(),
+          }),
+        } as CreateSaleDto);
+
     this.isSubmitting = true;
-    this.salesService
-      .create(dto)
+    request$
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: (sale) => {
@@ -548,12 +721,16 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
           this.customerName = '';
           this.montoEfectivo = '';
           this.montoTransferencia = '';
+          this.activeSaleId = null;
+          this.activeSaleCustomerName = null;
+          this.originalCartSnapshot = [];
           this.isMobileCartOpen = false;
           this.checkoutStep = 1;
           this.desktopStep = 1;
           this.lastSaleId = sale.id;
           this.productsService.clearCache();
           this.loadProducts();
+          this.loadOpenSales();
           this.toast.success(
             'Venta confirmada',
             `Se procesó una venta por $${totalStr}`,

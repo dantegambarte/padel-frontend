@@ -12,7 +12,7 @@ test.describe('POS / Nueva Venta', () => {
 
   test('POS-01: carga la lista de productos disponibles', async ({ page }) => {
     await expect(
-      page.getByRole('heading', { name: 'Nueva Venta' }),
+      page.getByRole('heading', { name: 'Catálogo de Productos' }),
     ).toBeVisible();
     const products = page
       .getByRole('button')
@@ -89,7 +89,7 @@ test.describe('POS / Nueva Venta', () => {
     if (await cashInput.isVisible()) {
       await cashInput.fill('1');
     }
-    const confirmBtn = page.getByRole('button', { name: /Confirmar Venta/i });
+    const confirmBtn = page.getByRole('button', { name: /Cobrar/i });
     await expect(confirmBtn).toBeDisabled();
   });
 
@@ -118,7 +118,7 @@ test.describe('POS / Nueva Venta', () => {
       await cashInput.fill(totalAmount);
     }
 
-    const confirmBtn = page.getByRole('button', { name: /Confirmar Venta/i });
+    const confirmBtn = page.getByRole('button', { name: /Cobrar/i });
     if (await confirmBtn.isEnabled()) {
       const salePromise = page.waitForResponse(
         (res) =>
@@ -171,8 +171,138 @@ test.describe('POS / Nueva Venta', () => {
       await transferInput.fill('500');
       await page.waitForTimeout(300);
       await expect(
-        page.getByRole('heading', { name: 'Nueva Venta' }),
+        page.getByRole('heading', { name: 'Catálogo de Productos' }),
       ).toBeVisible();
+    }
+  });
+});
+
+test.describe('POS / Cuentas Abiertas', () => {
+  test.beforeEach(async ({ page }) => {
+    await goToPOS(page);
+  });
+
+  test('POS-10: la pestaña Cuentas Abiertas reemplaza el catálogo por la lista', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /Cuentas Abiertas/i }).click();
+    // O hay una lista de cuentas, o el estado vacío — el catálogo no debe estar visible.
+    const emptyState = page.getByText('No hay cuentas abiertas');
+    const anyAccountCard = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+    await expect(emptyState.or(anyAccountCard)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('POS-11: "Dejar Abierta" está visible desde el paso Ítems, sin pasar por Pago', async ({
+    page,
+  }) => {
+    const firstProduct = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+    await firstProduct.click();
+
+    // El botón debe verse en la pestaña "Ítems" (la que carga por defecto), no requiere click en "Pago".
+    await expect(
+      page.getByRole('button', { name: /Dejar Abierta/i }),
+    ).toBeVisible({ timeout: 3000 });
+  });
+
+  test('POS-12: "Dejar Abierta" pide el nombre de cliente/mesa antes de guardar', async ({
+    page,
+  }) => {
+    const firstProduct = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+    await firstProduct.click();
+
+    await page.getByRole('button', { name: /Dejar Abierta/i }).click();
+
+    await expect(page.getByText('Nombre del Cliente / Mesa')).toBeVisible({
+      timeout: 3000,
+    });
+  });
+
+  test('POS-13: crear una cuenta abierta la agrega a la lista y vacía el ticket actual', async ({
+    page,
+  }) => {
+    const firstProduct = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+    await firstProduct.click();
+
+    await page.getByRole('button', { name: /Dejar Abierta/i }).click();
+
+    const nameInput = page.getByRole('textbox').last();
+    const uniqueName = `E2E Mesa ${Date.now()}`;
+    await nameInput.fill(uniqueName);
+
+    const createPromise = page.waitForResponse(
+      (res) =>
+        res.url().includes('/sales') &&
+        res.request().method() === 'POST' &&
+        !res.url().includes('/pay'),
+      { timeout: 10000 },
+    );
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    const res = await createPromise.catch(() => null);
+
+    if (res && [200, 201].includes(res.status())) {
+      await expect(
+        page.getByRole('button', { name: /Ir al Pago/i }),
+      ).toBeDisabled({ timeout: 5000 });
+
+      await page.getByRole('button', { name: /Cuentas Abiertas/i }).click();
+      await expect(
+        page.getByRole('button', { name: new RegExp(uniqueName) }),
+      ).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test('POS-14: cargar una cuenta abierta llena el carrito y muestra el banner de edición', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /Cuentas Abiertas/i }).click();
+
+    const firstAccount = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+
+    if (await firstAccount.isVisible().catch(() => false)) {
+      await firstAccount.click();
+
+      await expect(page.getByText(/Cliente:/i).first()).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(
+        page.getByRole('button', { name: /Actualizar Cuenta/i }),
+      ).toBeVisible();
+    }
+  });
+
+  test('POS-15: "Salir" del banner de edición vacía el carrito y vuelve a venta directa', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /Cuentas Abiertas/i }).click();
+
+    const firstAccount = page
+      .getByRole('button')
+      .filter({ hasText: /\$\d/ })
+      .first();
+
+    if (await firstAccount.isVisible().catch(() => false)) {
+      await firstAccount.click();
+      await page.getByRole('button', { name: 'Salir' }).click();
+
+      await expect(
+        page.getByRole('button', { name: /Dejar Abierta/i }),
+      ).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/Cliente:/i)).not.toBeVisible();
     }
   });
 });

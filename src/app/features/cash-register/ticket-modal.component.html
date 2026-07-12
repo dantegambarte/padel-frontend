@@ -82,14 +82,14 @@
             <span>${{ fmt(sale.total) }}</span>
           </div>
           <div
-            *ngIf="sale.amountCash > 0"
+            *ngIf="+sale.amountCash > 0"
             class="flex justify-between text-xs text-slate-500"
           >
             <span>Efectivo</span>
             <span>${{ fmt(sale.amountCash) }}</span>
           </div>
           <div
-            *ngIf="sale.amountTransfer > 0"
+            *ngIf="+sale.amountTransfer > 0"
             class="flex justify-between text-xs text-slate-500"
           >
             <span>Transferencia</span>
