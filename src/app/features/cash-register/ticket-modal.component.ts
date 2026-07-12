@@ -61,13 +61,13 @@ export class TicketModalComponent implements OnChanges {
     this.closeModal.emit();
   }
 
-  /** Formatea un número a string con separador de miles (es-AR). */
-  fmt(value: number): string {
+  /** Formatea un número (o numeric string de Postgres) con separador de miles (es-AR). */
+  fmt(value: number | string): string {
     return Number(value).toLocaleString('es-AR');
   }
 
   /** Subtotal de un ítem: precio unitario × cantidad. */
-  itemSubtotal(unitPrice: number, quantity: number): number {
+  itemSubtotal(unitPrice: number | string, quantity: number): number {
     return Number(unitPrice) * quantity;
   }
 
