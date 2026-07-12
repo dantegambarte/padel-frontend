@@ -392,6 +392,98 @@
           </table>
         </div>
       </div>
+
+      <div
+        *ngIf="report.consumptions.length > 0"
+        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      >
+        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-slate-100">
+              Consumos Internos
+            </p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">
+              {{ report.teacher.fullName }} — pendientes de pago
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="toggleConsumptions()"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {{ showConsumptions ? "Ocultar consumos internos" : "Ver consumos internos" }}
+          </button>
+        </div>
+
+        <div *ngIf="showConsumptions" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+              >
+                <th class="px-5 py-3">Fecha</th>
+                <th class="px-5 py-3">Producto</th>
+                <th class="px-5 py-3 text-right">Cantidad</th>
+                <th class="px-5 py-3 text-right">Precio Unitario</th>
+                <th class="px-5 py-3 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
+              <tr
+                *ngFor="let c of report.consumptions"
+                class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
+              >
+                <td class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">
+                  {{ fmtDate(c.date) }}
+                </td>
+                <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
+                  {{ c.productName }}
+                </td>
+                <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-400">
+                  {{ c.quantity }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-gray-500 dark:text-slate-400">
+                  ${{ fmt(c.unitCostPrice) }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100">
+                  ${{ fmt(c.totalCost) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr
+                class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
+              >
+                <td colspan="4" class="px-5 py-3 text-gray-700 dark:text-slate-300">
+                  TOTAL CONSUMOS — {{ report.summary.totalConsumptions }} item{{
+                    report.summary.totalConsumptions !== 1 ? "s" : ""
+                  }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-rose-700 dark:text-rose-400">
+                  ${{ fmt(report.summary.consumptionsTotal) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
+      >
+        <span class="text-base font-semibold text-emerald-700 dark:text-emerald-300">
+          Total a Cobrar
+          <span
+            *ngIf="report.consumptions.length > 0 && !showConsumptions"
+            class="text-xs font-normal text-emerald-600/80 dark:text-emerald-400/70"
+          >
+            (sin consumos internos)
+          </span>
+        </span>
+        <span class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
+          ${{ fmt(netTotal) }}
+        </span>
+      </div>
     </div>
   </ng-container>
 </div>

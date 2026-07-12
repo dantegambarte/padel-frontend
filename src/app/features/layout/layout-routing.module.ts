@@ -80,7 +80,7 @@ const routes: Routes = [
         loadChildren: () =>
           import('../teachers/teachers.module').then((m) => m.TeachersModule),
         canActivate: [AdminGuard],
-        data: { title: 'Profesores', roles: ['admin'] },
+        data: { title: 'Profesores', roles: ['admin', 'employee'] },
       },
       {
         path: 'account',
