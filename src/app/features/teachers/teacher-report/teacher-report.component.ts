@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
@@ -28,11 +29,18 @@ export class TeacherReportComponent implements OnInit {
   hasSearched = false;
   showSettlementModal = false;
   settlementMode: 'clases' | 'completa' = 'completa';
+  showConsumptions = true;
 
   constructor(
     private teachersSvc: TeachersService,
     private toast: ToastService,
+    private authService: AuthService,
   ) {}
+
+  /** True cuando el usuario logueado tiene rol 'employee'. */
+  get isEmployeeRole(): boolean {
+    return this.authService.currentUser?.role === 'employee';
+  }
 
   ngOnInit(): void {
     this.recalcDates();
@@ -118,6 +126,7 @@ export class TeacherReportComponent implements OnInit {
     this.isLoading = true;
     this.hasSearched = true;
     this.report = null;
+    this.showConsumptions = true;
 
     this.teachersSvc
       .getReport(this.selectedTeacherId, this.startDate, this.endDate)
@@ -161,6 +170,22 @@ export class TeacherReportComponent implements OnInit {
   /** Dispara la impresión del reporte visible en pantalla. */
   print(): void {
     window.print();
+  }
+
+  /** Alterna la visibilidad de la tabla de consumos internos. */
+  toggleConsumptions(): void {
+    this.showConsumptions = !this.showConsumptions;
+  }
+
+  /**
+   * Deuda total del profesor: horas de cancha usadas más consumos internos
+   * pendientes, si estos últimos están visibles en pantalla.
+   */
+  get netTotal(): number {
+    if (!this.report) return 0;
+    return this.showConsumptions
+      ? this.report.summary.grandTotal
+      : this.report.summary.totalAmount;
   }
 
   /** Formatea un número al estilo local argentino. */

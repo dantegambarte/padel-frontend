@@ -534,9 +534,17 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       return;
     }
     this.isOpening = true;
+    this.doOpenCash(fondo);
+  }
+
+  private doOpenCash(
+    fondo: number,
+    conflictAction?: 'reopen_today' | 'force_next_day',
+  ): void {
     const dto: OpenCashDto = {
       initialBalance: fondo,
       ...(this.notasApertura ? { notes: this.notasApertura } : {}),
+      ...(conflictAction ? { conflictAction } : {}),
     };
     this.cashService
       .open(dto)
@@ -549,17 +557,33 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.draftService.clearDraft(this.DRAFT_KEY_APERTURA);
           this.draftService.clearDraft(this.DRAFT_KEY_CIERRE);
           this.showAperturaDraftBanner = false;
-          this.toast.success(
-            'Turno abierto',
-            `Fondo inicial: $${this.fmt(fondo)}`,
-          );
+          const label =
+            conflictAction === 'reopen_today'
+              ? 'Jornada reabierta'
+              : conflictAction === 'force_next_day'
+                ? 'Jornada siguiente iniciada'
+                : 'Turno abierto';
+          this.toast.success(label, `Fondo inicial: $${this.fmt(fondo)}`);
           this.isBusinessDayClosed = false;
           this.isSessionOpen = null;
           this.loadCurrentSession();
         },
         error: (err) => {
-          const msg: string = err.error?.message ?? 'Intente nuevamente';
-          if (err.status === 409) {
+          const errBody = err.error ?? {};
+          const msg: string = errBody.message ?? 'Intente nuevamente';
+          const code: string = errBody.errorCode ?? errBody.code ?? '';
+
+          if (err.status === 409 || code === 'DAY_ALREADY_CLOSED') {
+            const isDayAlreadyClosed =
+              code === 'DAY_ALREADY_CLOSED' ||
+              msg.toUpperCase().includes('DAY_ALREADY_CLOSED') ||
+              msg.toLowerCase().includes('jornada') && msg.toLowerCase().includes('cerrada');
+
+            if (isDayAlreadyClosed) {
+              this.handleDayAlreadyClosed(fondo);
+              return;
+            }
+
             const isOrphanedDay = msg.includes('pendiente de cierre');
             if (isOrphanedDay) {
               Swal.fire({
@@ -581,6 +605,32 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           }
         },
       });
+  }
+
+  private handleDayAlreadyClosed(fondo: number): void {
+    this.isOpening = false;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Advertencia',
+      html: 'La jornada comercial de hoy ya fue cerrada. ¿Qué deseás hacer?',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Reabrir jornada de hoy (Me equivoqué)',
+      denyButtonText: 'Iniciar jornada de mañana',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f59e0b',
+      denyButtonColor: '#4f46e5',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.isOpening = true;
+        this.doOpenCash(fondo, 'reopen_today');
+      } else if (result.isDenied) {
+        this.isOpening = true;
+        this.doOpenCash(fondo, 'force_next_day');
+      }
+    });
   }
 
   /**

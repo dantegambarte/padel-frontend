@@ -411,6 +411,109 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
   });
 
   // =========================================================================
+  // E2E-CJ-05: DAY_ALREADY_CLOSED — Flujo "Reabrir Hoy"
+  // =========================================================================
+  test.describe('E2E-CJ-05: DAY_ALREADY_CLOSED — Flujo Reabrir Hoy', () => {
+    /**
+     * Flujo:
+     *  1. Sin sesión activa — la jornada de hoy ya fue cerrada formalmente.
+     *  2. El operador ingresa el fondo e intenta abrir → POST /sessions → 409 DAY_ALREADY_CLOSED.
+     *  3. El frontend muestra el Swal de conflicto con título "Advertencia"
+     *     y los botones "Reabrir" y "mañana".
+     *  4. El operador hace clic en "Reabrir jornada de hoy".
+     *  5. El frontend reenvía POST /sessions con conflictAction: 'reopen_today' → 201.
+     *  6. La UI muestra el toast de éxito "Jornada reabierta".
+     */
+    test('reenvía conflictAction reopen_today y muestra éxito al confirmar "Reabrir hoy"', async ({ page }) => {
+      // ── Mocks (LIFO: catch-all registrado primero = prioridad mínima)
+      await blockUnmockedCashRequests(page);
+      await mockAuxEndpoints(page);
+      // /current: carga inicial → post-apertura exitosa
+      await mockCurrentSequence(page, [
+        noSessionPayload(),
+        openSessionPayload('sess-CJ05'),
+      ]);
+
+      // POST /sessions: primera llamada → 409, segunda → 201
+      // Capturamos ambos payloads para verificar que el segundo incluya conflictAction.
+      let openCallCount = 0;
+      const capturedPayloads: Record<string, unknown>[] = [];
+
+      await page.route('**/api/v1/cash/sessions', (route) => {
+        if (route.request().method() !== 'POST') {
+          route.continue();
+          return;
+        }
+        openCallCount++;
+        capturedPayloads.push(
+          route.request().postDataJSON() as Record<string, unknown>,
+        );
+
+        if (openCallCount === 1) {
+          // Primera llamada: jornada ya cerrada
+          route.fulfill(
+            json(
+              {
+                errorCode: 'DAY_ALREADY_CLOSED',
+                message:
+                  'La jornada de hoy ya fue cerrada. Indicá cómo querés proceder.',
+                date: '2026-06-16',
+              },
+              409,
+            ),
+          );
+        } else {
+          // Segunda llamada: éxito
+          route.fulfill(
+            json({ id: 'sess-CJ05', date: '2026-06-16', status: 'OPEN' }, 201),
+          );
+        }
+      });
+
+      // ── Navegar
+      await page.goto('/app/cash-register');
+      await expect(page.locator('#fondo-inicial')).toBeVisible({
+        timeout: 10000,
+      });
+
+      // ── Paso 1: intentar abrir → dispara el 409
+      await page.fill('#fondo-inicial', '5000');
+      await page
+        .getByRole('button', { name: /^Abrir Turno( de Caja)?$/ })
+        .click();
+
+      // ── Paso 2: Swal de conflicto visible con botones correctos
+      const swalPopup = page.locator('.swal2-popup');
+      await expect(swalPopup).toBeVisible({ timeout: 6000 });
+      await expect(swalPopup.getByText('Advertencia')).toBeVisible();
+      await expect(
+        swalPopup.getByRole('button', { name: /Reabrir/i }),
+      ).toBeVisible();
+      await expect(
+        swalPopup.getByRole('button', { name: /mañana/i }),
+      ).toBeVisible();
+
+      // ── Paso 3: confirmar "Reabrir jornada de hoy"
+      await swalPopup.getByRole('button', { name: /Reabrir/i }).click();
+      await page.waitForLoadState('networkidle');
+
+      // ── Aserción A: se enviaron exactamente 2 peticiones POST
+      expect(openCallCount).toBe(2);
+
+      // ── Aserción B: segunda petición lleva conflictAction: 'reopen_today'
+      expect(capturedPayloads[1]).toMatchObject({
+        initialBalance: 5000,
+        conflictAction: 'reopen_today',
+      });
+
+      // ── Aserción C: toast de éxito visible en la UI
+      await expect(page.getByText('Jornada reabierta')).toBeVisible({
+        timeout: 5000,
+      });
+    });
+  });
+
+  // =========================================================================
   // E2E-CJ-04: Viaje en el Tiempo — Problema de la Medianoche
   // =========================================================================
   test.describe('E2E-CJ-04: Viaje en el Tiempo — Problema de la Medianoche', () => {

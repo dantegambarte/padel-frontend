@@ -158,6 +158,7 @@ interface CashApiResponse {
 export interface OpenCashDto {
   initialBalance: number;
   notes?: string;
+  conflictAction?: 'reopen_today' | 'force_next_day';
 }
 
 /** Payload interno del componente de caja (nombres en español). */
@@ -337,6 +338,7 @@ export class CashService {
       }>(`${this.url}/sessions`, {
         initialBalance: dto.initialBalance,
         ...(dto.notes ? { notes: dto.notes } : {}),
+        ...(dto.conflictAction ? { conflictAction: dto.conflictAction } : {}),
       })
       .pipe(tap(() => this.clearCurrentCache()));
   }

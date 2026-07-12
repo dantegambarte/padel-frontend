@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { InternalConsumption } from '../../../core/models/internal-consumption.model';
 import { TeacherReport } from '../../../core/models/teacher.model';
 import { PaymentMethod } from '../../../core/models/teacher.model';
@@ -46,7 +47,13 @@ export class TeacherSettlementModalComponent implements OnInit {
     private consumptionSvc: InternalConsumptionService,
     private teachersSvc: TeachersService,
     private router: Router,
+    private authService: AuthService,
   ) {}
+
+  /** True cuando el usuario logueado tiene rol 'employee'. */
+  get isEmployeeRole(): boolean {
+    return this.authService.currentUser?.role === 'employee';
+  }
 
   ngOnInit(): void {
     if (this.mode === 'clases') {
