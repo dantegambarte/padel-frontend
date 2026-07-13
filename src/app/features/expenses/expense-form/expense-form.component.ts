@@ -22,6 +22,7 @@ import { DraftService } from '../../../core/services/draft.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
+  standalone: false,
   selector: 'app-expense-form',
   templateUrl: './expense-form.component.html',
 })

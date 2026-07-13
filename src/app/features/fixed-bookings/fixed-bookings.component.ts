@@ -52,6 +52,7 @@ const EMPTY_FORM = (): FormState => ({
 });
 
 @Component({
+  standalone: false,
   selector: 'app-fixed-bookings',
   templateUrl: './fixed-bookings.component.html',
 })

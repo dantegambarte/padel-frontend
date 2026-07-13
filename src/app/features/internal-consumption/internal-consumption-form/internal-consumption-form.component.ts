@@ -19,6 +19,7 @@ import { TeachersService } from '../../../core/services/teachers.service';
 import { UsersService } from '../../../core/services/users.service';
 
 @Component({
+  standalone: false,
   selector: 'app-internal-consumption-form',
   templateUrl: './internal-consumption-form.component.html',
 })

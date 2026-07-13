@@ -15,6 +15,7 @@ export interface StatCardTrend {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-stat-card',
   templateUrl: './stat-card.component.html',
 })

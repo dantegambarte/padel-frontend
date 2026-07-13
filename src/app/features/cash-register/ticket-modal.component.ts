@@ -11,6 +11,7 @@ import { finalize } from 'rxjs';
 import { SalesService, SaleDetail } from '../../core/services/sales.service';
 
 @Component({
+  standalone: false,
   selector: 'app-ticket-modal',
   templateUrl: './ticket-modal.component.html',
 })

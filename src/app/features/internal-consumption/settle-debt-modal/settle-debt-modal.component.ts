@@ -10,6 +10,7 @@ import { Teacher } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 
 @Component({
+  standalone: false,
   selector: 'app-settle-debt-modal',
   templateUrl: './settle-debt-modal.component.html',
 })

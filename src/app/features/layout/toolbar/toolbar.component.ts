@@ -32,6 +32,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { HolidayService } from '../../../core/services/holiday.service';
 
 @Component({
+  standalone: false,
   selector: 'app-toolbar',
   templateUrl: './toolbar.component.html',
 })

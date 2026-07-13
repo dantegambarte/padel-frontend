@@ -13,6 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
 
 @Component({
+  standalone: false,
   selector: 'app-settings',
   templateUrl: './settings.component.html',
 })

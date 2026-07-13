@@ -8,6 +8,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
 
 @Component({
+  standalone: false,
   selector: 'app-account',
   templateUrl: './account.component.html',
 })

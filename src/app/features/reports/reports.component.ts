@@ -34,6 +34,7 @@ interface Preset {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-reports',
   templateUrl: './reports.component.html',
 })

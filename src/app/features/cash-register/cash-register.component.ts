@@ -57,6 +57,7 @@ export interface GroupedMovimiento {
   latestCreatedAt: string;
 }
 @Component({
+  standalone: false,
   selector: 'app-cash-register',
   templateUrl: './cash-register.component.html',
 })

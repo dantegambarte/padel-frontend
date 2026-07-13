@@ -11,6 +11,7 @@ import {
 } from '../../core/models/user.model';
 
 @Component({
+  standalone: false,
   selector: 'app-users',
   templateUrl: './users.component.html',
 })

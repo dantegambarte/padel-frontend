@@ -56,6 +56,7 @@ const ICON_COLORS: Record<string, { bg: string; text: string }> = {
 type DialogMode = 'create' | 'edit' | 'view';
 
 @Component({
+  standalone: false,
   selector: 'app-products',
   templateUrl: './products.component.html',
 })

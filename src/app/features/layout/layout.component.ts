@@ -22,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 @Component({
+  standalone: false,
   selector: 'app-layout',
   templateUrl: './layout.component.html',
 })

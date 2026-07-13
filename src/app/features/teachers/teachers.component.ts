@@ -17,6 +17,7 @@ const EMPTY_FORM = (): FormState => ({
 });
 
 @Component({
+  standalone: false,
   selector: 'app-teachers',
   templateUrl: './teachers.component.html',
 })

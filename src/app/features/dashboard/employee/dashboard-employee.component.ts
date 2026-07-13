@@ -10,6 +10,7 @@ import { ProductsService } from '../../../core/services/products.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
+  standalone: false,
   selector: 'app-dashboard-employee',
   templateUrl: './dashboard-employee.component.html',
 })

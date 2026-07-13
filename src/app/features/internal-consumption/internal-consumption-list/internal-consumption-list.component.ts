@@ -13,6 +13,7 @@ import { InternalConsumptionService } from '../../../core/services/internal-cons
 import { TeachersService } from '../../../core/services/teachers.service';
 
 @Component({
+  standalone: false,
   selector: 'app-internal-consumption-list',
   templateUrl: './internal-consumption-list.component.html',
 })

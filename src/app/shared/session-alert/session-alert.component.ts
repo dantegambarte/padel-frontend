@@ -8,6 +8,7 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
+  standalone: false,
   selector: 'app-session-alert',
   templateUrl: './session-alert.component.html',
 })

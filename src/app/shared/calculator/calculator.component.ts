@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { CalculatorService } from '../../core/services/calculator.service';
 
 @Component({
+  standalone: false,
   selector: 'app-calculator',
   templateUrl: './calculator.component.html',
 })

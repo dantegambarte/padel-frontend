@@ -6,6 +6,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { LowStockProduct } from '../../../core/models/product.model';
 
 @Component({
+  standalone: false,
   selector: 'app-inventory-alerts',
   templateUrl: './inventory-alerts.component.html',
 })

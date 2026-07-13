@@ -5,6 +5,7 @@ import { PricingShiftsService } from '../../core/services/pricing-shifts.service
 import { PricingShift } from '../../core/models/pricing-shift.model';
 
 @Component({
+  standalone: false,
   selector: 'app-pricing-shifts',
   templateUrl: './pricing-shifts.component.html',
 })

@@ -26,6 +26,7 @@ export const toastAnimation = trigger('toastState', [
 ]);
 
 @Component({
+  standalone: false,
   selector: 'app-toast',
   templateUrl: './toast.component.html',
   animations: [toastAnimation],

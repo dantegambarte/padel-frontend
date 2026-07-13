@@ -36,6 +36,7 @@ interface PosCartItem {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-pos',
   templateUrl: './pos.component.html',
 })

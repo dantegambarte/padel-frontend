@@ -10,6 +10,7 @@ import { InternalConsumptionService } from '../../../core/services/internal-cons
 import { TeachersService } from '../../../core/services/teachers.service';
 
 @Component({
+  standalone: false,
   selector: 'app-teacher-settlement-modal',
   templateUrl: './teacher-settlement-modal.component.html',
 })

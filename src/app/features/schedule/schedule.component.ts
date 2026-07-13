@@ -61,6 +61,7 @@ interface CartItem {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-schedule',
   templateUrl: './schedule.component.html',
 })

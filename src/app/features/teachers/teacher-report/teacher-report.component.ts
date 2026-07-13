@@ -12,6 +12,7 @@ import {
 type PeriodType = 'mensual' | 'quincenal' | 'semanal';
 
 @Component({
+  standalone: false,
   selector: 'app-teacher-report',
   templateUrl: './teacher-report.component.html',
 })

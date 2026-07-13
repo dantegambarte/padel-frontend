@@ -11,6 +11,7 @@ import {
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
+  standalone: false,
   selector: 'app-dashboard-admin',
   templateUrl: './dashboard-admin.component.html',
 })

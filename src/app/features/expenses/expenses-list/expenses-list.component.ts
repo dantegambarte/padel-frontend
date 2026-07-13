@@ -4,6 +4,7 @@ import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
+  standalone: false,
   selector: 'app-expenses-list',
   templateUrl: './expenses-list.component.html',
 })
