@@ -1,12 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  CanActivate,
-  CanActivateChild,
-  Router,
-  UrlTree,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable, map, take } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
@@ -29,7 +22,7 @@ import { SessionAlertService } from '../services/session-alert.service';
  * Implementa CanActivateChild para interceptar también la navegación entre child routes.
  */
 @Injectable({ providedIn: 'root' })
-export class AuthGuard implements CanActivate, CanActivateChild {
+export class AuthGuard  {
   constructor(
     private authService: AuthService,
     private router: Router,

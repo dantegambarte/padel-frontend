@@ -1,11 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  CanActivate,
-  Router,
-  UrlTree,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable, map, take } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
@@ -36,7 +30,7 @@ import { AuthService } from '../services/auth.service';
  * existentes en inventory-routing y teachers-routing.
  */
 @Injectable({ providedIn: 'root' })
-export class AdminGuard implements CanActivate {
+export class AdminGuard  {
   constructor(
     private authService: AuthService,
     private router: Router,
