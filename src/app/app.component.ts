@@ -1,18 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-  Router,
-  NavigationStart,
-  NavigationEnd,
-  NavigationCancel,
-  NavigationError,
-} from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { NgIf } from '@angular/common';
+import { ToastComponent } from './shared/toast/toast.component';
+import { CalculatorComponent } from './shared/calculator/calculator.component';
+import { SessionAlertComponent } from './shared/session-alert/session-alert.component';
 
 @Component({
-  standalone: false,
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    imports: [
+        NgIf,
+        RouterOutlet,
+        ToastComponent,
+        CalculatorComponent,
+        SessionAlertComponent,
+    ],
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'padel-frontend';
