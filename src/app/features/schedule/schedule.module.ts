@@ -5,16 +5,15 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { ScheduleRoutingModule } from './schedule-routing.module';
 import { ScheduleComponent } from './schedule.component';
-import { SharedModule } from '../../shared/shared.module';
+
 
 @NgModule({
     imports: [
-        CommonModule,
-        FormsModule,
-        DragDropModule,
-        ScheduleRoutingModule,
-        SharedModule,
-        ScheduleComponent,
-    ],
+    CommonModule,
+    FormsModule,
+    DragDropModule,
+    ScheduleRoutingModule,
+    ScheduleComponent,
+],
 })
 export class ScheduleModule {}

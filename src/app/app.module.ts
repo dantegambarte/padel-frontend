@@ -8,7 +8,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
-import { SharedModule } from './shared/shared.module';
+import { ToastComponent } from './shared/toast/toast.component';
+import { CalculatorComponent } from './shared/calculator/calculator.component';
+import { SessionAlertComponent } from './shared/session-alert/session-alert.component';
+
 
 registerLocaleData(localeEsAR);
 
@@ -19,9 +22,11 @@ registerLocaleData(localeEsAR);
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
-    SharedModule,
     CoreModule,
-  ],
+    ToastComponent,
+    CalculatorComponent,
+    SessionAlertComponent,
+],
   providers: [{ provide: LOCALE_ID, useValue: 'es-AR' }],
   bootstrap: [AppComponent],
 })

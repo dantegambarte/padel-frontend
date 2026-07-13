@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
-import { SharedModule } from '../../shared/shared.module';
+
 
 @NgModule({
-    imports: [CommonModule, FormsModule, UsersRoutingModule, SharedModule, UsersComponent],
+    imports: [CommonModule, FormsModule, UsersRoutingModule, UsersComponent],
 })
 export class UsersModule {}

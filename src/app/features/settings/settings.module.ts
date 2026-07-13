@@ -5,16 +5,15 @@ import { RouterModule } from '@angular/router';
 
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
-import { SharedModule } from '../../shared/shared.module';
+
 
 @NgModule({
     imports: [
-        CommonModule,
-        FormsModule,
-        RouterModule,
-        SettingsRoutingModule,
-        SharedModule,
-        SettingsComponent,
-    ],
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SettingsRoutingModule,
+    SettingsComponent,
+],
 })
 export class SettingsModule {}

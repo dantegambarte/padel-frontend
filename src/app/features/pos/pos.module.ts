@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 
 import { PosRoutingModule } from './pos-routing.module';
 import { PosComponent } from './pos.component';
-import { TicketModalModule } from '../cash-register/ticket-modal.module';
+
 
 @NgModule({
-    imports: [CommonModule, FormsModule, PosRoutingModule, TicketModalModule, PosComponent],
+    imports: [CommonModule, FormsModule, PosRoutingModule, PosComponent],
 })
 export class PosModule {}
