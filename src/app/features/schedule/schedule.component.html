@@ -1989,7 +1989,7 @@
                 <ng-container
                   *ngIf="
                     selectedBooking.status === 'playing' &&
-                    selectedBooking?.priceType !== 'professor'
+                    selectedBooking.priceType !== 'professor'
                   "
                 >
                   <div
@@ -2423,7 +2423,7 @@
                 <ng-container
                   *ngIf="
                     selectedBooking.status === 'playing' &&
-                    selectedBooking?.priceType === 'professor'
+                    selectedBooking.priceType === 'professor'
                   "
                 >
                   <div
