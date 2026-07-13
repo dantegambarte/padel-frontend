@@ -217,7 +217,8 @@
         </label>
         <input
           id="efectivo"
-          type="number" appDisableScroll
+          type="number"
+          appDisableScroll
           min="0"
           placeholder="0"
           [(ngModel)]="montoEfectivo"
@@ -231,7 +232,8 @@
         </label>
         <input
           id="transferencia"
-          type="number" appDisableScroll
+          type="number"
+          appDisableScroll
           min="0"
           placeholder="0"
           [(ngModel)]="montoTransferencia"
@@ -323,7 +325,7 @@
     type="button"
     (click)="leaveOpenAccount()"
     [disabled]="isLeaveOpenDisabled"
-    class="inline-flex h-11 w-40 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-amber-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    class="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-amber-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
   >
     <svg
       class="h-4 w-4 shrink-0"
@@ -372,11 +374,7 @@
         Procesando...
       </ng-container>
       <ng-template #confirmarLabel>
-        {{
-          isCashRegisterOpen
-            ? "Cobrar"
-            : "Caja Cerrada (Clic para abrir)"
-        }}
+        {{ isCashRegisterOpen ? "Cobrar" : "Caja Cerrada (Clic para abrir)" }}
       </ng-template>
     </button>
   </div>
@@ -434,7 +432,9 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 text-sm font-medium border-b border-border flex-shrink-0">
+    <div
+      class="grid grid-cols-2 text-sm font-medium border-b border-border flex-shrink-0"
+    >
       <button
         type="button"
         (click)="mainView = 'catalog'"
@@ -518,12 +518,18 @@
                 {{ (sale.customerName ?? "?").charAt(0).toUpperCase() }}
               </div>
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold">{{ sale.customerName }}</p>
+                <p class="truncate text-sm font-semibold">
+                  {{ sale.customerName }}
+                </p>
                 <p class="text-xs text-muted-foreground">
-                  {{ sale.items.length }} ítem{{ sale.items.length !== 1 ? "s" : "" }}
+                  {{ sale.items.length }} ítem{{
+                    sale.items.length !== 1 ? "s" : ""
+                  }}
                 </p>
               </div>
-              <p class="shrink-0 font-bold text-primary">${{ fmt(+sale.total) }}</p>
+              <p class="shrink-0 font-bold text-primary">
+                ${{ fmt(+sale.total) }}
+              </p>
               <svg
                 class="h-4 w-4 shrink-0 text-muted-foreground"
                 viewBox="0 0 24 24"
@@ -562,112 +568,116 @@
       </ng-container>
 
       <ng-template #catalogView>
-      <ng-container *ngIf="isLoadingProducts; else productList">
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div
-            *ngFor="let i of [1, 2, 3, 4, 5, 6]"
-            class="h-28 animate-pulse rounded-md border border-border bg-muted"
-          ></div>
-        </div>
-      </ng-container>
+        <ng-container *ngIf="isLoadingProducts; else productList">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div
+              *ngFor="let i of [1, 2, 3, 4, 5, 6]"
+              class="h-28 animate-pulse rounded-md border border-border bg-muted"
+            ></div>
+          </div>
+        </ng-container>
 
-      <ng-template #productList>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <button
-            *ngFor="let product of filteredProducts"
-            type="button"
-            (click)="addToCart(product)"
-            [class.opacity-50]="
-              !isRental(product) && getQuantityInCart(product) >= product.stock
-            "
-            [class.pointer-events-none]="
-              !isRental(product) && getQuantityInCart(product) >= product.stock
-            "
-            [class.grayscale]="!isRental(product) && product.stock === 0"
-            [class.cursor-not-allowed]="
-              !isRental(product) && product.stock === 0
-            "
-            [attr.aria-disabled]="
-              !isRental(product) && getQuantityInCart(product) >= product.stock
-                ? 'true'
-                : null
-            "
-            [title]="
-              !isRental(product) && getQuantityInCart(product) >= product.stock
-                ? 'Stock máximo alcanzado (' + product.stock + ' uds.)'
-                : ''
-            "
-            class="flex h-auto flex-col items-center justify-center gap-2 rounded-md border border-input bg-transparent p-4 text-sm font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <div class="text-center">
-              <p class="line-clamp-2 font-semibold leading-snug">
-                {{ product.name }}
-              </p>
-              <span
-                class="mt-1 inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
-                [ngClass]="[
-                  categoryColor(product).bg,
-                  categoryColor(product).text,
-                ]"
-              >
-                {{ product.category?.name }}
-              </span>
-            </div>
-            <div class="flex flex-col items-center gap-1">
-              <p class="text-lg font-bold text-primary">
-                ${{ fmt(product.salePrice) }}
-              </p>
-              <p class="text-xs text-muted-foreground">
-                <ng-container
-                  *ngIf="
-                    (product.category?.name ?? '')
-                      .toLowerCase()
-                      .includes('alquiler');
-                    else stockLabel
-                  "
+        <ng-template #productList>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <button
+              *ngFor="let product of filteredProducts"
+              type="button"
+              (click)="addToCart(product)"
+              [class.opacity-50]="
+                !isRental(product) &&
+                getQuantityInCart(product) >= product.stock
+              "
+              [class.pointer-events-none]="
+                !isRental(product) &&
+                getQuantityInCart(product) >= product.stock
+              "
+              [class.grayscale]="!isRental(product) && product.stock === 0"
+              [class.cursor-not-allowed]="
+                !isRental(product) && product.stock === 0
+              "
+              [attr.aria-disabled]="
+                !isRental(product) &&
+                getQuantityInCart(product) >= product.stock
+                  ? 'true'
+                  : null
+              "
+              [title]="
+                !isRental(product) &&
+                getQuantityInCart(product) >= product.stock
+                  ? 'Stock máximo alcanzado (' + product.stock + ' uds.)'
+                  : ''
+              "
+              class="flex h-auto flex-col items-center justify-center gap-2 rounded-md border border-input bg-transparent p-4 text-sm font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <div class="text-center">
+                <p class="line-clamp-2 font-semibold leading-snug">
+                  {{ product.name }}
+                </p>
+                <span
+                  class="mt-1 inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+                  [ngClass]="[
+                    categoryColor(product).bg,
+                    categoryColor(product).text,
+                  ]"
                 >
-                  Servicio
-                </ng-container>
-                <ng-template #stockLabel>
-                  <span
-                    [ngClass]="
-                      isLowStockProduct(product)
-                        ? 'text-amber-600 font-semibold'
-                        : ''
+                  {{ product.category?.name }}
+                </span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <p class="text-lg font-bold text-primary">
+                  ${{ fmt(product.salePrice) }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                  <ng-container
+                    *ngIf="
+                      (product.category?.name ?? '')
+                        .toLowerCase()
+                        .includes('alquiler');
+                      else stockLabel
                     "
-                    class="inline-flex items-center gap-0.5"
                   >
-                    <svg
-                      *ngIf="isLowStockProduct(product)"
-                      class="h-3 w-3 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                    Servicio
+                  </ng-container>
+                  <ng-template #stockLabel>
+                    <span
+                      [ngClass]="
+                        isLowStockProduct(product)
+                          ? 'text-amber-600 font-semibold'
+                          : ''
+                      "
+                      class="inline-flex items-center gap-0.5"
                     >
-                      <path
-                        d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                      />
-                      <path d="M12 9v4" />
-                      <path d="M12 17h.01" />
-                    </svg>
-                    Stock: {{ product.stock }}
-                  </span>
-                </ng-template>
-              </p>
-            </div>
-          </button>
+                      <svg
+                        *ngIf="isLowStockProduct(product)"
+                        class="h-3 w-3 shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                        />
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                      </svg>
+                      Stock: {{ product.stock }}
+                    </span>
+                  </ng-template>
+                </p>
+              </div>
+            </button>
 
-          <p
-            *ngIf="filteredProducts.length === 0"
-            class="col-span-full py-8 text-center text-sm text-muted-foreground"
-          >
-            No se encontraron productos
-          </p>
-        </div>
-      </ng-template>
+            <p
+              *ngIf="filteredProducts.length === 0"
+              class="col-span-full py-8 text-center text-sm text-muted-foreground"
+            >
+              No se encontraron productos
+            </p>
+          </div>
+        </ng-template>
       </ng-template>
     </div>
   </div>
@@ -977,7 +987,7 @@
 </div>
 
 <div
-  class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+  class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
   [ngClass]="{
     'opacity-100 pointer-events-auto': isMobileCartOpen,
     'opacity-0  pointer-events-none': !isMobileCartOpen,
@@ -1125,9 +1135,9 @@
           type="button"
           (click)="nextStep()"
           [disabled]="cart.length === 0"
-          class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-2 text-sm sm:text-base font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Continuar al Pago
+          Continuar
           <span class="opacity-75 font-normal">· ${{ fmt(total) }}</span>
           <svg
             class="h-5 w-5 shrink-0"
