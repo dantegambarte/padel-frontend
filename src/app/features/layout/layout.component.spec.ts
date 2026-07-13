@@ -34,7 +34,9 @@ describe('LayoutComponent', () => {
       currentUser$: currentUserSubject.asObservable(),
     });
     cashServiceSpy = jasmine.createSpyObj('CashService', ['getCurrent']);
-    notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['removeById', 'add']);
+    notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['removeById', 'add'], {
+      notifications$: of([]),
+    });
     remindersApiServiceSpy = jasmine.createSpyObj('RemindersApiService', ['getUpcoming']);
 
     cashServiceSpy.getCurrent.and.returnValue(
@@ -48,16 +50,16 @@ describe('LayoutComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [LayoutComponent],
-      providers: [
+    imports: [LayoutComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: CashService, useValue: cashServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
         { provide: RemindersApiService, useValue: remindersApiServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('resolves the initial page title from the router URL', () => {

@@ -9,11 +9,8 @@ import { TeachersRoutingModule } from './teachers-routing.module';
 import { TeachersComponent } from './teachers.component';
 
 @NgModule({
-  declarations: [
-    TeachersComponent,
-    TeacherReportComponent,
-    TeacherSettlementModalComponent,
-  ],
-  imports: [CommonModule, FormsModule, SharedModule, TeachersRoutingModule],
+    imports: [CommonModule, FormsModule, SharedModule, TeachersRoutingModule, TeachersComponent,
+        TeacherReportComponent,
+        TeacherSettlementModalComponent],
 })
 export class TeachersModule {}

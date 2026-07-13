@@ -15,10 +15,10 @@ describe('CalculatorComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [CalculatorComponent],
-      providers: [{ provide: CalculatorService, useValue: calcServiceSpy }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [CalculatorComponent],
+    providers: [{ provide: CalculatorService, useValue: calcServiceSpy }],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   function create() {

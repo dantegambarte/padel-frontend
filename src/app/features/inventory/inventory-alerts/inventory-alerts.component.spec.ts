@@ -24,14 +24,14 @@ describe('InventoryAlertsComponent', () => {
     productsServiceSpy.getLowStock.and.returnValue(of(alerts));
 
     await TestBed.configureTestingModule({
-      declarations: [InventoryAlertsComponent],
-      providers: [
+    imports: [InventoryAlertsComponent],
+    providers: [
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: Router, useValue: routerSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads alerts on init', () => {

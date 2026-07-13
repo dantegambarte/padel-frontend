@@ -5,6 +5,9 @@ import { TeachersService } from '../../core/services/teachers.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Teacher, CreateTeacherDto } from '../../core/models/teacher.model';
 import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
 type FormState = {
   fullName: string;
@@ -17,9 +20,16 @@ const EMPTY_FORM = (): FormState => ({
 });
 
 @Component({
-  standalone: false,
-  selector: 'app-teachers',
-  templateUrl: './teachers.component.html',
+    selector: 'app-teachers',
+    templateUrl: './teachers.component.html',
+    imports: [
+        NgIf,
+        NgFor,
+        ReactiveFormsModule,
+        FormsModule,
+        NgClass,
+        ModalScrollLockDirective,
+    ],
 })
 export class TeachersComponent implements OnInit, CanComponentDeactivate {
   teachers: Teacher[] = [];

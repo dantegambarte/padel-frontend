@@ -24,6 +24,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { DraftService } from '../../core/services/draft.service';
 import { getCategoryColor } from '../../core/utils/category-colors';
 import Swal from 'sweetalert2';
+import { TicketModalComponent } from '../cash-register/ticket-modal.component';
+import { NgIf, NgFor, NgTemplateOutlet, NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 interface PosCartItem {
   productId: string;
@@ -36,9 +39,17 @@ interface PosCartItem {
 }
 
 @Component({
-  standalone: false,
-  selector: 'app-pos',
-  templateUrl: './pos.component.html',
+    selector: 'app-pos',
+    templateUrl: './pos.component.html',
+    imports: [
+        TicketModalComponent,
+        NgIf,
+        NgFor,
+        ReactiveFormsModule,
+        FormsModule,
+        NgTemplateOutlet,
+        NgClass,
+    ],
 })
 export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   products: Product[] = [];

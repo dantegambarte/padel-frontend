@@ -6,7 +6,7 @@ import {
   OnDestroy,
   Output,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -20,11 +20,20 @@ import {
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { DraftService } from '../../../core/services/draft.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { NgIf, NgFor } from '@angular/common';
+import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
 
 @Component({
-  standalone: false,
-  selector: 'app-expense-form',
-  templateUrl: './expense-form.component.html',
+    selector: 'app-expense-form',
+    templateUrl: './expense-form.component.html',
+    imports: [
+        ModalScrollLockDirective,
+        NgIf,
+        ReactiveFormsModule,
+        DisableScrollDirective,
+        NgFor,
+    ],
 })
 export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** Si se pasa un Expense existente, el formulario trabaja en modo edición. */

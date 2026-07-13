@@ -6,7 +6,6 @@ import { InventoryRoutingModule } from './inventory-routing.module';
 import { InventoryAlertsComponent } from './inventory-alerts/inventory-alerts.component';
 
 @NgModule({
-  declarations: [InventoryAlertsComponent],
-  imports: [CommonModule, FormsModule, InventoryRoutingModule],
+    imports: [CommonModule, FormsModule, InventoryRoutingModule, InventoryAlertsComponent],
 })
 export class InventoryModule {}

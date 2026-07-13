@@ -68,15 +68,15 @@ describe('FixedBookingsComponent', () => {
     teachersSvcSpy.findAll.and.returnValue(of([teacher]));
 
     TestBed.configureTestingModule({
-      declarations: [FixedBookingsComponent],
-      providers: [
+    imports: [FixedBookingsComponent],
+    providers: [
         { provide: FixedBookingsService, useValue: fixedSvcSpy },
         { provide: CourtsService, useValue: courtsSvcSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: TeachersService, useValue: teachersSvcSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('loads fixed bookings, courts and teachers, and selects the first available court', () => {

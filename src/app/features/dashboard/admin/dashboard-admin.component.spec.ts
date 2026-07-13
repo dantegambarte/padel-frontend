@@ -25,13 +25,13 @@ describe('DashboardAdminComponent', () => {
     reportsServiceSpy.getLast7DaysRevenue.and.returnValue(of(mockRevenue));
 
     await TestBed.configureTestingModule({
-      declarations: [DashboardAdminComponent],
-      providers: [
+    imports: [DashboardAdminComponent],
+    providers: [
         { provide: ReportsService, useValue: reportsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads kpis and builds the revenue chart on init', () => {

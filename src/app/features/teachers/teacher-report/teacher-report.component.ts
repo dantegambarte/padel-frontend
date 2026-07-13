@@ -8,13 +8,24 @@ import {
   TeacherReport,
   TeacherReportBooking,
 } from '../../../core/models/teacher.model';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { NgFor, NgIf } from '@angular/common';
+import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
+import { TeacherSettlementModalComponent } from './teacher-settlement-modal.component';
 
 type PeriodType = 'mensual' | 'quincenal' | 'semanal';
 
 @Component({
-  standalone: false,
-  selector: 'app-teacher-report',
-  templateUrl: './teacher-report.component.html',
+    selector: 'app-teacher-report',
+    templateUrl: './teacher-report.component.html',
+    imports: [
+        ReactiveFormsModule,
+        FormsModule,
+        NgFor,
+        NgIf,
+        DisableScrollDirective,
+        TeacherSettlementModalComponent,
+    ],
 })
 export class TeacherReportComponent implements OnInit {
   teachers: Teacher[] = [];

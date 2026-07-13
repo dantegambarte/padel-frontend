@@ -8,11 +8,21 @@ import {
 } from '../../../core/models/internal-consumption.model';
 import { Teacher } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { NgIf, NgFor, DecimalPipe } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  standalone: false,
-  selector: 'app-settle-debt-modal',
-  templateUrl: './settle-debt-modal.component.html',
+    selector: 'app-settle-debt-modal',
+    templateUrl: './settle-debt-modal.component.html',
+    imports: [
+        ModalScrollLockDirective,
+        NgIf,
+        NgFor,
+        ReactiveFormsModule,
+        FormsModule,
+        DecimalPipe,
+    ],
 })
 export class SettleDebtModalComponent implements OnInit {
   @Input() teacher!: Teacher;

@@ -23,6 +23,11 @@ import {
   DailySummaryResponse,
   DailySummaryShift,
 } from '../../core/services/cash.service';
+import { NgIf, NgClass, NgFor } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
+import { TicketModalComponent } from './ticket-modal.component';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
 /**
  * Vista agrupada de movimientos del turno:
@@ -57,9 +62,18 @@ export interface GroupedMovimiento {
   latestCreatedAt: string;
 }
 @Component({
-  standalone: false,
-  selector: 'app-cash-register',
-  templateUrl: './cash-register.component.html',
+    selector: 'app-cash-register',
+    templateUrl: './cash-register.component.html',
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        DisableScrollDirective,
+        FormsModule,
+        NgClass,
+        NgFor,
+        TicketModalComponent,
+        ModalScrollLockDirective,
+    ],
 })
 export class CashRegisterComponent implements OnInit, OnDestroy {
   activeTab: 'turno' | 'historial' = 'turno';

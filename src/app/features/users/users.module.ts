@@ -7,7 +7,6 @@ import { UsersComponent } from './users.component';
 import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
-  declarations: [UsersComponent],
-  imports: [CommonModule, FormsModule, UsersRoutingModule, SharedModule],
+    imports: [CommonModule, FormsModule, UsersRoutingModule, SharedModule, UsersComponent],
 })
 export class UsersModule {}

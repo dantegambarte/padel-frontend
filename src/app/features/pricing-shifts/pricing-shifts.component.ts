@@ -1,13 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
 import { PricingShift } from '../../core/models/pricing-shift.model';
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 @Component({
-  standalone: false,
-  selector: 'app-pricing-shifts',
-  templateUrl: './pricing-shifts.component.html',
+    selector: 'app-pricing-shifts',
+    templateUrl: './pricing-shifts.component.html',
+    imports: [
+        NgIf,
+        NgFor,
+        NgClass,
+        ModalScrollLockDirective,
+        ReactiveFormsModule,
+        DisableScrollDirective,
+    ],
 })
 export class PricingShiftsComponent implements OnInit {
   readonly DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];

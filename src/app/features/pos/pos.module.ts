@@ -7,7 +7,6 @@ import { PosComponent } from './pos.component';
 import { TicketModalModule } from '../cash-register/ticket-modal.module';
 
 @NgModule({
-  declarations: [PosComponent],
-  imports: [CommonModule, FormsModule, PosRoutingModule, TicketModalModule],
+    imports: [CommonModule, FormsModule, PosRoutingModule, TicketModalModule, PosComponent],
 })
 export class PosModule {}

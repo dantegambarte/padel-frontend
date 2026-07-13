@@ -1,11 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
 import { RowState } from 'src/app/core/models/internal-consumption.model';
@@ -17,11 +11,20 @@ import { InternalConsumptionService } from '../../../core/services/internal-cons
 import { ProductsService } from '../../../core/services/products.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { UsersService } from '../../../core/services/users.service';
+import { NgIf, NgFor } from '@angular/common';
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
 
 @Component({
-  standalone: false,
-  selector: 'app-internal-consumption-form',
-  templateUrl: './internal-consumption-form.component.html',
+    selector: 'app-internal-consumption-form',
+    templateUrl: './internal-consumption-form.component.html',
+    imports: [
+        NgIf,
+        ModalScrollLockDirective,
+        ReactiveFormsModule,
+        NgFor,
+        DisableScrollDirective,
+    ],
 })
 export class InternalConsumptionFormComponent implements OnInit {
   @Output() saved = new EventEmitter<void>();

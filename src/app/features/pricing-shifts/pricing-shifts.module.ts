@@ -7,12 +7,12 @@ import { PricingShiftsRoutingModule } from './pricing-shifts-routing.module';
 import { PricingShiftsComponent } from './pricing-shifts.component';
 
 @NgModule({
-  declarations: [PricingShiftsComponent],
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    SharedModule,
-    PricingShiftsRoutingModule,
-  ],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        SharedModule,
+        PricingShiftsRoutingModule,
+        PricingShiftsComponent,
+    ],
 })
 export class PricingShiftsModule {}

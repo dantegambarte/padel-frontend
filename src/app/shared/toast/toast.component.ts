@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ToastService, ToastMessage } from '../../core/services/toast.service';
+import { NgFor, NgClass, NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf } from '@angular/common';
 
 /**
  * Animación de entrada/salida estilo Sileo/iOS:
@@ -26,10 +27,17 @@ export const toastAnimation = trigger('toastState', [
 ]);
 
 @Component({
-  standalone: false,
-  selector: 'app-toast',
-  templateUrl: './toast.component.html',
-  animations: [toastAnimation],
+    selector: 'app-toast',
+    templateUrl: './toast.component.html',
+    animations: [toastAnimation],
+    imports: [
+        NgFor,
+        NgClass,
+        NgSwitch,
+        NgSwitchCase,
+        NgSwitchDefault,
+        NgIf,
+    ],
 })
 export class ToastComponent implements OnInit, OnDestroy {
   toasts: ToastMessage[] = [];

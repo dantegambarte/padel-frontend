@@ -8,13 +8,13 @@ import { ReportsComponent } from './reports.component';
 import { TicketModalModule } from '../cash-register/ticket-modal.module';
 
 @NgModule({
-  declarations: [ReportsComponent],
-  imports: [
-    CommonModule,
-    FormsModule,
-    NgChartsModule,
-    ReportsRoutingModule,
-    TicketModalModule,
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        NgChartsModule,
+        ReportsRoutingModule,
+        TicketModalModule,
+        ReportsComponent,
+    ],
 })
 export class ReportsModule {}

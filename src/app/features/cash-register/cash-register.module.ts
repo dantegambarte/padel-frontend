@@ -8,13 +8,13 @@ import { SharedModule } from '../../shared/shared.module';
 import { TicketModalModule } from './ticket-modal.module';
 
 @NgModule({
-  declarations: [CashRegisterComponent],
-  imports: [
-    CommonModule,
-    FormsModule,
-    CashRegisterRoutingModule,
-    SharedModule,
-    TicketModalModule,
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        CashRegisterRoutingModule,
+        SharedModule,
+        TicketModalModule,
+        CashRegisterComponent,
+    ],
 })
 export class CashRegisterModule {}

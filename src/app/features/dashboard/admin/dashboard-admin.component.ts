@@ -9,11 +9,18 @@ import {
   DailyRevenue,
 } from '../../../core/services/reports.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { NgIf, NgFor, DecimalPipe } from '@angular/common';
+import { NgChartsModule } from 'ng2-charts';
 
 @Component({
-  standalone: false,
-  selector: 'app-dashboard-admin',
-  templateUrl: './dashboard-admin.component.html',
+    selector: 'app-dashboard-admin',
+    templateUrl: './dashboard-admin.component.html',
+    imports: [
+        NgIf,
+        NgFor,
+        NgChartsModule,
+        DecimalPipe,
+    ],
 })
 export class DashboardAdminComponent implements OnInit {
   isLoading = true;

@@ -63,17 +63,16 @@ describe('InternalConsumptionFormComponent', () => {
     usersServiceSpy.findAll.and.returnValue(of([user]));
 
     TestBed.configureTestingModule({
-      declarations: [InternalConsumptionFormComponent],
-      imports: [ReactiveFormsModule],
-      providers: [
+    imports: [ReactiveFormsModule, InternalConsumptionFormComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: InternalConsumptionService, useValue: serviceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: TeachersService, useValue: teachersServiceSpy },
         { provide: UsersService, useValue: usersServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('defaults consumerType to "staff" for employees and "teacher" for admins', () => {

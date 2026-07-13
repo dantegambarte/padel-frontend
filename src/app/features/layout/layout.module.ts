@@ -9,8 +9,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { TicketModalModule } from '../cash-register/ticket-modal.module';
 
 @NgModule({
-  declarations: [LayoutComponent, SidebarComponent, ToolbarComponent],
-  imports: [CommonModule, LayoutRoutingModule, SharedModule, TicketModalModule],
-  providers: [],
+    imports: [CommonModule, LayoutRoutingModule, SharedModule, TicketModalModule, LayoutComponent, SidebarComponent, ToolbarComponent],
+    providers: [],
 })
 export class LayoutModule {}

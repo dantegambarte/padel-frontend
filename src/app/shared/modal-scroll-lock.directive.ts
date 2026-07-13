@@ -11,7 +11,7 @@ import { Directive, OnInit, OnDestroy } from '@angular/core';
  *
  * Uso: agregar `appModalScrollLock` al contenedor del modal dentro de un `*ngIf`.
  */
-@Directive({ selector: '[appModalScrollLock]', standalone: false })
+@Directive({ selector: '[appModalScrollLock]' })
 export class ModalScrollLockDirective implements OnInit, OnDestroy {
   private static openCount = 0;
   private static savedBodyScrollY = 0;

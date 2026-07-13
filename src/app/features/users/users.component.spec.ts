@@ -37,14 +37,14 @@ describe('UsersComponent', () => {
     usersServiceSpy.findAll.and.returnValue(of([mockUser]));
 
     await TestBed.configureTestingModule({
-      declarations: [UsersComponent],
-      providers: [
+    imports: [UsersComponent],
+    providers: [
         { provide: UsersService, useValue: usersServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads users on init', () => {

@@ -8,20 +8,17 @@ import { SessionAlertComponent } from './session-alert/session-alert.component';
 import { ToastComponent } from './toast/toast.component';
 
 @NgModule({
-  declarations: [
-    ToastComponent,
-    CalculatorComponent,
-    ModalScrollLockDirective,
-    SessionAlertComponent,
-    DisableScrollDirective,
-  ],
-  imports: [CommonModule],
-  exports: [
-    ToastComponent,
-    CalculatorComponent,
-    ModalScrollLockDirective,
-    SessionAlertComponent,
-    DisableScrollDirective,
-  ],
+    imports: [CommonModule, ToastComponent,
+        CalculatorComponent,
+        ModalScrollLockDirective,
+        SessionAlertComponent,
+        DisableScrollDirective],
+    exports: [
+        ToastComponent,
+        CalculatorComponent,
+        ModalScrollLockDirective,
+        SessionAlertComponent,
+        DisableScrollDirective,
+    ],
 })
 export class SharedModule {}

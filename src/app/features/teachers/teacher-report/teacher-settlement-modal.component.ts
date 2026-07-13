@@ -8,11 +8,20 @@ import { TeacherReport } from '../../../core/models/teacher.model';
 import { PaymentMethod } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { TeachersService } from '../../../core/services/teachers.service';
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { NgIf, NgFor } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  standalone: false,
-  selector: 'app-teacher-settlement-modal',
-  templateUrl: './teacher-settlement-modal.component.html',
+    selector: 'app-teacher-settlement-modal',
+    templateUrl: './teacher-settlement-modal.component.html',
+    imports: [
+        ModalScrollLockDirective,
+        NgIf,
+        NgFor,
+        ReactiveFormsModule,
+        FormsModule,
+    ],
 })
 export class TeacherSettlementModalComponent implements OnInit {
   @Input() report!: TeacherReport;

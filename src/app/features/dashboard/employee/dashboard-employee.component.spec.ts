@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DashboardEmployeeComponent } from './dashboard-employee.component';
 import { BookingsService } from '../../../core/services/bookings.service';
@@ -24,15 +25,16 @@ describe('DashboardEmployeeComponent', () => {
     productsServiceSpy.getLowStock.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      declarations: [DashboardEmployeeComponent],
-      providers: [
+    imports: [DashboardEmployeeComponent],
+    providers: [
+        provideRouter([]),
         { provide: BookingsService, useValue: bookingsServiceSpy },
         { provide: CashService, useValue: cashServiceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads cash, bookings and low-stock in parallel on init', () => {

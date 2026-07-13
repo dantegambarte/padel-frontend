@@ -30,13 +30,13 @@ describe('TeachersComponent', () => {
     teachersSvcSpy.findAll.and.returnValue(of([teacher]));
 
     await TestBed.configureTestingModule({
-      declarations: [TeachersComponent],
-      providers: [
+    imports: [TeachersComponent],
+    providers: [
         { provide: TeachersService, useValue: teachersSvcSpy },
         { provide: ToastService, useValue: toastServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads all teachers (active + inactive) on init', () => {

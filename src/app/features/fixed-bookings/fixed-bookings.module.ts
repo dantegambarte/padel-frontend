@@ -7,7 +7,6 @@ import { FixedBookingsRoutingModule } from './fixed-bookings-routing.module';
 import { FixedBookingsComponent } from './fixed-bookings.component';
 
 @NgModule({
-  declarations: [FixedBookingsComponent],
-  imports: [CommonModule, FormsModule, SharedModule, FixedBookingsRoutingModule],
+    imports: [CommonModule, FormsModule, SharedModule, FixedBookingsRoutingModule, FixedBookingsComponent],
 })
 export class FixedBookingsModule {}

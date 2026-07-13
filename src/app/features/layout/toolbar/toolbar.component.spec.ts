@@ -37,19 +37,19 @@ describe('ToolbarComponent', () => {
     bookingsServiceSpy.getPendingExpectedDeposits.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      declarations: [ToolbarComponent],
-      providers: [
+    imports: [ToolbarComponent],
+    providers: [
         { provide: CalculatorService, useValue: jasmine.createSpyObj('CalculatorService', ['open']) },
-        { provide: ThemeService, useValue: { isDark$: new BehaviorSubject(false), toggle: () => {} } },
-        { provide: HolidayService, useValue: { isHoliday$: new BehaviorSubject(false), toggle: () => {} } },
+        { provide: ThemeService, useValue: { isDark$: new BehaviorSubject(false), toggle: () => { } } },
+        { provide: HolidayService, useValue: { isHoliday$: new BehaviorSubject(false), toggle: () => { } } },
         { provide: Router, useValue: routerSpy },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
         { provide: SearchService, useValue: searchServiceSpy },
         { provide: BookingsService, useValue: bookingsServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('mirrors notifications from the service', () => {

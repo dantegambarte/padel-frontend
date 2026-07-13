@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { NgClass, NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
 
 export type StatCardIcon =
   | 'dollar-sign'
@@ -15,9 +16,14 @@ export interface StatCardTrend {
 }
 
 @Component({
-  standalone: false,
-  selector: 'app-stat-card',
-  templateUrl: './stat-card.component.html',
+    selector: 'app-stat-card',
+    templateUrl: './stat-card.component.html',
+    imports: [
+        NgClass,
+        NgSwitch,
+        NgSwitchCase,
+        NgIf,
+    ],
 })
 export class StatCardComponent {
   @Input() title = '';

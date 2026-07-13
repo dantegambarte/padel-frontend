@@ -8,13 +8,13 @@ import { ExpensesListComponent } from './expenses-list/expenses-list.component';
 import { ExpenseFormComponent } from './expense-form/expense-form.component';
 
 @NgModule({
-  declarations: [ExpensesListComponent, ExpenseFormComponent],
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    SharedModule,
-    ExpensesRoutingModule,
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        SharedModule,
+        ExpensesRoutingModule,
+        ExpensesListComponent, ExpenseFormComponent,
+    ],
 })
 export class ExpensesModule {}

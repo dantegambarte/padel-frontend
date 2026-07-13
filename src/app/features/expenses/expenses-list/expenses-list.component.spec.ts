@@ -30,13 +30,13 @@ describe('ExpensesListComponent', () => {
     expensesServiceSpy.getAll.and.returnValue(of([mockExpense]));
 
     TestBed.configureTestingModule({
-      declarations: [ExpensesListComponent],
-      providers: [
+    imports: [ExpensesListComponent],
+    providers: [
         { provide: ExpensesService, useValue: expensesServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('loads expenses with a date range when the user is admin', () => {

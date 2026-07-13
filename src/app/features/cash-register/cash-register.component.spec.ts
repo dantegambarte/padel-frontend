@@ -85,28 +85,28 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [CashRegisterComponent],
-      providers: [
+    imports: [CashRegisterComponent],
+    providers: [
         { provide: CashService, useValue: cashService },
         { provide: AuthService, useValue: { isAdmin: true, currentUser: { fullName: 'Cajero Test' } } },
         { provide: ToastService, useValue: toastService },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         {
-          provide: DraftService,
-          useValue: {
-            hasDraft: jasmine.createSpy('hasDraft').and.returnValue(false),
-            getDraft: jasmine.createSpy('getDraft').and.returnValue(null),
-            saveDraft: jasmine.createSpy('saveDraft'),
-            clearDraft: jasmine.createSpy('clearDraft'),
-          },
+            provide: DraftService,
+            useValue: {
+                hasDraft: jasmine.createSpy('hasDraft').and.returnValue(false),
+                getDraft: jasmine.createSpy('getDraft').and.returnValue(null),
+                saveDraft: jasmine.createSpy('saveDraft'),
+                clearDraft: jasmine.createSpy('clearDraft'),
+            },
         },
         {
-          provide: ConfigService,
-          useValue: { getAll: jasmine.createSpy('getAll').and.returnValue(of([])) },
+            provide: ConfigService,
+            useValue: { getAll: jasmine.createSpy('getAll').and.returnValue(of([])) },
         },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
 
     fixture = TestBed.createComponent(CashRegisterComponent);
     component = fixture.componentInstance;

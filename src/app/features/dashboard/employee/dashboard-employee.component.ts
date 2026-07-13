@@ -8,11 +8,20 @@ import { BookingsService } from '../../../core/services/bookings.service';
 import { CashService } from '../../../core/services/cash.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { StatCardComponent } from '../components/stat-card/stat-card.component';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  standalone: false,
-  selector: 'app-dashboard-employee',
-  templateUrl: './dashboard-employee.component.html',
+    selector: 'app-dashboard-employee',
+    templateUrl: './dashboard-employee.component.html',
+    imports: [
+        NgIf,
+        NgFor,
+        StatCardComponent,
+        RouterLink,
+        NgClass,
+    ],
 })
 export class DashboardEmployeeComponent implements OnInit {
   isLoading = true;

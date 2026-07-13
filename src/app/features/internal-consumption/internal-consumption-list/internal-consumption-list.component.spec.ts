@@ -44,14 +44,14 @@ describe('InternalConsumptionListComponent', () => {
     teachersServiceSpy.findAll.and.returnValue(of([teacher]));
 
     await TestBed.configureTestingModule({
-      declarations: [InternalConsumptionListComponent],
-      providers: [
+    imports: [InternalConsumptionListComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: InternalConsumptionService, useValue: serviceSpy },
         { provide: TeachersService, useValue: teachersServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads consumptions, debt summary and teachers in parallel, enriching the summary', () => {

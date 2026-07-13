@@ -21,10 +21,10 @@ describe('TicketModalComponent', () => {
     salesServiceSpy = jasmine.createSpyObj('SalesService', ['findOne']);
 
     await TestBed.configureTestingModule({
-      declarations: [TicketModalComponent],
-      providers: [{ provide: SalesService, useValue: salesServiceSpy }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [TicketModalComponent],
+    providers: [{ provide: SalesService, useValue: salesServiceSpy }],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('creates without a saleId', () => {

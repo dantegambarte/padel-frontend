@@ -16,11 +16,10 @@ describe('ToastComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [ToastComponent],
-      imports: [NoopAnimationsModule],
-      providers: [{ provide: ToastService, useValue: toastServiceSpy }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [NoopAnimationsModule, ToastComponent],
+    providers: [{ provide: ToastService, useValue: toastServiceSpy }],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('mirrors the toasts$ stream', () => {

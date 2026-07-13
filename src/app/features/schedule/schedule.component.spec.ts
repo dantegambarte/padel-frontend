@@ -149,8 +149,8 @@ describe('ScheduleComponent', () => {
     draftServiceSpy.hasDraft.and.returnValue(false);
 
     TestBed.configureTestingModule({
-      declarations: [ScheduleComponent],
-      providers: [
+    imports: [ScheduleComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ConfigService, useValue: configServiceSpy },
         { provide: CourtsService, useValue: courtsServiceSpy },
@@ -167,9 +167,9 @@ describe('ScheduleComponent', () => {
         { provide: PricingShiftsService, useValue: pricingShiftsServiceSpy },
         { provide: DraftService, useValue: draftServiceSpy },
         { provide: HolidayService, useValue: { isHoliday: false } },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('loads courts, products, schedule config and pricing shifts on init', () => {

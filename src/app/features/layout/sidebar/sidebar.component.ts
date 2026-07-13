@@ -14,6 +14,7 @@ import { Subscription, filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { User, UserRole } from '../../../core/models/user.model';
+import { NgIf, NgClass, NgFor, NgSwitch, NgSwitchCase } from '@angular/common';
 
 interface NavItem {
   id: string;
@@ -29,9 +30,15 @@ interface NavGroup {
 }
 
 @Component({
-  standalone: false,
-  selector: 'app-sidebar',
-  templateUrl: './sidebar.component.html',
+    selector: 'app-sidebar',
+    templateUrl: './sidebar.component.html',
+    imports: [
+        NgIf,
+        NgClass,
+        NgFor,
+        NgSwitch,
+        NgSwitchCase,
+    ],
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isOpen: boolean = false;

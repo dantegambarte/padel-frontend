@@ -35,11 +35,10 @@ describe('PricingShiftsComponent', () => {
     serviceSpy.getAll.and.returnValue(of([shift]));
 
     await TestBed.configureTestingModule({
-      declarations: [PricingShiftsComponent],
-      imports: [ReactiveFormsModule],
-      providers: [{ provide: PricingShiftsService, useValue: serviceSpy }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [ReactiveFormsModule, PricingShiftsComponent],
+    providers: [{ provide: PricingShiftsService, useValue: serviceSpy }],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads shifts on init', () => {

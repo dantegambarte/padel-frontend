@@ -130,20 +130,20 @@ describe('PosComponent — Cuentas Abiertas', () => {
     draftService.getDraft.and.returnValue(null);
 
     await TestBed.configureTestingModule({
-      declarations: [PosComponent],
-      providers: [
+    imports: [PosComponent],
+    providers: [
         { provide: ProductsService, useValue: productsService },
         { provide: SalesService, useValue: salesService },
         { provide: CashService, useValue: cashService },
         { provide: ToastService, useValue: toastService },
         { provide: DraftService, useValue: draftService },
         {
-          provide: Router,
-          useValue: { navigate: jasmine.createSpy('navigate') },
+            provide: Router,
+            useValue: { navigate: jasmine.createSpy('navigate') },
         },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
 
     fixture = TestBed.createComponent(PosComponent);
     component = fixture.componentInstance;

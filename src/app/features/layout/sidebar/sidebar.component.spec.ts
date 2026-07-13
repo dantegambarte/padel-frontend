@@ -35,14 +35,14 @@ describe('SidebarComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [SidebarComponent],
-      providers: [
+    imports: [SidebarComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: Router, useValue: routerSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('filters nav groups by the current user role', () => {

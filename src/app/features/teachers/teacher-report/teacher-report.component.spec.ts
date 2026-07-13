@@ -30,14 +30,14 @@ describe('TeacherReportComponent', () => {
     teachersSvcSpy.findAll.and.returnValue(of([teacher]));
 
     await TestBed.configureTestingModule({
-      declarations: [TeacherReportComponent],
-      providers: [
+    imports: [TeacherReportComponent],
+    providers: [
         { provide: TeachersService, useValue: teachersSvcSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads teachers and computes a default monthly date range on init', () => {

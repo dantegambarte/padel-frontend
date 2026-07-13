@@ -30,11 +30,22 @@ import {
 } from '../../../core/services/search.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { HolidayService } from '../../../core/services/holiday.service';
+import { NgIf, NgTemplateOutlet, NgFor, NgClass, AsyncPipe, DecimalPipe, DatePipe } from '@angular/common';
+import { TicketModalComponent } from '../../cash-register/ticket-modal.component';
 
 @Component({
-  standalone: false,
-  selector: 'app-toolbar',
-  templateUrl: './toolbar.component.html',
+    selector: 'app-toolbar',
+    templateUrl: './toolbar.component.html',
+    imports: [
+        NgIf,
+        NgTemplateOutlet,
+        NgFor,
+        NgClass,
+        TicketModalComponent,
+        AsyncPipe,
+        DecimalPipe,
+        DatePipe,
+    ],
 })
 export class ToolbarComponent implements OnInit, OnDestroy {
   @Input() title = '';

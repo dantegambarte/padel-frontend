@@ -49,10 +49,10 @@ describe('SettleDebtModalComponent', () => {
     serviceSpy.getAll.and.returnValue(of([consumption]));
 
     await TestBed.configureTestingModule({
-      declarations: [SettleDebtModalComponent],
-      providers: [{ provide: InternalConsumptionService, useValue: serviceSpy }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [SettleDebtModalComponent],
+    providers: [{ provide: InternalConsumptionService, useValue: serviceSpy }],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   function createWithInputs() {

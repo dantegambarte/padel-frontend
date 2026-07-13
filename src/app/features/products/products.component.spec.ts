@@ -70,15 +70,15 @@ describe('ProductsComponent', () => {
     productsServiceSpy.getCategories.and.returnValue(of([bebidas, alquileres]));
 
     TestBed.configureTestingModule({
-      declarations: [ProductsComponent],
-      providers: [
+    imports: [ProductsComponent],
+    providers: [
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('loads products and categories on init', () => {

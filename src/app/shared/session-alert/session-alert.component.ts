@@ -6,11 +6,12 @@ import {
   SessionAlertType,
 } from '../../core/services/session-alert.service';
 import { AuthService } from '../../core/services/auth.service';
+import { NgIf, NgClass } from '@angular/common';
 
 @Component({
-  standalone: false,
-  selector: 'app-session-alert',
-  templateUrl: './session-alert.component.html',
+    selector: 'app-session-alert',
+    templateUrl: './session-alert.component.html',
+    imports: [NgIf, NgClass],
 })
 export class SessionAlertComponent implements OnInit, OnDestroy {
   visible = false;

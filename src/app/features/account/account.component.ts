@@ -1,16 +1,26 @@
 import { Component, HostListener, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute, NavigationStart } from '@angular/router';
+import { Router, ActivatedRoute, NavigationStart, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
+import { NgIf, NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  standalone: false,
-  selector: 'app-account',
-  templateUrl: './account.component.html',
+    selector: 'app-account',
+    templateUrl: './account.component.html',
+    imports: [
+        NgIf,
+        ModalScrollLockDirective,
+        ReactiveFormsModule,
+        FormsModule,
+        NgClass,
+        RouterLink,
+    ],
 })
 export class AccountComponent implements OnDestroy {
   form = {

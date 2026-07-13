@@ -18,15 +18,14 @@ describe('LoginComponent', () => {
     themeServiceStub = { isDark$: new BehaviorSubject<boolean>(false) };
 
     await TestBed.configureTestingModule({
-      declarations: [LoginComponent],
-      imports: [ReactiveFormsModule],
-      providers: [
+    imports: [ReactiveFormsModule, LoginComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: ThemeService, useValue: themeServiceStub },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('creates with an invalid empty form', () => {

@@ -1,11 +1,16 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CalculatorService } from '../../core/services/calculator.service';
+import { NgIf } from '@angular/common';
+import { ModalScrollLockDirective } from '../modal-scroll-lock.directive';
 
 @Component({
-  standalone: false,
-  selector: 'app-calculator',
-  templateUrl: './calculator.component.html',
+    selector: 'app-calculator',
+    templateUrl: './calculator.component.html',
+    imports: [
+        NgIf,
+        ModalScrollLockDirective,
+    ],
 })
 export class CalculatorComponent implements OnInit, OnDestroy {
   visible = false;

@@ -41,16 +41,15 @@ describe('ExpenseFormComponent', () => {
     draftServiceSpy.getDraft.and.returnValue(null);
 
     TestBed.configureTestingModule({
-      declarations: [ExpenseFormComponent],
-      imports: [ReactiveFormsModule],
-      providers: [
+    imports: [ReactiveFormsModule, ExpenseFormComponent],
+    providers: [
         { provide: ExpensesService, useValue: expensesServiceSpy },
         { provide: DraftService, useValue: draftServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: Router, useValue: routerSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('creates in create-mode with defaults and no draft', () => {

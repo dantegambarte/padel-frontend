@@ -2,11 +2,21 @@ import { Component, OnInit } from '@angular/core';
 import { Expense } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ExpenseFormComponent } from '../expense-form/expense-form.component';
 
 @Component({
-  standalone: false,
-  selector: 'app-expenses-list',
-  templateUrl: './expenses-list.component.html',
+    selector: 'app-expenses-list',
+    templateUrl: './expenses-list.component.html',
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        FormsModule,
+        NgFor,
+        NgClass,
+        ExpenseFormComponent,
+    ],
 })
 export class ExpensesListComponent implements OnInit {
   expenses: Expense[] = [];

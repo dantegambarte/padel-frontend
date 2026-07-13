@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { Subscription, filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -7,6 +7,10 @@ import { CashService } from '../../core/services/cash.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { RemindersApiService } from '../../core/services/reminders-api.service';
 import { User } from '../../core/models/user.model';
+import { NgIf, NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { ToolbarComponent } from './toolbar/toolbar.component';
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Inicio',
@@ -22,9 +26,16 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 @Component({
-  standalone: false,
-  selector: 'app-layout',
-  templateUrl: './layout.component.html',
+    selector: 'app-layout',
+    templateUrl: './layout.component.html',
+    imports: [
+        NgIf,
+        ModalScrollLockDirective,
+        SidebarComponent,
+        ToolbarComponent,
+        NgClass,
+        RouterOutlet,
+    ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;

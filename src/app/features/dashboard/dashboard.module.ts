@@ -11,12 +11,9 @@ import { DashboardEmployeeComponent } from './employee/dashboard-employee.compon
 import { StatCardComponent } from './components/stat-card/stat-card.component';
 
 @NgModule({
-  declarations: [
-    DashboardComponent,
-    DashboardAdminComponent,
-    DashboardEmployeeComponent,
-    StatCardComponent,
-  ],
-  imports: [CommonModule, RouterModule, NgChartsModule, DashboardRoutingModule],
+    imports: [CommonModule, RouterModule, NgChartsModule, DashboardRoutingModule, DashboardComponent,
+        DashboardAdminComponent,
+        DashboardEmployeeComponent,
+        StatCardComponent],
 })
 export class DashboardModule {}

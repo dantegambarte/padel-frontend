@@ -5,9 +5,9 @@ import { StatCardComponent } from './stat-card.component';
 describe('StatCardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [StatCardComponent],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    imports: [StatCardComponent],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('creates with default inputs and renders without throwing', () => {

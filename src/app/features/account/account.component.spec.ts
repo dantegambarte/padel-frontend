@@ -20,15 +20,15 @@ describe('AccountComponent', () => {
     const routerSpy = jasmine.createSpyObj('Router', ['navigate'], { events: routerEvents.asObservable() });
 
     TestBed.configureTestingModule({
-      declarations: [AccountComponent],
-      providers: [
+    imports: [AccountComponent],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: {} },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('does not show the forced modal for a user without mustChangePassword', () => {

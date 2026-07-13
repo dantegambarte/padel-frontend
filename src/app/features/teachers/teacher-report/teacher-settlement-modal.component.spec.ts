@@ -59,15 +59,15 @@ describe('TeacherSettlementModalComponent', () => {
     consumptionSvcSpy.getAll.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      declarations: [TeacherSettlementModalComponent],
-      providers: [
+    imports: [TeacherSettlementModalComponent],
+    providers: [
         { provide: InternalConsumptionService, useValue: consumptionSvcSpy },
         { provide: TeachersService, useValue: teachersSvcSpy },
         { provide: Router, useValue: routerSpy },
         { provide: AuthService, useValue: authServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   function createWithInputs(mode: 'clases' | 'completa' = 'completa') {

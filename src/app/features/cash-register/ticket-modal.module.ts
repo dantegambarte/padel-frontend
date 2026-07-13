@@ -5,8 +5,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { TicketModalComponent } from './ticket-modal.component';
 
 @NgModule({
-  declarations: [TicketModalComponent],
-  imports: [CommonModule, SharedModule],
-  exports: [TicketModalComponent],
+    imports: [CommonModule, SharedModule, TicketModalComponent],
+    exports: [TicketModalComponent],
 })
 export class TicketModalModule {}

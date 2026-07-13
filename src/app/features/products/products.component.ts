@@ -7,6 +7,10 @@ import { ProductsService } from '../../core/services/products.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { getCategoryColor } from '../../core/utils/category-colors';
+import { NgIf, NgFor, NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 interface ProductForm {
   name: string;
@@ -56,9 +60,17 @@ const ICON_COLORS: Record<string, { bg: string; text: string }> = {
 type DialogMode = 'create' | 'edit' | 'view';
 
 @Component({
-  standalone: false,
-  selector: 'app-products',
-  templateUrl: './products.component.html',
+    selector: 'app-products',
+    templateUrl: './products.component.html',
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        FormsModule,
+        NgFor,
+        NgClass,
+        ModalScrollLockDirective,
+        DisableScrollDirective,
+    ],
 })
 export class ProductsComponent implements OnInit {
   products: Product[] = [];

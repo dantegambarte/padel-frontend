@@ -21,13 +21,13 @@ describe('SessionAlertComponent', () => {
     authServiceSpy = jasmine.createSpyObj('AuthService', ['logout']);
 
     await TestBed.configureTestingModule({
-      declarations: [SessionAlertComponent],
-      providers: [
+    imports: [SessionAlertComponent],
+    providers: [
         { provide: SessionAlertService, useValue: sessionAlertServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('creates and starts hidden', () => {

@@ -31,14 +31,14 @@ describe('SettingsComponent', () => {
     configServiceSpy.getAll.and.returnValue(of(entries));
 
     await TestBed.configureTestingModule({
-      declarations: [SettingsComponent],
-      providers: [
+    imports: [SettingsComponent],
+    providers: [
         { provide: ConfigService, useValue: configServiceSpy },
         { provide: CourtsService, useValue: courtsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
   });
 
   it('loads config and applies it to the form', () => {

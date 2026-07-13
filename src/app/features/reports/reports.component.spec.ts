@@ -42,16 +42,16 @@ describe('ReportsComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [ReportsComponent],
-      providers: [
+    imports: [ReportsComponent],
+    providers: [
         { provide: ReportsService, useValue: reportsServiceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: CashService, useValue: cashServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: BookingsService, useValue: bookingsServiceSpy },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    });
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+});
   }
 
   it('defaults to the "mes" preset and loads KPIs for tab 0 on init', () => {

@@ -9,17 +9,15 @@ import { InternalConsumptionRoutingModule } from './internal-consumption-routing
 import { SettleDebtModalComponent } from './settle-debt-modal/settle-debt-modal.component';
 
 @NgModule({
-  declarations: [
-    InternalConsumptionListComponent,
-    InternalConsumptionFormComponent,
-    SettleDebtModalComponent,
-  ],
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    SharedModule,
-    InternalConsumptionRoutingModule,
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        SharedModule,
+        InternalConsumptionRoutingModule,
+        InternalConsumptionListComponent,
+        InternalConsumptionFormComponent,
+        SettleDebtModalComponent,
+    ],
 })
 export class InternalConsumptionModule {}

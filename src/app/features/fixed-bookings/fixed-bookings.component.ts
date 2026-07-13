@@ -13,6 +13,10 @@ import { ToastService } from '../../core/services/toast.service';
 import { TeachersService } from '../../core/services/teachers.service';
 import { Court } from '../../core/models/court.model';
 import { Teacher } from '../../core/models/teacher.model';
+import { NgClass, NgIf, NgFor, SlicePipe, DecimalPipe } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 /** Dato de una celda de la grilla semanal. */
 type SlotData = {
@@ -52,9 +56,19 @@ const EMPTY_FORM = (): FormState => ({
 });
 
 @Component({
-  standalone: false,
-  selector: 'app-fixed-bookings',
-  templateUrl: './fixed-bookings.component.html',
+    selector: 'app-fixed-bookings',
+    templateUrl: './fixed-bookings.component.html',
+    imports: [
+        NgClass,
+        NgIf,
+        NgFor,
+        ReactiveFormsModule,
+        FormsModule,
+        ModalScrollLockDirective,
+        DisableScrollDirective,
+        SlicePipe,
+        DecimalPipe,
+    ],
 })
 export class FixedBookingsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
