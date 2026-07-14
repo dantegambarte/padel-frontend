@@ -27,7 +27,7 @@
           type="button"
           (click)="setPreset(p.id)"
           [ngClass]="
-            selectedPreset === p.id
+            selectedPreset() === p.id
               ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
               : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
           "
@@ -73,7 +73,7 @@
         </div>
 
         <div
-          *ngIf="isAnyLoading"
+          *ngIf="isAnyLoading()"
           class="flex h-10 items-center gap-2 text-xs text-muted-foreground"
         >
           <svg
@@ -101,10 +101,10 @@
     </div>
   </div>
 
-  <ng-container *ngIf="!cashSessionLoading && cashSession?.sessionId">
+  <ng-container *ngIf="!cashSessionLoading() && cashSession()?.sessionId">
     <div
       [ngClass]="
-        cashSession!.isClosed
+        cashSession()!.isClosed
           ? 'border-border bg-muted/40'
           : 'border-accent/40 bg-accent/5'
       "
@@ -113,13 +113,13 @@
       <div class="flex items-center gap-3">
         <div
           [ngClass]="
-            cashSession!.isClosed
+            cashSession()!.isClosed
               ? 'bg-muted text-muted-foreground'
               : 'bg-accent/15 text-accent'
           "
           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
         >
-          <ng-container *ngIf="!cashSession!.isClosed; else iconClosed">
+          <ng-container *ngIf="!cashSession()!.isClosed; else iconClosed">
             <svg
               class="h-4 w-4"
               viewBox="0 0 24 24"
@@ -155,21 +155,21 @@
             </p>
             <span
               [ngClass]="
-                cashSession!.isClosed
+                cashSession()!.isClosed
                   ? 'bg-muted text-muted-foreground'
                   : 'bg-accent/15 text-accent'
               "
               class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-bold"
             >
-              {{ cashSession!.isClosed ? "Cerrada" : "Abierta ●" }}
+              {{ cashSession()!.isClosed ? "Cerrada" : "Abierta ●" }}
             </span>
           </div>
           <p class="text-xs text-muted-foreground">
-            Jornada del <strong>{{ cashSession!.sessionDate ?? "—" }}</strong>
-            <ng-container *ngIf="cashSession!.openedAt">
+            Jornada del <strong>{{ cashSession()!.sessionDate ?? "—" }}</strong>
+            <ng-container *ngIf="cashSession()!.openedAt">
               · Apertura:
               {{
-                cashSession!.openedAt
+                cashSession()!.openedAt
                   | date: "HH:mm" : "America/Argentina/Buenos_Aires"
               }}
             </ng-container>
@@ -177,7 +177,7 @@
         </div>
       </div>
       <button
-        *ngIf="!cashSession!.isClosed"
+        *ngIf="!cashSession()!.isClosed"
         type="button"
         (click)="selectToday()"
         class="inline-flex h-8 items-center gap-1.5 rounded-md border border-accent/50 bg-accent/10 px-3 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -216,7 +216,7 @@
         [attr.data-tab-index]="i"
         (click)="onTabChange(i)"
         [ngClass]="
-          activeTab === i
+          activeTab() === i
             ? 'border-b-2 border-primary text-foreground font-semibold bg-primary/5'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         "
@@ -314,8 +314,8 @@
       </button>
     </div>
 
-    <div *ngIf="activeTab === 0" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      <div *ngIf="isLoadingKpis" class="space-y-4">
+    <div *ngIf="activeTab() === 0" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div *ngIf="isLoadingKpis()" class="space-y-4">
         <div class="grid grid-cols-3 gap-4">
           <div
             *ngFor="let i of [1, 2, 3]"
@@ -336,7 +336,7 @@
         ></div>
       </div>
 
-      <ng-container *ngIf="!isLoadingKpis">
+      <ng-container *ngIf="!isLoadingKpis()">
         <div>
           <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Balance Financiero</h4>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -368,7 +368,7 @@
             <p
               class="text-2xl font-bold text-emerald-700 dark:text-emerald-400"
             >
-              ${{ fmt(summaryData?.totalRevenue ?? totalRevenue) }}
+              ${{ fmt(summaryData()?.totalRevenue ?? totalRevenue()) }}
             </p>
             <p class="text-xs text-emerald-600/70 dark:text-emerald-500">
               {{ periodoLabel }}
@@ -401,7 +401,7 @@
               </div>
             </div>
             <p class="text-2xl font-bold text-red-700 dark:text-red-400">
-              ${{ fmt(summaryData?.totalExpenses ?? 0) }}
+              ${{ fmt(summaryData()?.totalExpenses ?? 0) }}
             </p>
             <p class="text-xs text-red-600/70 dark:text-red-500">
               {{ periodoLabel }}
@@ -410,7 +410,7 @@
 
           <div
             [ngClass]="
-              (summaryData?.netProfit ?? 0) >= 0
+              (summaryData()?.netProfit ?? 0) >= 0
                 ? 'border-cyan-200 bg-cyan-50 dark:border-cyan-800/40 dark:bg-cyan-950/20'
                 : 'border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20'
             "
@@ -419,7 +419,7 @@
             <div class="flex items-center justify-between">
               <span
                 [ngClass]="
-                  (summaryData?.netProfit ?? 0) >= 0
+                  (summaryData()?.netProfit ?? 0) >= 0
                     ? 'text-cyan-700 dark:text-cyan-400'
                     : 'text-red-700 dark:text-red-400'
                 "
@@ -428,7 +428,7 @@
               >
               <div
                 [ngClass]="
-                  (summaryData?.netProfit ?? 0) >= 0
+                  (summaryData()?.netProfit ?? 0) >= 0
                     ? 'bg-cyan-500/15'
                     : 'bg-red-500/15'
                 "
@@ -436,7 +436,7 @@
               >
                 <svg
                   [ngClass]="
-                    (summaryData?.netProfit ?? 0) >= 0
+                    (summaryData()?.netProfit ?? 0) >= 0
                       ? 'text-cyan-600'
                       : 'text-red-600'
                   "
@@ -455,17 +455,17 @@
             </div>
             <p
               [ngClass]="
-                (summaryData?.netProfit ?? 0) >= 0
+                (summaryData()?.netProfit ?? 0) >= 0
                   ? 'text-cyan-700 dark:text-cyan-400'
                   : 'text-red-700 dark:text-red-400'
               "
               class="text-2xl font-bold"
             >
-              ${{ fmt(summaryData?.netProfit ?? 0) }}
+              ${{ fmt(summaryData()?.netProfit ?? 0) }}
             </p>
             <p
               [ngClass]="
-                (summaryData?.netProfit ?? 0) >= 0
+                (summaryData()?.netProfit ?? 0) >= 0
                   ? 'text-cyan-600/70'
                   : 'text-red-600/70'
               "
@@ -484,8 +484,8 @@
           <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
             <div class="min-w-0 flex-1">
               <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Alquileres</span>
-              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalAlquileres) }}</p>
-              <p class="text-xs text-muted-foreground mt-0.5">{{ pctAlquileres }}% del total</p>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalAlquileres()) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ pctAlquileres() }}% del total</p>
             </div>
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 ml-3">
               <svg class="h-4 w-4 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -498,8 +498,8 @@
           <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
             <div class="min-w-0 flex-1">
               <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Productos</span>
-              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalProductos) }}</p>
-              <p class="text-xs text-muted-foreground mt-0.5">{{ pctProductos }}% del total</p>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(totalProductos()) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ pctProductos() }}% del total</p>
             </div>
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 ml-3">
               <svg class="h-4 w-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -514,8 +514,8 @@
           <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
             <div class="min-w-0 flex-1">
               <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Efectivo</span>
-              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData?.cash?.total ?? 0) }}</p>
-              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData?.cash?.percentage ?? 0 }}% del total</p>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData()?.cash?.total ?? 0) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData()?.cash?.percentage ?? 0 }}% del total</p>
             </div>
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 ml-3">
               <svg class="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -528,8 +528,8 @@
           <div class="rounded-xl border border-border bg-background flex items-center justify-between p-3.5 sm:p-5">
             <div class="min-w-0 flex-1">
               <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide block truncate">Transferencia</span>
-              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData?.transfer?.total ?? 0) }}</p>
-              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData?.transfer?.percentage ?? 0 }}% del total</p>
+              <p class="text-xl font-bold text-foreground tabular-nums mt-0.5">${{ fmt(paymentData()?.transfer?.total ?? 0) }}</p>
+              <p class="text-xs text-muted-foreground mt-0.5">{{ paymentData()?.transfer?.percentage ?? 0 }}% del total</p>
             </div>
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 ml-3">
               <svg class="h-4 w-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -545,7 +545,7 @@
 
         <hr class="border-border my-6 sm:my-8">
         <div
-          *ngIf="revenueData.length > 0"
+          *ngIf="revenueData().length > 0"
           class="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-border bg-background p-5 space-y-3"
         >
           <div>
@@ -560,7 +560,7 @@
           >
             <canvas
               baseChart
-              [data]="cashFlowChartData"
+              [data]="cashFlowChartData()"
               [options]="barChartOptions"
               [type]="barChartType"
             >
@@ -570,7 +570,7 @@
 
         <div
           [ngClass]="
-            lowStockProducts.length > 0
+            lowStockProducts().length > 0
               ? 'border-orange-300 bg-orange-50 dark:border-orange-700/50 dark:bg-orange-950/20'
               : 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/40 dark:bg-emerald-950/20'
           "
@@ -579,14 +579,14 @@
           <div class="flex items-center gap-3 mb-3">
             <div
               [ngClass]="
-                lowStockProducts.length > 0
+                lowStockProducts().length > 0
                   ? 'bg-orange-500/15'
                   : 'bg-emerald-500/15'
               "
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
             >
               <svg
-                *ngIf="lowStockProducts.length > 0"
+                *ngIf="lowStockProducts().length > 0"
                 class="h-5 w-5 text-orange-600"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -602,7 +602,7 @@
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <svg
-                *ngIf="lowStockProducts.length === 0"
+                *ngIf="lowStockProducts().length === 0"
                 class="h-5 w-5 text-emerald-600"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -617,7 +617,7 @@
             <div>
               <p
                 [ngClass]="
-                  lowStockProducts.length > 0
+                  lowStockProducts().length > 0
                     ? 'text-orange-800 dark:text-orange-300'
                     : 'text-emerald-800 dark:text-emerald-300'
                 "
@@ -627,17 +627,17 @@
               </p>
               <p
                 [ngClass]="
-                  lowStockProducts.length > 0
+                  lowStockProducts().length > 0
                     ? 'text-orange-600/80'
                     : 'text-emerald-600/80'
                 "
                 class="text-xs"
               >
                 {{
-                  lowStockProducts.length > 0
-                    ? lowStockProducts.length +
+                  lowStockProducts().length > 0
+                    ? lowStockProducts().length +
                       " producto" +
-                      (lowStockProducts.length > 1 ? "s" : "") +
+                      (lowStockProducts().length > 1 ? "s" : "") +
                       " con stock bajo o agotado"
                     : "Todos los productos tienen stock suficiente"
                 }}
@@ -645,9 +645,9 @@
             </div>
           </div>
 
-          <ul *ngIf="lowStockProducts.length > 0" class="space-y-2 mt-3">
+          <ul *ngIf="lowStockProducts().length > 0" class="space-y-2 mt-3">
             <li
-              *ngFor="let p of lowStockProducts"
+              *ngFor="let p of lowStockProducts()"
               class="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 dark:bg-white/5"
             >
               <div class="flex items-center gap-2 min-w-0">
@@ -673,7 +673,7 @@
         </div>
 
         <div
-          *ngIf="revenueData.length === 0"
+          *ngIf="revenueData().length === 0"
           class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
         >
           <svg
@@ -696,7 +696,7 @@
       </ng-container>
     </div>
 
-    <div *ngIf="activeTab === 1" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div *ngIf="activeTab() === 1" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div class="grid gap-6 lg:grid-cols-2">
         <div
           class="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-border bg-background p-5 space-y-4"
@@ -710,18 +710,18 @@
             </p>
           </div>
           <div
-            *ngIf="isLoadingKpis"
+            *ngIf="isLoadingKpis()"
             class="h-[280px] animate-pulse rounded-lg bg-muted"
           ></div>
 
           <div
-            *ngIf="!isLoadingKpis"
+            *ngIf="!isLoadingKpis()"
             class="relative w-full max-w-full h-[320px] sm:h-[280px]"
             style="position: relative; width: 100%; max-width: 100%"
           >
             <canvas
               baseChart
-              [data]="barChartData"
+              [data]="barChartData()"
               [options]="barChartOptions"
               [type]="barChartType"
             ></canvas>
@@ -740,16 +740,16 @@
             </p>
           </div>
           <div
-            *ngIf="isLoadingKpis"
+            *ngIf="isLoadingKpis()"
             class="h-[200px] sm:h-[240px] animate-pulse rounded-lg bg-muted"
           ></div>
-          <ng-container *ngIf="!isLoadingKpis">
+          <ng-container *ngIf="!isLoadingKpis()">
             <div
               class="relative flex h-[200px] sm:h-[240px] items-center justify-center"
             >
               <canvas
                 baseChart
-                [data]="pieChartData"
+                [data]="pieChartData()"
                 [options]="pieChartOptions"
                 [type]="pieChartType"
               ></canvas>
@@ -764,7 +764,7 @@
                   >Efectivo
                 </span>
                 <span class="font-semibold"
-                  >${{ fmt(paymentData?.cash?.total ?? 0) }}</span
+                  >${{ fmt(paymentData()?.cash?.total ?? 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between text-sm">
@@ -776,7 +776,7 @@
                   >Transferencia
                 </span>
                 <span class="font-semibold"
-                  >${{ fmt(paymentData?.transfer?.total ?? 0) }}</span
+                  >${{ fmt(paymentData()?.transfer?.total ?? 0) }}</span
                 >
               </div>
             </div>
@@ -785,7 +785,7 @@
       </div>
     </div>
 
-    <div *ngIf="activeTab === 2" class="p-4 sm:p-6 space-y-4">
+    <div *ngIf="activeTab() === 2" class="p-4 sm:p-6 space-y-4">
       <div>
         <h3 class="text-sm font-semibold text-foreground">
           Ranking de Productos Vendidos
@@ -795,17 +795,17 @@
         </p>
       </div>
 
-      <div *ngIf="isLoadingRanking" class="space-y-3">
+      <div *ngIf="isLoadingRanking()" class="space-y-3">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5, 6]"
           class="h-16 animate-pulse rounded-xl border border-border bg-muted"
         ></div>
       </div>
 
-      <ng-container *ngIf="!isLoadingRanking">
+      <ng-container *ngIf="!isLoadingRanking()">
         <div class="space-y-2">
           <div
-            *ngFor="let product of productRanking; let i = index"
+            *ngFor="let product of productRanking(); let i = index"
             class="flex items-center gap-4 rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted/40"
           >
             <div
@@ -837,8 +837,8 @@
                 <div
                   class="h-full rounded-full bg-primary transition-all"
                   [style.width.%]="
-                    rankingTotalUnidades > 0
-                      ? (product.qty / rankingTotalUnidades) * 100
+                    rankingTotalUnidades() > 0
+                      ? (product.qty / rankingTotalUnidades()) * 100
                       : 0
                   "
                 ></div>
@@ -856,7 +856,7 @@
           </div>
 
           <p
-            *ngIf="productRanking.length === 0"
+            *ngIf="productRanking().length === 0"
             class="py-10 text-center text-sm text-muted-foreground"
           >
             No hay datos de productos para el período seleccionado
@@ -864,26 +864,26 @@
         </div>
 
         <div
-          *ngIf="productRanking.length > 0"
+          *ngIf="productRanking().length > 0"
           class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-5 py-3"
         >
           <div class="text-sm text-muted-foreground">
             <span class="font-medium text-foreground">{{
-              rankingTotalUnidades
+              rankingTotalUnidades()
             }}</span>
             unidades en total
           </div>
           <div class="text-right">
             <p class="text-xs text-muted-foreground">Total productos</p>
             <p class="text-lg font-bold text-foreground">
-              ${{ fmt(rankingTotalAmount) }}
+              ${{ fmt(rankingTotalAmount()) }}
             </p>
           </div>
         </div>
       </ng-container>
     </div>
 
-    <div *ngIf="activeTab === 3" class="p-4 sm:p-6 space-y-4 sm:space-y-5">
+    <div *ngIf="activeTab() === 3" class="p-4 sm:p-6 space-y-4 sm:space-y-5">
       <div
         class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
       >
@@ -895,17 +895,17 @@
             <div class="mt-1 flex flex-wrap items-center gap-2">
               <p class="text-xs text-muted-foreground">{{ periodoLabel }}</p>
               <span
-                *ngIf="!isLoadingTransactions"
+                *ngIf="!isLoadingTransactions()"
                 class="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
               >
-                {{ filteredTransactions.length }}
+                {{ filteredTransactions().length }}
                 <ng-container
-                  *ngIf="filteredTransactions.length !== transactions.length"
+                  *ngIf="filteredTransactions().length !== transactions().length"
                 >
-                  / {{ transactions.length }}
+                  / {{ transactions().length }}
                 </ng-container>
                 {{
-                  filteredTransactions.length === 1
+                  filteredTransactions().length === 1
                     ? "operación"
                     : "operaciones"
                 }}
@@ -914,15 +914,15 @@
           </div>
 
           <div
-            *ngIf="!isLoadingTransactions && transactions.length > 0"
+            *ngIf="!isLoadingTransactions() && transactions().length > 0"
             class="flex flex-wrap gap-2"
           >
             <div class="w-full flex flex-wrap gap-1">
               <button
                 type="button"
-                (click)="txFilterType = 'all'"
+                (click)="txFilterType.set('all')"
                 [ngClass]="
-                  txFilterType === 'all'
+                  txFilterType() === 'all'
                     ? 'bg-slate-700 text-white border-slate-700'
                     : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 "
@@ -932,9 +932,9 @@
               </button>
               <button
                 type="button"
-                (click)="txFilterType = 'booking'"
+                (click)="txFilterType.set('booking')"
                 [ngClass]="
-                  txFilterType === 'booking'
+                  txFilterType() === 'booking'
                     ? 'bg-orange-500 text-white border-orange-500'
                     : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
                 "
@@ -944,9 +944,9 @@
               </button>
               <button
                 type="button"
-                (click)="txFilterType = 'sale'"
+                (click)="txFilterType.set('sale')"
                 [ngClass]="
-                  txFilterType === 'sale'
+                  txFilterType() === 'sale'
                     ? 'bg-violet-500 text-white border-violet-500'
                     : 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100'
                 "
@@ -956,9 +956,9 @@
               </button>
               <button
                 type="button"
-                (click)="txFilterType = 'expense'"
+                (click)="txFilterType.set('expense')"
                 [ngClass]="
-                  txFilterType === 'expense'
+                  txFilterType() === 'expense'
                     ? 'bg-red-500 text-white border-red-500'
                     : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
                 "
@@ -971,9 +971,9 @@
             <div class="w-full flex flex-wrap gap-1">
               <button
                 type="button"
-                (click)="txFilterPayment = 'all'"
+                (click)="txFilterPayment.set('all')"
                 [ngClass]="
-                  txFilterPayment === 'all'
+                  txFilterPayment() === 'all'
                     ? 'bg-slate-700 text-white border-slate-700'
                     : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 "
@@ -983,9 +983,9 @@
               </button>
               <button
                 type="button"
-                (click)="txFilterPayment = 'cash'"
+                (click)="txFilterPayment.set('cash')"
                 [ngClass]="
-                  txFilterPayment === 'cash'
+                  txFilterPayment() === 'cash'
                     ? 'bg-emerald-500 text-white border-emerald-500'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                 "
@@ -995,9 +995,9 @@
               </button>
               <button
                 type="button"
-                (click)="txFilterPayment = 'transfer'"
+                (click)="txFilterPayment.set('transfer')"
                 [ngClass]="
-                  txFilterPayment === 'transfer'
+                  txFilterPayment() === 'transfer'
                     ? 'bg-indigo-500 text-white border-indigo-500'
                     : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                 "
@@ -1008,7 +1008,7 @@
             </div>
 
             <button
-              *ngIf="txFilterType !== 'all' || txFilterPayment !== 'all'"
+              *ngIf="txFilterType() !== 'all' || txFilterPayment() !== 'all'"
               type="button"
               (click)="resetTxFilters()"
               class="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
@@ -1036,7 +1036,7 @@
           <button
             type="button"
             (click)="exportExcel()"
-            [disabled]="isExporting || isLoadingTransactions"
+            [disabled]="isExporting() || isLoadingTransactions()"
             class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-accent px-3 sm:px-4 text-xs sm:text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <svg
@@ -1052,12 +1052,12 @@
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            {{ isExporting ? "Exportando..." : "Excel" }}
+            {{ isExporting() ? "Exportando..." : "Excel" }}
           </button>
           <button
             type="button"
             (click)="exportCSV()"
-            [disabled]="isExporting || isLoadingTransactions"
+            [disabled]="isExporting() || isLoadingTransactions()"
             class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 sm:px-4 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <svg
@@ -1081,17 +1081,17 @@
         </div>
       </div>
 
-      <div *ngIf="isLoadingTransactions" class="space-y-3">
+      <div *ngIf="isLoadingTransactions()" class="space-y-3">
         <div
           *ngFor="let i of [1, 2, 3, 4, 5]"
           class="h-24 animate-pulse rounded-xl border border-border bg-muted sm:h-12"
         ></div>
       </div>
 
-      <ng-container *ngIf="!isLoadingTransactions">
+      <ng-container *ngIf="!isLoadingTransactions()">
         <div class="md:hidden space-y-3">
           <div
-            *ngFor="let tx of filteredTransactions"
+            *ngFor="let tx of filteredTransactions()"
             class="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
           >
             <div class="flex items-center justify-between px-4 pt-4 pb-2">
@@ -1157,17 +1157,17 @@
           </div>
 
           <div
-            *ngIf="filteredTransactions.length > 0"
+            *ngIf="filteredTransactions().length > 0"
             class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3"
           >
             <span class="text-sm font-semibold">Total</span>
             <span class="font-mono text-lg font-bold"
-              >${{ fmt(filteredTransactionTotal) }}</span
+              >${{ fmt(filteredTransactionTotal()) }}</span
             >
           </div>
 
           <div
-            *ngIf="filteredTransactions.length === 0 && transactions.length > 0"
+            *ngIf="filteredTransactions().length === 0 && transactions().length > 0"
             class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
           >
             <svg
@@ -1195,7 +1195,7 @@
           </div>
 
           <p
-            *ngIf="transactions.length === 0"
+            *ngIf="transactions().length === 0"
             class="py-10 text-center text-sm text-muted-foreground"
           >
             No hay transacciones para el período seleccionado
@@ -1240,7 +1240,7 @@
             </thead>
             <tbody>
               <tr
-                *ngFor="let tx of filteredTransactions"
+                *ngFor="let tx of filteredTransactions()"
                 class="border-b border-border hover:bg-muted/40 transition-colors"
               >
                 <td
@@ -1304,7 +1304,7 @@
               </tr>
             </tbody>
             <tfoot
-              *ngIf="transactions.length > 0"
+              *ngIf="transactions().length > 0"
               class="border-t border-border bg-muted/30"
             >
               <tr>
@@ -1312,7 +1312,7 @@
                   Total del período
                 </td>
                 <td class="p-3 text-right font-mono text-base font-bold">
-                  ${{ fmt(transactionTotal) }}
+                  ${{ fmt(transactionTotal()) }}
                 </td>
                 <td class="p-3"></td>
                 <td class="p-3"></td>
@@ -1321,7 +1321,7 @@
           </table>
 
           <div
-            *ngIf="filteredTransactions.length === 0 && transactions.length > 0"
+            *ngIf="filteredTransactions().length === 0 && transactions().length > 0"
             class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
           >
             <svg
@@ -1349,7 +1349,7 @@
           </div>
 
           <p
-            *ngIf="transactions.length === 0"
+            *ngIf="transactions().length === 0"
             class="py-10 text-center text-sm text-muted-foreground"
           >
             No hay transacciones para el período seleccionado
@@ -1358,7 +1358,7 @@
       </ng-container>
 
       <div
-        *ngIf="isLoadingTicket"
+        *ngIf="isLoadingTicket()"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       >
         <svg class="h-10 w-10 animate-spin text-white" viewBox="0 0 24 24" fill="none">
@@ -1368,14 +1368,14 @@
       </div>
 
       <app-ticket-modal
-        *ngIf="ticketSaleId"
-        [saleId]="ticketSaleId"
+        *ngIf="ticketSaleId()"
+        [saleId]="ticketSaleId()"
         (closeModal)="closeTicket()"
       ></app-ticket-modal>
     </div>
 
     <div *ngIf="isTab(4)" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      <div *ngIf="isLoadingExpenses" class="space-y-3">
+      <div *ngIf="isLoadingExpenses()" class="space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div
             *ngFor="let _ of [1, 2, 3]"
@@ -1388,7 +1388,7 @@
         ></div>
       </div>
 
-      <ng-container *ngIf="!isLoadingExpenses && expensesReport">
+      <ng-container *ngIf="!isLoadingExpenses() && expensesReport() as expensesReport">
         <div
           class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
@@ -1404,7 +1404,7 @@
             <button
               type="button"
               (click)="exportExpensesExcel()"
-              [disabled]="isExporting"
+              [disabled]="isExporting()"
               class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <svg
@@ -1425,7 +1425,7 @@
             <button
               type="button"
               (click)="exportExpensesCSV()"
-              [disabled]="isExporting"
+              [disabled]="isExporting()"
               class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <svg
@@ -1690,7 +1690,7 @@
       </ng-container>
 
       <div
-        *ngIf="!isLoadingExpenses && !expensesReport"
+        *ngIf="!isLoadingExpenses() && !expensesReport()"
         class="py-14 text-center text-sm text-muted-foreground"
       >
         No se pudieron cargar los egresos. Intente nuevamente.

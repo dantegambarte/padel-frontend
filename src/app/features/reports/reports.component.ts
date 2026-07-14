@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
 import * as XLSX from 'xlsx';
 import { forkJoin, of, Subject } from 'rxjs';
 import {
@@ -69,9 +69,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
     { id: 'anual', label: 'Anual' },
   ];
   /** Resalta el preset activo; se limpia cuando el usuario edita las fechas manualmente. */
-  selectedPreset = 'mes';
+  selectedPreset = signal('mes');
 
-  activeTab: number = 0;
+  activeTab = signal(0);
   readonly tabs = [
     { label: 'Resumen General' },
     { label: 'Tendencias e Ingresos' },
@@ -80,43 +80,43 @@ export class ReportsComponent implements OnInit, OnDestroy {
     { label: 'Egresos' },
   ];
 
-  isLoadingKpis = false;
-  isLoadingRanking = false;
-  isLoadingTransactions = false;
-  isLoadingExpenses = false;
+  isLoadingKpis = signal(false);
+  isLoadingRanking = signal(false);
+  isLoadingTransactions = signal(false);
+  isLoadingExpenses = signal(false);
 
   private kpisLoaded = false;
   private rankingLoaded = false;
   private transactionsLoaded = false;
   private expensesLoaded = false;
 
-  revenueData: RevenueDay[] = [];
-  paymentData: PaymentBreakdown | null = null;
-  productRanking: ProductRanking[] = [];
-  transactions: TransactionExport[] = [];
-  expensesReport: ExpensesReport | null = null;
-  summaryData: ReportsSummaryResponse | null = null;
-  lowStockProducts: LowStockProduct[] = [];
+  revenueData = signal<RevenueDay[]>([]);
+  paymentData = signal<PaymentBreakdown | null>(null);
+  productRanking = signal<ProductRanking[]>([]);
+  transactions = signal<TransactionExport[]>([]);
+  expensesReport = signal<ExpensesReport | null>(null);
+  summaryData = signal<ReportsSummaryResponse | null>(null);
+  lowStockProducts = signal<LowStockProduct[]>([]);
 
-  txFilterType: 'all' | 'booking' | 'sale' | 'expense' = 'all';
-  txFilterPayment: 'all' | 'cash' | 'transfer' = 'all';
+  txFilterType = signal<'all' | 'booking' | 'sale' | 'expense'>('all');
+  txFilterPayment = signal<'all' | 'cash' | 'transfer'>('all');
 
-  isExporting = false;
+  isExporting = signal(false);
 
-  ticketSaleId: string | null = null;
-  isLoadingTicket = false;
+  ticketSaleId = signal<string | null>(null);
+  isLoadingTicket = signal(false);
 
-  cashSession: {
+  cashSession = signal<{
     sessionId: string | null;
     isClosed: boolean;
     sessionDate: string | null;
     openedAt: string | null;
-  } | null = null;
-  cashSessionLoading = true;
+  } | null>(null);
+  cashSessionLoading = signal(true);
 
   barChartType = 'bar' as const;
-  barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
-  cashFlowChartData: ChartData<'bar'> = { labels: [], datasets: [] };
+  barChartData = signal<ChartData<'bar'>>({ labels: [], datasets: [] });
+  cashFlowChartData = signal<ChartData<'bar'>>({ labels: [], datasets: [] });
   barChartOptions: ChartOptions<'bar'> = this.buildBarChartOptions();
 
   /** Reconstruye las opciones de los gráficos al cambiar el tamaño de ventana para adaptar el layout a móvil. */
@@ -166,7 +166,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   pieChartType = 'pie' as const;
-  pieChartData: ChartData<'pie'> = { labels: [], datasets: [] };
+  pieChartData = signal<ChartData<'pie'>>({ labels: [], datasets: [] });
   pieChartOptions: ChartOptions<'pie'> = this.buildPieChartOptions();
 
   /** Construye las opciones de Chart.js para el gráfico circular, con leyenda lateral en desktop y pie en móvil. */
@@ -239,14 +239,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
    */
   openTicket(referenceId: string, type: string): void {
     if (type === 'sale') {
-      this.ticketSaleId = referenceId;
+      this.ticketSaleId.set(referenceId);
       return;
     }
 
-    this.isLoadingTicket = true;
+    this.isLoadingTicket.set(true);
     this.bookingsService
       .getTicketSummary(referenceId)
-      .pipe(finalize(() => (this.isLoadingTicket = false)))
+      .pipe(finalize(() => this.isLoadingTicket.set(false)))
       .subscribe({
         next: (s) => this.openBookingDetail(s.booking),
         error: () =>
@@ -258,7 +258,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
    * Cierra el modal de detalle de ticket, limpiando el ID de venta seleccionado para ocultar el componente del ticket.
    */
   closeTicket(): void {
-    this.ticketSaleId = null;
+    this.ticketSaleId.set(null);
   }
 
   /**
@@ -367,82 +367,79 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   /** Suma total de ingresos (alquileres + ventas) del período seleccionado. */
-  get totalRevenue(): number {
-    return this.revenueData.reduce(
+  totalRevenue = computed(() =>
+    this.revenueData().reduce(
       (s, d) => s + (Number(d.bookings) || 0) + (Number(d.sales) || 0),
       0,
-    );
-  }
+    ),
+  );
 
   /** Total de ingresos por reservas de canchas en el período. */
-  get totalAlquileres(): number {
-    return this.revenueData.reduce((s, d) => s + (Number(d.bookings) || 0), 0);
-  }
+  totalAlquileres = computed(() =>
+    this.revenueData().reduce((s, d) => s + (Number(d.bookings) || 0), 0),
+  );
 
   /** Total de ingresos por ventas de productos en el período. */
-  get totalProductos(): number {
-    return this.revenueData.reduce((s, d) => s + (Number(d.sales) || 0), 0);
-  }
+  totalProductos = computed(() =>
+    this.revenueData().reduce((s, d) => s + (Number(d.sales) || 0), 0),
+  );
 
   /** Porcentaje de ingresos por alquileres sobre el total, como string con un decimal. */
-  get pctAlquileres(): string {
-    return this.totalRevenue > 0
-      ? ((this.totalAlquileres / this.totalRevenue) * 100).toFixed(1)
-      : '0.0';
-  }
+  pctAlquileres = computed(() =>
+    this.totalRevenue() > 0
+      ? ((this.totalAlquileres() / this.totalRevenue()) * 100).toFixed(1)
+      : '0.0',
+  );
 
   /** Porcentaje de ingresos por productos sobre el total, como string con un decimal. */
-  get pctProductos(): string {
-    return this.totalRevenue > 0
-      ? ((this.totalProductos / this.totalRevenue) * 100).toFixed(1)
-      : '0.0';
-  }
+  pctProductos = computed(() =>
+    this.totalRevenue() > 0
+      ? ((this.totalProductos() / this.totalRevenue()) * 100).toFixed(1)
+      : '0.0',
+  );
 
   /** Ticket promedio usa la cuenta de transacciones; disponible solo después de cargar tab 3. */
-  get ticketPromedio(): number {
-    return this.transactions.length > 0
-      ? Math.round(this.totalRevenue / this.transactions.length)
-      : 0;
-  }
+  ticketPromedio = computed(() =>
+    this.transactions().length > 0
+      ? Math.round(this.totalRevenue() / this.transactions().length)
+      : 0,
+  );
 
   /** Suma de todos los montos en la lista de transacciones cargadas. */
-  get transactionTotal(): number {
-    return this.transactions.reduce((s, t) => s + (Number(t.total) || 0), 0);
-  }
+  transactionTotal = computed(() =>
+    this.transactions().reduce((s, t) => s + (Number(t.total) || 0), 0),
+  );
 
   /** Transacciones filtradas por tipo (turno/venta) y método de pago. */
-  get filteredTransactions(): TransactionExport[] {
-    return this.transactions.filter((tx) => {
+  filteredTransactions = computed(() =>
+    this.transactions().filter((tx) => {
       const typeOk =
-        this.txFilterType === 'all' || tx.type === this.txFilterType;
+        this.txFilterType() === 'all' || tx.type === this.txFilterType();
       const paymentOk =
-        this.txFilterPayment === 'all' ||
-        (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
-        (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
+        this.txFilterPayment() === 'all' ||
+        (this.txFilterPayment() === 'cash' && Number(tx.cash) > 0) ||
+        (this.txFilterPayment() === 'transfer' && Number(tx.transfer) > 0);
       return typeOk && paymentOk;
-    });
-  }
+    }),
+  );
 
   /** Total monetario de las transacciones filtradas. */
-  get filteredTransactionTotal(): number {
-    return this.filteredTransactions.reduce(
+  filteredTransactionTotal = computed(() =>
+    this.filteredTransactions().reduce(
       (s, t) => s + (Number(t.total) || 0),
       0,
-    );
-  }
+    ),
+  );
 
   /** Suma de ingresos de todos los productos del ranking del período. */
-  get rankingTotalAmount(): number {
-    return this.productRanking.reduce(
-      (s, p) => s + (Number(p.revenue) || 0),
-      0,
-    );
-  }
+  rankingTotalAmount = computed(() =>
+    this.productRanking().reduce((s, p) => s + (Number(p.revenue) || 0), 0),
+  );
 
   /** Suma de unidades vendidas de todos los productos del ranking. */
-  get rankingTotalUnidades(): number {
-    return this.productRanking.reduce((s, p) => s + (Number(p.qty) || 0), 0);
-  }
+  rankingTotalUnidades = computed(() =>
+    this.productRanking().reduce((s, p) => s + (Number(p.qty) || 0), 0),
+  );
 
   /** Etiqueta legible del rango de fechas activo. Ej: "01/04/2026 – 30/04/2026". */
   get periodoLabel(): string {
@@ -450,14 +447,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   /** True si alguna de las cuatro secciones está cargando datos del servidor. */
-  get isAnyLoading(): boolean {
-    return (
-      this.isLoadingKpis ||
-      this.isLoadingRanking ||
-      this.isLoadingTransactions ||
-      this.isLoadingExpenses
-    );
-  }
+  isAnyLoading = computed(
+    () =>
+      this.isLoadingKpis() ||
+      this.isLoadingRanking() ||
+      this.isLoadingTransactions() ||
+      this.isLoadingExpenses(),
+  );
 
   /**
    * Rellena dateFrom / dateTo según el preset y emite en el pipeline de debounce.
@@ -467,7 +463,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const range = this.getDateRange(id);
     this.dateFrom = range.from;
     this.dateTo = range.to;
-    this.selectedPreset = id;
+    this.selectedPreset.set(id);
     this.filterChange$.next({ from: this.dateFrom, to: this.dateTo });
   }
 
@@ -476,7 +472,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
    * Limpia el preset resaltado y emite en el pipeline de debounce.
    */
   onDateChanged(): void {
-    this.selectedPreset = '';
+    this.selectedPreset.set('');
     this.filterChange$.next({ from: this.dateFrom, to: this.dateTo });
   }
 
@@ -485,7 +481,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const range = this.getDateRange('hoy');
     this.dateFrom = range.from;
     this.dateTo = range.to;
-    this.selectedPreset = 'hoy';
+    this.selectedPreset.set('hoy');
     this.applyFilters();
   }
 
@@ -515,8 +511,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Cambia la pestaña activa y carga sus datos si aún no están en caché. */
   onTabChange(index: number): void {
-    if (this.activeTab === index) return;
-    this.activeTab = index;
+    if (this.activeTab() === index) return;
+    this.activeTab.set(index);
     this.loadActiveTab();
     setTimeout(() => {
       const btn = document.querySelector<HTMLElement>(
@@ -535,7 +531,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
    * no están ya en memoria para el filtro actual.
    */
   private loadActiveTab(): void {
-    switch (this.activeTab) {
+    switch (this.activeTab()) {
       case 0:
       case 1:
         if (!this.kpisLoaded) this.loadKpis();
@@ -554,7 +550,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Carga KPIs, ingresos, métodos de pago, resumen y stock bajo en paralelo con forkJoin. */
   private loadKpis(): void {
-    this.isLoadingKpis = true;
+    this.isLoadingKpis.set(true);
     const groupBy = this.getGroupBy();
 
     forkJoin({
@@ -569,13 +565,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
         .pipe(catchError(() => of(null))),
       stock: this.productsService.getLowStock().pipe(catchError(() => of([]))),
     })
-      .pipe(finalize(() => (this.isLoadingKpis = false)))
+      .pipe(finalize(() => this.isLoadingKpis.set(false)))
       .subscribe({
         next: ({ revenue, payment, summary, stock }) => {
-          this.revenueData = revenue as RevenueDay[];
-          this.paymentData = payment as PaymentBreakdown | null;
-          this.summaryData = summary as ReportsSummaryResponse | null;
-          this.lowStockProducts = stock as LowStockProduct[];
+          this.revenueData.set(revenue as RevenueDay[]);
+          this.paymentData.set(payment as PaymentBreakdown | null);
+          this.summaryData.set(summary as ReportsSummaryResponse | null);
+          this.lowStockProducts.set(stock as LowStockProduct[]);
           this.buildCharts();
           this.kpisLoaded = true;
         },
@@ -586,16 +582,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Carga el ranking de productos más vendidos del período. */
   private loadRanking(): void {
-    this.isLoadingRanking = true;
+    this.isLoadingRanking.set(true);
     this.reportsService
       .getProductsRanking(this.dateFrom, this.dateTo)
       .pipe(
         catchError(() => of([])),
-        finalize(() => (this.isLoadingRanking = false)),
+        finalize(() => this.isLoadingRanking.set(false)),
       )
       .subscribe({
         next: (data) => {
-          this.productRanking = data as ProductRanking[];
+          this.productRanking.set(data as ProductRanking[]);
           this.rankingLoaded = true;
         },
         error: () =>
@@ -605,16 +601,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Carga el detalle de transacciones del período para exportación y filtros. */
   private loadTransactions(): void {
-    this.isLoadingTransactions = true;
+    this.isLoadingTransactions.set(true);
     this.reportsService
       .getTransactionsExport(this.dateFrom, this.dateTo)
       .pipe(
         catchError(() => of([])),
-        finalize(() => (this.isLoadingTransactions = false)),
+        finalize(() => this.isLoadingTransactions.set(false)),
       )
       .subscribe({
         next: (data) => {
-          this.transactions = data as TransactionExport[];
+          this.transactions.set(data as TransactionExport[]);
           this.transactionsLoaded = true;
         },
         error: () =>
@@ -627,16 +623,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Carga el reporte de egresos del período seleccionado. */
   private loadExpenses(): void {
-    this.isLoadingExpenses = true;
+    this.isLoadingExpenses.set(true);
     this.reportsService
       .getExpenses(this.dateFrom, this.dateTo)
       .pipe(
         catchError(() => of(null)),
-        finalize(() => (this.isLoadingExpenses = false)),
+        finalize(() => this.isLoadingExpenses.set(false)),
       )
       .subscribe({
         next: (data) => {
-          this.expensesReport = data as ExpensesReport | null;
+          this.expensesReport.set(data as ExpensesReport | null);
           this.expensesLoaded = true;
         },
         error: () =>
@@ -658,55 +654,57 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Actualiza los datasets de Chart.js de ingresos y métodos de pago con los datos cargados. */
   private buildCharts(): void {
-    const labels = this.revenueData.map((d) => d.period);
+    const revenueData = this.revenueData();
+    const labels = revenueData.map((d) => d.period);
 
-    this.barChartData = {
+    this.barChartData.set({
       labels,
       datasets: [
         {
-          data: this.revenueData.map((d) => d.bookings),
+          data: revenueData.map((d) => d.bookings),
           label: 'Alquileres',
           backgroundColor: ReportsComponent.BAR_COLORS.alquileres,
           borderColor: '#0891b2',
           borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
-          data: this.revenueData.map((d) => d.sales),
+          data: revenueData.map((d) => d.sales),
           label: 'Productos',
           backgroundColor: ReportsComponent.BAR_COLORS.productos,
           borderColor: '#ea6c0a',
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
-    };
+    });
 
-    this.cashFlowChartData = {
+    this.cashFlowChartData.set({
       labels,
       datasets: [
         {
-          data: this.revenueData.map((d) => d.bookings + d.sales),
+          data: revenueData.map((d) => d.bookings + d.sales),
           label: 'Ingresos',
           backgroundColor: ReportsComponent.BAR_COLORS.income,
           borderColor: '#0891b2',
           borderRadius: { topLeft: 4, topRight: 4 },
         },
         {
-          data: this.revenueData.map((d) => d.expenses ?? 0),
+          data: revenueData.map((d) => d.expenses ?? 0),
           label: 'Egresos',
           backgroundColor: ReportsComponent.BAR_COLORS.expenses,
           borderColor: '#dc2626',
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
-    };
+    });
 
-    this.pieChartData = {
+    const paymentData = this.paymentData();
+    this.pieChartData.set({
       labels: ['Efectivo', 'Transferencia'],
       datasets: [
         {
           data: [
-            this.paymentData?.cash?.total ?? 0,
-            this.paymentData?.transfer?.total ?? 0,
+            paymentData?.cash?.total ?? 0,
+            paymentData?.transfer?.total ?? 0,
           ],
           backgroundColor: [
             ReportsComponent.PAYMENT_COLORS.cash,
@@ -717,13 +715,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
           hoverOffset: 8,
         },
       ],
-    };
+    });
   }
 
   /** Genera y descarga un archivo Excel con los egresos del período activo. */
   exportExpensesExcel(): void {
-    if (!this.expensesReport || this.isExporting) return;
-    this.isExporting = true;
+    const expensesReport = this.expensesReport();
+    if (!expensesReport || this.isExporting()) return;
+    this.isExporting.set(true);
 
     const displayFrom = this.fmtDisplayDate(this.dateFrom);
     const displayTo = this.fmtDisplayDate(this.dateTo);
@@ -735,7 +734,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       minute: '2-digit',
     });
 
-    const rows = this.expensesReport.items.map((e) => ({
+    const rows = expensesReport.items.map((e) => ({
       Fecha: e.date,
       Descripción: e.description,
       Categoría: e.category,
@@ -749,7 +748,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       Categoría: '',
       Método: '',
       'Registrado por': '',
-      Monto: this.expensesReport.totalAmount,
+      Monto: expensesReport.totalAmount,
     });
 
     const headerAoa: (string | number)[][] = [
@@ -784,7 +783,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       `Egresos_${this.dateFrom.replace(/-/g, '')}_al_${this.dateTo.replace(/-/g, '')}.xlsx`,
     );
 
-    this.isExporting = false;
+    this.isExporting.set(false);
     this.toast.success(
       'Excel descargado',
       `Período: ${displayFrom} al ${displayTo}`,
@@ -793,7 +792,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Genera y descarga un CSV con los egresos del período activo. */
   exportExpensesCSV(): void {
-    if (!this.expensesReport || this.isExporting) return;
+    const expensesReport = this.expensesReport();
+    if (!expensesReport || this.isExporting()) return;
 
     const header = [
       'Fecha',
@@ -810,7 +810,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         : s;
     };
 
-    const rows = this.expensesReport.items.map((e) => [
+    const rows = expensesReport.items.map((e) => [
       e.date,
       e.description,
       e.category,
@@ -818,7 +818,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       e.createdByUser?.fullName ?? 'Desconocido',
       e.amount,
     ]);
-    rows.push(['TOTAL', '', '', '', '', this.expensesReport.totalAmount]);
+    rows.push(['TOTAL', '', '', '', '', expensesReport.totalAmount]);
 
     const csv = [
       header.map(escape).join(','),
@@ -843,32 +843,32 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Restablece los filtros de tipo y método de pago de la tabla de transacciones. */
   resetTxFilters(): void {
-    this.txFilterType = 'all';
-    this.txFilterPayment = 'all';
+    this.txFilterType.set('all');
+    this.txFilterPayment.set('all');
   }
 
   /** Exporta las transacciones filtradas a un archivo Excel. */
   exportExcel(): void {
-    if (this.isExporting) return;
+    if (this.isExporting()) return;
 
-    if (this.transactions.length > 0) {
-      this.triggerExcelDownload(this.filteredTransactions);
+    if (this.transactions().length > 0) {
+      this.triggerExcelDownload(this.filteredTransactions());
       return;
     }
 
-    this.isExporting = true;
+    this.isExporting.set(true);
     this.reportsService
       .getTransactionsExport(this.dateFrom, this.dateTo)
-      .pipe(finalize(() => (this.isExporting = false)))
+      .pipe(finalize(() => this.isExporting.set(false)))
       .subscribe({
         next: (data) => {
           const filtered = data.filter((tx) => {
             const typeOk =
-              this.txFilterType === 'all' || tx.type === this.txFilterType;
+              this.txFilterType() === 'all' || tx.type === this.txFilterType();
             const paymentOk =
-              this.txFilterPayment === 'all' ||
-              (this.txFilterPayment === 'cash' && Number(tx.cash) > 0) ||
-              (this.txFilterPayment === 'transfer' && Number(tx.transfer) > 0);
+              this.txFilterPayment() === 'all' ||
+              (this.txFilterPayment() === 'cash' && Number(tx.cash) > 0) ||
+              (this.txFilterPayment() === 'transfer' && Number(tx.transfer) > 0);
             return typeOk && paymentOk;
           });
           this.triggerExcelDownload(filtered);
@@ -883,12 +883,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Exporta las transacciones filtradas a un archivo CSV con BOM UTF-8. */
   exportCSV(): void {
-    if (this.isExporting) return;
+    if (this.isExporting()) return;
 
     const data =
-      this.filteredTransactions.length > 0
-        ? this.filteredTransactions
-        : this.transactions;
+      this.filteredTransactions().length > 0
+        ? this.filteredTransactions()
+        : this.transactions();
 
     if (data.length === 0) {
       this.toast.error(
@@ -1012,17 +1012,17 @@ export class ReportsComponent implements OnInit, OnDestroy {
     });
 
     const filterParts: string[] = [];
-    if (this.txFilterType !== 'all')
+    if (this.txFilterType() !== 'all')
       filterParts.push(
-        this.txFilterType === 'booking'
+        this.txFilterType() === 'booking'
           ? 'Tipo: Alquileres'
-          : this.txFilterType === 'sale'
+          : this.txFilterType() === 'sale'
             ? 'Tipo: Ventas'
             : 'Tipo: Egresos',
       );
-    if (this.txFilterPayment !== 'all')
+    if (this.txFilterPayment() !== 'all')
       filterParts.push(
-        this.txFilterPayment === 'cash'
+        this.txFilterPayment() === 'cash'
           ? 'Pago: Efectivo'
           : 'Pago: Transferencia',
       );
@@ -1095,7 +1095,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Evita que el narrowing de templates colapse el tipo de activeTab en comparaciones literales. */
   isTab(n: number): boolean {
-    return this.activeTab === n;
+    return this.activeTab() === n;
   }
 
   /** Devuelve las clases Tailwind del badge de categoría de egreso. */
@@ -1174,20 +1174,22 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   /** Carga el estado de la sesión de caja activa para el banner informativo. */
   private loadCashSession(): void {
-    this.cashSessionLoading = true;
+    this.cashSessionLoading.set(true);
     this.cashService
       .getCurrent()
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
-        this.cashSessionLoading = false;
-        this.cashSession = res
-          ? {
-              sessionId: res.sessionId,
-              isClosed: res.isClosed,
-              sessionDate: res.sessionDate,
-              openedAt: res.openedAt,
-            }
-          : null;
+        this.cashSessionLoading.set(false);
+        this.cashSession.set(
+          res
+            ? {
+                sessionId: res.sessionId,
+                isClosed: res.isClosed,
+                sessionDate: res.sessionDate,
+                openedAt: res.openedAt,
+              }
+            : null,
+        );
       });
   }
 }

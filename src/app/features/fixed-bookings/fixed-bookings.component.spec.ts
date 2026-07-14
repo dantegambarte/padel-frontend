@@ -85,9 +85,9 @@ describe('FixedBookingsComponent', () => {
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
-    expect(component.fixedBookings).toEqual([bookingA]);
-    expect(component.teachers).toEqual([teacher]);
-    expect(component.isLoading).toBe(false);
+    expect(component.fixedBookings()).toEqual([bookingA]);
+    expect(component.teachers()).toEqual([teacher]);
+    expect(component.isLoading()).toBe(false);
     expect(component.selectedCourtId).toBe('c1');
   });
 
@@ -97,7 +97,7 @@ describe('FixedBookingsComponent', () => {
     const fixture = TestBed.createComponent(FixedBookingsComponent);
     fixture.detectChanges();
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('filteredBookings filters by search term, day and court', () => {
@@ -159,7 +159,7 @@ describe('FixedBookingsComponent', () => {
     fixture.componentInstance.openDetail(inactiveCourtBooking);
 
     expect(toastServiceSpy.info).toHaveBeenCalled();
-    expect(fixture.componentInstance.selectedFixedBooking).toBeNull();
+    expect(fixture.componentInstance.selectedFixedBooking()).toBeNull();
   });
 
   it('openDetail() opens the panel for an active-court booking', () => {
@@ -167,7 +167,7 @@ describe('FixedBookingsComponent', () => {
     const fixture = TestBed.createComponent(FixedBookingsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openDetail(bookingA);
-    expect(fixture.componentInstance.selectedFixedBooking).toEqual(bookingA);
+    expect(fixture.componentInstance.selectedFixedBooking()).toEqual(bookingA);
   });
 
   it('onDayOfWeekChange() sets startDate to the next matching weekday', () => {
@@ -211,7 +211,7 @@ describe('FixedBookingsComponent', () => {
 
     fixture.componentInstance.submitForm();
 
-    expect(fixture.componentInstance.formError).toContain('obligatorio');
+    expect(fixture.componentInstance.formError()).toContain('obligatorio');
     expect(fixedSvcSpy.create).not.toHaveBeenCalled();
   });
 
@@ -228,7 +228,7 @@ describe('FixedBookingsComponent', () => {
     fixture.componentInstance.submitForm();
 
     expect(fixedSvcSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.isDialogOpen).toBe(false);
+    expect(fixture.componentInstance.isDialogOpen()).toBe(false);
     expect(toastServiceSpy.success).toHaveBeenCalled();
   });
 
@@ -278,7 +278,7 @@ describe('FixedBookingsComponent', () => {
     fixture.componentInstance.submitForm();
 
     expect(Swal.fire).toHaveBeenCalled();
-    expect(fixture.componentInstance.isSubmitting).toBe(false);
+    expect(fixture.componentInstance.isSubmitting()).toBe(false);
   });
 
   it('offers to retry with the next available date on CONFLICT_START_DATE (409)', () => {
@@ -314,7 +314,7 @@ describe('FixedBookingsComponent', () => {
 
     expect(fixedSvcSpy.generateNext).toHaveBeenCalledWith('fb1');
     expect(toastServiceSpy.success).toHaveBeenCalled();
-    expect(fixture.componentInstance.generatingId).toBeNull();
+    expect(fixture.componentInstance.generatingId()).toBeNull();
   });
 
   it('deleteCascade() does nothing if the user cancels the Swal confirmation', () => {
@@ -376,10 +376,10 @@ describe('FixedBookingsComponent', () => {
     const component = fixture.componentInstance;
     component.openDetail(bookingA);
     component.onEscape();
-    expect(component.selectedFixedBooking).toBeNull();
+    expect(component.selectedFixedBooking()).toBeNull();
 
     component.openCreateDialog();
     component.onEscape();
-    expect(component.isDialogOpen).toBe(false);
+    expect(component.isDialogOpen()).toBe(false);
   });
 });

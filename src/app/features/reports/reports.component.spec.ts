@@ -60,17 +60,17 @@ describe('ReportsComponent', () => {
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
-    expect(component.selectedPreset).toBe('mes');
+    expect(component.selectedPreset()).toBe('mes');
     expect(reportsServiceSpy.getRevenue).toHaveBeenCalled();
-    expect(component.revenueData.length).toBe(1);
+    expect(component.revenueData().length).toBe(1);
   });
 
   it('loads the cash session banner state on init', () => {
     setup();
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.cashSession?.sessionId).toBe('s1');
-    expect(fixture.componentInstance.cashSessionLoading).toBe(false);
+    expect(fixture.componentInstance.cashSession()?.sessionId).toBe('s1');
+    expect(fixture.componentInstance.cashSessionLoading()).toBe(false);
   });
 
   it('totalRevenue/totalAlquileres/totalProductos derive from revenueData', () => {
@@ -78,10 +78,10 @@ describe('ReportsComponent', () => {
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    expect(component.totalRevenue).toBe(1500);
-    expect(component.totalAlquileres).toBe(1000);
-    expect(component.totalProductos).toBe(500);
-    expect(component.pctAlquileres).toBe('66.7');
+    expect(component.totalRevenue()).toBe(1500);
+    expect(component.totalAlquileres()).toBe(1000);
+    expect(component.totalProductos()).toBe(500);
+    expect(component.pctAlquileres()).toBe('66.7');
   });
 
   it('onTabChange() lazily loads ranking data only once for tab 2', () => {
@@ -156,7 +156,7 @@ describe('ReportsComponent', () => {
 
     tick(400);
     expect(reportsServiceSpy.getRevenue).toHaveBeenCalled();
-    expect(fixture.componentInstance.selectedPreset).toBe('semana');
+    expect(fixture.componentInstance.selectedPreset()).toBe('semana');
   }));
 
   it('selectToday() applies the filter immediately, bypassing debounce', () => {
@@ -167,7 +167,7 @@ describe('ReportsComponent', () => {
 
     fixture.componentInstance.selectToday();
 
-    expect(fixture.componentInstance.selectedPreset).toBe('hoy');
+    expect(fixture.componentInstance.selectedPreset()).toBe('hoy');
     expect(fixture.componentInstance.dateFrom).toBe(fixture.componentInstance.dateTo);
     expect(reportsServiceSpy.getRevenue).toHaveBeenCalled();
   });
@@ -177,7 +177,7 @@ describe('ReportsComponent', () => {
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
     fixture.componentInstance.onDateChanged();
-    expect(fixture.componentInstance.selectedPreset).toBe('');
+    expect(fixture.componentInstance.selectedPreset()).toBe('');
     tick(400);
   }));
 
@@ -186,17 +186,17 @@ describe('ReportsComponent', () => {
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.transactions = [
+    component.transactions.set([
       { date: '', time: '', type: 'booking', concept: '', cash: 1000, transfer: 0, total: 1000, createdBy: '', referenceId: null },
       { date: '', time: '', type: 'sale', concept: '', cash: 0, transfer: 500, total: 500, createdBy: '', referenceId: null },
-    ] as TransactionExport[];
+    ] as TransactionExport[]);
 
-    component.txFilterType = 'sale';
-    expect(component.filteredTransactions.length).toBe(1);
+    component.txFilterType.set('sale');
+    expect(component.filteredTransactions().length).toBe(1);
 
-    component.txFilterType = 'all';
-    component.txFilterPayment = 'transfer';
-    expect(component.filteredTransactions.map((t) => t.type)).toEqual(['sale']);
+    component.txFilterType.set('all');
+    component.txFilterPayment.set('transfer');
+    expect(component.filteredTransactions().map((t) => t.type)).toEqual(['sale']);
   });
 
   it('openTicket() for a sale sets ticketSaleId without an HTTP call', () => {
@@ -204,7 +204,7 @@ describe('ReportsComponent', () => {
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openTicket('sale-1', 'sale');
-    expect(fixture.componentInstance.ticketSaleId).toBe('sale-1');
+    expect(fixture.componentInstance.ticketSaleId()).toBe('sale-1');
     expect(bookingsServiceSpy.getTicketSummary).not.toHaveBeenCalled();
   });
 
@@ -230,7 +230,7 @@ describe('ReportsComponent', () => {
     fixture.componentInstance.openTicket('b1', 'booking');
 
     expect(bookingsServiceSpy.getTicketSummary).toHaveBeenCalledWith('b1');
-    expect(fixture.componentInstance.isLoadingTicket).toBe(false);
+    expect(fixture.componentInstance.isLoadingTicket()).toBe(false);
   });
 
   it('openTicket() for a booking toasts on error', () => {
@@ -248,16 +248,16 @@ describe('ReportsComponent', () => {
     setup();
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.ticketSaleId = 'sale-1';
+    fixture.componentInstance.ticketSaleId.set('sale-1');
     fixture.componentInstance.closeTicket();
-    expect(fixture.componentInstance.ticketSaleId).toBeNull();
+    expect(fixture.componentInstance.ticketSaleId()).toBeNull();
   });
 
   it('exportCSV() toasts an error when there is no data to export', () => {
     setup();
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.transactions = [];
+    fixture.componentInstance.transactions.set([]);
 
     fixture.componentInstance.exportCSV();
 
@@ -268,9 +268,9 @@ describe('ReportsComponent', () => {
     setup();
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.transactions = [
+    fixture.componentInstance.transactions.set([
       { date: '2026-01-01', time: '10:00', type: 'booking', concept: 'Turno', cash: 1000, transfer: 0, total: 1000, createdBy: 'Admin', referenceId: null },
-    ];
+    ]);
     const clickSpy = spyOn(HTMLAnchorElement.prototype, 'click');
 
     fixture.componentInstance.exportCSV();
@@ -288,23 +288,23 @@ describe('ReportsComponent', () => {
     );
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.transactions = [];
+    fixture.componentInstance.transactions.set([]);
 
     fixture.componentInstance.exportExcel();
 
     expect(reportsServiceSpy.getTransactionsExport).toHaveBeenCalled();
-    expect(fixture.componentInstance.isExporting).toBe(false);
+    expect(fixture.componentInstance.isExporting()).toBe(false);
   });
 
   it('resetTxFilters() sets both filters back to "all"', () => {
     setup();
     const fixture = TestBed.createComponent(ReportsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.txFilterType = 'sale';
-    fixture.componentInstance.txFilterPayment = 'cash';
+    fixture.componentInstance.txFilterType.set('sale');
+    fixture.componentInstance.txFilterPayment.set('cash');
     fixture.componentInstance.resetTxFilters();
-    expect(fixture.componentInstance.txFilterType).toBe('all');
-    expect(fixture.componentInstance.txFilterPayment).toBe('all');
+    expect(fixture.componentInstance.txFilterType()).toBe('all');
+    expect(fixture.componentInstance.txFilterPayment()).toBe('all');
   });
 
   it('fmt() and fmtCurrency() are null-safe', () => {
