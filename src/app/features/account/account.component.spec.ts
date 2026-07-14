@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountComponent } from './account.component';
@@ -15,6 +15,7 @@ describe('AccountComponent', () => {
     routerEvents = new Subject();
     authServiceSpy = jasmine.createSpyObj('AuthService', ['changeOwnPassword', 'logout'], {
       currentUser,
+      currentUserSignal: signal(currentUser),
     });
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate'], { events: routerEvents.asObservable() });
@@ -49,7 +50,7 @@ describe('AccountComponent', () => {
     setup({ fullName: 'Juan Perez', mustChangePassword: false });
     const fixture = TestBed.createComponent(AccountComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.userInitials).toBe('JP');
+    expect(fixture.componentInstance.userInitials()).toBe('JP');
   });
 
   it('submitChange() rejects an empty current password', () => {

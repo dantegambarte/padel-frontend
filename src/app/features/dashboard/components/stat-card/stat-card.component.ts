@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { NgClass, NgSwitch, NgSwitchCase, NgIf } from '@angular/common';
 
 export type StatCardIcon =
@@ -24,6 +24,7 @@ export interface StatCardTrend {
         NgSwitchCase,
         NgIf,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatCardComponent {
   @Input() title = '';

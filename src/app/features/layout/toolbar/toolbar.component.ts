@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   HostListener,
@@ -48,6 +49,7 @@ import { TicketModalComponent } from '../../cash-register/ticket-modal.component
         DecimalPipe,
         DatePipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToolbarComponent implements OnInit, OnDestroy {
   @Input() title = '';

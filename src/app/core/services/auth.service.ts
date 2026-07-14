@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
@@ -41,6 +42,20 @@ export class AuthService {
    * Emite `null` cuando no hay sesión activa.
    */
   readonly currentUser$ = this.currentUserSubject.asObservable();
+
+  /**
+   * Versión signal de `currentUser$`, para componentes con `ChangeDetectionStrategy.OnPush`
+   * que necesitan reaccionar a cambios de sesión originados fuera de su propio árbol
+   * (ej. logout disparado desde otro componente, refresh de token).
+   */
+  readonly currentUserSignal = toSignal(this.currentUser$, {
+    initialValue: this.currentUserSubject.value,
+  });
+
+  /** Versión signal de `isAdmin`, derivada de `currentUserSignal`. */
+  readonly isAdminSignal = computed(
+    () => this.currentUserSignal()?.role === 'admin',
+  );
 
   constructor(
     private http: HttpClient,

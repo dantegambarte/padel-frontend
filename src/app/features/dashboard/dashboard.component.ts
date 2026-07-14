@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { NgIf } from '@angular/common';
 import { DashboardAdminComponent } from './admin/dashboard-admin.component';
@@ -12,12 +12,11 @@ import { DashboardEmployeeComponent } from './employee/dashboard-employee.compon
         DashboardAdminComponent,
         DashboardEmployeeComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
   constructor(private authService: AuthService) {}
 
   /** Devuelve `true` si el usuario autenticado tiene rol de administrador. */
-  get isAdmin(): boolean {
-    return this.authService.isAdmin;
-  }
+  isAdmin = this.authService.isAdminSignal;
 }

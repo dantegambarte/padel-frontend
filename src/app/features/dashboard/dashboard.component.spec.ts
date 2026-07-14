@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
@@ -12,7 +12,10 @@ describe('DashboardComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], { isAdmin: false });
+    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
+      isAdmin: false,
+      isAdminSignal: signal(false),
+    });
 
     const bookingsServiceSpy = jasmine.createSpyObj('BookingsService', ['findByDate']);
     bookingsServiceSpy.findByDate.and.returnValue(of([]));
@@ -42,6 +45,6 @@ describe('DashboardComponent', () => {
 
   it('isAdmin reflects AuthService.isAdmin', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
-    expect(fixture.componentInstance.isAdmin).toBe(false);
+    expect(fixture.componentInstance.isAdmin()).toBe(false);
   });
 });

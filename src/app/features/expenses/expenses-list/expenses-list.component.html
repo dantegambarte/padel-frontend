@@ -5,11 +5,11 @@
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Egresos</h1>
       <p class="text-sm text-muted-foreground">
-        <ng-container *ngIf="isAdmin"
+        <ng-container *ngIf="isAdmin()"
           >Historial completo de gastos · podés filtrar por
           período.</ng-container
         >
-        <ng-container *ngIf="!isAdmin"
+        <ng-container *ngIf="!isAdmin()"
           >Gastos registrados en el turno activo.</ng-container
         >
       </p>
@@ -57,7 +57,7 @@
   </div>
 
   <div
-    *ngIf="isAdmin"
+    *ngIf="isAdmin()"
     class="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 px-4 py-3"
   >
     <div class="flex flex-col gap-1">
@@ -153,7 +153,7 @@
             </th>
 
             <th
-              *ngIf="isAdmin"
+              *ngIf="isAdmin()"
               class="px-4 py-3 text-left font-medium text-muted-foreground"
             >
               Responsable
@@ -163,7 +163,7 @@
             </th>
 
             <th
-              *ngIf="isAdmin"
+              *ngIf="isAdmin()"
               class="px-4 py-3 text-center font-medium text-muted-foreground"
             >
               Acciones
@@ -196,7 +196,7 @@
               {{ expense.paymentMethod }}
             </td>
 
-            <td *ngIf="isAdmin" class="px-4 py-3">
+            <td *ngIf="isAdmin()" class="px-4 py-3">
               <span
                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                 [ngClass]="
@@ -224,7 +224,7 @@
               {{ formatCurrency(expense.amount) }}
             </td>
 
-            <td *ngIf="isAdmin" class="px-4 py-3">
+            <td *ngIf="isAdmin()" class="px-4 py-3">
               <div class="flex items-center justify-center gap-1">
                 <button
                   type="button"
@@ -278,7 +278,7 @@
         <tfoot class="bg-muted/50 border-t border-border">
           <tr>
             <td
-              [attr.colspan]="isAdmin ? 5 : 4"
+              [attr.colspan]="isAdmin() ? 5 : 4"
               class="px-4 py-3 text-sm font-semibold text-right text-muted-foreground"
             >
               Total:
@@ -286,7 +286,7 @@
             <td class="px-4 py-3 text-right font-bold tabular-nums">
               {{ formatCurrency(totalAmount()) }}
             </td>
-            <td *ngIf="isAdmin"></td>
+            <td *ngIf="isAdmin()"></td>
           </tr>
         </tfoot>
       </table>
@@ -304,7 +304,7 @@
               {{ expense.date }} · {{ expense.paymentMethod }}
             </p>
 
-            <p *ngIf="isAdmin" class="mt-1">
+            <p *ngIf="isAdmin()" class="mt-1">
               <span
                 class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                 [ngClass]="
@@ -329,7 +329,7 @@
             {{ expense.category }}
           </span>
 
-          <div *ngIf="isAdmin" class="flex gap-1">
+          <div *ngIf="isAdmin()" class="flex gap-1">
             <button
               type="button"
               (click)="openEditForm(expense)"

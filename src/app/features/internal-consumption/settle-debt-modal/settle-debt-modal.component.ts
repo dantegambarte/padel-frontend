@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 import {
@@ -23,6 +23,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
         FormsModule,
         DecimalPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettleDebtModalComponent implements OnInit {
   @Input() teacher!: Teacher;

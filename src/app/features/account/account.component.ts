@@ -1,11 +1,10 @@
-import { Component, HostListener, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, signal } from '@angular/core';
 import { Router, ActivatedRoute, NavigationStart, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { User } from '../../core/models/user.model';
 import { NgIf, NgClass } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -21,6 +20,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
         NgClass,
         RouterLink,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountComponent implements OnDestroy {
   form = {
@@ -43,14 +43,14 @@ export class AccountComponent implements OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
   ) {
-    if (this.isForced) {
+    if (this.isForced()) {
       this.showForcedModal.set(true);
     }
     this.navSub = this.router.events
       .pipe(filter((e) => e instanceof NavigationStart))
       .subscribe((e) => {
         const nav = e as NavigationStart;
-        if (this.isForced && !nav.url.startsWith('/app/account')) {
+        if (this.isForced() && !nav.url.startsWith('/app/account')) {
           this.showForcedModal.set(true);
         }
       });
@@ -61,13 +61,11 @@ export class AccountComponent implements OnDestroy {
   }
 
   /** Usuario autenticado actualmente. */
-  get currentUser(): User | null {
-    return this.authService.currentUser;
-  }
+  currentUser = this.authService.currentUserSignal;
 
   /** Iniciales del nombre completo (máx. 2 letras). */
-  get userInitials(): string {
-    const name = this.currentUser?.fullName ?? '';
+  userInitials = computed(() => {
+    const name = this.currentUser()?.fullName ?? '';
     return (
       name
         .trim()
@@ -78,12 +76,10 @@ export class AccountComponent implements OnDestroy {
         .toUpperCase()
         .slice(0, 2) || '?'
     );
-  }
+  });
 
   /** `true` cuando el admin restableció la contraseña y el usuario debe cambiarla. */
-  get isForced(): boolean {
-    return !!this.currentUser?.mustChangePassword;
-  }
+  isForced = computed(() => !!this.currentUser()?.mustChangePassword);
 
   /** `true` cuando nueva y confirmación tienen al menos 6 caracteres y coinciden. */
   get passwordsMatch(): boolean {
@@ -111,7 +107,7 @@ export class AccountComponent implements OnDestroy {
   @HostListener('document:keydown.escape')
   /** Navega al dashboard al presionar Escape (solo si el cambio de contraseña no es forzado). */
   onEscape(): void {
-    if (!this.isForced) this.router.navigate(['/app/dashboard']);
+    if (!this.isForced()) this.router.navigate(['/app/dashboard']);
   }
 
   /** Valida y envía el formulario de cambio de contraseña. */
@@ -137,7 +133,7 @@ export class AccountComponent implements OnDestroy {
     }
 
     this.isSubmitting.set(true);
-    const wasForced = this.isForced;
+    const wasForced = this.isForced();
     this.authService
       .changeOwnPassword(this.form.currentPassword, this.form.newPassword)
       .subscribe({

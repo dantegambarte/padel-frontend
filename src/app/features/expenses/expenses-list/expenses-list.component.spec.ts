@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ExpensesListComponent } from './expenses-list.component';
 import { ExpensesService } from '../../../core/services/expenses.service';
@@ -26,7 +26,10 @@ describe('ExpensesListComponent', () => {
 
   function setup(isAdmin: boolean) {
     expensesServiceSpy = jasmine.createSpyObj('ExpensesService', ['getAll', 'delete']);
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], { isAdmin });
+    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
+      isAdmin,
+      isAdminSignal: signal(isAdmin),
+    });
     expensesServiceSpy.getAll.and.returnValue(of([mockExpense]));
 
     TestBed.configureTestingModule({

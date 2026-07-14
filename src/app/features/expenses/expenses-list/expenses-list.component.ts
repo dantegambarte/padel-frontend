@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
 import { Expense } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -17,6 +17,7 @@ import { ExpenseFormComponent } from '../expense-form/expense-form.component';
         NgClass,
         ExpenseFormComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpensesListComponent implements OnInit {
   expenses = signal<Expense[]>([]);
@@ -32,9 +33,7 @@ export class ExpensesListComponent implements OnInit {
   dateFrom = '';
   dateTo = '';
 
-  get isAdmin(): boolean {
-    return this.authService.isAdmin;
-  }
+  isAdmin = this.authService.isAdminSignal;
 
   constructor(
     private expensesService: ExpensesService,
@@ -42,7 +41,7 @@ export class ExpensesListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.isAdmin) {
+    if (this.isAdmin()) {
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -55,7 +54,7 @@ export class ExpensesListComponent implements OnInit {
   loadExpenses(): void {
     this.loading.set(true);
     this.error.set(null);
-    const filters = this.isAdmin
+    const filters = this.isAdmin()
       ? { from: this.dateFrom || undefined, to: this.dateTo || undefined }
       : undefined;
 

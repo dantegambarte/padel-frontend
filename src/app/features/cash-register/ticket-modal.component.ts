@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
@@ -21,6 +22,7 @@ import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directi
         ModalScrollLockDirective,
         NgFor,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketModalComponent implements OnChanges {
   @Input() saleId: string | null = null;

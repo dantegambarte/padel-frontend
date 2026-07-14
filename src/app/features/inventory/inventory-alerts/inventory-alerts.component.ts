@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ProductsService } from '../../../core/services/products.service';
@@ -17,6 +17,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
         NgFor,
         NgClass,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryAlertsComponent implements OnInit {
   allAlerts = signal<LowStockProduct[]>([]);

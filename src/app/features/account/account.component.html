@@ -73,7 +73,7 @@
 
 <div class="space-y-6">
   <div
-    *ngIf="isForced"
+    *ngIf="isForced()"
     class="flex items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-3.5 dark:border-amber-700/50 dark:bg-amber-950/30"
   >
     <svg
@@ -108,16 +108,16 @@
         <div
           class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold select-none"
         >
-          {{ userInitials }}
+          {{ userInitials() }}
         </div>
         <div>
           <h2 class="text-xl font-semibold text-card-foreground">
-            {{ currentUser?.fullName }}
+            {{ currentUser()?.fullName }}
           </h2>
           <p class="text-sm text-muted-foreground">
-            {{ currentUser?.username }} ·
+            {{ currentUser()?.username }} ·
             <span class="capitalize">{{
-              currentUser?.role === "admin" ? "Administrador" : "Empleado"
+              currentUser()?.role === "admin" ? "Administrador" : "Empleado"
             }}</span>
           </p>
         </div>
@@ -150,7 +150,7 @@
           </h3>
           <p class="text-sm text-muted-foreground">
             {{
-              isForced
+              isForced()
                 ? "Establecé una nueva contraseña para tu cuenta."
                 : "Actualizá tu contraseña cuando quieras."
             }}
@@ -281,7 +281,7 @@
           </button>
 
           <button
-            *ngIf="!isForced"
+            *ngIf="!isForced()"
             type="button"
             routerLink="/app/dashboard"
             class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"

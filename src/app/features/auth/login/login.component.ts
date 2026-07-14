@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -14,6 +14,7 @@ import { NgIf, AsyncPipe } from '@angular/common';
         ReactiveFormsModule,
         AsyncPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   form: FormGroup;

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { trigger, transition, style, animate } from '@angular/animations';
 
@@ -38,6 +38,7 @@ export const toastAnimation = trigger('toastState', [
         NgSwitchDefault,
         NgIf,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent {
   private toastService = inject(ToastService);

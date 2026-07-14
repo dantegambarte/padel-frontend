@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import {
@@ -12,6 +12,7 @@ import { NgIf, NgClass } from '@angular/common';
     selector: 'app-session-alert',
     templateUrl: './session-alert.component.html',
     imports: [NgIf, NgClass],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionAlertComponent implements OnInit, OnDestroy {
   private sessionAlertService = inject(SessionAlertService);
