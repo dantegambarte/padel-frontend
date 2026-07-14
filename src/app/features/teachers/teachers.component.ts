@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, HostListener, computed, signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 import { TeachersService } from '../../core/services/teachers.service';
@@ -30,6 +30,7 @@ const EMPTY_FORM = (): FormState => ({
         NgClass,
         ModalScrollLockDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeachersComponent implements OnInit, CanComponentDeactivate {
   teachers = signal<Teacher[]>([]);

@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
@@ -41,6 +42,7 @@ interface NavGroup {
         NgSwitch,
         NgSwitchCase,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isOpen: boolean = false;

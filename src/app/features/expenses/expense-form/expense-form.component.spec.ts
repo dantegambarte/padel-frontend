@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -36,7 +36,10 @@ describe('ExpenseFormComponent', () => {
       'saveDraft',
       'clearDraft',
     ]);
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], { isAdmin });
+    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
+      isAdmin,
+      isAdminSignal: signal(isAdmin),
+    });
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     draftServiceSpy.getDraft.and.returnValue(null);
 

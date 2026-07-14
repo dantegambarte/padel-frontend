@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
@@ -22,6 +22,7 @@ import { RouterLink } from '@angular/router';
         RouterLink,
         NgClass,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardEmployeeComponent implements OnInit {
   isLoading = signal(true);

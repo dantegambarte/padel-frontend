@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, HostListener, signal } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 
@@ -28,6 +28,7 @@ import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directi
         NgClass,
         ModalScrollLockDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private readonly destroy$ = new Subject<void>();
@@ -74,6 +75,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
     private configService: ConfigService,
     private courtsService: CourtsService,
     private toast: ToastService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -143,6 +145,10 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
     this.savedHorarioApertura = this.horarioApertura;
     this.savedHorarioCierre = this.horarioCierre;
     this.savedFondoCajaBase = this.fondoCajaBase;
+
+    // applyConfig() se llama desde la respuesta async de getAll(); bajo OnPush
+    // este cambio en campos planos (ngModel) no dispara CD por sí solo.
+    this.cdr.markForCheck();
   }
 
   /** Guarda la configuración de horarios y actualiza el snapshot. */

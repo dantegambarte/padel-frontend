@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import {
@@ -29,6 +29,7 @@ import { SettleDebtModalComponent } from '../settle-debt-modal/settle-debt-modal
         SettleDebtModalComponent,
         DecimalPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionListComponent implements OnInit {
   consumptions = signal<InternalConsumption[]>([]);

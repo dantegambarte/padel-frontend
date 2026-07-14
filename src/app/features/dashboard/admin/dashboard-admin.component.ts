@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ChartData, ChartOptions } from 'chart.js';
@@ -21,6 +21,7 @@ import { NgChartsModule } from 'ng2-charts';
         NgChartsModule,
         DecimalPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardAdminComponent implements OnInit {
   isLoading = signal(true);

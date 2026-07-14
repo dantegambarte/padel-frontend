@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
@@ -18,6 +18,7 @@ import { DisableScrollDirective } from '../../shared/directives/disable-scroll.d
         ReactiveFormsModule,
         DisableScrollDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PricingShiftsComponent implements OnInit {
   readonly DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];

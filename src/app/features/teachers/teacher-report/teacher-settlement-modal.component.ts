@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
@@ -22,6 +22,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
         ReactiveFormsModule,
         FormsModule,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherSettlementModalComponent implements OnInit {
   @Input() report!: TeacherReport;

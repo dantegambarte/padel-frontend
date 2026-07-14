@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { TeachersService } from '../../../core/services/teachers.service';
@@ -26,6 +26,7 @@ type PeriodType = 'mensual' | 'quincenal' | 'semanal';
         DisableScrollDirective,
         TeacherSettlementModalComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherReportComponent implements OnInit {
   teachers = signal<Teacher[]>([]);

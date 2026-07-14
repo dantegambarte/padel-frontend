@@ -1,10 +1,12 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
   OnInit,
   OnDestroy,
   Output,
+  computed,
   signal,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -35,6 +37,7 @@ import { DisableScrollDirective } from '../../../shared/directives/disable-scrol
         DisableScrollDirective,
         NgFor,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** Si se pasa un Expense existente, el formulario trabaja en modo edición. */
@@ -67,7 +70,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   ];
 
   get categories(): ExpenseCategory[] {
-    if (this.authService.isAdmin) return this.ALL_CATEGORIES;
+    if (this.authService.isAdminSignal()) return this.ALL_CATEGORIES;
     return this.ALL_CATEGORIES.filter(
       (c) => !this.ADMIN_ONLY_CATEGORIES.includes(c),
     );
@@ -88,7 +91,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** True cuando admin elige fondos generales → caja no requerida. */
   get isGeneralFunds(): boolean {
     return (
-      this.authService.isAdmin &&
+      this.authService.isAdminSignal() &&
       this.form?.get('fundSource')?.value === 'general_funds'
     );
   }

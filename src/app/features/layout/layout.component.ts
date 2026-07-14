@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { Subscription, filter, map } from 'rxjs';
 
@@ -36,11 +36,13 @@ const PAGE_TITLES: Record<string, string> = {
         NgClass,
         RouterOutlet,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   currentUser = signal<User | null>(null);
   currentPageTitle = signal('Dashboard');
   isSidebarOpen = signal(false);
+  private currentUrl = signal('');
 
   unclosedSessionDate = signal<string | null>(null);
 
@@ -69,6 +71,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       }),
     );
 
+    this.currentUrl.set(this.router.url);
     this.currentPageTitle.set(this.resolveTitleFromUrl(this.router.url));
 
     this.sub.add(
@@ -78,6 +81,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
           map((e) => e.urlAfterRedirects),
         )
         .subscribe((url) => {
+          this.currentUrl.set(url);
           this.currentPageTitle.set(this.resolveTitleFromUrl(url));
         }),
     );
@@ -200,9 +204,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   /** `true` cuando la ruta activa es la agenda de turnos. */
-  get isSchedulePage(): boolean {
-    return this.router.url.includes('/schedule');
-  }
+  isSchedulePage = computed(() => this.currentUrl().includes('/schedule'));
 
   /** Alterna la visibilidad del sidebar en mobile. */
   toggleSidebar(): void {
