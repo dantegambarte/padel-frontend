@@ -44,7 +44,7 @@ describe('ExpensesListComponent', () => {
     const fixture = TestBed.createComponent(ExpensesListComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.expenses.length).toBe(1);
+    expect(fixture.componentInstance.expenses().length).toBe(1);
     expect(expensesServiceSpy.getAll).toHaveBeenCalledWith(
       jasmine.objectContaining({ from: jasmine.any(String), to: jasmine.any(String) }),
     );
@@ -64,7 +64,7 @@ describe('ExpensesListComponent', () => {
     const fixture = TestBed.createComponent(ExpensesListComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.error).toContain('No se pudieron cargar');
+    expect(fixture.componentInstance.error()).toContain('No se pudieron cargar');
   });
 
   it('totalAmount sums all listed expenses', () => {
@@ -73,7 +73,7 @@ describe('ExpensesListComponent', () => {
     const fixture = TestBed.createComponent(ExpensesListComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.totalAmount).toBe(6000);
+    expect(fixture.componentInstance.totalAmount()).toBe(6000);
   });
 
   it('openCreateForm()/openEditForm()/closeForm() toggle showForm and selectedExpense', () => {
@@ -83,17 +83,17 @@ describe('ExpensesListComponent', () => {
     const component = fixture.componentInstance;
 
     component.openCreateForm();
-    expect(component.showForm).toBe(true);
-    expect(component.selectedExpense).toBeNull();
+    expect(component.showForm()).toBe(true);
+    expect(component.selectedExpense()).toBeNull();
 
     component.closeForm();
     component.openEditForm(mockExpense);
-    expect(component.showForm).toBe(true);
-    expect(component.selectedExpense).toEqual(mockExpense);
+    expect(component.showForm()).toBe(true);
+    expect(component.selectedExpense()).toEqual(mockExpense);
 
     component.closeForm();
-    expect(component.showForm).toBe(false);
-    expect(component.selectedExpense).toBeNull();
+    expect(component.showForm()).toBe(false);
+    expect(component.selectedExpense()).toBeNull();
   });
 
   it('deleteExpense() does nothing when the user cancels the confirm dialog', () => {

@@ -6,7 +6,7 @@
     class="modal-card max-w-sm"
     (click)="$event.stopPropagation()"
   >
-    <div *ngIf="isLoading" class="flex items-center justify-center p-12">
+    <div *ngIf="isLoading()" class="flex items-center justify-center p-12">
       <svg
         class="h-8 w-8 animate-spin text-primary"
         viewBox="0 0 24 24"
@@ -29,13 +29,13 @@
     </div>
 
     <div
-      *ngIf="!isLoading && loadError"
+      *ngIf="!isLoading() && loadError()"
       class="p-8 text-center text-sm text-destructive"
     >
-      {{ loadError }}
+      {{ loadError() }}
     </div>
 
-    <ng-container *ngIf="!isLoading && sale">
+    <ng-container *ngIf="!isLoading() && sale() as sale">
       <div class="modal-body ticket-print-area bg-white text-sm text-slate-800">
         <div
           class="mb-4 text-center border-b border-dashed border-slate-300 pb-3"

@@ -69,13 +69,13 @@ describe('SettleDebtModalComponent', () => {
       teacherId: 't1',
       status: 'pending_payment',
     });
-    expect(fixture.componentInstance.consumptions.length).toBe(1);
-    expect(fixture.componentInstance.loading).toBe(false);
+    expect(fixture.componentInstance.consumptions().length).toBe(1);
+    expect(fixture.componentInstance.loading()).toBe(false);
   });
 
   it('total sums unitCostPrice * quantity across consumptions', () => {
     const fixture = createWithInputs();
-    expect(fixture.componentInstance.total).toBe(1600);
+    expect(fixture.componentInstance.total()).toBe(1600);
   });
 
   it('onSettle() emits settled on success', () => {
@@ -90,7 +90,7 @@ describe('SettleDebtModalComponent', () => {
       paymentMethod: 'cash',
     });
     expect(emitSpy).toHaveBeenCalled();
-    expect(fixture.componentInstance.settling).toBe(false);
+    expect(fixture.componentInstance.settling()).toBe(false);
   });
 
   it('onSettle() shows a Swal alert on error without emitting settled', () => {
@@ -105,7 +105,7 @@ describe('SettleDebtModalComponent', () => {
 
     expect(Swal.fire).toHaveBeenCalled();
     expect(emitSpy).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.settling).toBe(false);
+    expect(fixture.componentInstance.settling()).toBe(false);
   });
 
   it('onCancel() emits cancelled', () => {

@@ -5,6 +5,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  signal,
 } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -26,9 +27,9 @@ export class TicketModalComponent implements OnChanges {
 
   @Output() closeModal = new EventEmitter<void>();
 
-  sale: SaleDetail | null = null;
-  isLoading = false;
-  loadError = '';
+  sale = signal<SaleDetail | null>(null);
+  isLoading = signal(false);
+  loadError = signal('');
 
   constructor(private salesService: SalesService) {}
 
@@ -37,24 +38,24 @@ export class TicketModalComponent implements OnChanges {
       this.fetchSale(this.saleId);
     }
     if (changes['saleId'] && !this.saleId) {
-      this.sale = null;
-      this.loadError = '';
+      this.sale.set(null);
+      this.loadError.set('');
     }
   }
 
   /** Solicita el detalle de la venta al servicio y lo almacena para renderizar el ticket. */
   private fetchSale(id: string): void {
-    this.isLoading = true;
-    this.loadError = '';
-    this.sale = null;
+    this.isLoading.set(true);
+    this.loadError.set('');
+    this.sale.set(null);
 
     this.salesService
       .findOne(id)
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (s) => (this.sale = s),
+        next: (s) => this.sale.set(s),
         error: () =>
-          (this.loadError = 'No se pudo cargar el detalle de la venta.'),
+          this.loadError.set('No se pudo cargar el detalle de la venta.'),
       });
   }
 

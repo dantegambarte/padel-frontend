@@ -102,7 +102,7 @@
             <div class="relative">
               <input
                 id="password"
-                [type]="showPassword ? 'text' : 'password'"
+                [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
                 placeholder="Ingrese su contraseña"
                 autocomplete="current-password"
@@ -112,11 +112,11 @@
                 type="button"
                 (click)="togglePasswordVisibility()"
                 class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 focus:outline-none transition-colors"
-                [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
               >
                 <!-- Ojo abierto: contraseña oculta -->
                 <svg
-                  *ngIf="!showPassword"
+                  *ngIf="!showPassword()"
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
                   viewBox="0 0 24 24"
@@ -131,7 +131,7 @@
                 </svg>
                 <!-- Ojo tachado: contraseña visible -->
                 <svg
-                  *ngIf="showPassword"
+                  *ngIf="showPassword()"
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
                   viewBox="0 0 24 24"
@@ -159,7 +159,7 @@
           </div>
 
           <div
-            *ngIf="errorMessage"
+            *ngIf="errorMessage()"
             class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm"
           >
             <svg
@@ -175,15 +175,15 @@
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span>{{ errorMessage }}</span>
+            <span>{{ errorMessage() }}</span>
           </div>
 
           <button
             type="submit"
-            [disabled]="form.invalid || isLoading"
+            [disabled]="form.invalid || isLoading()"
             class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-base font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-full px-8"
           >
-            <ng-container *ngIf="isLoading; else elseLogin">
+            <ng-container *ngIf="isLoading(); else elseLogin">
               <svg
                 class="mr-2 h-4 w-4 animate-spin"
                 viewBox="0 0 24 24"

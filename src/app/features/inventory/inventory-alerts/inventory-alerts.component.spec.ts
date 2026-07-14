@@ -37,8 +37,8 @@ describe('InventoryAlertsComponent', () => {
   it('loads alerts on init', () => {
     const fixture = TestBed.createComponent(InventoryAlertsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.allAlerts.length).toBe(2);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.allAlerts().length).toBe(2);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('splits alerts into outOfStock and lowStock', () => {
@@ -103,6 +103,6 @@ describe('InventoryAlertsComponent', () => {
     const fixture = TestBed.createComponent(InventoryAlertsComponent);
     fixture.detectChanges();
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 });

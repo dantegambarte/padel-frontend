@@ -56,7 +56,7 @@ describe('LoginComponent', () => {
       password: 'secret1',
     });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/app/dashboard']);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('shows a specific message on 401', () => {
@@ -67,7 +67,7 @@ describe('LoginComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.errorMessage).toContain('Credenciales inválidas');
+    expect(fixture.componentInstance.errorMessage()).toContain('Credenciales inválidas');
   });
 
   it('shows a connectivity message on status 0', () => {
@@ -78,14 +78,14 @@ describe('LoginComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.errorMessage).toContain('No se pudo conectar');
+    expect(fixture.componentInstance.errorMessage()).toContain('No se pudo conectar');
   });
 
   it('togglePasswordVisibility() flips showPassword', () => {
     const fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.showPassword).toBe(false);
+    expect(fixture.componentInstance.showPassword()).toBe(false);
     fixture.componentInstance.togglePasswordVisibility();
-    expect(fixture.componentInstance.showPassword).toBe(true);
+    expect(fixture.componentInstance.showPassword()).toBe(true);
   });
 });

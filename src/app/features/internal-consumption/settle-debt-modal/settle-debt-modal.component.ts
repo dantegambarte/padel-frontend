@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 import {
@@ -31,17 +31,14 @@ export class SettleDebtModalComponent implements OnInit {
   @Output() settled = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
 
-  consumptions: InternalConsumption[] = [];
-  loading = true;
-  settling = false;
+  consumptions = signal<InternalConsumption[]>([]);
+  loading = signal(true);
+  settling = signal(false);
   paymentMethod: PaymentMethod = 'cash';
 
-  get total(): number {
-    return this.consumptions.reduce(
-      (sum, c) => sum + c.unitCostPrice * c.quantity,
-      0,
-    );
-  }
+  total = computed(() =>
+    this.consumptions().reduce((sum, c) => sum + c.unitCostPrice * c.quantity, 0),
+  );
 
   constructor(private service: InternalConsumptionService) {}
 
@@ -53,11 +50,11 @@ export class SettleDebtModalComponent implements OnInit {
       })
       .subscribe({
         next: (data) => {
-          this.consumptions = data;
-          this.loading = false;
+          this.consumptions.set(data);
+          this.loading.set(false);
         },
         error: () => {
-          this.loading = false;
+          this.loading.set(false);
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -71,7 +68,7 @@ export class SettleDebtModalComponent implements OnInit {
    * Inicia el proceso de liquidación de la deuda del docente, enviando una solicitud al servicio para marcar los consumos como pagados y registrar el método de pago. Maneja el estado de carga y posibles errores durante la operación, emitiendo eventos para notificar al componente padre sobre el resultado de la acción.
    */
   onSettle(): void {
-    this.settling = true;
+    this.settling.set(true);
 
     this.service
       .settleTeacherDebt({
@@ -80,11 +77,11 @@ export class SettleDebtModalComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.settling = false;
+          this.settling.set(false);
           this.settled.emit();
         },
         error: (err) => {
-          this.settling = false;
+          this.settling.set(false);
           const errorCode = err?.error?.errorCode;
           if (errorCode === 'CAJA_CERRADA') {
             Swal.fire({
@@ -113,7 +110,7 @@ export class SettleDebtModalComponent implements OnInit {
     const url = this.service.buildDebtReminderWhatsAppUrl(
       this.teacher.phoneNumber,
       this.teacher.fullName,
-      this.total,
+      this.total(),
     );
     window.open(url, '_blank', 'noopener,noreferrer');
   }

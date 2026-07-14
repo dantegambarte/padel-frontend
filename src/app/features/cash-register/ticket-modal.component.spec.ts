@@ -30,7 +30,7 @@ describe('TicketModalComponent', () => {
   it('creates without a saleId', () => {
     const fixture = TestBed.createComponent(TicketModalComponent);
     expect(() => fixture.detectChanges()).not.toThrow();
-    expect(fixture.componentInstance.sale).toBeNull();
+    expect(fixture.componentInstance.sale()).toBeNull();
   });
 
   it('ngOnChanges() fetches the sale when saleId is set', () => {
@@ -42,8 +42,8 @@ describe('TicketModalComponent', () => {
     component.ngOnChanges({ saleId: new SimpleChange(null, 's1', true) });
 
     expect(salesServiceSpy.findOne).toHaveBeenCalledWith('s1');
-    expect(component.sale).toEqual(mockSale);
-    expect(component.isLoading).toBe(false);
+    expect(component.sale()).toEqual(mockSale);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('ngOnChanges() sets loadError when the fetch fails', () => {
@@ -54,18 +54,18 @@ describe('TicketModalComponent', () => {
 
     component.ngOnChanges({ saleId: new SimpleChange(null, 's1', true) });
 
-    expect(component.loadError).toContain('No se pudo cargar');
+    expect(component.loadError()).toContain('No se pudo cargar');
   });
 
   it('ngOnChanges() clears the sale when saleId becomes null', () => {
     const fixture = TestBed.createComponent(TicketModalComponent);
     const component = fixture.componentInstance;
-    component.sale = mockSale;
+    component.sale.set(mockSale);
     component.saleId = null;
 
     component.ngOnChanges({ saleId: new SimpleChange('s1', null, false) });
 
-    expect(component.sale).toBeNull();
+    expect(component.sale()).toBeNull();
   });
 
   it('close() emits closeModal', () => {

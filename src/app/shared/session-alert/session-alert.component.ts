@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import {
@@ -14,23 +14,21 @@ import { NgIf, NgClass } from '@angular/common';
     imports: [NgIf, NgClass],
 })
 export class SessionAlertComponent implements OnInit, OnDestroy {
-  visible = false;
-  alertType: SessionAlertType = null;
+  private sessionAlertService = inject(SessionAlertService);
+  private authService = inject(AuthService);
+
+  visible = signal(false);
+  alertType = signal<SessionAlertType>(null);
 
   private sub = new Subscription();
-
-  constructor(
-    private sessionAlertService: SessionAlertService,
-    private authService: AuthService,
-  ) {}
 
   ngOnInit(): void {
     this.sub.add(
       this.sessionAlertService.alert$
         .pipe(filter((t) => t !== null))
         .subscribe((type) => {
-          this.alertType = type;
-          this.visible = true;
+          this.alertType.set(type);
+          this.visible.set(true);
         }),
     );
   }
@@ -39,26 +37,22 @@ export class SessionAlertComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-  get title(): string {
-    return this.alertType === 'SESSION_OVERRIDDEN'
-      ? 'Sesión cerrada'
-      : 'Sesión expirada';
-  }
+  title = computed(() =>
+    this.alertType() === 'SESSION_OVERRIDDEN' ? 'Sesión cerrada' : 'Sesión expirada',
+  );
 
-  get message(): string {
-    return this.alertType === 'SESSION_OVERRIDDEN'
+  message = computed(() =>
+    this.alertType() === 'SESSION_OVERRIDDEN'
       ? 'Tu sesión fue cerrada porque se detectó un inicio de sesión en otro dispositivo.'
-      : 'Tu sesión ha expirado por inactividad. Por favor, volvé a ingresar.';
-  }
+      : 'Tu sesión ha expirado por inactividad. Por favor, volvé a ingresar.',
+  );
 
-  get iconColor(): string {
-    return this.alertType === 'SESSION_OVERRIDDEN'
-      ? 'text-amber-500'
-      : 'text-blue-500';
-  }
+  iconColor = computed(() =>
+    this.alertType() === 'SESSION_OVERRIDDEN' ? 'text-amber-500' : 'text-blue-500',
+  );
 
   confirm(): void {
-    this.visible = false;
+    this.visible.set(false);
     this.sessionAlertService.dismiss();
     this.authService.logout();
   }

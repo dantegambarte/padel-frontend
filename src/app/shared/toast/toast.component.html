@@ -4,7 +4,7 @@
   aria-label="Notificaciones"
 >
   <div
-    *ngFor="let toast of toasts; trackBy: trackById"
+    *ngFor="let toast of toasts(); trackBy: trackById"
     [@toastState]
     class="relative pointer-events-auto flex items-start overflow-hidden rounded-2xl border border-white/30 shadow-[0_12px_40px_rgba(0,0,0,0.22),0_2px_8px_rgba(0,0,0,0.10)] backdrop-blur-xl gap-3 w-full sm:min-w-[360px] sm:max-w-[480px] pl-5 pr-3 py-3 sm:pl-6 sm:pr-4 sm:py-4"
     [ngClass]="cardBgClass(toast.variant)"

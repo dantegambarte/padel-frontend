@@ -1,16 +1,16 @@
 <div
-  *ngIf="visible"
+  *ngIf="visible()"
   class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4"
   role="alertdialog"
   aria-modal="true"
-  [attr.aria-label]="title"
+  [attr.aria-label]="title()"
 >
   <div
     class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center gap-4 text-center"
   >
     <div class="rounded-full bg-gray-50 p-3">
       <svg
-        [ngClass]="iconColor"
+        [ngClass]="iconColor()"
         class="w-10 h-10"
         fill="none"
         stroke="currentColor"
@@ -26,8 +26,8 @@
     </div>
 
     <div>
-      <h2 class="text-lg font-bold text-gray-900 mb-1">{{ title }}</h2>
-      <p class="text-sm text-gray-600 leading-relaxed">{{ message }}</p>
+      <h2 class="text-lg font-bold text-gray-900 mb-1">{{ title() }}</h2>
+      <p class="text-sm text-gray-600 leading-relaxed">{{ message() }}</p>
     </div>
 
     <button

@@ -29,7 +29,7 @@ describe('ToastComponent', () => {
     const toast: ToastMessage = { id: 1, title: 'Hola', variant: 'success' };
     toastsSubject.next([toast]);
 
-    expect(fixture.componentInstance.toasts).toEqual([toast]);
+    expect(fixture.componentInstance.toasts()).toEqual([toast]);
   });
 
   it('dismiss() delegates to the service', () => {

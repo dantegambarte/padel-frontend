@@ -35,14 +35,14 @@ describe('AccountComponent', () => {
     setup({ fullName: 'Admin Test', mustChangePassword: false });
     const fixture = TestBed.createComponent(AccountComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.showForcedModal).toBe(false);
+    expect(fixture.componentInstance.showForcedModal()).toBe(false);
   });
 
   it('shows the forced modal immediately when mustChangePassword is true', () => {
     setup({ fullName: 'Admin Test', mustChangePassword: true });
     const fixture = TestBed.createComponent(AccountComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.showForcedModal).toBe(true);
+    expect(fixture.componentInstance.showForcedModal()).toBe(true);
   });
 
   it('userInitials returns up to two uppercase initials', () => {
@@ -57,7 +57,7 @@ describe('AccountComponent', () => {
     const fixture = TestBed.createComponent(AccountComponent);
     fixture.detectChanges();
     fixture.componentInstance.submitChange();
-    expect(fixture.componentInstance.formError).toContain('actual es obligatoria');
+    expect(fixture.componentInstance.formError()).toContain('actual es obligatoria');
   });
 
   it('submitChange() rejects mismatched passwords', () => {
@@ -67,7 +67,7 @@ describe('AccountComponent', () => {
     const component = fixture.componentInstance;
     component.form = { currentPassword: 'old', newPassword: 'newpass1', confirmPassword: 'different' };
     component.submitChange();
-    expect(component.formError).toContain('no coinciden');
+    expect(component.formError()).toContain('no coinciden');
   });
 
   it('submitChange() calls the service and shows success on a normal (non-forced) change', () => {
@@ -83,7 +83,7 @@ describe('AccountComponent', () => {
     component.submitChange();
 
     expect(authServiceSpy.changeOwnPassword).toHaveBeenCalledWith('old', 'newpass1');
-    expect(component.showSuccess).toBe(true);
+    expect(component.showSuccess()).toBe(true);
     expect(authServiceSpy.logout).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe('AccountComponent', () => {
 
     component.submitChange();
 
-    expect(component.formError).toBe('Contraseña actual incorrecta');
-    expect(component.isSubmitting).toBe(false);
+    expect(component.formError()).toBe('Contraseña actual incorrecta');
+    expect(component.isSubmitting()).toBe(false);
   });
 });

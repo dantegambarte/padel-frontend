@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -17,12 +17,12 @@ import { NgIf, AsyncPipe } from '@angular/common';
 })
 export class LoginComponent {
   form: FormGroup;
-  errorMessage = '';
-  isLoading = false;
-  showPassword = false;
+  errorMessage = signal('');
+  isLoading = signal(false);
+  showPassword = signal(false);
 
   togglePasswordVisibility(): void {
-    this.showPassword = !this.showPassword;
+    this.showPassword.update((v) => !v);
   }
 
   /**
@@ -45,27 +45,28 @@ export class LoginComponent {
    * Muestra mensajes de error descriptivos según el código HTTP recibido.
    */
   onSubmit(): void {
-    if (this.form.invalid || this.isLoading) return;
+    if (this.form.invalid || this.isLoading()) return;
 
-    this.errorMessage = '';
-    this.isLoading = true;
+    this.errorMessage.set('');
+    this.isLoading.set(true);
 
     const { username, password } = this.form.value;
 
     this.authService.login({ username, password }).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.router.navigate(['/app/dashboard']);
       },
       error: (err) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         if (err.status === 401) {
-          this.errorMessage =
-            'Credenciales inválidas. Verificá usuario y contraseña.';
+          this.errorMessage.set(
+            'Credenciales inválidas. Verificá usuario y contraseña.',
+          );
         } else if (err.status === 0) {
-          this.errorMessage = 'No se pudo conectar con el servidor.';
+          this.errorMessage.set('No se pudo conectar con el servidor.');
         } else {
-          this.errorMessage = 'Error al iniciar sesión. Intentá nuevamente.';
+          this.errorMessage.set('Error al iniciar sesión. Intentá nuevamente.');
         }
       },
     });

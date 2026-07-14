@@ -1,4 +1,4 @@
-<ng-container *ngIf="showForcedModal">
+<ng-container *ngIf="showForcedModal()">
   <div appModalScrollLock class="modal-backdrop">
     <div class="modal-card max-w-md border border-amber-300/60">
       <div
@@ -49,7 +49,7 @@
       <div class="modal-footer">
         <button
           type="button"
-          (click)="showForcedModal = false"
+          (click)="showForcedModal.set(false)"
           class="inline-flex items-center gap-2 rounded-md bg-amber-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600"
         >
           Entendido, cambiar ahora
@@ -161,7 +161,7 @@
 
     <div class="p-6">
       <div
-        *ngIf="showSuccess"
+        *ngIf="showSuccess()"
         class="mb-4 flex items-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 py-2.5 text-sm text-accent"
       >
         <svg
@@ -180,10 +180,10 @@
       </div>
 
       <div
-        *ngIf="formError"
+        *ngIf="formError()"
         class="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
       >
-        {{ formError }}
+        {{ formError() }}
       </div>
 
       <div class="space-y-4 max-w-sm">
@@ -196,7 +196,7 @@
             type="password"
             [(ngModel)]="form.currentPassword"
             placeholder="••••••••"
-            [disabled]="isSubmitting"
+            [disabled]="isSubmitting()"
             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
           />
         </div>
@@ -210,7 +210,7 @@
             type="password"
             [(ngModel)]="form.newPassword"
             placeholder="Mínimo 6 caracteres"
-            [disabled]="isSubmitting"
+            [disabled]="isSubmitting()"
             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
           />
         </div>
@@ -224,7 +224,7 @@
             type="password"
             [(ngModel)]="form.confirmPassword"
             placeholder="••••••••"
-            [disabled]="isSubmitting"
+            [disabled]="isSubmitting()"
             (keydown.enter)="submitChange()"
             [ngClass]="{
               'border-destructive focus:ring-destructive/40': confirmMismatch,
@@ -261,7 +261,7 @@
             [disabled]="!canSubmit"
             class="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <ng-container *ngIf="isSubmitting">
+            <ng-container *ngIf="isSubmitting()">
               <svg
                 class="h-4 w-4 animate-spin"
                 viewBox="0 0 24 24"
@@ -275,7 +275,7 @@
               </svg>
               Guardando…
             </ng-container>
-            <ng-container *ngIf="!isSubmitting"
+            <ng-container *ngIf="!isSubmitting()"
               >Guardar Contraseña</ng-container
             >
           </button>

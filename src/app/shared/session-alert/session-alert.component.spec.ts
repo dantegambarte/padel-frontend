@@ -33,7 +33,7 @@ describe('SessionAlertComponent', () => {
   it('creates and starts hidden', () => {
     const fixture = TestBed.createComponent(SessionAlertComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.visible).toBe(false);
+    expect(fixture.componentInstance.visible()).toBe(false);
   });
 
   it('becomes visible and sets alertType when the service emits a non-null alert', () => {
@@ -42,9 +42,9 @@ describe('SessionAlertComponent', () => {
 
     alertSubject.next('TOKEN_EXPIRED');
 
-    expect(fixture.componentInstance.visible).toBe(true);
-    expect(fixture.componentInstance.alertType).toBe('TOKEN_EXPIRED');
-    expect(fixture.componentInstance.title).toBe('Sesión expirada');
+    expect(fixture.componentInstance.visible()).toBe(true);
+    expect(fixture.componentInstance.alertType()).toBe('TOKEN_EXPIRED');
+    expect(fixture.componentInstance.title()).toBe('Sesión expirada');
   });
 
   it('shows the SESSION_OVERRIDDEN copy for that alert type', () => {
@@ -53,7 +53,7 @@ describe('SessionAlertComponent', () => {
 
     alertSubject.next('SESSION_OVERRIDDEN');
 
-    expect(fixture.componentInstance.title).toBe('Sesión cerrada');
+    expect(fixture.componentInstance.title()).toBe('Sesión cerrada');
   });
 
   it('confirm() hides the alert, dismisses it and logs the user out', () => {
@@ -63,7 +63,7 @@ describe('SessionAlertComponent', () => {
 
     fixture.componentInstance.confirm();
 
-    expect(fixture.componentInstance.visible).toBe(false);
+    expect(fixture.componentInstance.visible()).toBe(false);
     expect(sessionAlertServiceSpy.dismiss).toHaveBeenCalled();
     expect(authServiceSpy.logout).toHaveBeenCalled();
   });
