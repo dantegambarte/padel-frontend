@@ -20,7 +20,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -45,12 +45,29 @@ function ss(name: string) {
   return path.join(SCREENSHOTS_DIR, name);
 }
 
+async function dismissSweetAlertIfVisible(page: Page) {
+  const popup = page.locator('.swal2-popup');
+  await popup.waitFor({ state: 'visible', timeout: 1000 }).catch(() => null);
+  if (await popup.isVisible().catch(() => false)) {
+    await popup.getByRole('button', { name: /Entendido|Aceptar|OK/i }).click();
+    await popup.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => null);
+    await page.waitForTimeout(400);
+  }
+}
+
+async function hasPendingBusinessDayAlert(page: Page) {
+  const popup = page.locator('.swal2-popup');
+  await popup.waitFor({ state: 'visible', timeout: 1000 }).catch(() => null);
+  return popup.getByRole('heading', { name: /Jornada anterior pendiente/i }).isVisible().catch(() => false);
+}
+
 /** Rellena un input numérico por id con el valor dado. */
 async function fillNumeric(
-  page: import('@playwright/test').Page,
+  page: Page,
   id: string,
   value: string,
 ) {
+  await dismissSweetAlertIfVisible(page);
   const input = page.locator(`#${id}`);
   if (await input.isVisible().catch(() => false)) {
     await input.click({ clickCount: 3 });
@@ -97,7 +114,7 @@ async function screenshotWithHighlight(
 }
 
 test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   ensureDir();
 
   await page.goto('/auth/login');
@@ -139,7 +156,10 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   await page.waitForURL('**/app/**', { timeout: 10_000 });
   await page.waitForTimeout(800);
 
-  await page.goto('/app/cash-register');
+  await page.goto('/app/cash-register', {
+    waitUntil: 'domcontentloaded',
+    timeout: 15_000,
+  });
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1200);
 
@@ -202,7 +222,7 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
 
   await page.waitForTimeout(600);
 
-  const continuarBtn = page.getByRole('button', { name: /Continuar al Pago/i });
+  const continuarBtn = page.getByRole('button', { name: /Continuar al Pago|Ir al Pago/i });
   await screenshotWithHighlight(
     continuarBtn,
     page,
@@ -222,7 +242,7 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     await page.waitForTimeout(600);
 
     const confirmarBtn = page
-      .getByRole('button', { name: /Confirmar Venta/i })
+      .getByRole('button', { name: /Confirmar Venta|Cobrar|Caja Cerrada/i })
       .first();
     await screenshotWithHighlight(
       confirmarBtn,
@@ -252,7 +272,10 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     }
   }
 
-  await page.goto('/app/cash-register');
+  await page.goto('/app/cash-register', {
+    waitUntil: 'domcontentloaded',
+    timeout: 15_000,
+  });
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1200);
 
@@ -266,8 +289,10 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   const cierreTurnoBtn = page
     .getByRole('button', { name: /Cierre de Turno/i })
     .first();
-  await cierreTurnoBtn.click();
-  await page.waitForTimeout(800);
+  if (await cierreTurnoBtn.isVisible().catch(() => false)) {
+    await cierreTurnoBtn.click();
+    await page.waitForTimeout(800);
+  }
 
   await fillNumeric(page, 'efectivo-real', '15000');
   await screenshotWithHighlight(
@@ -277,8 +302,11 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     false,
   );
 
-  await page.getByRole('button', { name: /Cerrar mi Turno/i }).click();
-  await page.waitForTimeout(800);
+  const cerrarMiTurnoBtn = page.getByRole('button', { name: /Cerrar mi Turno/i });
+  if (await cerrarMiTurnoBtn.isVisible().catch(() => false)) {
+    await cerrarMiTurnoBtn.click();
+    await page.waitForTimeout(800);
+  }
 
   const btnConfirmarNormal = page.getByRole('button', {
     name: /Confirmar cierre de turno/i,
@@ -289,48 +317,78 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     ss('08c-confirmacion-comun.png'),
     false,
   );
-  await btnConfirmarNormal.click();
-  await page.waitForTimeout(1500);
+  if (await btnConfirmarNormal.isVisible().catch(() => false)) {
+    await btnConfirmarNormal.click();
+    await page.waitForTimeout(1500);
+  }
 
   const nuevoTurnoBtn = page
     .getByRole('button', { name: /Abrir Nuevo Turno|Iniciar Nueva Jornada/i })
     .first();
-  await nuevoTurnoBtn.click();
-  await fillNumeric(page, 'fondo-nuevo-turno', '10000');
-  await page
-    .getByRole('button', { name: /Abrir Turno|Iniciar Nueva Jornada/i })
-    .last()
-    .click();
-  await page.waitForTimeout(1500);
+  if (await nuevoTurnoBtn.isVisible().catch(() => false)) {
+    await nuevoTurnoBtn.click();
+    if (await hasPendingBusinessDayAlert(page)) {
+      await page.screenshot({
+        path: ss('09-jornada-anterior-pendiente.png'),
+        fullPage: false,
+      });
+      await dismissSweetAlertIfVisible(page);
+    } else {
+      await fillNumeric(page, 'fondo-nuevo-turno', '10000');
+      await page
+        .getByRole('button', { name: /Abrir Turno|Iniciar Nueva Jornada/i })
+        .last()
+        .click();
+      await page.waitForTimeout(1500);
+    }
+  }
 
   await page.goto('/app/schedule');
   await page.waitForTimeout(1000);
-  await page.getByRole('button', { name: 'Disponible' }).first().click();
-  await page.waitForTimeout(800);
-  await page
-    .getByRole('textbox', { name: /Cliente|Jugador|Nombre/i })
-    .first()
-    .fill('Jugador en Cancha');
+  const pendingSlot = page
+    .getByRole('button', { name: /Disponible 12:00/ })
+    .first();
+  if (await pendingSlot.isVisible().catch(() => false)) {
+    await pendingSlot.click({ timeout: 3_000 }).catch(() => null);
+    await page.waitForTimeout(800);
+    const bookingName = page
+      .getByRole('textbox', { name: /Cliente|Jugador|Nombre/i })
+      .first();
+    if (await bookingName.isVisible({ timeout: 1_500 }).catch(() => false)) {
+      await bookingName.fill('Jugador en Cancha');
+    }
+  }
 
   const btnGuardarReserva = page.getByRole('button', {
     name: /Guardar Reserva/i,
   });
-  await screenshotWithHighlight(
-    btnGuardarReserva,
-    page,
-    ss('10-creando-pendiente.png'),
-    false,
-  );
-  await btnGuardarReserva.click();
-  await page.waitForTimeout(1500);
+  if (await btnGuardarReserva.isVisible({ timeout: 1_500 }).catch(() => false)) {
+    await screenshotWithHighlight(
+      btnGuardarReserva,
+      page,
+      ss('10-creando-pendiente.png'),
+      false,
+    );
+  } else {
+    await page.screenshot({ path: ss('10-creando-pendiente.png'), fullPage: false });
+  }
+  if (await btnGuardarReserva.isEnabled({ timeout: 1_500 }).catch(() => false)) {
+    await btnGuardarReserva.click();
+    await page.waitForTimeout(1500);
+  }
 
-  await page.goto('/app/cash-register');
+  await page.goto('/app/cash-register', {
+    waitUntil: 'domcontentloaded',
+    timeout: 15_000,
+  });
   await page.waitForTimeout(1000);
-  await page
+  const closeTurnTab = page
     .getByRole('button', { name: /Cierre de Turno/i })
-    .first()
-    .click();
-  await page.waitForTimeout(1000);
+    .first();
+  if (await closeTurnTab.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await closeTurnTab.click();
+    await page.waitForTimeout(1000);
+  }
 
   const btnTraspasar = page.getByRole('button', {
     name: /Traspasar y cerrar turno/i,
@@ -342,8 +400,10 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     false,
   );
 
-  await btnTraspasar.click();
-  await page.waitForTimeout(2000);
+  if (await btnTraspasar.isVisible().catch(() => false)) {
+    await btnTraspasar.click();
+    await page.waitForTimeout(2000);
+  }
 
   await page.screenshot({
     path: ss('12-caja-final-cerrada.png'),

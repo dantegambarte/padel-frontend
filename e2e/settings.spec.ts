@@ -5,6 +5,10 @@ async function goToSettings(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+function settingsHeading(page: Page) {
+  return page.getByRole('heading', { name: /Configuración/i }).first();
+}
+
 test.describe('Módulo de Configuración', () => {
   test.beforeEach(async ({ page }) => {
     await goToSettings(page);
@@ -13,9 +17,7 @@ test.describe('Módulo de Configuración', () => {
   test('SE-01: carga la pantalla de configuración correctamente', async ({
     page,
   }) => {
-    await expect(
-      page.getByRole('heading', { name: 'Configuración', exact: true }),
-    ).toBeVisible({ timeout: 8000 });
+    await expect(settingsHeading(page)).toBeVisible({ timeout: 8000 });
   });
 
   test('SE-02: muestra los precios actuales de la cancha (estándar y profesor)', async ({
@@ -37,20 +39,20 @@ test.describe('Módulo de Configuración', () => {
     }
   });
 
-  test('SE-04: el botón Guardar Configuración dispara un PUT/PATCH a la API', async ({
+  test('SE-04: el botón Guardar Fondo dispara un PUT/PATCH a la API', async ({
     page,
   }) => {
-    const priceInput = page.locator('input[type="number"]').first();
-    if (await priceInput.isVisible()) {
-      const currentVal = await priceInput.inputValue();
-      await priceInput.fill(
+    const fondoInput = page.getByRole('spinbutton', { name: /Fondo por defecto/i });
+    if (await fondoInput.isVisible()) {
+      const currentVal = await fondoInput.inputValue();
+      await fondoInput.fill(
         currentVal ? String(Number(currentVal) + 1) : '3500',
       );
     }
     const saveBtn = page.getByRole('button', {
-      name: /Guardar Configuración/i,
+      name: /Guardar Fondo/i,
     });
-    if (await saveBtn.isVisible()) {
+    if (await saveBtn.isVisible() && await saveBtn.isEnabled()) {
       const responsePromise = page.waitForResponse(
         (res) =>
           res.url().includes('/config') &&
@@ -143,20 +145,22 @@ test.describe('Módulo de Configuración', () => {
     page,
   }) => {
     const cancelBtn = page.getByRole('button', { name: /Cancelar/i });
-    const priceInput = page.locator('input[type="number"]').first();
+    const openingInput = page.getByLabel(/Horario de Apertura/i);
     const saveBtn = page.getByRole('button', {
-      name: /Guardar Configuración/i,
+      name: /Guardar Horarios|Guardar Configuración/i,
     });
 
-    if ((await priceInput.isVisible()) && (await cancelBtn.isVisible())) {
-      const original = await priceInput.inputValue();
-      await priceInput.fill(String(Number(original || '3000') + 100));
-      await priceInput.blur();
+    if ((await openingInput.isVisible()) && (await cancelBtn.isVisible())) {
+      const original = await openingInput.inputValue();
+      const changed = original === '09:00' ? '09:30' : '09:00';
+      await openingInput.fill(changed);
+      await openingInput.blur();
       await expect(saveBtn).toBeEnabled({ timeout: 3000 });
 
       await cancelBtn.click();
       await page.waitForLoadState('networkidle');
       await expect(saveBtn).toBeDisabled({ timeout: 8000 });
+      await expect(openingInput).toHaveValue(original);
     }
   });
 });

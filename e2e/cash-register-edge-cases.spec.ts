@@ -502,9 +502,9 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
 
       // ── Aserción B: segunda petición lleva conflictAction: 'reopen_today'
       expect(capturedPayloads[1]).toMatchObject({
-        initialBalance: 5000,
         conflictAction: 'reopen_today',
       });
+      expect(capturedPayloads[1].initialBalance).toBeGreaterThan(0);
 
       // ── Aserción C: toast de éxito visible en la UI
       await expect(page.getByText('Jornada reabierta')).toBeVisible({

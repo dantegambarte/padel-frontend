@@ -205,6 +205,9 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   /** Descarta los cambios pendientes recargando la configuración desde el servidor. */
   cancel(): void {
+    this.horarioApertura = this.savedHorarioApertura;
+    this.horarioCierre = this.savedHorarioCierre;
+    this.fondoCajaBase = this.savedFondoCajaBase;
     this.loadAll();
   }
 

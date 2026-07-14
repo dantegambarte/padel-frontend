@@ -108,14 +108,31 @@ async function createDisposableCompletedBooking(
       });
       expect(playRes.ok()).toBeTruthy();
 
-      const productsRes = await page.request.get(`${API_URL}/products`, { headers });
-      const products = await productsRes.json();
-      const productList = Array.isArray(products) ? products : products?.data;
-      if (productList?.length > 0) {
+      const fixtureProductRes = await page.request.post(`${API_URL}/products`, {
+        headers,
+        data: {
+          name: `Consumo Profesor E2E ${Date.now()}`,
+          costPrice: 100,
+          salePrice: 1000,
+          stock: 20,
+          minStock: 1,
+          icon: 'inventory_2',
+        },
+      });
+      let product = fixtureProductRes.ok() ? await fixtureProductRes.json() : null;
+
+      if (!product) {
+        const productsRes = await page.request.get(`${API_URL}/products`, { headers });
+        const products = await productsRes.json();
+        const productList = Array.isArray(products) ? products : products?.data;
+        product = productList?.find((p: any) => p.stock > 0) ?? null;
+      }
+
+      if (product) {
         await page.request.post(`${API_URL}/internal-consumption`, {
           headers,
           data: {
-            productId: productList[0].id,
+            productId: product.id,
             quantity: 1,
             consumerType: 'teacher',
             teacherId: teacher.id,

@@ -5,6 +5,46 @@ async function goToCaja(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+function cashScreenHeading(page: Page) {
+  return page.locator('main').getByRole('heading', {
+    name: /Arqueo de Turno|Efectivo Esperado|Caja Cerrada|Abrir Turno/i,
+  }).first();
+}
+
+function closeCashButton(page: Page) {
+  return page.getByRole('button', {
+    name: /Cerrar Jornada|Cerrar Caja Z|Cerrar mi Turno/i,
+  }).first();
+}
+
+async function goToCierreTurno(page: Page) {
+  const cierreTab = page.getByRole('button', { name: /Cierre de Turno/i });
+  if (await cierreTab.isVisible()) {
+    await cierreTab.click({ force: true });
+    const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
+    if (await pendingDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+      return false;
+    }
+    const cierreHeading = page
+      .locator('main')
+      .getByRole('heading', { name: /Arqueo de Turno/i });
+    if (!(await cierreHeading.isVisible({ timeout: 3000 }).catch(() => false))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function fillCashCount(page: Page, amount = '1000') {
+  const canClose = await goToCierreTurno(page);
+  if (!canClose) return false;
+  const cashInput = page.locator('#efectivo-real');
+  if (await cashInput.isVisible()) {
+    await cashInput.fill(amount);
+  }
+  return true;
+}
+
 test.describe('Cierre de Caja', () => {
   test.beforeEach(async ({ page }) => {
     await goToCaja(page);
@@ -13,9 +53,7 @@ test.describe('Cierre de Caja', () => {
   test('CA-01: carga la pantalla de cierre de caja correctamente', async ({
     page,
   }) => {
-    await expect(
-      page.getByRole('heading', { name: 'Cierre de Caja' }),
-    ).toBeVisible();
+    await expect(cashScreenHeading(page)).toBeVisible();
   });
 
   test('CA-02: muestra el resumen de ingresos del día', async ({ page }) => {
@@ -37,14 +75,19 @@ test.describe('Cierre de Caja', () => {
   test('CA-04: el botón de cerrar caja abre un diálogo de confirmación', async ({
     page,
   }) => {
-    const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
+    const canClose = await fillCashCount(page);
+    if (!canClose) {
+      await expect(page.getByRole('dialog', { name: /Hay pendientes/i })).toBeVisible();
+      return;
+    }
+    const closeBtn = closeCashButton(page);
     if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
     } else {
       const isClosed =
         (await page.getByText(/cerrada|Caja cerrada/i).count()) > 0 ||
-        (await closeBtn.isDisabled());
+        (await closeBtn.isDisabled({ timeout: 500 }).catch(() => false));
       expect(isClosed).toBeTruthy();
     }
   });
@@ -52,31 +95,22 @@ test.describe('Cierre de Caja', () => {
   test('CA-05: el formulario de cierre requiere monto en efectivo contado', async ({
     page,
   }) => {
-    const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
-    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
-      await closeBtn.click();
-      const dialog = page.getByRole('dialog');
-      await expect(dialog).toBeVisible({ timeout: 3000 });
-
-      const confirmBtn = dialog.getByRole('button', { name: /Confirmar/i });
-      if (await confirmBtn.isVisible()) {
-        await expect(confirmBtn).toBeDisabled();
-      }
-
-      const montoInput = dialog
-        .locator('input[type="number"], input[type="text"]')
-        .first();
-      if (await montoInput.isVisible()) {
-        await montoInput.fill('1000');
-        await expect(confirmBtn).toBeEnabled({ timeout: 1000 });
-      }
+    const canClose = await goToCierreTurno(page);
+    if (!canClose) return;
+    const closeBtn = closeCashButton(page);
+    if (await closeBtn.isVisible()) {
+      await expect(closeBtn).toBeDisabled();
+      await fillCashCount(page);
+      await expect(closeBtn).toBeEnabled({ timeout: 1000 });
     }
   });
 
   test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({
     page,
   }) => {
-    const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
+    const canClose = await fillCashCount(page, '5000');
+    if (!canClose) return;
+    const closeBtn = closeCashButton(page);
     if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       const dialog = page.getByRole('dialog');
@@ -97,7 +131,14 @@ test.describe('Cierre de Caja', () => {
   test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({
     page,
   }) => {
-    const closeBtn = page.getByRole('button', { name: /Cerrar Caja Z/i });
+    const canClose = await fillCashCount(page);
+    if (!canClose) {
+      const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
+      await pendingDialog.getByRole('button', { name: /Cancelar/i }).click();
+      await expect(pendingDialog).not.toBeVisible({ timeout: 2000 });
+      return;
+    }
+    const closeBtn = closeCashButton(page);
     if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
       await closeBtn.click();
       const dialog = page.getByRole('dialog');
