@@ -6,6 +6,8 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  computed,
+  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, Subscription, EMPTY } from 'rxjs';
@@ -52,26 +54,26 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   @Input() currentUser: User | null = null;
   @Output() toggleMenu = new EventEmitter<void>();
 
-  isNotifOpen = false;
-  isUserMenuOpen = false;
-  isDepositsOpen = false;
+  isNotifOpen = signal(false);
+  isUserMenuOpen = signal(false);
+  isDepositsOpen = signal(false);
 
-  notifications: AppNotification[] = [];
+  notifications = signal<AppNotification[]>([]);
 
-  pendingDeposits: BookingResponse[] = [];
-  isLoadingDeposits = false;
-  confirmingDepositId: string | null = null;
+  pendingDeposits = signal<BookingResponse[]>([]);
+  isLoadingDeposits = signal(false);
+  confirmingDepositId = signal<string | null>(null);
 
-  searchQuery = '';
-  isSearchOpen = false;
-  isSearchLoading = false;
-  searchResults: SearchResponse = { products: [], bookings: [], sales: [] };
+  searchQuery = signal('');
+  isSearchOpen = signal(false);
+  isSearchLoading = signal(false);
+  searchResults = signal<SearchResponse>({ products: [], bookings: [], sales: [] });
 
   /** Controla si el buscador expandido está activo en mobile. */
-  isMobileSearchOpen = false;
+  isMobileSearchOpen = signal(false);
 
   /** ID de la venta cuyo ticket debe mostrarse sobre la pantalla actual. */
-  globalTicketSaleId: string | null = null;
+  globalTicketSaleId = signal<string | null>(null);
 
   private readonly searchSubject = new Subject<string>();
   private sub = new Subscription();
@@ -90,7 +92,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub.add(
       this.notificationService.notifications$.subscribe((notifs) => {
-        this.notifications = notifs;
+        this.notifications.set(notifs);
       }),
     );
 
@@ -105,23 +107,23 @@ export class ToolbarComponent implements OnInit, OnDestroy {
           distinctUntilChanged(),
           switchMap((q) => {
             if (!q.trim()) {
-              this.searchResults = { products: [], bookings: [], sales: [] };
-              this.isSearchOpen = false;
+              this.searchResults.set({ products: [], bookings: [], sales: [] });
+              this.isSearchOpen.set(false);
               return EMPTY;
             }
-            this.isSearchLoading = true;
+            this.isSearchLoading.set(true);
             return this.searchService
               .search(q)
-              .pipe(finalize(() => (this.isSearchLoading = false)));
+              .pipe(finalize(() => this.isSearchLoading.set(false)));
           }),
         )
         .subscribe({
           next: (results) => {
-            this.searchResults = results;
-            this.isSearchOpen = true;
+            this.searchResults.set(results);
+            this.isSearchOpen.set(true);
           },
           error: () => {
-            this.isSearchLoading = false;
+            this.isSearchLoading.set(false);
           },
         }),
     );
@@ -150,25 +152,20 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   }
 
   /** Cantidad de notificaciones no leídas para el badge del ícono de campana. */
-  get notifCount(): number {
-    return this.notifications.length;
-  }
+  notifCount = computed(() => this.notifications().length);
 
   /** True si el dropdown de búsqueda tiene al menos un resultado en cualquier categoría. */
-  get hasSearchResults(): boolean {
+  hasSearchResults = computed(() => {
+    const results = this.searchResults();
     return (
-      this.searchResults.products.length > 0 ||
-      this.searchResults.bookings.length > 0 ||
-      this.searchResults.sales.length > 0
+      results.products.length > 0 ||
+      results.bookings.length > 0 ||
+      results.sales.length > 0
     );
-  }
+  });
 
   /** Notificaciones agrupadas por categoría (TURNOS, STOCK, CAJA, SISTEMA) para el panel desplegable. */
-  get groupedNotifications(): {
-    category: string;
-    label: string;
-    items: AppNotification[];
-  }[] {
+  groupedNotifications = computed(() => {
     const LABELS: Record<string, string> = {
       TURNOS: 'Turnos',
       STOCK: 'Stock',
@@ -176,7 +173,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       SISTEMA: 'Sistema',
     };
     const map = new Map<string, AppNotification[]>();
-    for (const n of this.notifications) {
+    for (const n of this.notifications()) {
       const cat = n.category ?? 'SISTEMA';
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(n);
@@ -186,7 +183,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
       label: LABELS[category] ?? category,
       items,
     }));
-  }
+  });
 
   /** Clase de color del indicador circular por categoría de notificación. */
   categoryDotClass(category: string): string {
@@ -202,32 +199,32 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   /** Propaga el valor del input al Subject de búsqueda para el pipeline de debounce. */
   onSearchInput(event: Event): void {
     const q = (event.target as HTMLInputElement).value;
-    this.searchQuery = q;
+    this.searchQuery.set(q);
     this.searchSubject.next(q);
   }
 
   /** Reabre el dropdown si ya hay resultados cuando el input recupera el foco. */
   onSearchFocus(): void {
-    if (this.searchQuery.trim() && this.hasSearchResults) {
-      this.isSearchOpen = true;
+    if (this.searchQuery().trim() && this.hasSearchResults()) {
+      this.isSearchOpen.set(true);
     }
   }
 
   /** Limpia el input de búsqueda, resetea resultados y cierra el dropdown. */
   clearSearch(): void {
-    this.searchQuery = '';
-    this.searchResults = { products: [], bookings: [], sales: [] };
-    this.isSearchOpen = false;
+    this.searchQuery.set('');
+    this.searchResults.set({ products: [], bookings: [], sales: [] });
+    this.isSearchOpen.set(false);
   }
 
   openMobileSearch(): void {
-    this.isMobileSearchOpen = true;
-    this.isNotifOpen = false;
-    this.isUserMenuOpen = false;
+    this.isMobileSearchOpen.set(true);
+    this.isNotifOpen.set(false);
+    this.isUserMenuOpen.set(false);
   }
 
   closeMobileSearch(): void {
-    this.isMobileSearchOpen = false;
+    this.isMobileSearchOpen.set(false);
     this.clearSearch();
   }
 
@@ -250,13 +247,13 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   /** Abre el ticket de una venta desde el resultado de búsqueda navegando a reportes. */
   openSaleTicket(item: SearchResultItem): void {
     this.clearSearch();
-    this.globalTicketSaleId = item.id;
+    this.globalTicketSaleId.set(item.id);
     this.router.navigate(['/app/reports']);
   }
 
   /** Cierra el overlay de ticket de venta global. */
   closeSaleTicket(): void {
-    this.globalTicketSaleId = null;
+    this.globalTicketSaleId.set(null);
   }
 
   /** `true` si el admin ya abrió WhatsApp para esta notificación (1er clic realizado). */
@@ -266,16 +263,16 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   /** Abre o cierra el panel de notificaciones, cerrando los otros dropdowns. */
   toggleNotif(): void {
-    this.isNotifOpen = !this.isNotifOpen;
-    if (this.isNotifOpen) {
-      this.isUserMenuOpen = false;
-      this.isSearchOpen = false;
+    this.isNotifOpen.update((v) => !v);
+    if (this.isNotifOpen()) {
+      this.isUserMenuOpen.set(false);
+      this.isSearchOpen.set(false);
     }
   }
 
   /** Cierra el panel de notificaciones. */
   closeNotif(): void {
-    this.isNotifOpen = false;
+    this.isNotifOpen.set(false);
   }
 
   /** Elimina una notificación individual sin cerrar el panel. */
@@ -292,7 +289,7 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   /** Navega a la ruta de la notificación; si tiene URL de WhatsApp, la abre en la primera interacción. */
   navigateFromNotification(notif: AppNotification): void {
-    this.isNotifOpen = false;
+    this.isNotifOpen.set(false);
 
     if (notif.whatsappUrl) {
       const clickedKey = `wa_clicked_${notif.id}`;
@@ -318,22 +315,22 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   /** Cierra el menú de usuario y navega a la página de perfil. */
   goToAccount(): void {
-    this.isUserMenuOpen = false;
+    this.isUserMenuOpen.set(false);
     this.router.navigate(['/app/account']);
   }
 
   /** Abre o cierra el menú desplegable del usuario, cerrando los otros paneles. */
   toggleUserMenu(): void {
-    this.isUserMenuOpen = !this.isUserMenuOpen;
-    if (this.isUserMenuOpen) {
-      this.isNotifOpen = false;
-      this.isSearchOpen = false;
+    this.isUserMenuOpen.update((v) => !v);
+    if (this.isUserMenuOpen()) {
+      this.isNotifOpen.set(false);
+      this.isSearchOpen.set(false);
     }
   }
 
   /** Cierra el menú desplegable del usuario. */
   closeUserMenu(): void {
-    this.isUserMenuOpen = false;
+    this.isUserMenuOpen.set(false);
   }
 
   /** Cierra la sesión y redirige al login. */
@@ -343,31 +340,29 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   }
 
   /** Cantidad de señas pendientes para el badge. */
-  get pendingDepositsCount(): number {
-    return this.pendingDeposits.length;
-  }
+  pendingDepositsCount = computed(() => this.pendingDeposits().length);
 
   /** Carga (o recarga) la lista de señas pendientes desde la API. */
   loadPendingDeposits(): void {
-    this.isLoadingDeposits = true;
+    this.isLoadingDeposits.set(true);
     this.bookingsService.getPendingExpectedDeposits().subscribe({
       next: (deposits) => {
-        this.pendingDeposits = deposits;
-        this.isLoadingDeposits = false;
+        this.pendingDeposits.set(deposits);
+        this.isLoadingDeposits.set(false);
       },
       error: () => {
-        this.isLoadingDeposits = false;
+        this.isLoadingDeposits.set(false);
       },
     });
   }
 
   /** Abre o cierra el panel de señas pendientes, cerrando los otros paneles. */
   toggleDeposits(): void {
-    this.isDepositsOpen = !this.isDepositsOpen;
-    if (this.isDepositsOpen) {
-      this.isNotifOpen = false;
-      this.isUserMenuOpen = false;
-      this.isSearchOpen = false;
+    this.isDepositsOpen.update((v) => !v);
+    if (this.isDepositsOpen()) {
+      this.isNotifOpen.set(false);
+      this.isUserMenuOpen.set(false);
+      this.isSearchOpen.set(false);
       this.loadPendingDeposits();
     }
   }
@@ -377,23 +372,23 @@ export class ToolbarComponent implements OnInit, OnDestroy {
    * Elimina el item de la lista localmente tras confirmar (optimistic UI).
    */
   confirmDeposit(deposit: BookingResponse): void {
-    if (this.confirmingDepositId) return;
-    this.confirmingDepositId = deposit.id;
+    if (this.confirmingDepositId()) return;
+    this.confirmingDepositId.set(deposit.id);
 
     this.bookingsService.confirmExpectedDeposit(deposit.id).subscribe({
       next: () => {
-        this.pendingDeposits = this.pendingDeposits.filter((d) => d.id !== deposit.id);
-        this.confirmingDepositId = null;
+        this.pendingDeposits.update((list) => list.filter((d) => d.id !== deposit.id));
+        this.confirmingDepositId.set(null);
       },
       error: () => {
-        this.confirmingDepositId = null;
+        this.confirmingDepositId.set(null);
       },
     });
   }
 
   /** Navega a la agenda en la fecha del depósito pendiente. */
   navigateToDeposit(deposit: BookingResponse): void {
-    this.isDepositsOpen = false;
+    this.isDepositsOpen.set(false);
     this.router.navigate(['/app/schedule'], {
       queryParams: { date: deposit.date, openBooking: deposit.id },
     });
@@ -402,11 +397,11 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   @HostListener('document:click')
   /** Cierra todos los paneles desplegables al hacer clic fuera de ellos. */
   onDocumentClick(): void {
-    this.isUserMenuOpen = false;
-    this.isNotifOpen = false;
-    this.isDepositsOpen = false;
-    this.isSearchOpen = false;
-    this.isMobileSearchOpen = false;
+    this.isUserMenuOpen.set(false);
+    this.isNotifOpen.set(false);
+    this.isDepositsOpen.set(false);
+    this.isSearchOpen.set(false);
+    this.isMobileSearchOpen.set(false);
     this.clearSearch();
   }
 }

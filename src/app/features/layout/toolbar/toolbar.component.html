@@ -40,14 +40,14 @@
           type="search"
           placeholder="Buscar productos, turnos o ventas"
           autocomplete="off"
-          [value]="searchQuery"
+          [value]="searchQuery()"
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()"
-          [class.pr-8]="isSearchLoading"
+          [class.pr-8]="isSearchLoading()"
           class="flex h-9 w-72 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <div
-          *ngIf="isSearchLoading"
+          *ngIf="isSearchLoading()"
           class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
         >
           <svg
@@ -80,7 +80,7 @@
       </div>
 
       <button
-        *ngIf="!isMobileSearchOpen"
+        *ngIf="!isMobileSearchOpen()"
         type="button"
         (click)="openMobileSearch(); $event.stopPropagation()"
         class="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-card-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -114,15 +114,15 @@
             <circle cx="16" cy="15" r="1.5" fill="currentColor" stroke="none" />
           </svg>
           <span
-            *ngIf="pendingDepositsCount > 0"
+            *ngIf="pendingDepositsCount() > 0"
             class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white text-[10px] font-bold"
           >
-            {{ pendingDepositsCount > 9 ? '9+' : pendingDepositsCount }}
+            {{ pendingDepositsCount() > 9 ? '9+' : pendingDepositsCount() }}
           </span>
         </button>
 
         <div
-          *ngIf="isDepositsOpen"
+          *ngIf="isDepositsOpen()"
           (click)="$event.stopPropagation()"
           class="fixed top-16 left-3 right-3 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:w-96 sm:mt-2 z-[200] rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/5 overflow-hidden animate-in fade-in-0 zoom-in-95"
         >
@@ -146,16 +146,16 @@
                   </svg>
                 </button>
                 <span
-                  *ngIf="pendingDepositsCount > 0"
+                  *ngIf="pendingDepositsCount() > 0"
                   class="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
                 >
-                  {{ pendingDepositsCount }}
+                  {{ pendingDepositsCount() }}
                 </span>
               </div>
             </div>
             <hr class="my-1 border-border" />
 
-            <div *ngIf="isLoadingDeposits" class="flex justify-center py-6">
+            <div *ngIf="isLoadingDeposits()" class="flex justify-center py-6">
               <svg class="h-5 w-5 animate-spin text-violet-500" viewBox="0 0 24 24" fill="none">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -163,7 +163,7 @@
             </div>
 
             <div
-              *ngIf="!isLoadingDeposits && pendingDepositsCount === 0"
+              *ngIf="!isLoadingDeposits() && pendingDepositsCount() === 0"
               class="flex flex-col items-center gap-2 py-6 text-center"
             >
               <svg class="h-8 w-8 text-muted-foreground/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -173,9 +173,9 @@
               <p class="text-sm text-muted-foreground">Sin señas pendientes</p>
             </div>
 
-            <div *ngIf="!isLoadingDeposits && pendingDepositsCount > 0" class="max-h-[60vh] sm:max-h-80 overflow-y-auto space-y-1">
+            <div *ngIf="!isLoadingDeposits() && pendingDepositsCount() > 0" class="max-h-[60vh] sm:max-h-80 overflow-y-auto space-y-1">
               <div
-                *ngFor="let deposit of pendingDeposits"
+                *ngFor="let deposit of pendingDeposits()"
                 class="flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 transition-colors group"
               >
                 <button
@@ -197,14 +197,14 @@
                   <button
                     type="button"
                     (click)="confirmDeposit(deposit)"
-                    [disabled]="confirmingDepositId === deposit.id"
+                    [disabled]="confirmingDepositId() === deposit.id"
                     title="Confirmar seña por transferencia"
                     class="flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500 text-white text-xs font-semibold hover:bg-violet-600 transition-colors disabled:opacity-50"
                   >
-                    <svg *ngIf="confirmingDepositId !== deposit.id" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg *ngIf="confirmingDepositId() !== deposit.id" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <svg *ngIf="confirmingDepositId === deposit.id" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <svg *ngIf="confirmingDepositId() === deposit.id" class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
@@ -238,15 +238,15 @@
           </svg>
 
           <span
-            *ngIf="notifCount > 0"
+            *ngIf="notifCount() > 0"
             class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold"
           >
-            {{ notifCount > 9 ? "9+" : notifCount }}
+            {{ notifCount() > 9 ? "9+" : notifCount() }}
           </span>
         </button>
 
         <div
-          *ngIf="isNotifOpen"
+          *ngIf="isNotifOpen()"
           (click)="$event.stopPropagation()"
           class="fixed top-16 left-3 right-3 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:w-96 sm:mt-2 z-[200] rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/5 overflow-hidden animate-in fade-in-0 zoom-in-95"
         >
@@ -255,7 +255,7 @@
               <p class="text-sm font-semibold">Notificaciones</p>
               <div class="flex items-center gap-2">
                 <button
-                  *ngIf="notifCount > 0"
+                  *ngIf="notifCount() > 0"
                   type="button"
                   (click)="clearAllNotifications($event)"
                   class="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
@@ -263,17 +263,17 @@
                   Limpiar todas
                 </button>
                 <span
-                  *ngIf="notifCount > 0"
+                  *ngIf="notifCount() > 0"
                   class="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive"
                 >
-                  {{ notifCount }}
+                  {{ notifCount() }}
                 </span>
               </div>
             </div>
             <hr class="my-1 border-border" />
 
             <div
-              *ngIf="notifications.length === 0"
+              *ngIf="notifications().length === 0"
               class="flex flex-col items-center gap-2 py-6 text-center"
             >
               <svg
@@ -292,7 +292,7 @@
             </div>
 
             <div class="max-h-[60vh] sm:max-h-80 overflow-y-auto">
-              <ng-container *ngFor="let group of groupedNotifications">
+              <ng-container *ngFor="let group of groupedNotifications()">
                 <div class="flex items-center gap-1.5 px-2 pt-2 pb-1">
                   <span
                     class="h-2 w-2 rounded-full flex-shrink-0"
@@ -646,7 +646,7 @@
         </button>
 
         <div
-          *ngIf="isUserMenuOpen"
+          *ngIf="isUserMenuOpen()"
           (click)="$event.stopPropagation()"
           class="absolute right-0 top-full mt-1 w-48 z-[100] rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
         >
@@ -700,7 +700,7 @@
   </div>
 
   <div
-    *ngIf="isMobileSearchOpen"
+    *ngIf="isMobileSearchOpen()"
     (click)="$event.stopPropagation()"
     class="md:hidden overflow-hidden animate-[mobileSearchIn_200ms_ease-out_both]"
   >
@@ -725,14 +725,14 @@
           type="search"
           placeholder="Buscar productos, turnos o ventas"
           autocomplete="off"
-          [value]="searchQuery"
+          [value]="searchQuery()"
           (input)="onSearchInput($event)"
           (focus)="onSearchFocus()"
-          [class.pr-8]="isSearchLoading"
+          [class.pr-8]="isSearchLoading()"
           class="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <div
-          *ngIf="isSearchLoading"
+          *ngIf="isSearchLoading()"
           class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
         >
           <svg
@@ -788,13 +788,13 @@
 </header>
 
 <app-ticket-modal
-  [saleId]="globalTicketSaleId"
+  [saleId]="globalTicketSaleId()"
   (closeModal)="closeSaleTicket()"
 ></app-ticket-modal>
 
 <ng-template #searchDropdown let-posClass>
   <div
-    *ngIf="isSearchOpen"
+    *ngIf="isSearchOpen()"
     (click)="$event.stopPropagation()"
     [class]="
       'absolute top-full mt-1 z-[100] border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden rounded-md animate-in fade-in-0 zoom-in-95 ' +
@@ -802,14 +802,14 @@
     "
   >
     <div class="max-h-80 overflow-y-auto p-1">
-      <ng-container *ngIf="searchResults.products.length > 0">
+      <ng-container *ngIf="searchResults().products.length > 0">
         <p
           class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Productos
         </p>
         <button
-          *ngFor="let item of searchResults.products"
+          *ngFor="let item of searchResults().products"
           type="button"
           (click)="navigateToProduct(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
@@ -840,19 +840,19 @@
 
       <hr
         *ngIf="
-          searchResults.products.length > 0 && searchResults.bookings.length > 0
+          searchResults().products.length > 0 && searchResults().bookings.length > 0
         "
         class="my-1 border-border"
       />
 
-      <ng-container *ngIf="searchResults.bookings.length > 0">
+      <ng-container *ngIf="searchResults().bookings.length > 0">
         <p
           class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Reservas
         </p>
         <button
-          *ngFor="let item of searchResults.bookings"
+          *ngFor="let item of searchResults().bookings"
           type="button"
           (click)="navigateToBooking(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
@@ -884,21 +884,21 @@
 
       <hr
         *ngIf="
-          (searchResults.bookings.length > 0 ||
-            searchResults.products.length > 0) &&
-          searchResults.sales.length > 0
+          (searchResults().bookings.length > 0 ||
+            searchResults().products.length > 0) &&
+          searchResults().sales.length > 0
         "
         class="my-1 border-border"
       />
 
-      <ng-container *ngIf="searchResults.sales.length > 0">
+      <ng-container *ngIf="searchResults().sales.length > 0">
         <p
           class="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Ventas POS
         </p>
         <button
-          *ngFor="let item of searchResults.sales"
+          *ngFor="let item of searchResults().sales"
           type="button"
           (click)="openSaleTicket(item)"
           class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm hover:bg-accent/10 transition-colors text-left"
@@ -931,7 +931,7 @@
       </ng-container>
 
       <div
-        *ngIf="!isSearchLoading && !hasSearchResults"
+        *ngIf="!isSearchLoading() && !hasSearchResults()"
         class="flex flex-col items-center gap-1 py-6 text-center"
       >
         <svg
@@ -948,7 +948,7 @@
         </svg>
         <p class="text-sm text-muted-foreground">Sin resultados para</p>
         <p class="text-sm font-medium text-card-foreground">
-          "{{ searchQuery }}"
+          "{{ searchQuery() }}"
         </p>
       </div>
     </div>

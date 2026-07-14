@@ -1,5 +1,5 @@
 <div
-  *ngIf="isSessionOpen === null"
+  *ngIf="isSessionOpen() === null"
   class="flex flex-col items-center justify-center min-h-[60vh] gap-4"
 >
   <svg
@@ -15,7 +15,7 @@
 </div>
 
 <div
-  *ngIf="isSessionOpen === false && activeTab === 'turno'"
+  *ngIf="isSessionOpen() === false && activeTab() === 'turno'"
   class="flex flex-col items-center justify-center min-h-[60vh] px-4"
 >
   <div
@@ -50,7 +50,7 @@
     </div>
 
     <div
-      *ngIf="showAperturaDraftBanner"
+      *ngIf="showAperturaDraftBanner()"
       class="mx-6 mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm"
     >
       <span class="flex items-center gap-2 text-amber-800 font-medium">
@@ -109,12 +109,12 @@
             placeholder="0"
             [(ngModel)]="fondoInicial"
             (ngModelChange)="triggerDraftSave()"
-            [disabled]="isOpening"
+            [disabled]="isOpening()"
             class="flex h-12 w-full rounded-lg border-2 border-input bg-background pl-8 pr-3 py-2 text-xl font-bold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <p
-          *ngIf="fondoInicialSugerido; else fondoHint1"
+          *ngIf="fondoInicialSugerido(); else fondoHint1"
           class="text-xs text-amber-700 flex items-center gap-1"
         >
           <svg
@@ -154,7 +154,7 @@
           placeholder="Ej: Jornada de fin de semana, evento especial..."
           [(ngModel)]="notasApertura"
           (ngModelChange)="triggerDraftSave()"
-          [disabled]="isOpening"
+          [disabled]="isOpening()"
           class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
@@ -182,14 +182,14 @@
           logicalCommercialDateLabel
         }}</strong>
         <span
-          *ngIf="isOvernightWindow && !isBusinessDayClosed"
+          *ngIf="isOvernightWindow && !isBusinessDayClosed()"
           class="mt-1 block text-xs text-blue-600"
         >
           (Son las {{ currentTimeLabel }} hs — antes de las 03:00 corresponde al
           día anterior)
         </span>
         <span
-          *ngIf="isBusinessDayClosed"
+          *ngIf="isBusinessDayClosed()"
           class="mt-1.5 flex items-center justify-center gap-1 text-xs font-semibold text-amber-700"
         >
           <svg
@@ -214,7 +214,7 @@
 
       <!-- Bloqueo: jornada anterior sin cerrar -->
       <div
-        *ngIf="hasPendingClosures"
+        *ngIf="hasPendingClosures()"
         class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800 ring-1 ring-red-200"
       >
         <p class="font-semibold mb-1">⚠ Jornada anterior pendiente de cierre</p>
@@ -226,14 +226,14 @@
       </div>
 
       <button
-        *ngIf="hasPendingClosures"
+        *ngIf="hasPendingClosures()"
         type="button"
         (click)="closeDaySession()"
-        [disabled]="isClosingDay"
+        [disabled]="isClosingDay()"
         class="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl border-2 border-red-800/40 bg-red-900 px-6 py-3 text-base font-bold text-white shadow-lg transition-all hover:bg-red-800 active:bg-red-950 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
       >
         <svg
-          *ngIf="!isClosingDay"
+          *ngIf="!isClosingDay()"
           class="h-5 w-5"
           viewBox="0 0 24 24"
           fill="none"
@@ -245,7 +245,7 @@
           <path d="M18 6 6 18M6 6l12 12" />
         </svg>
         <svg
-          *ngIf="isClosingDay"
+          *ngIf="isClosingDay()"
           class="h-5 w-5 animate-spin"
           viewBox="0 0 24 24"
           fill="none"
@@ -254,17 +254,17 @@
         >
           <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-        {{ isClosingDay ? 'Cerrando jornada...' : 'Finalizar Jornada' }}
+        {{ isClosingDay() ? 'Cerrando jornada...' : 'Finalizar Jornada' }}
       </button>
 
       <button
         type="button"
         (click)="abrirJornada()"
-        [disabled]="isOpening || hasPendingClosures"
+        [disabled]="isOpening() || hasPendingClosures()"
         class="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <svg
-          *ngIf="!isOpening"
+          *ngIf="!isOpening()"
           class="h-5 w-5"
           viewBox="0 0 24 24"
           fill="none"
@@ -278,7 +278,7 @@
           <line x1="8" y1="12" x2="16" y2="12" />
         </svg>
         <svg
-          *ngIf="isOpening"
+          *ngIf="isOpening()"
           class="h-5 w-5 animate-spin"
           viewBox="0 0 24 24"
           fill="none"
@@ -287,7 +287,7 @@
         >
           <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-        <ng-container *ngIf="isOpening; else labelAbrir"
+        <ng-container *ngIf="isOpening(); else labelAbrir"
           >Abriendo...</ng-container
         >
         <ng-template #labelAbrir>
@@ -299,15 +299,15 @@
   </div>
 </div>
 
-<div *ngIf="isSessionOpen !== null" class="mb-4 border-b border-border">
+<div *ngIf="isSessionOpen() !== null" class="mb-4 border-b border-border">
   <nav class="flex gap-1 -mb-px" aria-label="Secciones de caja">
     <button
       type="button"
-      (click)="activeTab = 'turno'"
-      [class.border-accent]="activeTab === 'turno'"
-      [class.text-accent]="activeTab === 'turno'"
-      [class.border-transparent]="activeTab !== 'turno'"
-      [class.text-muted-foreground]="activeTab !== 'turno'"
+      (click)="activeTab.set('turno')"
+      [class.border-accent]="activeTab() === 'turno'"
+      [class.text-accent]="activeTab() === 'turno'"
+      [class.border-transparent]="activeTab() !== 'turno'"
+      [class.text-muted-foreground]="activeTab() !== 'turno'"
       class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
     >
       <svg
@@ -327,11 +327,11 @@
     <button
       *ngIf="isAdmin"
       type="button"
-      (click)="activeTab = 'historial'; loadDailySummary()"
-      [class.border-accent]="activeTab === 'historial'"
-      [class.text-accent]="activeTab === 'historial'"
-      [class.border-transparent]="activeTab !== 'historial'"
-      [class.text-muted-foreground]="activeTab !== 'historial'"
+      (click)="activeTab.set('historial'); loadDailySummary()"
+      [class.border-accent]="activeTab() === 'historial'"
+      [class.text-accent]="activeTab() === 'historial'"
+      [class.border-transparent]="activeTab() !== 'historial'"
+      [class.text-muted-foreground]="activeTab() !== 'historial'"
       class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
     >
       <svg
@@ -353,9 +353,9 @@
   </nav>
 </div>
 
-<div *ngIf="isSessionOpen === true && activeTab === 'turno'" class="space-y-6">
+<div *ngIf="isSessionOpen() === true && activeTab() === 'turno'" class="space-y-6">
   <div
-    *ngIf="staleSession"
+    *ngIf="staleSession()"
     class="flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 text-orange-900 dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-200"
     role="alert"
   >
@@ -409,11 +409,11 @@
         </h4>
       </div>
       <div class="px-6 pb-6">
-        <ng-container *ngIf="isLoading; else showEfectivo">
+        <ng-container *ngIf="isLoading(); else showEfectivo">
           <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
         </ng-container>
         <ng-template #showEfectivo>
-          <p class="text-2xl font-bold">${{ fmt(efectivoEsperado) }}</p>
+          <p class="text-2xl font-bold">${{ fmt(efectivoEsperado()) }}</p>
           <p class="text-xs text-muted-foreground">Según ventas del sistema</p>
         </ng-template>
       </div>
@@ -442,11 +442,11 @@
         </h4>
       </div>
       <div class="px-6 pb-6">
-        <ng-container *ngIf="isLoading; else showTransferencia">
+        <ng-container *ngIf="isLoading(); else showTransferencia">
           <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
         </ng-container>
         <ng-template #showTransferencia>
-          <p class="text-2xl font-bold">${{ fmt(transferenciaTotal) }}</p>
+          <p class="text-2xl font-bold">${{ fmt(transferenciaTotal()) }}</p>
           <p class="text-xs text-muted-foreground">Registradas en el sistema</p>
         </ng-template>
       </div>
@@ -475,7 +475,7 @@
         </h4>
       </div>
       <div class="px-6 pb-6">
-        <ng-container *ngIf="isLoading; else showTotal">
+        <ng-container *ngIf="isLoading(); else showTotal">
           <div class="h-8 w-32 animate-pulse rounded bg-muted"></div>
         </ng-container>
         <ng-template #showTotal>
@@ -492,11 +492,11 @@
     <nav class="flex gap-1 -mb-px" aria-label="Secciones del turno">
       <button
         type="button"
-        (click)="turnoTab = 'movimientos'"
-        [class.border-accent]="turnoTab === 'movimientos'"
-        [class.text-accent]="turnoTab === 'movimientos'"
-        [class.border-transparent]="turnoTab !== 'movimientos'"
-        [class.text-muted-foreground]="turnoTab !== 'movimientos'"
+        (click)="turnoTab.set('movimientos')"
+        [class.border-accent]="turnoTab() === 'movimientos'"
+        [class.text-accent]="turnoTab() === 'movimientos'"
+        [class.border-transparent]="turnoTab() !== 'movimientos'"
+        [class.text-muted-foreground]="turnoTab() !== 'movimientos'"
         class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none"
       >
         <svg
@@ -517,23 +517,23 @@
         </svg>
         Movimientos
         <span
-          *ngIf="movimientos.length > 0"
+          *ngIf="movimientos().length > 0"
           class="ml-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent"
-          >{{ movimientos.length }}</span
+          >{{ movimientos().length }}</span
         >
       </button>
       <button
         type="button"
         (click)="onCierreTabClick()"
-        [disabled]="isCheckingPendings"
-        [class.border-accent]="turnoTab === 'cierre'"
-        [class.text-accent]="turnoTab === 'cierre'"
-        [class.border-transparent]="turnoTab !== 'cierre'"
-        [class.text-muted-foreground]="turnoTab !== 'cierre'"
+        [disabled]="isCheckingPendings()"
+        [class.border-accent]="turnoTab() === 'cierre'"
+        [class.text-accent]="turnoTab() === 'cierre'"
+        [class.border-transparent]="turnoTab() !== 'cierre'"
+        [class.text-muted-foreground]="turnoTab() !== 'cierre'"
         class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
       >
         <svg
-          *ngIf="!isCheckingPendings"
+          *ngIf="!isCheckingPendings()"
           class="h-4 w-4"
           viewBox="0 0 24 24"
           fill="none"
@@ -546,7 +546,7 @@
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         <svg
-          *ngIf="isCheckingPendings"
+          *ngIf="isCheckingPendings()"
           class="h-4 w-4 animate-spin"
           viewBox="0 0 24 24"
           fill="none"
@@ -557,7 +557,7 @@
         </svg>
         Cierre de Turno
         <span
-          *ngIf="isClosed"
+          *ngIf="isClosed()"
           class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700"
           >Cerrado</span
         >
@@ -565,7 +565,7 @@
     </nav>
   </div>
 
-  <ng-container *ngIf="turnoTab === 'cierre'">
+  <ng-container *ngIf="turnoTab() === 'cierre'">
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -603,7 +603,7 @@
 
       <div class="space-y-6 px-6 pb-6">
         <div
-          *ngIf="showCierreDraftBanner"
+          *ngIf="showCierreDraftBanner()"
           class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm"
         >
           <span class="flex items-center gap-2 text-amber-800 font-medium">
@@ -646,7 +646,7 @@
               <div class="flex justify-between">
                 <span class="text-muted-foreground italic">Fondo inicial (queda en caja):</span>
                 <span class="font-medium text-muted-foreground italic"
-                  >${{ fmt(initialBalance) }}</span
+                  >${{ fmt(initialBalance()) }}</span
                 >
               </div>
 
@@ -656,7 +656,7 @@
                   Ingresos en Efectivo (Ventas/Turnos):
                 </span>
                 <span class="font-medium text-emerald-600"
-                  >+${{ fmt(cashIncome) }}</span
+                  >+${{ fmt(cashIncome()) }}</span
                 >
               </div>
 
@@ -666,7 +666,7 @@
                   Egresos en Efectivo (Gastos):
                 </span>
                 <span class="font-medium text-destructive"
-                  >−${{ fmt(cashExpenseTotal) }}</span
+                  >−${{ fmt(cashExpenseTotal()) }}</span
                 >
               </div>
 
@@ -674,7 +674,7 @@
                 <span class="font-semibold"
                   >= Recaudación neta (efectivo):</span
                 >
-                <span class="font-bold">${{ fmt(efectivoEsperado) }}</span>
+                <span class="font-bold">${{ fmt(efectivoEsperado()) }}</span>
               </div>
 
               <div class="mt-3 rounded-lg border border-border bg-muted/30 p-3 space-y-2">
@@ -688,7 +688,7 @@
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                     <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
-                  <span>El total en cajón (${{ fmt(totalEsperadoEnCajon) }}) es menor al fondo base configurado (${{ fmt(fondoCajaBase) }}). No hay efectivo para retirar este turno.</span>
+                  <span>El total en cajón (${{ fmt(totalEsperadoEnCajon) }}) es menor al fondo base configurado (${{ fmt(fondoCajaBase()) }}). No hay efectivo para retirar este turno.</span>
                 </div>
 
                 <div class="flex justify-between text-sm">
@@ -708,7 +708,7 @@
                   >Transferencias recibidas:</span
                 >
                 <span class="font-semibold"
-                  >${{ fmt(transferenciaTotal) }}</span
+                  >${{ fmt(transferenciaTotal()) }}</span
                 >
               </div>
               <div class="flex justify-between border-t border-border pt-2">
@@ -729,10 +729,10 @@
                 Efectivo a retirar (Recaudación)
               </label>
               <ng-container
-                *ngIf="isClosed && closedCashCounted != null; else inputContado"
+                *ngIf="isClosed() && closedCashCounted() != null; else inputContado"
               >
                 <p class="text-2xl font-bold text-foreground py-1">
-                  ${{ fmt(closedCashCounted) }}
+                  ${{ fmt(closedCashCounted()!) }}
                 </p>
               </ng-container>
               <ng-template #inputContado>
@@ -766,7 +766,7 @@
         </div>
 
         <div
-          *ngIf="showDiferencia && !isBusinessDayClosed"
+          *ngIf="showDiferencia && !isBusinessDayClosed()"
           class="flex items-center gap-3 rounded-lg p-4"
           [ngClass]="indicatorClass"
         >
@@ -824,12 +824,12 @@
             placeholder="Agregar observaciones..."
             [(ngModel)]="notas"
             (ngModelChange)="triggerCierreDraftSave()"
-            [disabled]="isClosed"
+            [disabled]="isClosed()"
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
-        <ng-container *ngIf="!isClosed; else cajaCerrada">
+        <ng-container *ngIf="!isClosed(); else cajaCerrada">
           <button
             type="button"
             (click)="openConfirmDialog()"
@@ -855,7 +855,7 @@
         <ng-template #cajaCerrada>
           <div class="space-y-5">
             <div
-              *ngIf="isBusinessDayClosed"
+              *ngIf="isBusinessDayClosed()"
               class="flex items-start gap-3 rounded-xl border border-green-300/60 bg-green-50 p-4"
             >
               <div
@@ -907,14 +907,14 @@
               <div>
                 <p class="font-semibold text-amber-900">
                   {{
-                    isBusinessDayClosed
+                    isBusinessDayClosed()
                       ? "Jornada comercial cerrada"
                       : "Estado: Turno cerrado"
                   }}
                 </p>
                 <p class="mt-0.5 text-sm text-amber-700 leading-relaxed">
                   {{
-                    isBusinessDayClosed
+                    isBusinessDayClosed()
                       ? "Turno y jornada comercial cerrados. Al abrir un nuevo turno, se iniciará la gestión de un nuevo día."
                       : "El turno fue cerrado correctamente. La jornada del día sigue activa. Podés abrir el siguiente turno o cerrar la jornada completa si sos el último turno del día."
                   }}
@@ -923,7 +923,7 @@
             </div>
 
             <div
-              *ngIf="pendingBookings > 0 || unpaidSales > 0"
+              *ngIf="pendingBookings() > 0 || unpaidSales() > 0"
               class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2"
             >
               <h4
@@ -946,15 +946,15 @@
                 Pendientes Transferidos al Siguiente Turno
               </h4>
               <div class="text-sm text-blue-700 space-y-1">
-                <p *ngIf="pendingBookings > 0">
-                  · <strong>{{ pendingBookings }}</strong> turno{{
-                    pendingBookings !== 1 ? "s" : ""
+                <p *ngIf="pendingBookings() > 0">
+                  · <strong>{{ pendingBookings() }}</strong> turno{{
+                    pendingBookings() !== 1 ? "s" : ""
                   }}
                   en juego (jugando actualmente)
                 </p>
-                <p *ngIf="unpaidSales > 0">
-                  · <strong>{{ unpaidSales }}</strong> venta{{
-                    unpaidSales !== 1 ? "s" : ""
+                <p *ngIf="unpaidSales() > 0">
+                  · <strong>{{ unpaidSales() }}</strong> venta{{
+                    unpaidSales() !== 1 ? "s" : ""
                   }}
                   sin cobrar
                 </p>
@@ -988,7 +988,7 @@
                   <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
                 {{
-                  isBusinessDayClosed
+                  isBusinessDayClosed()
                     ? "Iniciar Nueva Jornada Comercial"
                     : "Abrir Nuevo Turno"
                 }}
@@ -1016,12 +1016,12 @@
                     step="100"
                     placeholder="0"
                     [(ngModel)]="fondoInicial"
-                    [disabled]="isOpening"
+                    [disabled]="isOpening()"
                     class="flex h-12 w-full rounded-lg border-2 border-input bg-background pl-8 pr-3 py-2 text-xl font-bold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <p
-                  *ngIf="fondoInicialSugerido; else fondoHint2"
+                  *ngIf="fondoInicialSugerido(); else fondoHint2"
                   class="text-xs text-amber-700 flex items-center gap-1"
                 >
                   <svg
@@ -1062,7 +1062,7 @@
                   type="text"
                   placeholder="Ej: Turno noche, evento especial..."
                   [(ngModel)]="notasApertura"
-                  [disabled]="isOpening"
+                  [disabled]="isOpening()"
                   class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
@@ -1070,12 +1070,12 @@
               <div
                 class="rounded-md p-3 text-center text-sm ring-1"
                 [ngClass]="
-                  isBusinessDayClosed
+                  isBusinessDayClosed()
                     ? 'bg-amber-50 text-amber-800 ring-amber-200'
                     : 'bg-blue-50 text-blue-800 ring-blue-200'
                 "
               >
-                <ng-container *ngIf="!isBusinessDayClosed">
+                <ng-container *ngIf="!isBusinessDayClosed()">
                   <span class="flex items-center justify-center gap-1.5">
                     <svg
                       class="h-4 w-4 flex-shrink-0 text-blue-500"
@@ -1103,7 +1103,7 @@
                     corresponde al día anterior)
                   </span>
                 </ng-container>
-                <ng-container *ngIf="isBusinessDayClosed">
+                <ng-container *ngIf="isBusinessDayClosed()">
                   <span
                     class="flex items-center justify-center gap-1.5 font-semibold"
                   >
@@ -1141,11 +1141,11 @@
               <button
                 type="button"
                 (click)="abrirJornada()"
-                [disabled]="isOpening"
+                [disabled]="isOpening()"
                 class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-bold text-accent-foreground shadow-lg transition-all hover:bg-accent/90 hover:shadow-accent/25 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <svg
-                  *ngIf="!isOpening"
+                  *ngIf="!isOpening()"
                   class="h-5 w-5"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -1159,7 +1159,7 @@
                   <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
                 <svg
-                  *ngIf="isOpening"
+                  *ngIf="isOpening()"
                   class="h-5 w-5 animate-spin"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -1169,9 +1169,9 @@
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
                 {{
-                  isOpening
+                  isOpening()
                     ? "Abriendo..."
-                    : isBusinessDayClosed
+                    : isBusinessDayClosed()
                       ? "Iniciar Nueva Jornada"
                       : "Abrir Nuevo Turno"
                 }}
@@ -1179,7 +1179,7 @@
             </div>
 
             <div
-              *ngIf="!isBusinessDayClosed && pendingBookings > 0"
+              *ngIf="!isBusinessDayClosed() && pendingBookings() > 0"
               class="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3"
             >
               <svg
@@ -1199,23 +1199,23 @@
               </svg>
               <p class="text-sm text-amber-800 leading-snug">
                 <strong>Atención:</strong> Hay
-                <strong>{{ pendingBookings }}</strong> turno{{
-                  pendingBookings !== 1 ? "s" : ""
+                <strong>{{ pendingBookings() }}</strong> turno{{
+                  pendingBookings() !== 1 ? "s" : ""
                 }}
-                en juego o pendiente{{ pendingBookings !== 1 ? "s" : "" }} de
+                en juego o pendiente{{ pendingBookings() !== 1 ? "s" : "" }} de
                 cobro. Al cerrar la jornada, se completarán automáticamente.
               </p>
             </div>
 
             <button
-              *ngIf="!isBusinessDayClosed"
+              *ngIf="!isBusinessDayClosed()"
               type="button"
               (click)="closeDaySession()"
-              [disabled]="isClosingDay"
+              [disabled]="isClosingDay()"
               class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-800/40 bg-red-900 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 active:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
               <svg
-                *ngIf="!isClosingDay"
+                *ngIf="!isClosingDay()"
                 class="h-4 w-4 flex-shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -1227,7 +1227,7 @@
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
               <svg
-                *ngIf="isClosingDay"
+                *ngIf="isClosingDay()"
                 class="h-4 w-4 animate-spin flex-shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -1236,7 +1236,7 @@
               >
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-              {{ isClosingDay ? "Procesando..." : "Cerrar Jornada (Z)" }}
+              {{ isClosingDay() ? "Procesando..." : "Cerrar Jornada (Z)" }}
             </button>
           </div>
         </ng-template>
@@ -1244,7 +1244,7 @@
     </div>
   </ng-container>
 
-  <ng-container *ngIf="turnoTab === 'movimientos'">
+  <ng-container *ngIf="turnoTab() === 'movimientos'">
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
     >
@@ -1261,7 +1261,7 @@
 
       <div class="px-6 pb-6">
         <div class="space-y-2">
-          <ng-container *ngIf="isLoading; else movimientosLoaded">
+          <ng-container *ngIf="isLoading(); else movimientosLoaded">
             <div
               *ngFor="let i of [1, 2, 3, 4, 5]"
               class="h-16 w-full animate-pulse rounded-lg bg-muted"
@@ -1481,10 +1481,10 @@
             </ng-container>
 
             <p
-              *ngIf="movimientos.length === 0"
+              *ngIf="movimientos().length === 0"
               class="py-8 text-center text-sm text-muted-foreground"
             >
-              No hay movimientos registrados
+              No hay movimientos() registrados
             </p>
           </ng-template>
         </div>
@@ -1494,11 +1494,11 @@
 </div>
 
 <app-ticket-modal
-  [saleId]="ticketSaleId"
+  [saleId]="ticketSaleId()"
   (closeModal)="closeTicket()"
 ></app-ticket-modal>
 
-<div *ngIf="isAdmin && activeTab === 'historial'" class="space-y-6">
+<div *ngIf="isAdmin && activeTab() === 'historial'" class="space-y-6">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
     <div class="space-y-1.5">
       <label
@@ -1511,7 +1511,7 @@
         <button
           type="button"
           (click)="changeDay(-1)"
-          [disabled]="historialLoading"
+          [disabled]="historialLoading()"
           title="Día anterior"
           class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:pointer-events-none disabled:opacity-50 dark:disabled:bg-slate-800/50 dark:disabled:text-gray-500"
         >
@@ -1530,7 +1530,7 @@
         <button
           type="button"
           (click)="changeDay(1)"
-          [disabled]="historialLoading || historialDate >= maxDate"
+          [disabled]="historialLoading() || historialDate >= maxDate"
           title="Día siguiente"
           class="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:pointer-events-none disabled:opacity-50 dark:disabled:bg-slate-800/50 dark:disabled:text-gray-500"
         >
@@ -1540,15 +1540,15 @@
     </div>
 
     <button
-      *ngIf="dailySummary && dailySummary.sessions.length > 0"
+      *ngIf="dailySummary() && dailySummary()!.sessions.length > 0"
       type="button"
       (click)="exportJornadaZ()"
-      [disabled]="exportingDaily || !historialDate"
+      [disabled]="exportingDaily() || !historialDate"
       title="Descargar Excel consolidado de la jornada (Cierre del Turno)"
       class="inline-flex h-10 items-center gap-2 rounded-lg border border-green-600 bg-white px-4 text-sm font-medium text-green-700 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50"
     >
       <svg
-        *ngIf="!exportingDaily"
+        *ngIf="!exportingDaily()"
         class="h-4 w-4"
         viewBox="0 0 24 24"
         fill="none"
@@ -1564,7 +1564,7 @@
         <polyline points="10 9 9 9 8 9" />
       </svg>
       <svg
-        *ngIf="exportingDaily"
+        *ngIf="exportingDaily()"
         class="h-4 w-4 animate-spin"
         viewBox="0 0 24 24"
         fill="none"
@@ -1573,11 +1573,11 @@
       >
         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
       </svg>
-      {{ exportingDaily ? "Generando..." : "Exportar Jornada Z" }}
+      {{ exportingDaily() ? "Generando..." : "Exportar Jornada Z" }}
     </button>
   </div>
 
-  <ng-container *ngIf="historialLoading">
+  <ng-container *ngIf="historialLoading()">
     <div class="h-32 w-full animate-pulse rounded-xl bg-muted"></div>
     <div class="grid gap-4 md:grid-cols-2">
       <div class="h-24 animate-pulse rounded-lg bg-muted"></div>
@@ -1587,7 +1587,7 @@
 
   <div
     *ngIf="
-      !historialLoading && dailySummary && dailySummary.sessions.length === 0
+      !historialLoading() && dailySummary() && dailySummary()!.sessions.length === 0
     "
     class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-16 text-center"
   >
@@ -1615,9 +1615,10 @@
 
   <ng-container
     *ngIf="
-      !historialLoading && dailySummary && dailySummary.sessions.length > 0
+      !historialLoading() && dailySummary() && dailySummary()!.sessions.length > 0
     "
   >
+    <ng-container *ngIf="dailySummary() as summary">
     <div class="rounded-xl border border-border bg-card px-6 py-4">
       <p
         class="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
@@ -1625,13 +1626,13 @@
         Consolidado
       </p>
       <h2 class="mt-1 text-lg font-bold capitalize text-card-foreground">
-        {{ fmtDateLabel(dailySummary.date) }}
+        {{ fmtDateLabel(summary.date) }}
       </h2>
       <p class="text-sm text-muted-foreground">
-        {{ dailySummary.sessions.length }} turno{{
-          dailySummary.sessions.length > 1 ? "s" : ""
+        {{ summary.sessions.length }} turno{{
+          summary.sessions.length > 1 ? "s" : ""
         }}
-        registrado{{ dailySummary.sessions.length > 1 ? "s" : "" }}
+        registrado{{ summary.sessions.length > 1 ? "s" : "" }}
       </p>
     </div>
 
@@ -1648,16 +1649,16 @@
         Recaudación Total del Día
       </p>
       <p class="mt-3 text-5xl font-extrabold text-accent">
-        ${{ fmt(dailySummary.totalExpected) }}
+        ${{ fmt(summary.totalExpected) }}
       </p>
       <div class="mt-4 flex justify-center gap-4 text-sm text-muted-foreground">
-        <span *ngIf="dailySummary.totalCounted !== null">
+        <span *ngIf="summary.totalCounted !== null">
           Arqueo físico total:
           <span class="font-semibold text-foreground"
-            >${{ fmt(dailySummary.totalCounted) }}</span
+            >${{ fmt(summary.totalCounted) }}</span
           >
         </span>
-        <span *ngIf="dailySummary.totalCounted === null" class="italic">
+        <span *ngIf="summary.totalCounted === null" class="italic">
           (Hay turnos aún abiertos — arqueo incompleto)
         </span>
       </div>
@@ -1671,7 +1672,7 @@
       </h3>
 
       <div
-        *ngFor="let shift of dailySummary.sessions; let i = index"
+        *ngFor="let shift of summary.sessions; let i = index"
         class="rounded-xl border border-border bg-card p-5 shadow-sm"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -1708,12 +1709,12 @@
             <button
               type="button"
               (click)="exportTurnoX(shift.sessionId, shift.openedByName)"
-              [disabled]="exportingSessionId === shift.sessionId"
+              [disabled]="exportingSessionId() === shift.sessionId"
               title="Descargar Excel de este turno (Cierre X)"
               class="inline-flex items-center gap-1.5 rounded-md border border-green-600 bg-white px-2.5 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50"
             >
               <svg
-                *ngIf="exportingSessionId !== shift.sessionId"
+                *ngIf="exportingSessionId() !== shift.sessionId"
                 class="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -1730,7 +1731,7 @@
                 <line x1="8" y1="17" x2="16" y2="17" />
               </svg>
               <svg
-                *ngIf="exportingSessionId === shift.sessionId"
+                *ngIf="exportingSessionId() === shift.sessionId"
                 class="h-3.5 w-3.5 animate-spin"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -1740,7 +1741,7 @@
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
               {{
-                exportingSessionId === shift.sessionId
+                exportingSessionId() === shift.sessionId
                   ? "..."
                   : "Exportar Turno X"
               }}
@@ -1808,10 +1809,11 @@
         </div>
       </div>
     </div>
+    </ng-container>
   </ng-container>
 </div>
 
-<ng-container *ngIf="showPendingsModal">
+<ng-container *ngIf="showPendingsModal()">
   <div appModalScrollLock class="modal-backdrop" (click)="closePendingsModal()">
     <div
       role="dialog"
@@ -1852,7 +1854,7 @@
           class="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2"
         >
           <p
-            *ngIf="pendingBookings > 0"
+            *ngIf="pendingBookings() > 0"
             class="flex items-center gap-2 text-sm text-amber-800"
           >
             <svg
@@ -1867,12 +1869,12 @@
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            <strong>{{ pendingBookings }}</strong
-            >&nbsp;turno{{ pendingBookings !== 1 ? "s" : "" }} con gente jugando
+            <strong>{{ pendingBookings() }}</strong
+            >&nbsp;turno{{ pendingBookings() !== 1 ? "s" : "" }} con gente jugando
             actualmente
           </p>
           <p
-            *ngIf="unpaidSales > 0"
+            *ngIf="unpaidSales() > 0"
             class="flex items-center gap-2 text-sm text-amber-800"
           >
             <svg
@@ -1887,8 +1889,8 @@
               <line x1="12" y1="1" x2="12" y2="23" />
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
-            <strong>{{ unpaidSales }}</strong
-            >&nbsp;venta{{ unpaidSales !== 1 ? "s" : "" }} sin cobrar
+            <strong>{{ unpaidSales() }}</strong
+            >&nbsp;venta{{ unpaidSales() !== 1 ? "s" : "" }} sin cobrar
           </p>
         </div>
         <p class="mt-3 text-xs text-muted-foreground leading-relaxed">
@@ -1921,7 +1923,7 @@
   </div>
 </ng-container>
 
-<ng-container *ngIf="isDialogOpen">
+<ng-container *ngIf="isDialogOpen()">
   <div appModalScrollLock class="modal-backdrop" (click)="closeDialog()">
     <div
       role="dialog"
@@ -1949,11 +1951,11 @@
           <div class="flex flex-col gap-2">
             <div class="flex justify-between text-sm text-muted-foreground">
               <span>Fondo inicial:</span>
-              <span>${{ fmt(initialBalance) }}</span>
+              <span>${{ fmt(initialBalance()) }}</span>
             </div>
             <div class="flex justify-between text-sm text-muted-foreground">
               <span>Recaudación neta:</span>
-              <span>${{ fmt(efectivoEsperado) }}</span>
+              <span>${{ fmt(efectivoEsperado()) }}</span>
             </div>
             <div class="flex justify-between border-t border-border pt-2">
               <span class="font-semibold">Total esperado en cajón:</span>
@@ -1977,7 +1979,7 @@
         <button
           type="button"
           (click)="closeDialog()"
-          [disabled]="isSubmitting"
+          [disabled]="isSubmitting()"
           class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-secondary disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Cancelar
@@ -1985,10 +1987,10 @@
         <button
           type="button"
           (click)="confirmarCierre()"
-          [disabled]="isSubmitting"
+          [disabled]="isSubmitting()"
           class="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {{ isSubmitting ? "Cerrando turno..." : "Confirmar cierre de turno" }}
+          {{ isSubmitting() ? "Cerrando turno..." : "Confirmar cierre de turno" }}
         </button>
       </div>
     </div>

@@ -192,7 +192,7 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
 
     spyOn(Swal, 'fire').and.callFake((..._args: any[]) => {
       // Capturamos el estado de isOpening en el instante exacto en que el modal se abre
-      isOpeningCapturado = component.isOpening;
+      isOpeningCapturado = component.isOpening();
       return SWAL_DISMISSED;
     });
 

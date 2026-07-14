@@ -57,8 +57,8 @@ describe('ToolbarComponent', () => {
     fixture.detectChanges();
     const notif = { id: 'n1' } as AppNotification;
     notificationsSubject.next([notif]);
-    expect(fixture.componentInstance.notifications).toEqual([notif]);
-    expect(fixture.componentInstance.notifCount).toBe(1);
+    expect(fixture.componentInstance.notifications()).toEqual([notif]);
+    expect(fixture.componentInstance.notifCount()).toBe(1);
   });
 
   it('does not load pending deposits for a non-admin user', () => {
@@ -77,31 +77,31 @@ describe('ToolbarComponent', () => {
     tick(300);
 
     expect(searchServiceSpy.search).toHaveBeenCalledWith('pel');
-    expect(fixture.componentInstance.searchResults).toEqual(results);
-    expect(fixture.componentInstance.isSearchOpen).toBe(true);
+    expect(fixture.componentInstance.searchResults()).toEqual(results);
+    expect(fixture.componentInstance.isSearchOpen()).toBe(true);
   }));
 
   it('clearSearch() resets the query and results', () => {
     const fixture = TestBed.createComponent(ToolbarComponent);
     fixture.detectChanges();
-    fixture.componentInstance.searchQuery = 'algo';
-    fixture.componentInstance.isSearchOpen = true;
+    fixture.componentInstance.searchQuery.set('algo');
+    fixture.componentInstance.isSearchOpen.set(true);
 
     fixture.componentInstance.clearSearch();
 
-    expect(fixture.componentInstance.searchQuery).toBe('');
-    expect(fixture.componentInstance.isSearchOpen).toBe(false);
+    expect(fixture.componentInstance.searchQuery()).toBe('');
+    expect(fixture.componentInstance.isSearchOpen()).toBe(false);
   });
 
   it('hasSearchResults is true when any category has results', () => {
     const fixture = TestBed.createComponent(ToolbarComponent);
     fixture.detectChanges();
-    fixture.componentInstance.searchResults = {
+    fixture.componentInstance.searchResults.set({
       products: [],
       bookings: [{ id: 'b1', label: 'Turno' }],
       sales: [],
-    };
-    expect(fixture.componentInstance.hasSearchResults).toBe(true);
+    });
+    expect(fixture.componentInstance.hasSearchResults()).toBe(true);
   });
 
   it('groupedNotifications groups by category with Spanish labels', () => {
@@ -111,7 +111,7 @@ describe('ToolbarComponent', () => {
       { id: 'n1', category: 'TURNOS' } as AppNotification,
       { id: 'n2', category: 'STOCK' } as AppNotification,
     ]);
-    const grouped = fixture.componentInstance.groupedNotifications;
+    const grouped = fixture.componentInstance.groupedNotifications();
     expect(grouped.find((g) => g.category === 'TURNOS')?.label).toBe('Turnos');
   });
 
@@ -137,36 +137,36 @@ describe('ToolbarComponent', () => {
     bookingsServiceSpy.confirmExpectedDeposit.and.returnValue(of({} as any));
     const fixture = TestBed.createComponent(ToolbarComponent);
     fixture.detectChanges();
-    fixture.componentInstance.pendingDeposits = [{ id: 'd1' } as any];
+    fixture.componentInstance.pendingDeposits.set([{ id: 'd1' } as any]);
 
     fixture.componentInstance.confirmDeposit({ id: 'd1' } as any);
 
-    expect(fixture.componentInstance.pendingDeposits.length).toBe(0);
+    expect(fixture.componentInstance.pendingDeposits().length).toBe(0);
   });
 
   it('toggleNotif() closes the search and user menu when opening', () => {
     const fixture = TestBed.createComponent(ToolbarComponent);
     fixture.detectChanges();
-    fixture.componentInstance.isUserMenuOpen = true;
+    fixture.componentInstance.isUserMenuOpen.set(true);
     fixture.componentInstance.toggleNotif();
-    expect(fixture.componentInstance.isNotifOpen).toBe(true);
-    expect(fixture.componentInstance.isUserMenuOpen).toBe(false);
+    expect(fixture.componentInstance.isNotifOpen()).toBe(true);
+    expect(fixture.componentInstance.isUserMenuOpen()).toBe(false);
   });
 
   it('onDocumentClick() closes every open panel', () => {
     const fixture = TestBed.createComponent(ToolbarComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.isNotifOpen = true;
-    component.isUserMenuOpen = true;
-    component.isDepositsOpen = true;
-    component.isSearchOpen = true;
+    component.isNotifOpen.set(true);
+    component.isUserMenuOpen.set(true);
+    component.isDepositsOpen.set(true);
+    component.isSearchOpen.set(true);
 
     component.onDocumentClick();
 
-    expect(component.isNotifOpen).toBe(false);
-    expect(component.isUserMenuOpen).toBe(false);
-    expect(component.isDepositsOpen).toBe(false);
-    expect(component.isSearchOpen).toBe(false);
+    expect(component.isNotifOpen()).toBe(false);
+    expect(component.isUserMenuOpen()).toBe(false);
+    expect(component.isDepositsOpen()).toBe(false);
+    expect(component.isSearchOpen()).toBe(false);
   });
 });

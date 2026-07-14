@@ -6,6 +6,8 @@ import {
   ElementRef,
   ViewChildren,
   QueryList,
+  computed,
+  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, Subscription, finalize } from 'rxjs';
@@ -52,31 +54,32 @@ interface PosCartItem {
     ],
 })
 export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
-  products: Product[] = [];
-  filteredProducts: Product[] = [];
-  cart: PosCartItem[] = [];
+  products = signal<Product[]>([]);
+  filteredProducts = signal<Product[]>([]);
+  cart = signal<PosCartItem[]>([]);
   searchQuery = '';
   customerName = '';
   montoEfectivo = '';
   montoTransferencia = '';
-  isLoadingProducts = false;
-  isSubmitting = false;
-  isMobileCartOpen = false;
-  checkoutStep = 1;
-  desktopStep = 1;
-  selectedItemDetail: PosCartItem | null = null;
-  isDetailModalOpen = false;
+  isLoadingProducts = signal(false);
+  isSubmitting = signal(false);
+  isMobileCartOpen = signal(false);
+  checkoutStep = signal(1);
+  desktopStep = signal(1);
+  selectedItemDetail = signal<PosCartItem | null>(null);
+  isDetailModalOpen = signal(false);
 
   @ViewChildren('cartScrollContainer')
   private cartScrollContainers!: QueryList<ElementRef>;
 
+  /** Estado transitorio de gesto táctil — nunca leído en el template. */
   touchStartY = 0;
   touchEndY = 0;
   readonly swipeThreshold = 50;
 
-  lastSaleId: string | null = null;
+  lastSaleId = signal<string | null>(null);
 
-  toastMessage: string | null = null;
+  toastMessage = signal<string | null>(null);
   private toastTimeout: any;
 
   /**
@@ -84,24 +87,24 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * Default `true` (optimista) para no bloquear en caso de red lenta al iniciar.
    * Se actualiza en `ngOnInit` con la respuesta real del servidor.
    */
-  isCashRegisterOpen = true;
+  isCashRegisterOpen = signal(true);
 
   /** Vista activa del panel izquierdo: catálogo de productos o cuentas abiertas. */
-  mainView: 'catalog' | 'open-accounts' = 'catalog';
-  openSales: SaleDetail[] = [];
-  isLoadingOpenSales = false;
+  mainView = signal<'catalog' | 'open-accounts'>('catalog');
+  openSales = signal<SaleDetail[]>([]);
+  isLoadingOpenSales = signal(false);
 
   /** Cuenta abierta cargada en el ticket actual (null = venta directa nueva). */
-  activeSaleId: string | null = null;
-  activeSaleCustomerName: string | null = null;
+  activeSaleId = signal<string | null>(null);
+  activeSaleCustomerName = signal<string | null>(null);
   /** Foto del carrito al cargar la cuenta, para calcular el delta a enviar por PATCH. */
   private originalCartSnapshot: PosCartItem[] = [];
   /** Índice de productos (incluye inactivos) para resolver stock real de ítems de cuentas abiertas. */
   private allProductsById = new Map<string, Product>();
 
   /** Draft del carrito POS. */
-  showCartDraftBanner = false;
-  cartDraftItemCount = 0;
+  showCartDraftBanner = signal(false);
+  cartDraftItemCount = signal(0);
   private readonly DRAFT_KEY_CART = 'draft_pos_cart';
   private cartDraftSave$ = new Subject<void>();
   private sub = new Subscription();
@@ -124,7 +127,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     this.sub.add(
       this.cartDraftSave$.pipe(debounceTime(500)).subscribe(() => {
         this.draftService.saveDraft(this.DRAFT_KEY_CART, {
-          cart: this.cart,
+          cart: this.cart(),
           customerName: this.customerName,
           montoEfectivo: this.montoEfectivo,
           montoTransferencia: this.montoTransferencia,
@@ -139,8 +142,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       montoTransferencia: string;
     }>(this.DRAFT_KEY_CART);
     if (draft?.cart?.length) {
-      this.showCartDraftBanner = true;
-      this.cartDraftItemCount = draft.cart.reduce((s, i) => s + i.quantity, 0);
+      this.showCartDraftBanner.set(true);
+      this.cartDraftItemCount.set(draft.cart.reduce((s, i) => s + i.quantity, 0));
     }
   }
 
@@ -157,16 +160,16 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       montoTransferencia: string;
     }>(this.DRAFT_KEY_CART);
     if (!draft) return;
-    this.cart = draft.cart ?? [];
+    this.cart.set(draft.cart ?? []);
     this.customerName = draft.customerName ?? '';
     this.montoEfectivo = draft.montoEfectivo ?? '';
     this.montoTransferencia = draft.montoTransferencia ?? '';
-    this.showCartDraftBanner = false;
+    this.showCartDraftBanner.set(false);
   }
 
   /** Descarta el banner sin restaurar el borrador. */
   dismissCartDraft(): void {
-    this.showCartDraftBanner = false;
+    this.showCartDraftBanner.set(false);
     this.draftService.clearDraft(this.DRAFT_KEY_CART);
   }
 
@@ -177,7 +180,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * el draft real de una venta directa a medio armar.
    */
   triggerCartDraftSave(): void {
-    if (this.isEditingOpenAccount) return;
+    if (this.isEditingOpenAccount()) return;
     this.cartDraftSave$.next();
   }
 
@@ -190,10 +193,10 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   private checkCashStatus(): void {
     this.cashService.getCurrent().subscribe({
       next: (cash) => {
-        this.isCashRegisterOpen = !cash.isClosed && !cash.noSession;
+        this.isCashRegisterOpen.set(!cash.isClosed && !cash.noSession);
       },
       error: () => {
-        this.isCashRegisterOpen = true;
+        this.isCashRegisterOpen.set(true);
       },
     });
   }
@@ -221,14 +224,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * Filtra los inactivos antes de asignarlos al estado.
    */
   private loadProducts(): void {
-    this.isLoadingProducts = true;
+    this.isLoadingProducts.set(true);
     this.productsService
       .findAll()
-      .pipe(finalize(() => (this.isLoadingProducts = false)))
+      .pipe(finalize(() => this.isLoadingProducts.set(false)))
       .subscribe({
         next: (products) => {
           this.allProductsById = new Map(products.map((p) => [p.id, p]));
-          this.products = products.filter((p) => p.isActive);
+          this.products.set(products.filter((p) => p.isActive));
           this.applyFilter();
         },
         error: () => {
@@ -242,12 +245,12 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Carga la lista de cuentas abiertas para el tab lateral. */
   loadOpenSales(): void {
-    this.isLoadingOpenSales = true;
+    this.isLoadingOpenSales.set(true);
     this.salesService
       .findOpen()
-      .pipe(finalize(() => (this.isLoadingOpenSales = false)))
+      .pipe(finalize(() => this.isLoadingOpenSales.set(false)))
       .subscribe({
-        next: (sales) => (this.openSales = sales),
+        next: (sales) => this.openSales.set(sales),
         error: () => {
           this.toast.error('Error', 'No se pudieron cargar las cuentas abiertas');
         },
@@ -255,14 +258,12 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** `true` cuando el ticket actual corresponde a una cuenta abierta cargada. */
-  get isEditingOpenAccount(): boolean {
-    return this.activeSaleId !== null;
-  }
+  isEditingOpenAccount = computed(() => this.activeSaleId() !== null);
 
   /** Etiqueta del botón naranja según haya o no una cuenta abierta cargada. */
-  get leaveOpenLabel(): string {
-    return this.isEditingOpenAccount ? 'Actualizar Cuenta' : 'Dejar Abierta';
-  }
+  leaveOpenLabel = computed(() =>
+    this.isEditingOpenAccount() ? 'Actualizar Cuenta' : 'Dejar Abierta',
+  );
 
   /**
    * Carga una cuenta abierta de la lista lateral en el ticket actual.
@@ -272,13 +273,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * la venta: el stock es responsabilidad del producto, no del ítem histórico.
    */
   selectOpenSale(sale: SaleDetail): void {
-    this.cart = sale.items.map((i) => this.toCartItem(i));
-    this.originalCartSnapshot = this.cart.map((i) => ({ ...i }));
-    this.activeSaleId = sale.id;
-    this.activeSaleCustomerName = sale.customerName;
-    this.mainView = 'catalog';
-    this.desktopStep = 1;
-    this.checkoutStep = 1;
+    const items = sale.items.map((i) => this.toCartItem(i));
+    this.cart.set(items);
+    this.originalCartSnapshot = items.map((i) => ({ ...i }));
+    this.activeSaleId.set(sale.id);
+    this.activeSaleCustomerName.set(sale.customerName);
+    this.mainView.set('catalog');
+    this.desktopStep.set(1);
+    this.checkoutStep.set(1);
   }
 
   /** Mapea un ítem histórico de venta a ítem de carrito, resolviendo stock actual. */
@@ -297,22 +299,22 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Cancela la edición de la cuenta abierta actual y vacía el ticket. */
   cancelOpenAccountEdit(): void {
-    this.cart = [];
-    this.activeSaleId = null;
-    this.activeSaleCustomerName = null;
+    this.cart.set([]);
+    this.activeSaleId.set(null);
+    this.activeSaleCustomerName.set(null);
     this.originalCartSnapshot = [];
     this.triggerCartDraftSave();
   }
 
   /** `true` cuando el botón "Actualizar Cuenta" debe estar deshabilitado. */
   get isLeaveOpenDisabled(): boolean {
-    if (this.cart.length === 0 || this.isSubmitting) return true;
-    return this.isEditingOpenAccount && this.diffNewItems().length === 0;
+    if (this.cart().length === 0 || this.isSubmitting()) return true;
+    return this.isEditingOpenAccount() && this.diffNewItems().length === 0;
   }
 
   /** Cantidades agregadas desde que se cargó la cuenta abierta (delta a enviar por PATCH). */
   private diffNewItems(): { productId: string; quantity: number }[] {
-    return this.cart
+    return this.cart()
       .map((item) => {
         const original = this.originalCartSnapshot.find(
           (o) => o.productId === item.productId,
@@ -331,17 +333,17 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * Con cuenta cargada: envía solo el delta de ítems nuevos por PATCH.
    */
   leaveOpenAccount(): void {
-    if (this.cart.length === 0) return;
+    if (this.cart().length === 0) return;
 
-    if (this.isEditingOpenAccount) {
+    if (this.isEditingOpenAccount()) {
       const newItems = this.diffNewItems();
       if (newItems.length === 0) {
         this.toast.error('Sin cambios', 'No agregaste productos nuevos');
         return;
       }
-      this.salesService.addItems(this.activeSaleId!, { items: newItems }).subscribe({
+      this.salesService.addItems(this.activeSaleId()!, { items: newItems }).subscribe({
         next: () => {
-          this.originalCartSnapshot = this.cart.map((i) => ({ ...i }));
+          this.originalCartSnapshot = this.cart().map((i) => ({ ...i }));
           this.toast.success('Cuenta actualizada', '');
           this.loadOpenSales();
         },
@@ -366,15 +368,15 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       this.salesService
         .createOpen(
           customerName,
-          this.cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          this.cart().map((i) => ({ productId: i.productId, quantity: i.quantity })),
         )
         .subscribe({
           next: () => {
-            this.cart = [];
+            this.cart.set([]);
             this.draftService.clearDraft(this.DRAFT_KEY_CART);
-            this.checkoutStep = 1;
-            this.desktopStep = 1;
-            this.isMobileCartOpen = false;
+            this.checkoutStep.set(1);
+            this.desktopStep.set(1);
+            this.isMobileCartOpen.set(false);
             this.toast.success('Cuenta abierta', `Se guardó para ${customerName}`);
             this.loadOpenSales();
           },
@@ -397,21 +399,24 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * el array entero en cada ciclo de detección de cambios.
    */
   private applyFilter(): void {
+    const products = this.products();
     const base = this.searchQuery.trim()
       ? (() => {
           const q = this.normalize(this.searchQuery);
-          return this.products.filter((p) =>
+          return products.filter((p) =>
             this.normalize(p.name).includes(q),
           );
         })()
-      : this.products;
+      : products;
 
-    this.filteredProducts = [...base].sort((a, b) => {
-      const aOut = !this.isRental(a) && a.stock <= 0 ? 1 : 0;
-      const bOut = !this.isRental(b) && b.stock <= 0 ? 1 : 0;
-      if (aOut !== bOut) return aOut - bOut;
-      return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
-    });
+    this.filteredProducts.set(
+      [...base].sort((a, b) => {
+        const aOut = !this.isRental(a) && a.stock <= 0 ? 1 : 0;
+        const bOut = !this.isRental(b) && b.stock <= 0 ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      }),
+    );
   }
 
   /** Manejador del evento (ngModelChange) del buscador. Actualiza el array filtrado. */
@@ -422,13 +427,13 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Devuelve la cantidad actual de un producto en el carrito (0 si no está). */
   getQuantityInCart(product: Product): number {
-    return this.cart.find((i) => i.productId === product.id)?.quantity ?? 0;
+    return this.cart().find((i) => i.productId === product.id)?.quantity ?? 0;
   }
 
   /** Suma total de unidades en el carrito. */
-  get totalItems(): number {
-    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
-  }
+  totalItems = computed(() =>
+    this.cart().reduce((sum, item) => sum + item.quantity, 0),
+  );
 
   /** Registra la posición vertical inicial del toque para detectar swipe en mobile. */
   onTouchStart(event: TouchEvent): void {
@@ -441,8 +446,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.touchEndY === 0) return;
     const deltaY = this.touchEndY - this.touchStartY;
     if (deltaY > this.swipeThreshold) {
-      this.isMobileCartOpen = false;
-      this.checkoutStep = 1;
+      this.isMobileCartOpen.set(false);
+      this.checkoutStep.set(1);
     }
     this.touchStartY = 0;
     this.touchEndY = 0;
@@ -450,37 +455,34 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Alterna la visibilidad del carrito en móvil. Al abrir, reinicia al paso 1. */
   toggleMobileCart(): void {
-    this.isMobileCartOpen = !this.isMobileCartOpen;
-    if (this.isMobileCartOpen) this.checkoutStep = 1;
+    this.isMobileCartOpen.update((v) => !v);
+    if (this.isMobileCartOpen()) this.checkoutStep.set(1);
   }
 
   /** Avanza al paso 2 del wizard de pago (solo móvil). */
   nextStep(): void {
-    this.checkoutStep = 2;
+    this.checkoutStep.set(2);
   }
 
   /** Retrocede al paso 1 del wizard (solo móvil). */
   prevStep(): void {
-    this.checkoutStep = 1;
+    this.checkoutStep.set(1);
   }
 
   /** Avanza al paso 2 del wizard desktop. */
   nextDesktopStep(): void {
-    this.desktopStep = 2;
+    this.desktopStep.set(2);
   }
 
   /** Retrocede al paso 1 del wizard desktop. */
   prevDesktopStep(): void {
-    this.desktopStep = 1;
+    this.desktopStep.set(1);
   }
 
   /** Total del carrito sumando precio × cantidad de cada ítem. */
-  get total(): number {
-    return this.cart.reduce(
-      (sum, item) => sum + item.salePrice * item.quantity,
-      0,
-    );
-  }
+  total = computed(() =>
+    this.cart().reduce((sum, item) => sum + item.salePrice * item.quantity, 0),
+  );
 
   /** Monto en efectivo ingresado, convertido a número. */
   get efectivo(): number {
@@ -499,7 +501,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Diferencia entre el total del carrito y lo ya pagado (puede ser negativa = vuelto). */
   get faltante(): number {
-    return this.total - this.totalPagado;
+    return this.total() - this.totalPagado;
   }
 
   /** Indica si se deben mostrar los detalles de pago en la UI. */
@@ -510,9 +512,9 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   /** `true` cuando el botón "Confirmar Venta" debe estar deshabilitado. */
   get isConfirmDisabled(): boolean {
     return (
-      this.cart.length === 0 ||
-      this.isSubmitting ||
-      this.totalPagado < this.total
+      this.cart().length === 0 ||
+      this.isSubmitting() ||
+      this.totalPagado < this.total()
     );
   }
 
@@ -550,7 +552,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * @param product - Producto a agregar.
    */
   addToCart(product: Product): void {
-    const existing = this.cart.find((i) => i.productId === product.id);
+    const cart = this.cart();
+    const existing = cart.find((i) => i.productId === product.id);
     const rental = this.isRental(product);
 
     if (!rental && existing && existing.quantity >= product.stock) {
@@ -561,15 +564,15 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const existingIndex = this.cart.findIndex(
-      (i) => i.productId === product.id,
-    );
+    const existingIndex = cart.findIndex((i) => i.productId === product.id);
 
     if (existingIndex !== -1) {
-      if (rental || this.cart[existingIndex].quantity < product.stock) {
-        const item = this.cart.splice(existingIndex, 1)[0];
+      if (rental || cart[existingIndex].quantity < product.stock) {
+        const next = [...cart];
+        const item = next.splice(existingIndex, 1)[0];
         item.quantity += 1;
-        this.cart.push(item);
+        next.push(item);
+        this.cart.set(next);
       } else {
         this.toast.error(
           'Stock insuficiente',
@@ -577,23 +580,26 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
         );
       }
     } else {
-      this.cart.push({
-        productId: product.id,
-        name: product.name,
-        salePrice: product.salePrice,
-        stock: product.stock,
-        minStock: product.minStock ?? 0,
-        category: product.category?.name ?? '',
-        quantity: 1,
-      });
+      this.cart.set([
+        ...cart,
+        {
+          productId: product.id,
+          name: product.name,
+          salePrice: product.salePrice,
+          stock: product.stock,
+          minStock: product.minStock ?? 0,
+          category: product.category?.name ?? '',
+          quantity: 1,
+        },
+      ]);
     }
 
     this.triggerCartDraftSave();
 
-    this.toastMessage = `+1 ${product.name}`;
+    this.toastMessage.set(`+1 ${product.name}`);
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
     this.toastTimeout = setTimeout(() => {
-      this.toastMessage = null;
+      this.toastMessage.set(null);
     }, 1500);
 
     setTimeout(() => this.scrollCartsToBottom(), 0);
@@ -614,14 +620,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * @param delta     - Valor a sumar (positivo o negativo).
    */
   updateQuantity(productId: string, delta: number): void {
-    const item = this.cart.find((i) => i.productId === productId);
+    const item = this.cart().find((i) => i.productId === productId);
     if (!item) return;
     const newQty = item.quantity + delta;
     if (newQty <= 0) {
       this.removeFromCart(productId);
     } else if (this.isRental(item) || newQty <= item.stock) {
-      this.cart = this.cart.map((i) =>
-        i.productId === productId ? { ...i, quantity: newQty } : i,
+      this.cart.update((list) =>
+        list.map((i) => (i.productId === productId ? { ...i, quantity: newQty } : i)),
       );
       this.triggerCartDraftSave();
     }
@@ -637,14 +643,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Abre el modal de detalle para el ítem seleccionado. */
   showItemDetails(item: PosCartItem): void {
-    this.selectedItemDetail = item;
-    this.isDetailModalOpen = true;
+    this.selectedItemDetail.set(item);
+    this.isDetailModalOpen.set(true);
   }
 
   /** Cierra el modal de detalle y limpia la selección. */
   closeDetailModal(): void {
-    this.isDetailModalOpen = false;
-    this.selectedItemDetail = null;
+    this.isDetailModalOpen.set(false);
+    this.selectedItemDetail.set(null);
   }
 
   /**
@@ -652,13 +658,13 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * @param productId - Identificador del producto a quitar.
    */
   removeFromCart(productId: string): void {
-    this.cart = this.cart.filter((i) => i.productId !== productId);
+    this.cart.update((list) => list.filter((i) => i.productId !== productId));
     this.triggerCartDraftSave();
   }
 
   /** Cierra el ticket modal de la última venta. */
   closeTicket(): void {
-    this.lastSaleId = null;
+    this.lastSaleId.set(null);
   }
 
   /** Formatea un número usando el locale argentino. */
@@ -672,7 +678,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
    * Limpia el carrito y los montos de pago al completarse con éxito.
    */
   confirmSale(): void {
-    if (!this.isCashRegisterOpen) {
+    if (!this.isCashRegisterOpen()) {
       Swal.fire({
         title: '¡Caja Cerrada!',
         text: 'Necesitas abrir un turno en la caja para poder registrar ventas o cobros.',
@@ -689,14 +695,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    if (this.cart.length === 0) {
+    if (this.cart().length === 0) {
       this.toast.error(
         'Carrito vacío',
         'Agregue productos al carrito para realizar una venta',
       );
       return;
     }
-    if (this.totalPagado < this.total) {
+    if (this.totalPagado < this.total()) {
       this.toast.error(
         'Pago insuficiente',
         `Faltan $${this.fmt(this.faltante)} para completar la venta`,
@@ -704,15 +710,15 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const totalStr = this.fmt(this.total);
+    const totalStr = this.fmt(this.total());
 
-    const request$ = this.isEditingOpenAccount
-      ? this.salesService.pay(this.activeSaleId!, {
+    const request$ = this.isEditingOpenAccount()
+      ? this.salesService.pay(this.activeSaleId()!, {
           amountCash: this.efectivo,
           amountTransfer: this.transferencia,
         })
       : this.salesService.create({
-          items: this.cart.map((i) => ({
+          items: this.cart().map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
           })),
@@ -723,23 +729,23 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
           }),
         } as CreateSaleDto);
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     request$
-      .pipe(finalize(() => (this.isSubmitting = false)))
+      .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: (sale) => {
           this.draftService.clearDraft(this.DRAFT_KEY_CART);
-          this.cart = [];
+          this.cart.set([]);
           this.customerName = '';
           this.montoEfectivo = '';
           this.montoTransferencia = '';
-          this.activeSaleId = null;
-          this.activeSaleCustomerName = null;
+          this.activeSaleId.set(null);
+          this.activeSaleCustomerName.set(null);
           this.originalCartSnapshot = [];
-          this.isMobileCartOpen = false;
-          this.checkoutStep = 1;
-          this.desktopStep = 1;
-          this.lastSaleId = sale.id;
+          this.isMobileCartOpen.set(false);
+          this.checkoutStep.set(1);
+          this.desktopStep.set(1);
+          this.lastSaleId.set(sale.id);
           this.productsService.clearCache();
           this.loadProducts();
           this.loadOpenSales();
