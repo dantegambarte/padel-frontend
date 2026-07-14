@@ -41,8 +41,8 @@ describe('DashboardEmployeeComponent', () => {
     const fixture = TestBed.createComponent(DashboardEmployeeComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.isLoading).toBe(false);
-    expect(fixture.componentInstance.cashAmount).toBe(5000);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
+    expect(fixture.componentInstance.cashAmount()).toBe(5000);
   });
 
   it('filters upcoming bookings to booked/playing and sorts by hour', () => {
@@ -57,7 +57,7 @@ describe('DashboardEmployeeComponent', () => {
     const fixture = TestBed.createComponent(DashboardEmployeeComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.upcomingBookings.map((b) => b.hour)).toEqual([
+    expect(fixture.componentInstance.upcomingBookings().map((b) => b.hour)).toEqual([
       '09:00',
       '15:00',
     ]);
@@ -69,13 +69,13 @@ describe('DashboardEmployeeComponent', () => {
     fixture.detectChanges();
 
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('proximoTurnoValue falls back to "Sin turnos" with no upcoming bookings', () => {
     const fixture = TestBed.createComponent(DashboardEmployeeComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.proximoTurnoValue).toBe('Sin turnos');
+    expect(fixture.componentInstance.proximoTurnoValue()).toBe('Sin turnos');
   });
 
   it('isPaid() is true only when the payment covers the full price', () => {

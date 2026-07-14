@@ -1,6 +1,6 @@
 <div class="space-y-6 p-4 md:p-6">
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <ng-container *ngIf="isLoading; else kpiCards">
+    <ng-container *ngIf="isLoading(); else kpiCards">
       <div
         *ngFor="let i of [1, 2, 3, 4]"
         class="h-32 animate-pulse rounded-lg border border-border bg-muted shadow-md"
@@ -30,26 +30,26 @@
           </span>
         </div>
         <p class="text-2xl font-bold text-card-foreground">
-          ${{ fmt(kpis?.totalRevenue) }}
+          ${{ fmt(kpis()?.totalRevenue) }}
         </p>
         <div class="flex gap-3 text-xs text-muted-foreground">
           <span class="flex items-center gap-1">
             <span
               class="inline-block h-2 w-2 rounded-full bg-emerald-500"
             ></span>
-            Ef. ${{ fmt(kpis?.cashTotal) }}
+            Ef. ${{ fmt(kpis()?.cashTotal) }}
           </span>
           <span class="flex items-center gap-1">
             <span
               class="inline-block h-2 w-2 rounded-full bg-indigo-500"
             ></span>
-            Tr. ${{ fmt(kpis?.transferTotal) }}
+            Tr. ${{ fmt(kpis()?.transferTotal) }}
           </span>
         </div>
         <p class="text-xs text-muted-foreground">
           Ticket Promedio:
           <span class="font-semibold text-card-foreground"
-            >${{ fmt(kpis?.averageTicket) }}</span
+            >${{ fmt(kpis()?.averageTicket) }}</span
           >
         </p>
       </div>
@@ -78,7 +78,7 @@
           </span>
         </div>
         <p class="text-2xl font-bold text-card-foreground">
-          {{ kpis?.completedBookings ?? 0 }}
+          {{ kpis()?.completedBookings ?? 0 }}
         </p>
         <p class="text-xs text-muted-foreground">Canchas cobradas hoy</p>
       </div>
@@ -107,14 +107,14 @@
           </span>
         </div>
         <p class="text-2xl font-bold text-card-foreground">
-          ${{ fmt(kpis?.cantinaRevenue) }}
+          ${{ fmt(kpis()?.cantinaRevenue) }}
         </p>
         <p class="text-xs text-muted-foreground">
-          {{ kpis?.cantinaItemsSold ?? 0 }} uds. vendidas hoy
+          {{ kpis()?.cantinaItemsSold ?? 0 }} uds. vendidas hoy
         </p>
         <p class="text-xs font-semibold text-orange-600">
-          🔥 Más vendido: {{ kpis?.topProduct?.name || "Ninguno" }} ({{
-            kpis?.topProduct?.quantity ?? 0
+          🔥 Más vendido: {{ kpis()?.topProduct?.name || "Ninguno" }} ({{
+            kpis()?.topProduct?.quantity ?? 0
           }})
         </p>
       </div>
@@ -148,17 +148,17 @@
           </span>
         </div>
         <p class="text-2xl font-bold text-card-foreground">
-          {{ kpis?.occupationRate ?? 0 }}%
+          {{ kpis()?.occupationRate ?? 0 }}%
         </p>
         <p class="text-xs text-muted-foreground">
-          {{ kpis?.completedBookings ?? 0 }} de
-          {{ kpis?.totalSlots ?? 0 }} horarios del día
+          {{ kpis()?.completedBookings ?? 0 }} de
+          {{ kpis()?.totalSlots ?? 0 }} horarios del día
         </p>
 
         <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted mt-1">
           <div
             class="h-full rounded-full bg-violet-500 transition-all duration-500"
-            [style.width.%]="kpis?.occupationRate ?? 0"
+            [style.width.%]="kpis()?.occupationRate ?? 0"
           ></div>
         </div>
       </div>
@@ -178,13 +178,13 @@
     </div>
     <div class="w-full px-4 pb-4 md:px-6 md:pb-6 pt-4">
       <div
-        *ngIf="isLoading"
+        *ngIf="isLoading()"
         class="h-[320px] w-full animate-pulse rounded-lg bg-muted"
       ></div>
-      <div *ngIf="!isLoading" class="relative w-full" style="height: 320px">
+      <div *ngIf="!isLoading()" class="relative w-full" style="height: 320px">
         <canvas
           baseChart
-          [data]="barChartData"
+          [data]="barChartData()"
           [options]="barChartOptions"
           [type]="barChartType"
         ></canvas>
@@ -202,13 +202,13 @@
         </h3>
       </div>
       <div class="space-y-4 px-6 pb-6 pt-4">
-        <ng-container *ngIf="isLoading">
+        <ng-container *ngIf="isLoading()">
           <div
             *ngFor="let i of [1, 2, 3]"
             class="h-6 animate-pulse rounded bg-muted"
           ></div>
         </ng-container>
-        <ng-container *ngIf="!isLoading && kpis">
+        <ng-container *ngIf="!isLoading() && kpis() as kpis">
           <div class="flex items-center justify-between">
             <span class="text-sm text-muted-foreground">Total Recaudado</span>
             <span class="text-lg font-bold">${{ fmt(kpis.totalRevenue) }}</span>
@@ -326,7 +326,7 @@
       </div>
 
       <div class="flex flex-col px-6 pb-6 pt-4 flex-1">
-        <ng-container *ngIf="isLoading">
+        <ng-container *ngIf="isLoading()">
           <div
             class="h-16 w-1/2 mx-auto animate-pulse rounded-lg bg-muted mb-2"
           ></div>
@@ -339,7 +339,7 @@
           ></div>
         </ng-container>
 
-        <ng-container *ngIf="!isLoading && kpis">
+        <ng-container *ngIf="!isLoading() && kpis() as kpis">
           <div class="text-center my-4">
             <p class="text-5xl font-bold text-blue-600 leading-none">
               {{ kpis.totalOperations }}

@@ -53,7 +53,7 @@
     </div>
   </div>
 
-  <ng-container *ngIf="isLoading">
+  <ng-container *ngIf="isLoading()">
     <div
       *ngFor="let _ of [1, 2, 3]"
       class="h-16 animate-pulse rounded-xl border border-border bg-muted"
@@ -61,14 +61,14 @@
   </ng-container>
 
   <div
-    *ngIf="serverError && !isLoading"
+    *ngIf="serverError() && !isLoading()"
     class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
   >
-    {{ serverError }}
+    {{ serverError() }}
   </div>
 
   <div
-    *ngIf="!isLoading && !serverError && shifts.length === 0"
+    *ngIf="!isLoading() && !serverError() && shifts().length === 0"
     class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center"
   >
     <svg
@@ -113,7 +113,7 @@
   </div>
 
   <div
-    *ngIf="!isLoading && shifts.length > 0"
+    *ngIf="!isLoading() && shifts().length > 0"
     class="hidden md:block rounded-xl border border-border overflow-hidden shadow-sm"
   >
     <div class="w-full overflow-x-auto">
@@ -154,7 +154,7 @@
       </thead>
       <tbody class="divide-y divide-border">
         <tr
-          *ngFor="let s of shifts"
+          *ngFor="let s of shifts()"
           class="hover:bg-muted/20 transition-colors"
           [class.opacity-50]="!s.isActive"
         >
@@ -229,7 +229,7 @@
                 type="button"
                 (click)="requestDelete(s.id)"
                 title="Eliminar franja"
-                [disabled]="deletingId === s.id"
+                [disabled]="deletingId() === s.id"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-background text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
               >
                 <svg
@@ -254,9 +254,9 @@
     </div>
   </div>
 
-  <div *ngIf="!isLoading && shifts.length > 0" class="md:hidden space-y-3">
+  <div *ngIf="!isLoading() && shifts().length > 0" class="md:hidden space-y-3">
     <div
-      *ngFor="let s of shifts"
+      *ngFor="let s of shifts()"
       class="rounded-xl border border-border bg-card p-4 space-y-3"
       [class.opacity-60]="!s.isActive"
     >
@@ -326,7 +326,7 @@
 </div>
 
 <div
-  *ngIf="showModal"
+  *ngIf="showModal()"
   appModalScrollLock
   class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
   (click)="closeModal()"
@@ -337,7 +337,7 @@
   >
     <div class="flex-shrink-0 flex items-center justify-between border-b px-6 py-4">
       <h2 class="text-lg font-semibold">
-        {{ editingId ? "Editar Franja Horaria" : "Nueva Franja Horaria" }}
+        {{ editingId() ? "Editar Franja Horaria" : "Nueva Franja Horaria" }}
       </h2>
       <button
         type="button"
@@ -485,7 +485,7 @@
           </button>
         </div>
         <p
-          *ngIf="modalError && selectedDays.length === 0"
+          *ngIf="modalError() && selectedDays().length === 0"
           class="text-xs text-destructive"
         >
           Seleccioná al menos un día.
@@ -664,7 +664,7 @@
         </div>
       </div>
 
-      <div *ngIf="editingId" class="flex items-center gap-3">
+      <div *ngIf="editingId()" class="flex items-center gap-3">
         <input
           type="checkbox"
           id="isActive"
@@ -677,10 +677,10 @@
       </div>
 
       <div
-        *ngIf="modalError"
+        *ngIf="modalError()"
         class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
       >
-        {{ modalError }}
+        {{ modalError() }}
       </div>
 
       <div class="flex gap-3 pt-1">
@@ -693,11 +693,11 @@
         </button>
         <button
           type="submit"
-          [disabled]="submitting || !isFormReady"
+          [disabled]="submitting() || !isFormReady"
           class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg
-            *ngIf="submitting"
+            *ngIf="submitting()"
             class="h-4 w-4 animate-spin"
             viewBox="0 0 24 24"
             fill="none"
@@ -709,9 +709,9 @@
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
           </svg>
           {{
-            submitting
+            submitting()
               ? "Guardando..."
-              : editingId
+              : editingId()
                 ? "Guardar Cambios"
                 : "Crear Franja"
           }}
@@ -722,7 +722,7 @@
 </div>
 
 <div
-  *ngIf="deleteConfirmId"
+  *ngIf="deleteConfirmId()"
   appModalScrollLock
   class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
 >

@@ -51,15 +51,15 @@ describe('SidebarComponent', () => {
     currentUserSubject.next(adminUser);
 
     const component = fixture.componentInstance;
-    expect(component.filteredNavGroups.length).toBeGreaterThan(0);
-    const allItems = component.filteredNavGroups.flatMap((g) => g.items);
+    expect(component.filteredNavGroups().length).toBeGreaterThan(0);
+    const allItems = component.filteredNavGroups().flatMap((g) => g.items);
     expect(allItems.some((i) => i.id === 'reports')).toBe(true);
   });
 
   it('shows no nav groups when logged out', () => {
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.filteredNavGroups).toEqual([]);
+    expect(fixture.componentInstance.filteredNavGroups()).toEqual([]);
   });
 
   it('loads low-stock counts split into in-stock vs out-of-stock', () => {
@@ -73,21 +73,21 @@ describe('SidebarComponent', () => {
     fixture.detectChanges();
     currentUserSubject.next(adminUser);
 
-    expect(fixture.componentInstance.outOfStockCount).toBe(1);
-    expect(fixture.componentInstance.lowStockCount).toBe(1);
+    expect(fixture.componentInstance.outOfStockCount()).toBe(1);
+    expect(fixture.componentInstance.lowStockCount()).toBe(1);
   });
 
   it('userInitials returns up to two uppercase initials', () => {
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
     currentUserSubject.next(adminUser);
-    expect(fixture.componentInstance.userInitials).toBe('AT');
+    expect(fixture.componentInstance.userInitials()).toBe('AT');
   });
 
   it('isActive() compares against the current URL ignoring query params', () => {
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
-    fixture.componentInstance.currentUrl = '/app/dashboard?foo=bar';
+    fixture.componentInstance.currentUrl.set('/app/dashboard?foo=bar');
     expect(fixture.componentInstance.isActive('/app/dashboard')).toBe(true);
     expect(fixture.componentInstance.isActive('/app/schedule')).toBe(false);
   });
@@ -116,7 +116,7 @@ describe('SidebarComponent', () => {
     const event = new MouseEvent('click');
     spyOn(event, 'stopPropagation');
     fixture.componentInstance.toggleUserMenu(event);
-    expect(fixture.componentInstance.isUserMenuOpen).toBe(true);
+    expect(fixture.componentInstance.isUserMenuOpen()).toBe(true);
     expect(event.stopPropagation).toHaveBeenCalled();
   });
 

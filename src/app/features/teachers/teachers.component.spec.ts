@@ -43,8 +43,8 @@ describe('TeachersComponent', () => {
     const fixture = TestBed.createComponent(TeachersComponent);
     fixture.detectChanges();
     expect(teachersSvcSpy.findAll).toHaveBeenCalledWith(true);
-    expect(fixture.componentInstance.teachers).toEqual([teacher]);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.teachers()).toEqual([teacher]);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('filteredTeachers filters by name or phone', () => {
@@ -61,15 +61,15 @@ describe('TeachersComponent', () => {
     const fixture = TestBed.createComponent(TeachersComponent);
     fixture.detectChanges();
     fixture.componentInstance.openCreateDialog();
-    expect(fixture.componentInstance.isDialogOpen).toBe(true);
-    expect(fixture.componentInstance.editingId).toBeNull();
+    expect(fixture.componentInstance.isDialogOpen()).toBe(true);
+    expect(fixture.componentInstance.editingId()).toBeNull();
   });
 
   it('openEditDialog() pre-fills the form from the teacher', () => {
     const fixture = TestBed.createComponent(TeachersComponent);
     fixture.detectChanges();
     fixture.componentInstance.openEditDialog(teacher);
-    expect(fixture.componentInstance.editingId).toBe('t1');
+    expect(fixture.componentInstance.editingId()).toBe('t1');
     expect(fixture.componentInstance.form.fullName).toBe('Juan Perez');
   });
 
@@ -78,7 +78,7 @@ describe('TeachersComponent', () => {
     fixture.detectChanges();
     fixture.componentInstance.form.fullName = '   ';
     fixture.componentInstance.submitForm();
-    expect(fixture.componentInstance.formError).toContain('obligatorio');
+    expect(fixture.componentInstance.formError()).toContain('obligatorio');
     expect(teachersSvcSpy.create).not.toHaveBeenCalled();
   });
 
@@ -92,7 +92,7 @@ describe('TeachersComponent', () => {
     fixture.componentInstance.submitForm();
 
     expect(teachersSvcSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.isDialogOpen).toBe(false);
+    expect(fixture.componentInstance.isDialogOpen()).toBe(false);
     expect(toastServiceSpy.success).toHaveBeenCalled();
   });
 
@@ -107,8 +107,8 @@ describe('TeachersComponent', () => {
 
     fixture.componentInstance.submitForm();
 
-    expect(fixture.componentInstance.formError).toBe('Ya existe');
-    expect(fixture.componentInstance.isSubmitting).toBe(false);
+    expect(fixture.componentInstance.formError()).toBe('Ya existe');
+    expect(fixture.componentInstance.isSubmitting()).toBe(false);
   });
 
   it('toggleActive() calls update with the flipped isActive and reloads', () => {

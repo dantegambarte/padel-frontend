@@ -1,4 +1,4 @@
-<ng-container *ngIf="visible">
+<ng-container *ngIf="visible()">
   <div
     appModalScrollLock
     class="fixed inset-0 z-[99998] bg-black/30 backdrop-blur-[2px]"
@@ -39,14 +39,14 @@
 
     <div class="px-4 pb-3 pt-1 text-right">
       <p class="min-h-[1.5rem] text-sm text-zinc-500 font-mono truncate">
-        {{ expressionHistory }}&nbsp;
+        {{ expressionHistory() }}&nbsp;
       </p>
       <p
         class="text-4xl font-light tracking-tight text-white font-mono truncate"
-        [class.text-2xl]="formattedDisplay.length > 10"
-        [class.text-red-400]="currentInput === 'Error'"
+        [class.text-2xl]="formattedDisplay().length > 10"
+        [class.text-red-400]="currentInput() === 'Error'"
       >
-        {{ formattedDisplay }}
+        {{ formattedDisplay() }}
       </p>
     </div>
 
@@ -75,7 +75,7 @@
       <button
         type="button"
         (click)="setOperator('÷')"
-        [class.ring-2]="operator === '÷'"
+        [class.ring-2]="operator() === '÷'"
         class="calc-btn bg-amber-500 text-white hover:bg-amber-400 active:bg-amber-300 ring-amber-300"
       >
         ÷
@@ -105,7 +105,7 @@
       <button
         type="button"
         (click)="setOperator('×')"
-        [class.ring-2]="operator === '×'"
+        [class.ring-2]="operator() === '×'"
         class="calc-btn bg-amber-500 text-white hover:bg-amber-400 active:bg-amber-300 ring-amber-300"
       >
         ×
@@ -135,7 +135,7 @@
       <button
         type="button"
         (click)="setOperator('−')"
-        [class.ring-2]="operator === '−'"
+        [class.ring-2]="operator() === '−'"
         class="calc-btn bg-amber-500 text-white hover:bg-amber-400 active:bg-amber-300 ring-amber-300"
       >
         −
@@ -165,7 +165,7 @@
       <button
         type="button"
         (click)="setOperator('+')"
-        [class.ring-2]="operator === '+'"
+        [class.ring-2]="operator() === '+'"
         class="calc-btn bg-amber-500 text-white hover:bg-amber-400 active:bg-amber-300 ring-amber-300"
       >
         +

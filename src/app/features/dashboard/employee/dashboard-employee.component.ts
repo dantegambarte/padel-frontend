@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
@@ -24,11 +24,11 @@ import { RouterLink } from '@angular/router';
     ],
 })
 export class DashboardEmployeeComponent implements OnInit {
-  isLoading = true;
+  isLoading = signal(true);
 
-  cashAmount = 0;
-  upcomingBookings: BookingResponse[] = [];
-  lowStockProducts: LowStockProduct[] = [];
+  cashAmount = signal(0);
+  upcomingBookings = signal<BookingResponse[]>([]);
+  lowStockProducts = signal<LowStockProduct[]>([]);
 
   /**
    * Fecha de hoy en formato YYYY-MM-DD usando hora local
@@ -51,7 +51,7 @@ export class DashboardEmployeeComponent implements OnInit {
    * El error de caja no cancela el `forkJoin` gracias al `catchError`.
    */
   ngOnInit(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     const cash$ = this.cashService
       .getCurrent()
@@ -62,16 +62,18 @@ export class DashboardEmployeeComponent implements OnInit {
       bookings: this.bookingsService.findByDate(this.today),
       lowStock: this.productsService.getLowStock(),
     })
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: ({ cash, bookings, lowStock }) => {
-          this.cashAmount = cash?.efectivoEsperado ?? 0;
+          this.cashAmount.set(cash?.efectivoEsperado ?? 0);
 
-          this.upcomingBookings = bookings
-            .filter((b) => b.status === 'booked' || b.status === 'playing')
-            .sort((a, b) => a.hour.localeCompare(b.hour));
+          this.upcomingBookings.set(
+            bookings
+              .filter((b) => b.status === 'booked' || b.status === 'playing')
+              .sort((a, b) => a.hour.localeCompare(b.hour)),
+          );
 
-          this.lowStockProducts = lowStock;
+          this.lowStockProducts.set(lowStock);
         },
         error: () => {
           this.toast.error(
@@ -83,16 +85,16 @@ export class DashboardEmployeeComponent implements OnInit {
   }
 
   /** Devuelve la hora del próximo turno o 'Sin turnos' si no hay ninguno. */
-  get proximoTurnoValue(): string {
-    return this.upcomingBookings[0]
-      ? this.formatHour(this.upcomingBookings[0].hour)
-      : 'Sin turnos';
-  }
+  proximoTurnoValue = computed(() => {
+    const first = this.upcomingBookings()[0];
+    return first ? this.formatHour(first.hour) : 'Sin turnos';
+  });
 
   /** Devuelve el nombre de la cancha del próximo turno. */
-  get proximoTurnoTrend(): string {
-    return this.upcomingBookings[0] ? this.upcomingBookings[0].court.name : '—';
-  }
+  proximoTurnoTrend = computed(() => {
+    const first = this.upcomingBookings()[0];
+    return first ? first.court.name : '—';
+  });
 
   /** Formatea un número usando el locale argentino. */
   fmt(value: number): string {

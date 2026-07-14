@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 
@@ -31,9 +31,9 @@ import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directi
 })
 export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private readonly destroy$ = new Subject<void>();
-  isLoading = true;
-  isSubmitting = false;
-  isSavingFondo = false;
+  isLoading = signal(true);
+  isSubmitting = signal(false);
+  isSavingFondo = signal(false);
 
   horarioApertura = '09:00';
   horarioCierre = '23:00';
@@ -59,14 +59,14 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
     return this.isHorariosDirty || this.isFondoDirty;
   }
 
-  courts: Court[] = [];
-  courtToDelete: Court | null = null;
+  courts = signal<Court[]>([]);
+  courtToDelete = signal<Court | null>(null);
 
-  isCourtModalOpen = false;
-  isCourtSubmitting = false;
-  courtModalMode: 'create' | 'edit' = 'create';
+  isCourtModalOpen = signal(false);
+  isCourtSubmitting = signal(false);
+  courtModalMode = signal<'create' | 'edit'>('create');
   editingCourtId: string | null = null;
-  courtFormError = '';
+  courtFormError = signal('');
 
   courtForm = { name: '', description: '', isActive: true };
 
@@ -81,7 +81,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
     // mutación (create/update/delete/toggle) sin necesidad de recargar.
     this.courtsService.courts$
       .pipe(takeUntil(this.destroy$))
-      .subscribe((courts) => (this.courts = courts));
+      .subscribe((courts) => this.courts.set(courts));
 
     this.loadAll();
   }
@@ -94,18 +94,18 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
   @HostListener('document:keydown.escape')
   /** Cancela la confirmación de borrado o cierra el modal de cancha al presionar Escape. */
   onEscape(): void {
-    if (this.courtToDelete) {
-      this.courtToDelete = null;
+    if (this.courtToDelete()) {
+      this.courtToDelete.set(null);
       return;
     }
-    if (this.isCourtModalOpen && !this.isCourtSubmitting) {
+    if (this.isCourtModalOpen() && !this.isCourtSubmitting()) {
       this.closeCourtModal();
     }
   }
 
   /** Carga la configuración y dispara la carga de canchas en paralelo. */
   private loadAll(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     // Las canchas llegan vía courts$ (suscripción en ngOnInit).
     // Aquí solo cargamos la configuración de horarios.
     this.courtsService.loadCourts();
@@ -114,11 +114,11 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
       .pipe(catchError(() => of([])))
       .subscribe({
         next: (config) => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.applyConfig(config as ConfigEntry[]);
         },
         error: () => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.toast.error(
             'Error al cargar configuración',
             'Intente recargar la página',
@@ -147,8 +147,8 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   /** Guarda la configuración de horarios y actualiza el snapshot. */
   save(): void {
-    if (this.isSubmitting) return;
-    this.isSubmitting = true;
+    if (this.isSubmitting()) return;
+    this.isSubmitting.set(true);
 
     const entries: ConfigEntry[] = [
       { key: 'hora_apertura', value: this.horarioApertura },
@@ -157,7 +157,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
     this.configService
       .updateBulk(entries)
-      .pipe(finalize(() => (this.isSubmitting = false)))
+      .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: () => {
           this.savedHorarioApertura = this.horarioApertura;
@@ -177,8 +177,8 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   /** Guarda únicamente el fondo de caja base. */
   guardarFondoCaja(): void {
-    if (this.isSavingFondo) return;
-    this.isSavingFondo = true;
+    if (this.isSavingFondo()) return;
+    this.isSavingFondo.set(true);
 
     const entries: ConfigEntry[] = [
       { key: 'fondo_caja_base', value: String(this.fondoCajaBase) },
@@ -186,7 +186,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
     this.configService
       .updateBulk(entries)
-      .pipe(finalize(() => (this.isSavingFondo = false)))
+      .pipe(finalize(() => this.isSavingFondo.set(false)))
       .subscribe({
         next: () => {
           this.savedFondoCajaBase = this.fondoCajaBase;
@@ -213,44 +213,44 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   /** Abre el modal en modo creación con el formulario vacío. */
   openCreateCourtModal(): void {
-    this.courtModalMode = 'create';
+    this.courtModalMode.set('create');
     this.editingCourtId = null;
-    this.courtFormError = '';
+    this.courtFormError.set('');
     this.courtForm = { name: '', description: '', isActive: true };
-    this.isCourtModalOpen = true;
+    this.isCourtModalOpen.set(true);
   }
 
   /** Abre el modal en modo edición pre-cargando los datos de la cancha. */
   openEditCourtModal(court: Court): void {
-    this.courtModalMode = 'edit';
+    this.courtModalMode.set('edit');
     this.editingCourtId = court.id;
-    this.courtFormError = '';
+    this.courtFormError.set('');
     this.courtForm = {
       name: court.name,
       description: court.description ?? '',
       isActive: court.isActive,
     };
-    this.isCourtModalOpen = true;
+    this.isCourtModalOpen.set(true);
   }
 
   /** Cierra el modal de cancha si no hay una petición en curso. */
   closeCourtModal(): void {
-    if (this.isCourtSubmitting) return;
-    this.isCourtModalOpen = false;
+    if (this.isCourtSubmitting()) return;
+    this.isCourtModalOpen.set(false);
   }
 
   /** Valida y envía el formulario de cancha para creación o edición. */
   saveCourtModal(): void {
-    this.courtFormError = '';
+    this.courtFormError.set('');
 
     if (!this.courtForm.name.trim()) {
-      this.courtFormError = 'El nombre de la cancha es obligatorio.';
+      this.courtFormError.set('El nombre de la cancha es obligatorio.');
       return;
     }
 
-    this.isCourtSubmitting = true;
+    this.isCourtSubmitting.set(true);
 
-    if (this.courtModalMode === 'create') {
+    if (this.courtModalMode() === 'create') {
       const dto: CreateCourtDto = {
         name: this.courtForm.name.trim(),
         description: this.courtForm.description.trim() || undefined,
@@ -259,8 +259,8 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
       this.courtsService.create(dto).subscribe({
         next: (created) => {
-          this.isCourtSubmitting = false;
-          this.isCourtModalOpen = false;
+          this.isCourtSubmitting.set(false);
+          this.isCourtModalOpen.set(false);
           // courts[] se actualiza vía courts$ — no se muta localmente.
           this.toast.success(
             'Cancha creada',
@@ -268,9 +268,9 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
           );
         },
         error: (err) => {
-          this.isCourtSubmitting = false;
+          this.isCourtSubmitting.set(false);
           const msg = err?.error?.message ?? 'No se pudo crear la cancha';
-          this.courtFormError = Array.isArray(msg) ? msg.join(', ') : msg;
+          this.courtFormError.set(Array.isArray(msg) ? msg.join(', ') : msg);
         },
       });
     } else {
@@ -282,8 +282,8 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
       this.courtsService.update(this.editingCourtId!, dto).subscribe({
         next: (updated) => {
-          this.isCourtSubmitting = false;
-          this.isCourtModalOpen = false;
+          this.isCourtSubmitting.set(false);
+          this.isCourtModalOpen.set(false);
           // courts[] se actualiza vía courts$ — no se muta localmente.
           this.toast.success(
             'Cancha actualizada',
@@ -291,9 +291,9 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
           );
         },
         error: (err) => {
-          this.isCourtSubmitting = false;
+          this.isCourtSubmitting.set(false);
           const msg = err?.error?.message ?? 'No se pudo actualizar la cancha';
-          this.courtFormError = Array.isArray(msg) ? msg.join(', ') : msg;
+          this.courtFormError.set(Array.isArray(msg) ? msg.join(', ') : msg);
         },
       });
     }
@@ -301,20 +301,21 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   /** Abre el modal de confirmación de eliminación. */
   confirmDeleteCourt(court: Court): void {
-    this.courtToDelete = court;
+    this.courtToDelete.set(court);
   }
 
   /** Cancela la eliminación. */
   cancelDeleteCourt(): void {
-    this.courtToDelete = null;
+    this.courtToDelete.set(null);
   }
 
   /** Ejecuta la eliminación de la cancha confirmada. */
   deleteCourt(): void {
-    if (!this.courtToDelete) return;
-    const id = this.courtToDelete.id;
-    const name = this.courtToDelete.name;
-    this.courtToDelete = null;
+    const courtToDelete = this.courtToDelete();
+    if (!courtToDelete) return;
+    const id = courtToDelete.id;
+    const name = courtToDelete.name;
+    this.courtToDelete.set(null);
     this.courtsService.delete(id).subscribe({
       next: () => {
         // courts[] se actualiza vía courts$ — no se muta localmente.

@@ -1,5 +1,5 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, HostListener, inject, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CalculatorService } from '../../core/services/calculator.service';
 import { NgIf } from '@angular/common';
 import { ModalScrollLockDirective } from '../modal-scroll-lock.directive';
@@ -12,36 +12,23 @@ import { ModalScrollLockDirective } from '../modal-scroll-lock.directive';
         ModalScrollLockDirective,
     ],
 })
-export class CalculatorComponent implements OnInit, OnDestroy {
-  visible = false;
+export class CalculatorComponent {
+  private calcService = inject(CalculatorService);
+  visible = toSignal(this.calcService.visible$, { initialValue: false });
 
   /** Número que se está tipeando actualmente o el resultado mostrado. */
-  currentInput = '0';
+  currentInput = signal('0');
   /** Primer operando guardado antes de aplicar el operador. */
-  previousInput = '';
+  previousInput = signal('');
   /** Operador pendiente (+, −, ×, ÷). */
-  operator = '';
+  operator = signal('');
   /** Texto del renglón superior: muestra la operación acumulada. */
-  expressionHistory = '';
+  expressionHistory = signal('');
 
   /** Cuando es `true`, el próximo dígito reemplaza el display. */
   private waitingForOperand2 = false;
   /** Indica que se acaba de pulsar `=` — el próximo dígito arranca una operación nueva. */
   private justEvaluated = false;
-
-  private sub = new Subscription();
-
-  constructor(private calcService: CalculatorService) {}
-
-  ngOnInit(): void {
-    this.sub.add(
-      this.calcService.visible$.subscribe((v) => (this.visible = v)),
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.sub.unsubscribe();
-  }
 
   /** Cierra la calculadora flotante. */
   close(): void {
@@ -51,7 +38,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   /** Maneja los eventos de teclado para operar la calculadora sin usar el ratón. */
   onKey(e: KeyboardEvent): void {
-    if (!this.visible) return;
+    if (!this.visible()) return;
 
     const HANDLED = new Set([
       'Escape',
@@ -128,37 +115,37 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   /** Agrega un dígito al número actual respetando el estado de la máquina. */
   appendDigit(d: string): void {
     if (this.justEvaluated) {
-      this.currentInput = d;
-      this.expressionHistory = '';
+      this.currentInput.set(d);
+      this.expressionHistory.set('');
       this.justEvaluated = false;
       return;
     }
     if (this.waitingForOperand2) {
-      this.currentInput = d;
+      this.currentInput.set(d);
       this.waitingForOperand2 = false;
     } else {
-      this.currentInput = this.currentInput === '0' ? d : this.currentInput + d;
+      this.currentInput.update((v) => (v === '0' ? d : v + d));
     }
-    if (this.currentInput.replace('.', '').replace('-', '').length > 15) {
-      this.currentInput = this.currentInput.slice(0, -1);
+    if (this.currentInput().replace('.', '').replace('-', '').length > 15) {
+      this.currentInput.update((v) => v.slice(0, -1));
     }
   }
 
   /** Agrega el separador decimal si aún no existe en el número actual. */
   appendDot(): void {
     if (this.justEvaluated) {
-      this.currentInput = '0.';
-      this.expressionHistory = '';
+      this.currentInput.set('0.');
+      this.expressionHistory.set('');
       this.justEvaluated = false;
       return;
     }
     if (this.waitingForOperand2) {
-      this.currentInput = '0.';
+      this.currentInput.set('0.');
       this.waitingForOperand2 = false;
       return;
     }
-    if (!this.currentInput.includes('.')) {
-      this.currentInput += '.';
+    if (!this.currentInput().includes('.')) {
+      this.currentInput.update((v) => v + '.');
     }
   }
 
@@ -167,26 +154,28 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     if (this.justEvaluated) return;
 
     if (this.waitingForOperand2) {
-      this.currentInput = this.previousInput || '0';
-      this.operator = '';
-      this.previousInput = '';
+      this.currentInput.set(this.previousInput() || '0');
+      this.operator.set('');
+      this.previousInput.set('');
       this.waitingForOperand2 = false;
-      this.expressionHistory = '';
+      this.expressionHistory.set('');
       return;
     }
 
-    if (this.currentInput.length > 1) {
-      const sliced = this.currentInput.slice(0, -1);
-      this.currentInput = sliced === '-' || sliced === '.' ? '0' : sliced;
+    if (this.currentInput().length > 1) {
+      const sliced = this.currentInput().slice(0, -1);
+      this.currentInput.set(sliced === '-' || sliced === '.' ? '0' : sliced);
       return;
     }
 
-    if (this.operator) {
-      this.currentInput = '0';
+    if (this.operator()) {
+      this.currentInput.set('0');
       this.waitingForOperand2 = true;
-      this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${this.operator}`;
+      this.expressionHistory.set(
+        `${this.fmtNumber(this.previousInput())} ${this.operator()}`,
+      );
     } else {
-      this.currentInput = '0';
+      this.currentInput.set('0');
     }
   }
 
@@ -196,81 +185,82 @@ export class CalculatorComponent implements OnInit, OnDestroy {
       this.justEvaluated = false;
     }
 
-    if (this.operator && !this.waitingForOperand2) {
+    if (this.operator() && !this.waitingForOperand2) {
       const result = this.evaluate(
-        parseFloat(this.previousInput),
-        parseFloat(this.currentInput),
-        this.operator,
+        parseFloat(this.previousInput()),
+        parseFloat(this.currentInput()),
+        this.operator(),
       );
       if (result === null) {
-        this.currentInput = 'Error';
+        this.currentInput.set('Error');
         this.resetState();
         return;
       }
-      this.currentInput = String(result);
+      this.currentInput.set(String(result));
     }
 
-    this.previousInput = this.currentInput;
-    this.operator = op;
+    this.previousInput.set(this.currentInput());
+    this.operator.set(op);
     this.waitingForOperand2 = true;
-    this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${op}`;
+    this.expressionHistory.set(`${this.fmtNumber(this.previousInput())} ${op}`);
   }
 
   /** Ejecuta la operación pendiente y muestra el resultado en el display. */
   calculate(): void {
-    if (!this.operator || this.waitingForOperand2) return;
+    if (!this.operator() || this.waitingForOperand2) return;
 
-    this.expressionHistory = `${this.fmtNumber(this.previousInput)} ${this.operator} ${this.fmtNumber(this.currentInput)} =`;
+    this.expressionHistory.set(
+      `${this.fmtNumber(this.previousInput())} ${this.operator()} ${this.fmtNumber(this.currentInput())} =`,
+    );
 
     const result = this.evaluate(
-      parseFloat(this.previousInput),
-      parseFloat(this.currentInput),
-      this.operator,
+      parseFloat(this.previousInput()),
+      parseFloat(this.currentInput()),
+      this.operator(),
     );
 
     if (result === null) {
-      this.currentInput = 'Error';
+      this.currentInput.set('Error');
       this.resetState();
       return;
     }
 
-    this.currentInput = String(result);
+    this.currentInput.set(String(result));
     this.resetState();
     this.justEvaluated = true;
   }
 
   /** Invierte el signo del número actual. */
   toggleSign(): void {
-    if (this.currentInput === '0' || this.currentInput === 'Error') return;
-    this.currentInput = this.currentInput.startsWith('-')
-      ? this.currentInput.slice(1)
-      : '-' + this.currentInput;
+    if (this.currentInput() === '0' || this.currentInput() === 'Error') return;
+    this.currentInput.update((v) => (v.startsWith('-') ? v.slice(1) : '-' + v));
   }
 
   /** Divide el número actual entre 100 para convertirlo a porcentaje. */
   percent(): void {
-    const n = parseFloat(this.currentInput);
+    const n = parseFloat(this.currentInput());
     if (isNaN(n)) return;
-    this.currentInput = String(parseFloat((n / 100).toPrecision(12)));
+    this.currentInput.set(String(parseFloat((n / 100).toPrecision(12))));
   }
 
   /** Reinicia la calculadora al estado inicial (AC). */
   clear(): void {
-    this.currentInput = '0';
-    this.previousInput = '';
-    this.operator = '';
-    this.expressionHistory = '';
+    this.currentInput.set('0');
+    this.previousInput.set('');
+    this.operator.set('');
+    this.expressionHistory.set('');
     this.waitingForOperand2 = false;
     this.justEvaluated = false;
   }
 
   /** Formatea el display con separador de miles (punto) y decimal (coma) argentino. */
-  get formattedDisplay(): string {
-    if (this.currentInput === 'Error') return 'Error';
-    const parts = this.currentInput.split('.');
+  formattedDisplay = computed(() => {
+    const currentInput = this.currentInput();
+    if (currentInput === 'Error') return 'Error';
+    const parts = currentInput.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return parts.join(',');
-  }
+  });
 
   /** Aplica la operación aritmética a los dos operandos. Devuelve null en caso de división por cero. */
   private evaluate(a: number, b: number, op: string): number | null {
@@ -297,8 +287,8 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   /** Limpia el operador y los operandos sin tocar el display (se llama después de calcular). */
   private resetState(): void {
-    this.previousInput = '';
-    this.operator = '';
+    this.previousInput.set('');
+    this.operator.set('');
     this.waitingForOperand2 = false;
   }
 

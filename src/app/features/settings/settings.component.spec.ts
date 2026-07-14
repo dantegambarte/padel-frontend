@@ -48,14 +48,14 @@ describe('SettingsComponent', () => {
     expect(component.horarioApertura).toBe('08:00');
     expect(component.horarioCierre).toBe('22:00');
     expect(component.fondoCajaBase).toBe(5000);
-    expect(component.isLoading).toBe(false);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('mirrors courts from the courts$ stream', () => {
     const fixture = TestBed.createComponent(SettingsComponent);
     fixture.detectChanges();
     courtsSubject.next([court]);
-    expect(fixture.componentInstance.courts).toEqual([court]);
+    expect(fixture.componentInstance.courts()).toEqual([court]);
   });
 
   it('isHorariosDirty reflects unsaved schedule changes', () => {
@@ -104,7 +104,7 @@ describe('SettingsComponent', () => {
 
     fixture.componentInstance.saveCourtModal();
 
-    expect(fixture.componentInstance.courtFormError).toContain('obligatorio');
+    expect(fixture.componentInstance.courtFormError()).toContain('obligatorio');
     expect(courtsServiceSpy.create).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe('SettingsComponent', () => {
     fixture.componentInstance.saveCourtModal();
 
     expect(courtsServiceSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.isCourtModalOpen).toBe(false);
+    expect(fixture.componentInstance.isCourtModalOpen()).toBe(false);
   });
 
   it('deleteCourt() calls the service for the confirmed court', () => {
@@ -130,6 +130,6 @@ describe('SettingsComponent', () => {
     fixture.componentInstance.deleteCourt();
 
     expect(courtsServiceSpy.delete).toHaveBeenCalledWith('c1');
-    expect(fixture.componentInstance.courtToDelete).toBeNull();
+    expect(fixture.componentInstance.courtToDelete()).toBeNull();
   });
 });

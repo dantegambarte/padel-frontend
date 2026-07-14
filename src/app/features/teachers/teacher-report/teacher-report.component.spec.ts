@@ -44,7 +44,7 @@ describe('TeacherReportComponent', () => {
     const fixture = TestBed.createComponent(TeacherReportComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    expect(component.teachers).toEqual([teacher]);
+    expect(component.teachers()).toEqual([teacher]);
     expect(component.startDate).toBeTruthy();
     expect(component.endDate).toBeTruthy();
   });
@@ -98,8 +98,8 @@ describe('TeacherReportComponent', () => {
 
     component.search();
 
-    expect(component.report).toEqual(report);
-    expect(component.isLoading).toBe(false);
+    expect(component.report()).toEqual(report);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('toasts an error when the report request fails', () => {
@@ -112,7 +112,7 @@ describe('TeacherReportComponent', () => {
     component.search();
 
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('fmtHours() formats minutes into "Xh Ymin"', () => {
@@ -135,9 +135,9 @@ describe('TeacherReportComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.openSettlement('clases');
-    expect(component.showSettlementModal).toBe(true);
-    expect(component.settlementMode).toBe('clases');
+    expect(component.showSettlementModal()).toBe(true);
+    expect(component.settlementMode()).toBe('clases');
     component.closeSettlement();
-    expect(component.showSettlementModal).toBe(false);
+    expect(component.showSettlementModal()).toBe(false);
   });
 });

@@ -57,7 +57,7 @@ describe('ExpenseFormComponent', () => {
     const fixture = TestBed.createComponent(ExpenseFormComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance.isEditMode).toBe(false);
-    expect(fixture.componentInstance.draftRestored).toBe(false);
+    expect(fixture.componentInstance.draftRestored()).toBe(false);
   });
 
   it('categories excludes Sueldos for non-admin users', () => {
@@ -79,7 +79,7 @@ describe('ExpenseFormComponent', () => {
     draftServiceSpy.getDraft.and.returnValue({ amount: 1000 });
     const fixture = TestBed.createComponent(ExpenseFormComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.draftRestored).toBe(true);
+    expect(fixture.componentInstance.draftRestored()).toBe(true);
   });
 
   it('applyDraft() patches the form and clears the restoration banner', () => {
@@ -89,7 +89,7 @@ describe('ExpenseFormComponent', () => {
     fixture.detectChanges();
     fixture.componentInstance.applyDraft();
     expect(fixture.componentInstance.form.value.description).toBe('Restored');
-    expect(fixture.componentInstance.draftRestored).toBe(false);
+    expect(fixture.componentInstance.draftRestored()).toBe(false);
   });
 
   it('pre-fills the form in edit mode from the given expense', () => {
@@ -148,8 +148,8 @@ describe('ExpenseFormComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.showOpenCashPanel).toBe(true);
-    expect(fixture.componentInstance.serverError).toBeNull();
+    expect(fixture.componentInstance.showOpenCashPanel()).toBe(true);
+    expect(fixture.componentInstance.serverError()).toBeNull();
   });
 
   it('onSubmit() shows a generic server error otherwise', () => {
@@ -163,7 +163,7 @@ describe('ExpenseFormComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.serverError).toBe('Error genérico');
+    expect(fixture.componentInstance.serverError()).toBe('Error genérico');
   });
 
   it('irAbrirCaja() navigates to cash-register', () => {

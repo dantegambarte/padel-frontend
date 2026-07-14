@@ -30,7 +30,7 @@ describe('CalculatorComponent', () => {
   it('mirrors visible$ from the service', () => {
     const fixture = create();
     visibleSubject.next(true);
-    expect(fixture.componentInstance.visible).toBe(true);
+    expect(fixture.componentInstance.visible()).toBe(true);
   });
 
   it('close() delegates to the service', () => {
@@ -44,7 +44,7 @@ describe('CalculatorComponent', () => {
     const component = fixture.componentInstance;
     component.appendDigit('5');
     component.appendDigit('3');
-    expect(component.currentInput).toBe('53');
+    expect(component.currentInput()).toBe('53');
   });
 
   it('performs a basic addition end to end', () => {
@@ -54,7 +54,7 @@ describe('CalculatorComponent', () => {
     component.setOperator('+');
     component.appendDigit('3');
     component.calculate();
-    expect(component.currentInput).toBe('8');
+    expect(component.currentInput()).toBe('8');
   });
 
   it('chains operators, applying the pending operation first', () => {
@@ -67,7 +67,7 @@ describe('CalculatorComponent', () => {
     // 2 + 3 = 5 gets applied before starting the multiplication
     component.appendDigit('4');
     component.calculate();
-    expect(component.currentInput).toBe('20');
+    expect(component.currentInput()).toBe('20');
   });
 
   it('division by zero shows Error and resets state', () => {
@@ -77,8 +77,8 @@ describe('CalculatorComponent', () => {
     component.setOperator('÷');
     component.appendDigit('0');
     component.calculate();
-    expect(component.currentInput).toBe('Error');
-    expect(component.operator).toBe('');
+    expect(component.currentInput()).toBe('Error');
+    expect(component.operator()).toBe('');
   });
 
   it('clear() resets the calculator to its initial state', () => {
@@ -87,9 +87,9 @@ describe('CalculatorComponent', () => {
     component.appendDigit('9');
     component.setOperator('+');
     component.clear();
-    expect(component.currentInput).toBe('0');
-    expect(component.operator).toBe('');
-    expect(component.previousInput).toBe('');
+    expect(component.currentInput()).toBe('0');
+    expect(component.operator()).toBe('');
+    expect(component.previousInput()).toBe('');
   });
 
   it('toggleSign() flips the sign of the current input', () => {
@@ -97,9 +97,9 @@ describe('CalculatorComponent', () => {
     const component = fixture.componentInstance;
     component.appendDigit('7');
     component.toggleSign();
-    expect(component.currentInput).toBe('-7');
+    expect(component.currentInput()).toBe('-7');
     component.toggleSign();
-    expect(component.currentInput).toBe('7');
+    expect(component.currentInput()).toBe('7');
   });
 
   it('backspace() removes the last digit', () => {
@@ -109,7 +109,7 @@ describe('CalculatorComponent', () => {
     component.appendDigit('2');
     component.appendDigit('3');
     component.backspace();
-    expect(component.currentInput).toBe('12');
+    expect(component.currentInput()).toBe('12');
   });
 
   it('appendDot() adds a decimal point only once', () => {
@@ -119,14 +119,14 @@ describe('CalculatorComponent', () => {
     component.appendDot();
     component.appendDot();
     component.appendDigit('5');
-    expect(component.currentInput).toBe('1.5');
+    expect(component.currentInput()).toBe('1.5');
   });
 
   it('formattedDisplay adds thousands separators', () => {
     const fixture = create();
     const component = fixture.componentInstance;
     ['1', '0', '0', '0'].forEach((d) => component.appendDigit(d));
-    expect(component.formattedDisplay).toBe('1.000');
+    expect(component.formattedDisplay()).toBe('1.000');
   });
 
   it('onKey() ignores keys while the calculator is not visible', () => {
@@ -136,7 +136,7 @@ describe('CalculatorComponent', () => {
     spyOn(event, 'preventDefault');
     component.onKey(event);
     expect(event.preventDefault).not.toHaveBeenCalled();
-    expect(component.currentInput).toBe('0');
+    expect(component.currentInput()).toBe('0');
   });
 
   it('onKey() handles digit keys when visible', () => {
@@ -145,7 +145,7 @@ describe('CalculatorComponent', () => {
     visibleSubject.next(true);
     const event = new KeyboardEvent('keydown', { key: '7' });
     component.onKey(event);
-    expect(component.currentInput).toBe('7');
+    expect(component.currentInput()).toBe('7');
   });
 
   it('onKey() Escape closes the calculator', () => {

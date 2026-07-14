@@ -15,7 +15,7 @@
         <h1 class="text-xl font-bold">La Caldera</h1>
         <p class="text-xs text-sidebar-foreground/60">
           {{
-            currentUser?.role === "admin"
+            currentUser()?.role === "admin"
               ? "Modo Administrador"
               : "Modo Empleado"
           }}
@@ -26,12 +26,12 @@
 
   <div class="p-4 border-b border-sidebar-border">
     <p class="text-base text-sidebar-foreground/80">
-      Hola, <span class="font-semibold">{{ currentUser?.fullName }}</span>
+      Hola, <span class="font-semibold">{{ currentUser()?.fullName }}</span>
     </p>
   </div>
 
   <nav class="flex-1 overflow-y-auto scroll-smooth-mobile p-3">
-    <ng-container *ngFor="let group of filteredNavGroups; let first = first">
+    <ng-container *ngFor="let group of filteredNavGroups(); let first = first">
       <p
         [class.mt-0]="first"
         [class.mt-4]="!first"
@@ -302,13 +302,13 @@
           <span
             *ngIf="
               item.id === 'inventory-alerts' &&
-              outOfStockCount + lowStockCount > 0
+              outOfStockCount() + lowStockCount() > 0
             "
             class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white"
-            title="{{ outOfStockCount + lowStockCount }} producto{{
-              outOfStockCount + lowStockCount !== 1 ? 's' : ''
+            title="{{ outOfStockCount() + lowStockCount() }} producto{{
+              outOfStockCount() + lowStockCount() !== 1 ? 's' : ''
             }} en alerta"
-            >{{ outOfStockCount + lowStockCount }}</span
+            >{{ outOfStockCount() + lowStockCount() }}</span
           >
         </button>
       </div>
@@ -322,18 +322,18 @@
       class="w-full flex items-center justify-start gap-3 rounded-md px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
       <div
-        [ngClass]="avatarColorClass"
+        [ngClass]="avatarColorClass()"
         class="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold flex-shrink-0"
       >
-        {{ userInitials }}
+        {{ userInitials() }}
       </div>
       <div class="flex-1 text-left min-w-0">
-        <p class="text-sm font-medium truncate">{{ currentUser?.fullName }}</p>
-        <p class="text-xs text-sidebar-foreground/60">{{ roleLabel }}</p>
+        <p class="text-sm font-medium truncate">{{ currentUser()?.fullName }}</p>
+        <p class="text-xs text-sidebar-foreground/60">{{ roleLabel() }}</p>
       </div>
       <svg
         class="h-4 w-4 flex-shrink-0 transition-transform"
-        [class.rotate-180]="isUserMenuOpen"
+        [class.rotate-180]="isUserMenuOpen()"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -346,7 +346,7 @@
     </button>
 
     <div
-      *ngIf="isUserMenuOpen"
+      *ngIf="isUserMenuOpen()"
       class="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
     >
       <div class="p-2">
@@ -373,7 +373,7 @@
           Cambiar Contraseña
         </button>
 
-        <ng-container *ngIf="currentUser?.role === 'admin'">
+        <ng-container *ngIf="currentUser()?.role === 'admin'">
           <button
             type="button"
             (click)="navigate('/app/settings')"

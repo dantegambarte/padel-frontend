@@ -59,35 +59,35 @@ describe('InternalConsumptionListComponent', () => {
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
-    expect(component.loading).toBe(false);
-    expect(component.teachers).toEqual([teacher]);
-    expect(component.debtSummary[0].teacherName).toBe('Juan');
-    expect(component.debtSummary[0].phoneNumber).toBe('+5491100000000');
+    expect(component.loading()).toBe(false);
+    expect(component.teachers()).toEqual([teacher]);
+    expect(component.debtSummary()[0].teacherName).toBe('Juan');
+    expect(component.debtSummary()[0].phoneNumber).toBe('+5491100000000');
   });
 
   it('sets an error message when the parallel load fails', () => {
     serviceSpy.getAll.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(InternalConsumptionListComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.error).toContain('No se pudieron cargar');
+    expect(fixture.componentInstance.error()).toContain('No se pudieron cargar');
   });
 
   it('openSettleModal() sets settleTarget when the teacher is found', () => {
     const fixture = TestBed.createComponent(InternalConsumptionListComponent);
     fixture.detectChanges();
-    fixture.componentInstance.openSettleModal(fixture.componentInstance.debtSummary[0]);
-    expect(fixture.componentInstance.settleTarget?.teacher.id).toBe('t1');
+    fixture.componentInstance.openSettleModal(fixture.componentInstance.debtSummary()[0]);
+    expect(fixture.componentInstance.settleTarget()?.teacher.id).toBe('t1');
   });
 
   it('onSettled() clears settleTarget and reloads', () => {
     const fixture = TestBed.createComponent(InternalConsumptionListComponent);
     fixture.detectChanges();
-    fixture.componentInstance.settleTarget = {
+    fixture.componentInstance.settleTarget.set({
       teacher,
       summary: { ...summary, teacherName: teacher.fullName, phoneNumber: teacher.phoneNumber },
-    };
+    });
     fixture.componentInstance.onSettled();
-    expect(fixture.componentInstance.settleTarget).toBeNull();
+    expect(fixture.componentInstance.settleTarget()).toBeNull();
   });
 
   it('notifyTeacher() opens WhatsApp with an itemized message when the teacher has a phone', () => {

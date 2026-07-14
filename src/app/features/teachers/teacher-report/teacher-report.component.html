@@ -21,7 +21,7 @@
           class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
         >
           <option value="" disabled>Seleccioná un profesor...</option>
-          <option *ngFor="let t of teachers" [value]="t.id">
+          <option *ngFor="let t of teachers()" [value]="t.id">
             {{ t.fullName }}{{ !t.isActive ? " (inactivo)" : "" }}
           </option>
         </select>
@@ -85,11 +85,11 @@
       <button
         type="button"
         (click)="search()"
-        [disabled]="!canSearch || isLoading"
+        [disabled]="!canSearch || isLoading()"
         class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
         <svg
-          *ngIf="!isLoading"
+          *ngIf="!isLoading()"
           class="h-4 w-4"
           viewBox="0 0 24 24"
           fill="none"
@@ -102,7 +102,7 @@
           <path d="m21 21-4.3-4.3" />
         </svg>
         <svg
-          *ngIf="isLoading"
+          *ngIf="isLoading()"
           class="h-4 w-4 animate-spin"
           viewBox="0 0 24 24"
           fill="none"
@@ -113,12 +113,12 @@
         >
           <path d="M21 12a9 9 0 1 1-6.219-8.56" />
         </svg>
-        {{ isLoading ? "Generando..." : "Generar Reporte" }}
+        {{ isLoading() ? "Generando..." : "Generar Reporte" }}
       </button>
     </div>
   </div>
 
-  <div *ngIf="isLoading" class="space-y-4">
+  <div *ngIf="isLoading()" class="space-y-4">
     <div class="grid gap-4 sm:grid-cols-3">
       <div
         *ngFor="let _ of [1, 2, 3]"
@@ -130,8 +130,9 @@
     ></div>
   </div>
 
+  <ng-container *ngIf="report() as report">
   <div
-    *ngIf="hasSearched && !isLoading && report && report.bookings.length === 0"
+    *ngIf="hasSearched() && !isLoading() && report.bookings.length === 0"
     class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900"
   >
     <svg
@@ -157,7 +158,7 @@
     </p>
   </div>
 
-  <ng-container *ngIf="report && report.bookings.length > 0 && !isLoading">
+  <ng-container *ngIf="report.bookings.length > 0 && !isLoading()">
     <div id="print-area" class="teacher-report-print-area space-y-6">
       <div
         class="hidden print:flex print:items-start print:justify-between print:border-b print:pb-4"
@@ -411,11 +412,11 @@
             (click)="toggleConsumptions()"
             class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {{ showConsumptions ? "Ocultar consumos internos" : "Ver consumos internos" }}
+            {{ showConsumptions() ? "Ocultar consumos internos" : "Ver consumos internos" }}
           </button>
         </div>
 
-        <div *ngIf="showConsumptions" class="overflow-x-auto">
+        <div *ngIf="showConsumptions()" class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr
@@ -474,24 +475,25 @@
         <span class="text-base font-semibold text-emerald-700 dark:text-emerald-300">
           Total a Cobrar
           <span
-            *ngIf="report.consumptions.length > 0 && !showConsumptions"
+            *ngIf="report.consumptions.length > 0 && !showConsumptions()"
             class="text-xs font-normal text-emerald-600/80 dark:text-emerald-400/70"
           >
             (sin consumos internos)
           </span>
         </span>
         <span class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
-          ${{ fmt(netTotal) }}
+          ${{ fmt(netTotal()) }}
         </span>
       </div>
     </div>
   </ng-container>
+  </ng-container>
 </div>
 
 <app-teacher-settlement-modal
-  *ngIf="showSettlementModal && report"
-  [report]="report"
-  [mode]="settlementMode"
+  *ngIf="showSettlementModal() && report()"
+  [report]="report()!"
+  [mode]="settlementMode()"
   (settled)="onSettled()"
   (cancelled)="closeSettlement()"
 ></app-teacher-settlement-modal>

@@ -37,14 +37,14 @@
     </div>
   </div>
 
-  <ng-container *ngIf="isLoading">
+  <ng-container *ngIf="isLoading()">
     <div
       *ngFor="let i of [1, 2, 3]"
       class="h-40 animate-pulse rounded-lg border border-border bg-muted/40"
     ></div>
   </ng-container>
 
-  <ng-container *ngIf="!isLoading">
+  <ng-container *ngIf="!isLoading()">
     <div class="rounded-lg border border-border bg-card shadow-md">
       <div class="border-b border-border p-6">
         <div class="flex items-center gap-2">
@@ -168,11 +168,11 @@
           <button
             type="button"
             (click)="guardarFondoCaja()"
-            [disabled]="isSavingFondo || !isFondoDirty"
+            [disabled]="isSavingFondo() || !isFondoDirty"
             class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span *ngIf="isSavingFondo">Guardando…</span>
-            <span *ngIf="!isSavingFondo">Guardar Fondo</span>
+            <span *ngIf="isSavingFondo()">Guardando…</span>
+            <span *ngIf="!isSavingFondo()">Guardar Fondo</span>
           </button>
         </div>
       </div>
@@ -213,7 +213,7 @@
 
       <div class="p-6">
         <div
-          *ngIf="courts.length === 0"
+          *ngIf="courts().length === 0"
           class="flex flex-col items-center justify-center py-10 text-center"
         >
           <svg
@@ -236,7 +236,7 @@
           </p>
         </div>
 
-        <div *ngIf="courts.length > 0">
+        <div *ngIf="courts().length > 0">
           <table class="w-full text-sm">
             <thead class="hidden md:table-header-group">
               <tr class="border-b border-border">
@@ -257,7 +257,7 @@
 
             <tbody class="block md:table-row-group">
               <tr
-                *ngFor="let court of courts"
+                *ngFor="let court of courts()"
                 class="block md:table-row bg-card md:bg-transparent border border-border md:border-0 md:border-b rounded-xl md:rounded-none shadow-sm md:shadow-none mb-3 md:mb-0 p-4 md:p-0 last:mb-0 md:hover:bg-muted/20 md:transition-colors"
               >
                 <td
@@ -377,7 +377,7 @@
       </div>
     </div>
 
-    <ng-container *ngIf="courtToDelete">
+    <ng-container *ngIf="courtToDelete() as courtToDelete">
       <div
         appModalScrollLock
         class="modal-backdrop"
@@ -451,7 +451,7 @@
       </div>
     </ng-container>
 
-    <ng-container *ngIf="isCourtModalOpen">
+    <ng-container *ngIf="isCourtModalOpen()">
       <div
         appModalScrollLock
         class="modal-backdrop"
@@ -484,14 +484,14 @@
               <div>
                 <h3 class="text-lg font-semibold text-card-foreground">
                   {{
-                    courtModalMode === "create"
+                    courtModalMode() === "create"
                       ? "Nueva Cancha"
                       : "Editar Cancha"
                   }}
                 </h3>
                 <p class="text-sm text-muted-foreground">
                   {{
-                    courtModalMode === "create"
+                    courtModalMode() === "create"
                       ? "Completá los datos para agregar la cancha"
                       : "Modificá los datos de la cancha"
                   }}
@@ -502,10 +502,10 @@
 
           <div class="modal-body flex flex-col gap-4">
             <div
-              *ngIf="courtFormError"
+              *ngIf="courtFormError()"
               class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
             >
-              {{ courtFormError }}
+              {{ courtFormError() }}
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -576,7 +576,7 @@
             <button
               type="button"
               (click)="closeCourtModal()"
-              [disabled]="isCourtSubmitting"
+              [disabled]="isCourtSubmitting()"
               class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
             >
               Cancelar
@@ -584,13 +584,13 @@
             <button
               type="button"
               (click)="saveCourtModal()"
-              [disabled]="isCourtSubmitting"
+              [disabled]="isCourtSubmitting()"
               class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <ng-container *ngIf="isCourtSubmitting">Guardando…</ng-container>
-              <ng-container *ngIf="!isCourtSubmitting">
+              <ng-container *ngIf="isCourtSubmitting()">Guardando…</ng-container>
+              <ng-container *ngIf="!isCourtSubmitting()">
                 {{
-                  courtModalMode === "create"
+                  courtModalMode() === "create"
                     ? "Crear Cancha"
                     : "Guardar Cambios"
                 }}
@@ -605,7 +605,7 @@
       <button
         type="button"
         (click)="cancel()"
-        [disabled]="isSubmitting"
+        [disabled]="isSubmitting()"
         class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
       >
         Cancelar
@@ -613,11 +613,11 @@
       <button
         type="button"
         (click)="save()"
-        [disabled]="isSubmitting || !isHorariosDirty"
+        [disabled]="isSubmitting() || !isHorariosDirty"
         class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span *ngIf="isSubmitting">Guardando…</span>
-        <span *ngIf="!isSubmitting">Guardar Horarios</span>
+        <span *ngIf="isSubmitting()">Guardando…</span>
+        <span *ngIf="!isSubmitting()">Guardar Horarios</span>
       </button>
     </div>
   </ng-container>

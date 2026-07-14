@@ -1,4 +1,4 @@
-<div *ngIf="unclosedSessionDate" appModalScrollLock class="modal-backdrop">
+<div *ngIf="unclosedSessionDate()" appModalScrollLock class="modal-backdrop">
   <div
     role="alertdialog"
     aria-modal="true"
@@ -34,7 +34,7 @@
           <p class="mt-1 text-sm text-muted-foreground">
             La jornada del
             <span class="font-semibold text-amber-700">{{
-              formatUnclosedDate(unclosedSessionDate)
+              formatUnclosedDate(unclosedSessionDate())
             }}</span>
             todavía está abierta. Realizá el cierre antes de continuar para que
             los movimientos queden correctamente registrados.
@@ -46,7 +46,7 @@
     <div class="modal-footer flex-col-reverse sm:flex-row">
       <button
         type="button"
-        (click)="unclosedSessionDate = null"
+        (click)="unclosedSessionDate.set(null)"
         class="inline-flex justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
       >
         Recordármelo después
@@ -66,14 +66,14 @@
   class="flex h-[100dvh] overflow-hidden bg-background transition-colors duration-300"
 >
   <app-sidebar
-    [isOpen]="isSidebarOpen"
-    (closeMenu)="isSidebarOpen = false"
+    [isOpen]="isSidebarOpen()"
+    (closeMenu)="isSidebarOpen.set(false)"
   ></app-sidebar>
 
   <div class="flex flex-col flex-1 min-w-0">
     <app-toolbar
-      [title]="currentPageTitle"
-      [currentUser]="currentUser"
+      [title]="currentPageTitle()"
+      [currentUser]="currentUser()"
       (toggleMenu)="toggleSidebar()"
     ></app-toolbar>
 

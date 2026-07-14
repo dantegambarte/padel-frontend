@@ -5,6 +5,7 @@ import {
   OnInit,
   OnDestroy,
   Output,
+  signal,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -43,12 +44,12 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   @Output() cancelled = new EventEmitter<void>();
 
   form!: FormGroup;
-  submitting = false;
-  serverError: string | null = null;
+  submitting = signal(false);
+  serverError = signal<string | null>(null);
 
-  showOpenCashPanel = false;
+  showOpenCashPanel = signal(false);
   /** true cuando hay un borrador encontrado esperando confirmación del usuario. */
-  draftRestored = false;
+  draftRestored = signal(false);
   private pendingDraft: Record<string, unknown> | null = null;
 
   private readonly DRAFT_KEY = 'draft_expense';
@@ -132,7 +133,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
       );
       if (draft) {
         this.pendingDraft = draft;
-        this.draftRestored = true;
+        this.draftRestored.set(true);
       }
 
       this.sub.add(
@@ -153,14 +154,14 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
       this.form.patchValue(this.pendingDraft);
       this.pendingDraft = null;
     }
-    this.draftRestored = false;
+    this.draftRestored.set(false);
   }
 
   /** Descarta el borrador guardado sin aplicarlo al formulario. */
   dismissDraftBadge(): void {
     this.draftService.clearDraft(this.DRAFT_KEY);
     this.pendingDraft = null;
-    this.draftRestored = false;
+    this.draftRestored.set(false);
   }
 
   /** Valida el formulario y envía la creación o actualización del egreso. Detecta error de caja cerrada. */
@@ -170,9 +171,9 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.submitting = true;
-    this.serverError = null;
-    this.showOpenCashPanel = false;
+    this.submitting.set(true);
+    this.serverError.set(null);
+    this.showOpenCashPanel.set(false);
     const value = this.form.getRawValue();
 
     const request$ = this.isEditMode
@@ -181,24 +182,24 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
 
     request$.subscribe({
       next: () => {
-        this.submitting = false;
+        this.submitting.set(false);
         if (!this.isEditMode) {
           this.draftService.clearDraft(this.DRAFT_KEY);
         }
         this.saved.emit();
       },
       error: (err) => {
-        this.submitting = false;
+        this.submitting.set(false);
         const errorCode: string = err?.error?.errorCode ?? '';
         const message: string = err?.error?.message ?? '';
         const isCajaCerrada =
           errorCode === 'CAJA_CERRADA' ||
           message.toLowerCase().includes('abrir la caja');
         if (isCajaCerrada && !this.isGeneralFunds) {
-          this.showOpenCashPanel = true;
-          this.serverError = null;
+          this.showOpenCashPanel.set(true);
+          this.serverError.set(null);
         } else {
-          this.serverError = message || 'Ocurrió un error. Intente de nuevo.';
+          this.serverError.set(message || 'Ocurrió un error. Intente de nuevo.');
         }
       },
     });
@@ -211,7 +212,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
 
   /** Oculta el panel de apertura de caja sin navegar. */
   cancelarAperturaCaja(): void {
-    this.showOpenCashPanel = false;
+    this.showOpenCashPanel.set(false);
   }
 
   /** Emite el evento de cancelación para cerrar el modal desde el padre. */

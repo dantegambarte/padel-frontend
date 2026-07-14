@@ -81,7 +81,7 @@ describe('TeacherSettlementModalComponent', () => {
   it('mode "clases" skips loading consumptions', () => {
     const fixture = createWithInputs('clases');
     expect(consumptionSvcSpy.getAll).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.loading).toBe(false);
+    expect(fixture.componentInstance.loading()).toBe(false);
   });
 
   it('mode "completa" loads pending consumptions for the teacher', () => {
@@ -90,7 +90,7 @@ describe('TeacherSettlementModalComponent', () => {
       teacherId: 't1',
       status: 'pending_payment',
     });
-    expect(fixture.componentInstance.loading).toBe(false);
+    expect(fixture.componentInstance.loading()).toBe(false);
   });
 
   it('grandTotal sums bookingTotal and consumptionTotal', () => {
@@ -116,8 +116,8 @@ describe('TeacherSettlementModalComponent', () => {
 
     const fixture = createWithInputs('completa');
 
-    expect(fixture.componentInstance.consumptionTotal).toBe(1000);
-    expect(fixture.componentInstance.grandTotal).toBe(4000);
+    expect(fixture.componentInstance.consumptionTotal()).toBe(1000);
+    expect(fixture.componentInstance.grandTotal()).toBe(4000);
   });
 
   it('onSettle() emits settled on success', () => {
@@ -147,7 +147,7 @@ describe('TeacherSettlementModalComponent', () => {
     fixture.componentInstance.onSettle();
 
     expect(Swal.fire).toHaveBeenCalled();
-    expect(fixture.componentInstance.settling).toBe(false);
+    expect(fixture.componentInstance.settling()).toBe(false);
   });
 
   it('onCancel() emits cancelled', () => {

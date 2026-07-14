@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import {
@@ -31,20 +31,21 @@ import { SettleDebtModalComponent } from '../settle-debt-modal/settle-debt-modal
     ],
 })
 export class InternalConsumptionListComponent implements OnInit {
-  consumptions: InternalConsumption[] = [];
-  debtSummary: EnrichedDebtSummary[] = [];
-  teachers: Teacher[] = [];
-  loading = false;
-  error: string | null = null;
+  consumptions = signal<InternalConsumption[]>([]);
+  debtSummary = signal<EnrichedDebtSummary[]>([]);
+  teachers = signal<Teacher[]>([]);
+  loading = signal(false);
+  error = signal<string | null>(null);
 
   filters: InternalConsumptionFilters = {};
   dateFrom = '';
   dateTo = '';
 
-  showForm = false;
+  showForm = signal(false);
 
-  settleTarget: { teacher: Teacher; summary: EnrichedDebtSummary } | null =
-    null;
+  settleTarget = signal<{ teacher: Teacher; summary: EnrichedDebtSummary } | null>(
+    null,
+  );
 
   readonly statusLabels: Record<InternalConsumptionStatus, string> = {
     staff_consumption: 'Consumo empleado',
@@ -75,8 +76,8 @@ export class InternalConsumptionListComponent implements OnInit {
 
   /** Load consumptions + debt summary + teachers in parallel. */
   loadAll(): void {
-    this.loading = true;
-    this.error = null;
+    this.loading.set(true);
+    this.error.set(null);
 
     forkJoin({
       consumptions: this.service.getAll({
@@ -90,21 +91,23 @@ export class InternalConsumptionListComponent implements OnInit {
       ),
     }).subscribe({
       next: ({ consumptions, summary, teachers }) => {
-        this.consumptions = consumptions;
-        this.teachers = teachers;
-        this.debtSummary = summary.map((s) => {
-          const t = teachers.find((t) => t.id === s.teacherId);
-          return {
-            ...s,
-            teacherName: t?.fullName ?? `Profesor #${s.teacherId.slice(0, 8)}`,
-            phoneNumber: t?.phoneNumber ?? null,
-          };
-        });
-        this.loading = false;
+        this.consumptions.set(consumptions);
+        this.teachers.set(teachers);
+        this.debtSummary.set(
+          summary.map((s) => {
+            const t = teachers.find((t) => t.id === s.teacherId);
+            return {
+              ...s,
+              teacherName: t?.fullName ?? `Profesor #${s.teacherId.slice(0, 8)}`,
+              phoneNumber: t?.phoneNumber ?? null,
+            };
+          }),
+        );
+        this.loading.set(false);
       },
       error: () => {
-        this.error = 'No se pudieron cargar los datos. Intentá de nuevo.';
-        this.loading = false;
+        this.error.set('No se pudieron cargar los datos. Intentá de nuevo.');
+        this.loading.set(false);
       },
     });
   }
@@ -124,13 +127,13 @@ export class InternalConsumptionListComponent implements OnInit {
 
   /** Open settle modal for a teacher. */
   openSettleModal(summary: EnrichedDebtSummary): void {
-    const teacher = this.teachers.find((t) => t.id === summary.teacherId);
+    const teacher = this.teachers().find((t) => t.id === summary.teacherId);
     if (!teacher) return;
-    this.settleTarget = { teacher, summary };
+    this.settleTarget.set({ teacher, summary });
   }
 
   onSettled(): void {
-    this.settleTarget = null;
+    this.settleTarget.set(null);
     this.loadAll();
   }
 
@@ -158,7 +161,7 @@ export class InternalConsumptionListComponent implements OnInit {
   }
 
   onFormSaved(): void {
-    this.showForm = false;
+    this.showForm.set(false);
     this.loadAll();
   }
 

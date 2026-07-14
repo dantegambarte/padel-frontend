@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { TeachersService } from '../../../core/services/teachers.service';
@@ -28,7 +28,7 @@ type PeriodType = 'mensual' | 'quincenal' | 'semanal';
     ],
 })
 export class TeacherReportComponent implements OnInit {
-  teachers: Teacher[] = [];
+  teachers = signal<Teacher[]>([]);
   selectedTeacherId = '';
   startDate = '';
   endDate = '';
@@ -36,12 +36,12 @@ export class TeacherReportComponent implements OnInit {
   periodType: PeriodType = 'mensual';
   startDay = 1;
 
-  report: TeacherReport | null = null;
-  isLoading = false;
-  hasSearched = false;
-  showSettlementModal = false;
-  settlementMode: 'clases' | 'completa' = 'completa';
-  showConsumptions = true;
+  report = signal<TeacherReport | null>(null);
+  isLoading = signal(false);
+  hasSearched = signal(false);
+  showSettlementModal = signal(false);
+  settlementMode = signal<'clases' | 'completa'>('completa');
+  showConsumptions = signal(true);
 
   constructor(
     private teachersSvc: TeachersService,
@@ -57,7 +57,7 @@ export class TeacherReportComponent implements OnInit {
   ngOnInit(): void {
     this.recalcDates();
     this.teachersSvc.findAll(true).subscribe({
-      next: (list) => (this.teachers = list),
+      next: (list) => this.teachers.set(list),
       error: () =>
         this.toast.error('Error', 'No se pudieron cargar los profesores.'),
     });
@@ -135,48 +135,48 @@ export class TeacherReportComponent implements OnInit {
   /** Solicita el reporte de liquidación al servidor para el profesor y período seleccionados. */
   search(): void {
     if (!this.canSearch) return;
-    this.isLoading = true;
-    this.hasSearched = true;
-    this.report = null;
-    this.showConsumptions = true;
+    this.isLoading.set(true);
+    this.hasSearched.set(true);
+    this.report.set(null);
+    this.showConsumptions.set(true);
 
     this.teachersSvc
       .getReport(this.selectedTeacherId, this.startDate, this.endDate)
       .subscribe({
         next: (data) => {
-          this.report = data;
-          this.isLoading = false;
+          this.report.set(data);
+          this.isLoading.set(false);
         },
         error: () => {
           this.toast.error(
             'Error',
             'No se pudo generar el reporte. Intente nuevamente.',
           );
-          this.isLoading = false;
+          this.isLoading.set(false);
         },
       });
   }
 
   /** Abre el modal de liquidación en el modo indicado. */
   openSettlement(mode: 'clases' | 'completa'): void {
-    this.settlementMode = mode;
-    this.showSettlementModal = true;
+    this.settlementMode.set(mode);
+    this.showSettlementModal.set(true);
   }
 
   /** Cierra el modal sin liquidar. */
   closeSettlement(): void {
-    this.showSettlementModal = false;
+    this.showSettlementModal.set(false);
   }
 
   /** Callback tras liquidación exitosa: limpia reporte y muestra toast. */
   onSettled(): void {
-    this.showSettlementModal = false;
+    this.showSettlementModal.set(false);
     this.toast.success(
       'Liquidación registrada',
       'La deuda del profesor fue cobrada y registrada en caja.',
     );
-    this.report = null;
-    this.hasSearched = false;
+    this.report.set(null);
+    this.hasSearched.set(false);
   }
 
   /** Dispara la impresión del reporte visible en pantalla. */
@@ -186,19 +186,20 @@ export class TeacherReportComponent implements OnInit {
 
   /** Alterna la visibilidad de la tabla de consumos internos. */
   toggleConsumptions(): void {
-    this.showConsumptions = !this.showConsumptions;
+    this.showConsumptions.update((v) => !v);
   }
 
   /**
    * Deuda total del profesor: horas de cancha usadas más consumos internos
    * pendientes, si estos últimos están visibles en pantalla.
    */
-  get netTotal(): number {
-    if (!this.report) return 0;
-    return this.showConsumptions
-      ? this.report.summary.grandTotal
-      : this.report.summary.totalAmount;
-  }
+  netTotal = computed(() => {
+    const report = this.report();
+    if (!report) return 0;
+    return this.showConsumptions()
+      ? report.summary.grandTotal
+      : report.summary.totalAmount;
+  });
 
   /** Formatea un número al estilo local argentino. */
   fmt(value: number): string {

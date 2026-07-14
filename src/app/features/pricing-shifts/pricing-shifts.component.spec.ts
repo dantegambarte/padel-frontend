@@ -44,32 +44,32 @@ describe('PricingShiftsComponent', () => {
   it('loads shifts on init', () => {
     const fixture = TestBed.createComponent(PricingShiftsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.shifts).toEqual([shift]);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.shifts()).toEqual([shift]);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('sets serverError when loading fails', () => {
     serviceSpy.getAll.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(PricingShiftsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.serverError).toContain('No se pudieron cargar');
+    expect(fixture.componentInstance.serverError()).toContain('No se pudieron cargar');
   });
 
   it('openCreate() builds an empty form and opens the modal', () => {
     const fixture = TestBed.createComponent(PricingShiftsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.showModal).toBe(true);
-    expect(fixture.componentInstance.editingId).toBeNull();
-    expect(fixture.componentInstance.selectedDays).toEqual([]);
+    expect(fixture.componentInstance.showModal()).toBe(true);
+    expect(fixture.componentInstance.editingId()).toBeNull();
+    expect(fixture.componentInstance.selectedDays()).toEqual([]);
   });
 
   it('openEdit() pre-fills the form and selected days from the shift', () => {
     const fixture = TestBed.createComponent(PricingShiftsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openEdit(shift);
-    expect(fixture.componentInstance.editingId).toBe('s1');
-    expect(fixture.componentInstance.selectedDays).toEqual([1, 2, 3]);
+    expect(fixture.componentInstance.editingId()).toBe('s1');
+    expect(fixture.componentInstance.selectedDays()).toEqual([1, 2, 3]);
     expect(fixture.componentInstance.form.value.name).toBe('Horario pico');
   });
 
@@ -97,7 +97,7 @@ describe('PricingShiftsComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.modalError).toContain('Seleccioná al menos un día');
+    expect(fixture.componentInstance.modalError()).toContain('Seleccioná al menos un día');
     expect(serviceSpy.create).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe('PricingShiftsComponent', () => {
     fixture.componentInstance.onSubmit();
 
     expect(serviceSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.showModal).toBe(false);
+    expect(fixture.componentInstance.showModal()).toBe(false);
   });
 
   it('formatDays() maps day numbers to sorted Spanish abbreviations', () => {
@@ -134,6 +134,6 @@ describe('PricingShiftsComponent', () => {
     fixture.componentInstance.requestDelete('s1');
     fixture.componentInstance.confirmDelete();
     expect(serviceSpy.delete).toHaveBeenCalledWith('s1');
-    expect(fixture.componentInstance.deleteConfirmId).toBeNull();
+    expect(fixture.componentInstance.deleteConfirmId()).toBeNull();
   });
 });

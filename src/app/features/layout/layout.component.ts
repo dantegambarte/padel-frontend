@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { Subscription, filter, map } from 'rxjs';
 
@@ -38,11 +38,11 @@ const PAGE_TITLES: Record<string, string> = {
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {
-  currentUser: User | null = null;
-  currentPageTitle = 'Dashboard';
-  isSidebarOpen = false;
+  currentUser = signal<User | null>(null);
+  currentPageTitle = signal('Dashboard');
+  isSidebarOpen = signal(false);
 
-  unclosedSessionDate: string | null = null;
+  unclosedSessionDate = signal<string | null>(null);
 
   private sub = new Subscription();
 
@@ -62,14 +62,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
-        this.currentUser = user;
+        this.currentUser.set(user);
         if (user?.role === 'admin') {
           this.loadFixedBookingReminders();
         }
       }),
     );
 
-    this.currentPageTitle = this.resolveTitleFromUrl(this.router.url);
+    this.currentPageTitle.set(this.resolveTitleFromUrl(this.router.url));
 
     this.sub.add(
       this.router.events
@@ -78,7 +78,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
           map((e) => e.urlAfterRedirects),
         )
         .subscribe((url) => {
-          this.currentPageTitle = this.resolveTitleFromUrl(url);
+          this.currentPageTitle.set(this.resolveTitleFromUrl(url));
         }),
     );
 
@@ -98,7 +98,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   /** Navega a Cierre de Caja y cierra el modal de advertencia. */
   goToCashRegister(): void {
-    this.unclosedSessionDate = null;
+    this.unclosedSessionDate.set(null);
     this.router.navigate(['/app/cash-register']);
   }
 
@@ -187,7 +187,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             data.sessionDate &&
             data.sessionDate < todayStr
           ) {
-            this.unclosedSessionDate = data.sessionDate;
+            this.unclosedSessionDate.set(data.sessionDate);
           }
         },
         error: () => {},
@@ -206,7 +206,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   /** Alterna la visibilidad del sidebar en mobile. */
   toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
+    this.isSidebarOpen.update((v) => !v);
   }
 
   /**

@@ -31,7 +31,7 @@
     </button>
   </div>
 
-  <div *ngIf="isLoading" class="space-y-3">
+  <div *ngIf="isLoading()" class="space-y-3">
     <div
       *ngFor="let _ of [1, 2, 3]"
       class="h-20 rounded-xl bg-gray-100 animate-pulse dark:bg-slate-800"
@@ -39,7 +39,7 @@
   </div>
 
   <div
-    *ngIf="!isLoading && teachers.length === 0"
+    *ngIf="!isLoading() && teachers().length === 0"
     class="flex flex-col items-center justify-center py-16 text-center"
   >
     <svg
@@ -64,7 +64,7 @@
     </p>
   </div>
 
-  <div *ngIf="!isLoading && teachers.length > 0" class="space-y-4">
+  <div *ngIf="!isLoading() && teachers().length > 0" class="space-y-4">
     <div class="relative max-w-sm">
       <svg
         class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
@@ -138,7 +138,7 @@
               <button
                 type="button"
                 (click)="toggleActive(t)"
-                [disabled]="togglingId === t.id"
+                [disabled]="togglingId() === t.id"
                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors disabled:opacity-40"
                 [ngClass]="
                   t.isActive
@@ -198,7 +198,7 @@
                   *ngIf="t.isActive"
                   type="button"
                   (click)="confirmDelete(t)"
-                  [disabled]="togglingId === t.id"
+                  [disabled]="togglingId() === t.id"
                   title="Desactivar"
                   class="rounded-md p-1.5 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                 >
@@ -260,7 +260,7 @@
           <button
             type="button"
             (click)="toggleActive(t)"
-            [disabled]="togglingId === t.id"
+            [disabled]="togglingId() === t.id"
             class="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors disabled:opacity-40"
             [ngClass]="
               t.isActive
@@ -313,7 +313,7 @@
             *ngIf="t.isActive"
             type="button"
             (click)="confirmDelete(t)"
-            [disabled]="togglingId === t.id"
+            [disabled]="togglingId() === t.id"
             class="rounded-md p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-40"
           >
             <svg
@@ -336,7 +336,7 @@
 </div>
 
 <div
-  *ngIf="isDialogOpen"
+  *ngIf="isDialogOpen()"
   appModalScrollLock
   class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50"
   (click)="closeDialog()"
@@ -349,7 +349,7 @@
       class="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-800"
     >
       <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
-        {{ dialogTitle }}
+        {{ dialogTitle() }}
       </h2>
       <button
         type="button"
@@ -373,10 +373,10 @@
 
     <form (ngSubmit)="submitForm()" class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-4">
       <div
-        *ngIf="formError"
+        *ngIf="formError()"
         class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
       >
-        {{ formError }}
+        {{ formError() }}
       </div>
 
       <div>
@@ -422,13 +422,13 @@
       <button
         type="button"
         (click)="submitForm()"
-        [disabled]="isSubmitting"
+        [disabled]="isSubmitting()"
         class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
       >
         {{
-          isSubmitting
+          isSubmitting()
             ? "Guardando..."
-            : editingId
+            : editingId()
               ? "Guardar cambios"
               : "Crear profesor"
         }}

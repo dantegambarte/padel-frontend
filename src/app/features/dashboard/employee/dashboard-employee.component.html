@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-    <ng-container *ngIf="isLoading; else empKpiCards">
+    <ng-container *ngIf="isLoading(); else empKpiCards">
       <div
         *ngFor="let i of [1, 2, 3]"
         class="h-32 animate-pulse rounded-lg border border-border bg-muted shadow-md"
@@ -10,22 +10,22 @@
     <ng-template #empKpiCards>
       <app-stat-card
         title="Caja Actual (Efectivo)"
-        [value]="'$' + fmt(cashAmount)"
+        [value]="'$' + fmt(cashAmount())"
         icon="dollar-sign"
       >
       </app-stat-card>
 
       <app-stat-card
         title="Próximo Turno"
-        [value]="proximoTurnoValue"
+        [value]="proximoTurnoValue()"
         icon="clock"
-        [trend]="{ value: proximoTurnoTrend, positive: true }"
+        [trend]="{ value: proximoTurnoTrend(), positive: true }"
       >
       </app-stat-card>
 
       <app-stat-card
         title="Alertas de Stock"
-        [value]="lowStockProducts.length.toString()"
+        [value]="lowStockProducts().length.toString()"
         icon="alert-triangle"
         extraClass="border-destructive/50"
       >
@@ -141,7 +141,7 @@
     </div>
     <div class="px-6 pb-6">
       <div class="space-y-3">
-        <ng-container *ngIf="isLoading; else bookingsList">
+        <ng-container *ngIf="isLoading(); else bookingsList">
           <div
             *ngFor="let i of [1, 2, 3, 4]"
             class="h-16 animate-pulse rounded-lg bg-muted"
@@ -150,7 +150,7 @@
 
         <ng-template #bookingsList>
           <div
-            *ngFor="let booking of upcomingBookings"
+            *ngFor="let booking of upcomingBookings()"
             class="flex items-center justify-between rounded-lg border border-border p-3"
           >
             <div class="flex items-center gap-3">
@@ -180,7 +180,7 @@
           </div>
 
           <p
-            *ngIf="upcomingBookings.length === 0"
+            *ngIf="upcomingBookings().length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
           >
             No hay turnos pendientes para hoy
@@ -221,7 +221,7 @@
 
     <div class="px-6 pb-6">
       <div class="space-y-2">
-        <ng-container *ngIf="isLoading; else stockList">
+        <ng-container *ngIf="isLoading(); else stockList">
           <div
             *ngFor="let i of [1, 2, 3]"
             class="h-14 animate-pulse rounded-lg bg-muted"
@@ -230,7 +230,7 @@
 
         <ng-template #stockList>
           <div
-            *ngFor="let product of lowStockProducts"
+            *ngFor="let product of lowStockProducts()"
             class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3"
           >
             <div>
@@ -248,7 +248,7 @@
           </div>
 
           <p
-            *ngIf="lowStockProducts.length === 0"
+            *ngIf="lowStockProducts().length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
           >
             Todos los productos tienen stock suficiente

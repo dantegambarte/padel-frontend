@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
@@ -30,9 +30,9 @@ export class TeacherSettlementModalComponent implements OnInit {
   @Output() settled = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
 
-  consumptions: InternalConsumption[] = [];
-  loading = true;
-  settling = false;
+  consumptions = signal<InternalConsumption[]>([]);
+  loading = signal(true);
+  settling = signal(false);
   paymentMethod: PaymentMethod = 'cash';
 
   /** Devuelve el total de las clases del reporte. */
@@ -41,17 +41,12 @@ export class TeacherSettlementModalComponent implements OnInit {
   }
 
   /** Devuelve el total de los consumos pendientes. */
-  get consumptionTotal(): number {
-    return this.consumptions.reduce(
-      (sum, c) => sum + c.unitCostPrice * c.quantity,
-      0,
-    );
-  }
+  consumptionTotal = computed(() =>
+    this.consumptions().reduce((sum, c) => sum + c.unitCostPrice * c.quantity, 0),
+  );
 
   /** Devuelve el total general. */
-  get grandTotal(): number {
-    return this.bookingTotal + this.consumptionTotal;
-  }
+  grandTotal = computed(() => this.bookingTotal + this.consumptionTotal());
 
   constructor(
     private consumptionSvc: InternalConsumptionService,
@@ -67,18 +62,18 @@ export class TeacherSettlementModalComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.mode === 'clases') {
-      this.loading = false;
+      this.loading.set(false);
       return;
     }
     this.consumptionSvc
       .getAll({ teacherId: this.report.teacher.id, status: 'pending_payment' })
       .subscribe({
         next: (data) => {
-          this.consumptions = data;
-          this.loading = false;
+          this.consumptions.set(data);
+          this.loading.set(false);
         },
         error: () => {
-          this.loading = false;
+          this.loading.set(false);
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -92,23 +87,23 @@ export class TeacherSettlementModalComponent implements OnInit {
    * Realiza la liquidación del profesor. Si el error es caja cerrada, muestra un mensaje específico con opción a ir a abrir caja. Para otros errores, muestra un mensaje genérico.
    */
   onSettle(): void {
-    this.settling = true;
+    this.settling.set(true);
 
     this.teachersSvc
       .liquidate({
         teacherId: this.report.teacher.id,
         bookingIds: this.report.bookings.map((b) => b.id),
         consumptionIds:
-          this.mode === 'clases' ? [] : this.consumptions.map((c) => c.id),
+          this.mode === 'clases' ? [] : this.consumptions().map((c) => c.id),
         paymentMethod: this.paymentMethod,
       })
       .subscribe({
         next: () => {
-          this.settling = false;
+          this.settling.set(false);
           this.settled.emit();
         },
         error: (err) => {
-          this.settling = false;
+          this.settling.set(false);
           const errorCode = err?.error?.errorCode;
           if (errorCode === 'CAJA_CERRADA') {
             Swal.fire({

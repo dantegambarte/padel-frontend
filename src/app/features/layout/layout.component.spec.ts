@@ -65,7 +65,7 @@ describe('LayoutComponent', () => {
   it('resolves the initial page title from the router URL', () => {
     const fixture = TestBed.createComponent(LayoutComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.currentPageTitle).toBe('Inicio');
+    expect(fixture.componentInstance.currentPageTitle()).toBe('Inicio');
   });
 
   it('does not load fixed-booking reminders for a non-admin user', () => {
@@ -105,23 +105,23 @@ describe('LayoutComponent', () => {
     );
     const fixture = TestBed.createComponent(LayoutComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.unclosedSessionDate).toBe('2020-01-01');
+    expect(fixture.componentInstance.unclosedSessionDate()).toBe('2020-01-01');
   });
 
   it('toggleSidebar() flips isSidebarOpen', () => {
     const fixture = TestBed.createComponent(LayoutComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.isSidebarOpen).toBe(false);
+    expect(fixture.componentInstance.isSidebarOpen()).toBe(false);
     fixture.componentInstance.toggleSidebar();
-    expect(fixture.componentInstance.isSidebarOpen).toBe(true);
+    expect(fixture.componentInstance.isSidebarOpen()).toBe(true);
   });
 
   it('goToCashRegister() clears the warning and navigates', () => {
     const fixture = TestBed.createComponent(LayoutComponent);
     fixture.detectChanges();
-    fixture.componentInstance.unclosedSessionDate = '2020-01-01';
+    fixture.componentInstance.unclosedSessionDate.set('2020-01-01');
     fixture.componentInstance.goToCashRegister();
-    expect(fixture.componentInstance.unclosedSessionDate).toBeNull();
+    expect(fixture.componentInstance.unclosedSessionDate()).toBeNull();
   });
 
   it('formatUnclosedDate() returns an empty string for null input', () => {

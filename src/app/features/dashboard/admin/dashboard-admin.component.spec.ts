@@ -39,11 +39,11 @@ describe('DashboardAdminComponent', () => {
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
-    expect(component.isLoading).toBe(false);
-    expect(component.kpis).toEqual(mockKpis);
-    expect(component.barChartData.labels).toEqual(['01/01', '02/01']);
-    expect(component.barChartData.datasets[0].data).toEqual([1000, 2000]);
-    expect(component.barChartData.datasets[1].data).toEqual([500, 300]);
+    expect(component.isLoading()).toBe(false);
+    expect(component.kpis()).toEqual(mockKpis);
+    expect(component.barChartData().labels).toEqual(['01/01', '02/01']);
+    expect(component.barChartData().datasets[0].data).toEqual([1000, 2000]);
+    expect(component.barChartData().datasets[1].data).toEqual([500, 300]);
   });
 
   it('toasts an error when the parallel load fails', () => {
@@ -52,7 +52,7 @@ describe('DashboardAdminComponent', () => {
     fixture.detectChanges();
 
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('fmt() defaults to 0 for null/undefined', () => {
