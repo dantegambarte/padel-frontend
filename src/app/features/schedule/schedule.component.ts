@@ -6,6 +6,7 @@ import {
   NgZone,
   ViewChild,
   ElementRef,
+  signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, forkJoin, timer, of } from 'rxjs';
@@ -92,31 +93,31 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   })();
-  courts: Court[] = [];
-  allProducts: Product[] = [];
-  teachers: Teacher[] = [];
-  pricingShifts: PricingShift[] = [];
+  courts = signal<Court[]>([]);
+  allProducts = signal<Product[]>([]);
+  teachers = signal<Teacher[]>([]);
+  pricingShifts = signal<PricingShift[]>([]);
   isTeacherBooking = false;
   selectedTeacherId: string | null = null;
 
   /** Productos marcados como destacados, disponibles para agregar rápidamente. */
   get featuredProducts(): Product[] {
-    return this.allProducts.filter(
+    return this.allProducts().filter(
       (p) =>
         p.isFeatured &&
         (p.stock > 0 ||
           (p.category?.name ?? '').toLowerCase().includes('alquiler')),
     );
   }
-  isLoading = false;
-  loadError = '';
+  isLoading = signal(false);
+  loadError = signal('');
 
   bookingMap = new Map<string, BookingResponse>();
 
   horarioApertura = '09:00';
-  horarioCierre = '23:00';
+  horarioCierre = signal('23:00');
 
-  HOURS: string[] = this.buildHoursFromRange('09:00', '23:00');
+  HOURS = signal<string[]>(this.buildHoursFromRange('09:00', '23:00'));
 
   /** Genera slots de 30 min desde apertura hasta (sin incluir) cierre, con soporte post-medianoche. */
   private buildHoursFromRange(apertura: string, cierre: string): string[] {
@@ -145,60 +146,60 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     { value: 120, label: '2 hs' },
   ];
 
-  durationMinutes = 60;
+  durationMinutes = signal(60);
 
-  isDialogOpen = false;
-  isSaving = false;
-  isSavingDetail = false;
-  isConfirmingBooking = false;
+  isDialogOpen = signal(false);
+  isSaving = signal(false);
+  isSavingDetail = signal(false);
+  isConfirmingBooking = signal(false);
 
-  dialogMode: 'create' | 'detail' = 'create';
+  dialogMode = signal<'create' | 'detail'>('create');
 
-  selectedSlot: { court: Court; hour: string } | null = null;
-  selectedBooking: BookingResponse | null = null;
+  selectedSlot = signal<{ court: Court; hour: string } | null>(null);
+  selectedBooking = signal<BookingResponse | null>(null);
 
   clientName = '';
   phoneNumber = '';
   priceType: PriceType = 'standard';
   isFixedBookingMode = false;
-  cart: CartItem[] = [];
+  cart = signal<CartItem[]>([]);
   cashPayment = 0;
   cashTransfer = 0;
   productSearch = '';
-  searchResults: Product[] = [];
+  searchResults = signal<Product[]>([]);
 
-  detailCart: CartItem[] = [];
+  detailCart = signal<CartItem[]>([]);
   detailAmountCash = 0;
   detailAmountTransfer = 0;
-  detailPlayerCount = 4;
-  detailPaidCount = 0;
+  detailPlayerCount = signal(4);
+  detailPaidCount = signal(0);
   readonly MAX_PLAYERS = 12;
   detailProductSearch = '';
-  detailSearchResults: Product[] = [];
-  isAutoSavingItems = false;
+  detailSearchResults = signal<Product[]>([]);
+  isAutoSavingItems = signal(false);
   private detailSaveSeq = 0;
   private autoSaveSub: Subscription | null = null;
 
   /** Verdadero cuando al menos un ítem del carrito está tildado para cobro parcial. */
   get hasSelectedProducts(): boolean {
-    return this.detailCart.some((i) => !i.isPaid && i.selectedForPayment);
+    return this.detailCart().some((i) => !i.isPaid && i.selectedForPayment);
   }
 
   /** Cantidad de ítems (líneas) del carrito tildados para cobro parcial. */
   get selectedProductsCount(): number {
-    return this.detailCart.filter((i) => !i.isPaid && i.selectedForPayment)
+    return this.detailCart().filter((i) => !i.isPaid && i.selectedForPayment)
       .length;
   }
 
   /** Total de los productos tildados para cobro parcial. Calculado en tiempo real. */
   get pendingProductPaymentAmount(): number {
-    return this.detailCart
+    return this.detailCart()
       .filter((i) => !i.isPaid && i.selectedForPayment)
       .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
 
-  detailPaymentTab: 'quick' | 'split' = 'quick';
-  pendingProductPaymentMethod: 'cash' | 'transfer' | null = null;
+  detailPaymentTab = signal<'quick' | 'split'>('quick');
+  pendingProductPaymentMethod = signal<'cash' | 'transfer' | null>(null);
 
   @ViewChild('dialogScrollBody') dialogScrollBody!: ElementRef<HTMLDivElement>;
   @ViewChild('cobroParcialPanel')
@@ -211,50 +212,54 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private scrollDragStartX = 0;
   private scrollDragOriginLeft = 0;
 
-  confirmDialogOpen = false;
-  confirmDialogTitle = '';
-  confirmDialogMessage = '';
+  confirmDialogOpen = signal(false);
+  confirmDialogTitle = signal('');
+  confirmDialogMessage = signal('');
   private confirmCallback: (() => void) | null = null;
 
-  rescheduleDialogOpen = false;
+  rescheduleDialogOpen = signal(false);
   rescheduleFromModal = false;
   isDragging = false;
   rescheduleTargetCourtId = '';
   rescheduleTargetDate = '';
   rescheduleTargetHour = '';
   private rescheduleSourceId = '';
-  isRescheduling = false;
+  isRescheduling = signal(false);
 
   private savedAmountCash = 0;
   private savedAmountTransfer = 0;
   private initialPaidCount = 0;
-  playerPaymentHistory: {
-    method: 'cash' | 'transfer';
-    amount: number;
-    courtAmount: number;
-    consumablesTotal: number;
-    paymentId: string;
-    preCommitItems: CartItem[];
-    consumableItems: { name: string; unitPrice: number; qty: number }[];
-  }[] = [];
+  playerPaymentHistory = signal<
+    {
+      method: 'cash' | 'transfer';
+      amount: number;
+      courtAmount: number;
+      consumablesTotal: number;
+      paymentId: string;
+      preCommitItems: CartItem[];
+      consumableItems: { name: string; unitPrice: number; qty: number }[];
+    }[]
+  >([]);
 
-  finalizedPaymentHistory: {
-    method: 'cash' | 'transfer';
-    amount: number;
-    courtAmount: number;
-    consumablesTotal: number;
-    consumableItems: { name: string; unitPrice: number; qty: number }[];
-  }[] = [];
-  partialCashCount = 0;
-  partialTransferCount = 0;
+  finalizedPaymentHistory = signal<
+    {
+      method: 'cash' | 'transfer';
+      amount: number;
+      courtAmount: number;
+      consumablesTotal: number;
+      consumableItems: { name: string; unitPrice: number; qty: number }[];
+    }[]
+  >([]);
+  partialCashCount = signal(0);
+  partialTransferCount = signal(0);
 
-  lastPaidSummary: {
+  lastPaidSummary = signal<{
     courtAmount: number;
     consumablesTotal: number;
     total: number;
-  } | null = null;
+  } | null>(null);
 
-  selectedConsumableKeys = new Set<string>();
+  selectedConsumableKeys = signal(new Set<string>());
 
   /**
    * Vista "plana" del carrito: cada unidad de cada ítem impago como una entrada separada.
@@ -279,8 +284,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }[] = [];
     const productCounter = new Map<string, number>();
 
-    for (let cartIdx = 0; cartIdx < this.detailCart.length; cartIdx++) {
-      const item = this.detailCart[cartIdx];
+    const detailCart = this.detailCart();
+    for (let cartIdx = 0; cartIdx < detailCart.length; cartIdx++) {
+      const item = detailCart[cartIdx];
 
       if (item.isPaid && !item.committedBySplit) continue;
 
@@ -306,8 +312,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Total de los consumos seleccionados individualmente para el jugador actual. */
   get selectedConsumablesTotal(): number {
     let total = 0;
+    const selectedConsumableKeys = this.selectedConsumableKeys();
     for (const unit of this.flatUnpaidConsumables) {
-      if (!unit.committed && this.selectedConsumableKeys.has(unit.key)) {
+      if (!unit.committed && selectedConsumableKeys.has(unit.key)) {
         total += unit.unitPrice;
       }
     }
@@ -320,7 +327,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * - En modo 'court+items': cuota proporcional de cancha + todos los consumos pendientes.
    */
   get currentPlayerTotal(): number {
-    if (this.splitMode === 'court+items') {
+    if (this.splitMode() === 'court+items') {
       return this.detailCostPerPlayer;
     }
     return this.baseCanchaSplit + this.selectedConsumablesTotal;
@@ -328,29 +335,34 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Alterna la selección de una unidad individual de consumo para el pago del jugador actual. */
   toggleConsumableUnit(key: string): void {
-    this.lastPaidSummary = null;
-    const next = new Set(this.selectedConsumableKeys);
+    this.lastPaidSummary.set(null);
+    const next = new Set(this.selectedConsumableKeys());
     if (next.has(key)) {
       next.delete(key);
     } else {
       next.add(key);
     }
-    this.selectedConsumableKeys = next;
+    this.selectedConsumableKeys.set(next);
     // Sincronizar selectedForPayment usando flatUnpaidConsumables para obtener el cartIdx correcto
     const flat = this.flatUnpaidConsumables;
     const unit = flat.find((u) => u.key === key);
     if (unit) {
       const cartIdx = unit.cartIdx;
+      const selectedConsumableKeys = this.selectedConsumableKeys();
       const anyUnitSelected = flat.some(
-        (u) => u.cartIdx === cartIdx && this.selectedConsumableKeys.has(u.key),
+        (u) => u.cartIdx === cartIdx && selectedConsumableKeys.has(u.key),
       );
-      this.detailCart = this.detailCart.map((item, i) =>
-        i === cartIdx ? { ...item, selectedForPayment: anyUnitSelected } : item,
+      this.detailCart.update((cart) =>
+        cart.map((item, i) =>
+          i === cartIdx
+            ? { ...item, selectedForPayment: anyUnitSelected }
+            : item,
+        ),
       );
     }
   }
 
-  splitMode: 'court' | 'court+items' = 'court+items';
+  splitMode = signal<'court' | 'court+items'>('court+items');
 
   /**
    * Cambia el modo de división. Si hay pagos parciales de la sesión sin guardar,
@@ -359,11 +371,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   setSplitMode(mode: 'court' | 'court+items'): void {
     if (mode === 'court+items' && !this.hasUnpaidItems) mode = 'court';
-    if (this.splitMode === mode) return;
-    if (this.playerPaymentHistory.length > 0) {
+    if (this.splitMode() === mode) return;
+    const playerPaymentHistory = this.playerPaymentHistory();
+    if (playerPaymentHistory.length > 0) {
       let cashFromButtons = 0;
       let transferFromButtons = 0;
-      for (const p of this.playerPaymentHistory) {
+      for (const p of playerPaymentHistory) {
         if (p.method === 'cash') cashFromButtons += p.amount;
         else transferFromButtons += p.amount;
       }
@@ -375,28 +388,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         0,
         (Number(this.detailAmountTransfer) || 0) - transferFromButtons,
       );
-      this.playerPaymentHistory = [];
-      this.partialCashCount = 0;
-      this.partialTransferCount = 0;
-      this.lastPaidSummary = null;
-      this.detailPaidCount = this.initialPaidCount;
+      this.playerPaymentHistory.set([]);
+      this.partialCashCount.set(0);
+      this.partialTransferCount.set(0);
+      this.lastPaidSummary.set(null);
+      this.detailPaidCount.set(this.initialPaidCount);
     }
-    this.selectedConsumableKeys = new Set();
-    this.splitMode = mode;
+    this.selectedConsumableKeys.set(new Set());
+    this.splitMode.set(mode);
   }
 
   private notifiedBookingIds = new Set<string>();
 
   private sub = new Subscription();
 
-  isCashRegisterOpen = true;
+  isCashRegisterOpen = signal(true);
 
-  showBookingDraftBanner = false;
+  showBookingDraftBanner = signal(false);
   private readonly DRAFT_KEY_BOOKING = 'draft_booking_create';
   private bookingDraftSave$ = new Subject<void>();
 
   private playerCountSave$ = new Subject<number>();
-  isSavingPlayerCount = false;
+  isSavingPlayerCount = signal(false);
 
   constructor(
     private authService: AuthService,
@@ -430,8 +443,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
         this.addToBookingMap(updated);
 
-        if (this.selectedBooking?.id === updated.id) {
-          this.selectedBooking = updated;
+        if (this.selectedBooking()?.id === updated.id) {
+          this.selectedBooking.set(updated);
         }
       }),
     );
@@ -442,7 +455,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           clientName: this.clientName,
           phoneNumber: this.phoneNumber,
           priceType: this.priceType,
-          durationMinutes: this.durationMinutes,
+          durationMinutes: this.durationMinutes(),
           pagoEfectivo: this.cashPayment,
           pagoTransferencia: this.cashTransfer,
         });
@@ -451,16 +464,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       this.playerCountSave$.pipe(debounceTime(400)).subscribe((count) => {
-        if (!this.selectedBooking) return;
-        this.isSavingPlayerCount = true;
+        const selectedBooking = this.selectedBooking();
+        if (!selectedBooking) return;
+        this.isSavingPlayerCount.set(true);
         this.bookingsService
-          .update(this.selectedBooking.id, { playerCount: count })
+          .update(selectedBooking.id, { playerCount: count })
           .subscribe({
             next: (updated) => {
               this.addToBookingMap(updated);
-              this.selectedBooking = updated;
+              this.selectedBooking.set(updated);
             },
-            complete: () => (this.isSavingPlayerCount = false),
+            complete: () => this.isSavingPlayerCount.set(false),
           });
       }),
     );
@@ -474,10 +488,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.cashService.getCurrent().subscribe({
         next: (cash) => {
-          this.isCashRegisterOpen = !cash.isClosed && !cash.noSession;
+          this.isCashRegisterOpen.set(!cash.isClosed && !cash.noSession);
         },
         error: () => {
-          this.isCashRegisterOpen = true;
+          this.isCashRegisterOpen.set(true);
         },
       }),
     );
@@ -628,12 +642,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * La primera columna (horas) tiene ancho fijo de 80 px; las canchas usan minmax(200px, 1fr).
    */
   get gridColsStyle(): string {
-    return `80px repeat(${this.courts.length}, minmax(200px, 1fr))`;
+    return `80px repeat(${this.courts().length}, minmax(200px, 1fr))`;
   }
 
   /** Solo las columnas de canchas (sin la columna de horas), para el panel derecho scrollable. */
   get courtColsStyle(): string {
-    return `repeat(${this.courts.length}, minmax(200px, 1fr))`;
+    return `repeat(${this.courts().length}, minmax(200px, 1fr))`;
   }
 
   /** Convierte una hora 'HH:mm' a minutos totales desde medianoche. */
@@ -647,13 +661,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Devuelve `null` si no hay franja configurada (fallback a precios de cancha).
    */
   get activeShift(): PricingShift | null {
-    if (!this.selectedSlot || !this.pricingShifts.length) return null;
+    const selectedSlot = this.selectedSlot();
+    if (!selectedSlot || !this.pricingShifts().length) return null;
     const [year, month, day] = this.selectedDate.split('-').map(Number);
     const realDay = new Date(year, month - 1, day).getDay();
     const dayOfWeek = this.holidayService.isHoliday ? 6 : realDay;
-    const bookingMin = this.timeToMinutes(this.selectedSlot.hour);
+    const bookingMin = this.timeToMinutes(selectedSlot.hour);
     return (
-      this.pricingShifts.find((s) => {
+      this.pricingShifts().find((s) => {
         const days = (s.daysOfWeek as number[]).map(Number);
         if (!days.includes(dayOfWeek)) return false;
         const startMin = this.timeToMinutes(s.startTime);
@@ -672,11 +687,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   getPriceLabel(booking: BookingResponse): string {
     if (booking.priceType === 'professor') return 'Profesor';
     if (booking.appliedShiftName) return booking.appliedShiftName;
-    if (this.pricingShifts.length) {
+    if (this.pricingShifts().length) {
       const [year, month, day] = booking.date.split('-').map(Number);
       const dayOfWeek = new Date(year, month - 1, day).getDay();
       const bookingMin = this.timeToMinutes(booking.hour);
-      const shift = this.pricingShifts.find((s) => {
+      const shift = this.pricingShifts().find((s) => {
         const days = (s.daysOfWeek as number[]).map(Number);
         if (!days.includes(dayOfWeek)) return false;
         const startMin = this.timeToMinutes(s.startTime);
@@ -695,7 +710,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Indica que no hay precio válido configurado y el guardado debe bloquearse.
    */
   get isTariffMissing(): boolean {
-    return !!this.selectedSlot && this.activeShift === null;
+    return !!this.selectedSlot() && this.activeShift === null;
   }
 
   /**
@@ -709,13 +724,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Precio de la cancha según franja dinámica activa, con fallback a precios estáticos. */
   get courtPrice(): number {
-    if (!this.selectedSlot) return 0;
+    if (!this.selectedSlot()) return 0;
     const shift = this.activeShift;
     if (shift) {
       if (this.isTeacherBooking) {
-        return Number(shift.teacherPricePerHour) * (this.durationMinutes / 60);
+        return Number(shift.teacherPricePerHour) * (this.durationMinutes() / 60);
       }
-      switch (this.durationMinutes) {
+      switch (this.durationMinutes()) {
         case 30:
           return Number(shift.price30min) || 0;
         case 90:
@@ -731,9 +746,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Hora de fin calculada a partir del slot seleccionado y la duración. */
   get endHour(): string {
-    if (!this.selectedSlot) return '';
-    const [h, m] = this.selectedSlot.hour.split(':').map(Number);
-    const totalMin = h * 60 + m + this.durationMinutes;
+    const selectedSlot = this.selectedSlot();
+    if (!selectedSlot) return '';
+    const [h, m] = selectedSlot.hour.split(':').map(Number);
+    const totalMin = h * 60 + m + this.durationMinutes();
     const endH = Math.floor(totalMin / 60) % 24;
     const endM = totalMin % 60;
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
@@ -743,21 +759,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Devuelve `true` si la hora de fin del turno excede el horario de cierre del club.
    */
   get exceedsClosingTime(): boolean {
-    if (!this.selectedSlot) return false;
+    const selectedSlot = this.selectedSlot();
+    if (!selectedSlot) return false;
     const [oh, om] = this.horarioApertura.split(':').map(Number);
-    const [ch, cm] = this.horarioCierre.split(':').map(Number);
-    const [sh, sm] = this.selectedSlot.hour.split(':').map(Number);
+    const [ch, cm] = this.horarioCierre().split(':').map(Number);
+    const [sh, sm] = selectedSlot.hour.split(':').map(Number);
     const openMin = oh * 60 + om;
     let closeMin = ch * 60 + cm;
     if (closeMin <= openMin) closeMin += 1440;
     let startMin = sh * 60 + sm;
     if (startMin < openMin) startMin += 1440;
-    return startMin + this.durationMinutes > closeMin;
+    return startMin + this.durationMinutes() > closeMin;
   }
 
   /** Subtotal de los ítems del carrito de creación. */
   get cartSubtotal(): number {
-    return this.cart.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    return this.cart().reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
   }
 
   /** Total de la reserva: precio cancha + subtotal de ítems. */
@@ -795,8 +812,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Carga canchas, productos y config en paralelo, luego dispara la carga de reservas del día. */
   private loadInitialData(): void {
-    this.isLoading = true;
-    this.loadError = '';
+    this.isLoading.set(true);
+    this.loadError.set('');
 
     this.sub.add(
       forkJoin({
@@ -813,23 +830,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           if (cfgMap.has('hora_apertura'))
             this.horarioApertura = cfgMap.get('hora_apertura')!;
           if (cfgMap.has('hora_cierre'))
-            this.horarioCierre = cfgMap.get('hora_cierre')!;
-          this.HOURS = this.buildHoursFromRange(
-            this.horarioApertura,
-            this.horarioCierre,
+            this.horarioCierre.set(cfgMap.get('hora_cierre')!);
+          this.HOURS.set(
+            this.buildHoursFromRange(this.horarioApertura, this.horarioCierre()),
           );
 
-          this.courts = courts.filter((c) => c.isActive);
-          this.allProducts = products.filter((p) => p.isActive);
-          this.teachers = teachers.filter((t: Teacher) => t.isActive);
-          this.pricingShifts = pricingShifts as PricingShift[];
+          this.courts.set(courts.filter((c) => c.isActive));
+          this.allProducts.set(products.filter((p) => p.isActive));
+          this.teachers.set(teachers.filter((t: Teacher) => t.isActive));
+          this.pricingShifts.set(pricingShifts as PricingShift[]);
           this.loadBookings();
         },
         error: () => {
-          this.isLoading = false;
-          this.loadError =
+          this.isLoading.set(false);
+          this.loadError.set(
             'No se pudo conectar con el servidor. ' +
-            'Verificá que el backend esté corriendo en localhost:3000.';
+              'Verificá que el backend esté corriendo en localhost:3000.',
+          );
         },
       }),
     );
@@ -837,7 +854,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Recarga las reservas del día seleccionado y actualiza el bookingMap. */
   loadBookings(onLoaded?: () => void): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.sub.add(
       this.bookingsService.findByDate(this.selectedDate).subscribe({
         next: (bookings) => {
@@ -847,12 +864,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
               this.addToBookingMap(b);
             }
           });
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.scrollToCurrentTime();
           onLoaded?.();
         },
         error: () => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.toast.error(
             'Error',
             'No se pudieron cargar las reservas del día.',
@@ -1016,7 +1033,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Subtotal de los ítems del carrito en el modo detalle. */
   get detailItemsSubtotal(): number {
-    return this.detailCart.reduce(
+    return this.detailCart().reduce(
       (sum, i) => sum + Number(i.unitPrice) * Number(i.quantity),
       0,
     );
@@ -1025,7 +1042,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Total cancha + consumos en el modo detalle. Usa Number() para evitar concatenación con strings de PostgreSQL. */
   get detailTotalReserva(): number {
     return (
-      Number(this.selectedBooking?.priceAmount ?? 0) + this.detailItemsSubtotal
+      Number(this.selectedBooking()?.priceAmount ?? 0) + this.detailItemsSubtotal
     );
   }
 
@@ -1083,7 +1100,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Subtotal de consumos pendientes de pago (ítems no marcados como pagados). */
   get detailUnpaidItemsSubtotal(): number {
-    return this.detailCart
+    return this.detailCart()
       .filter((i) => !i.isPaid)
       .reduce((s, i) => s + Number(i.unitPrice) * Number(i.quantity), 0);
   }
@@ -1100,7 +1117,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   get hasUnpaidOrCommittedItems(): boolean {
     return (
-      this.hasUnpaidItems || this.detailCart.some((i) => i.committedBySplit)
+      this.hasUnpaidItems || this.detailCart().some((i) => i.committedBySplit)
     );
   }
 
@@ -1112,21 +1129,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   /** División de cuenta habilitada solo cuando el partido está en curso o finalizado. */
   get canSplitAccount(): boolean {
-    const status = this.selectedBooking?.status;
+    const status = this.selectedBooking()?.status;
     return status === 'playing' || status === 'completed';
   }
 
   /** Monto base para el split de pago: solo cancha o cancha + ítems no pagados según el modo activo. */
   private get splitBase(): number {
-    const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
-    return this.splitMode === 'court' || !this.hasUnpaidItems
+    const courtPrice = Number(this.selectedBooking()?.priceAmount ?? 0);
+    return this.splitMode() === 'court' || !this.hasUnpaidItems
       ? courtPrice
       : courtPrice + this.detailUnpaidItemsSubtotal;
   }
 
   /** Monto dividido en partes iguales según el modo de división activo. */
   get detailCostPerPlayer(): number {
-    const n = this.detailPlayerCount || 1;
+    const n = this.detailPlayerCount() || 1;
     return Math.ceil(this.splitBase / n);
   }
 
@@ -1134,7 +1151,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get detailDebtPerPlayer(): number {
     const remaining = Math.max(
       1,
-      this.detailPlayerCount - this.detailPaidCount,
+      this.detailPlayerCount() - this.detailPaidCount(),
     );
     return Math.ceil(this.detailSaldoPendiente / remaining);
   }
@@ -1145,8 +1162,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Es la única base válida para cobrar la parte proporcional de cancha.
    */
   get baseCanchaSplit(): number {
-    const courtPrice = Number(this.selectedBooking?.priceAmount ?? 0);
-    const n = this.detailPlayerCount || 1;
+    const courtPrice = Number(this.selectedBooking()?.priceAmount ?? 0);
+    const n = this.detailPlayerCount() || 1;
     return Math.ceil(courtPrice / n);
   }
 
@@ -1172,11 +1189,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   /** Retorna los ítems en su estado PRE-commit que fueron comprometidos. */
   private commitSelectedConsumables(paymentId: string): CartItem[] {
-    if (this.selectedConsumableKeys.size === 0) return [];
+    if (this.selectedConsumableKeys().size === 0) return [];
 
     const selectedCountByIdx = new Map<number, number>();
     for (const unit of this.flatUnpaidConsumables) {
-      if (!unit.committed && this.selectedConsumableKeys.has(unit.key)) {
+      if (!unit.committed && this.selectedConsumableKeys().has(unit.key)) {
         selectedCountByIdx.set(
           unit.cartIdx,
           (selectedCountByIdx.get(unit.cartIdx) ?? 0) + 1,
@@ -1187,8 +1204,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const newCart: CartItem[] = [];
     const preCommitItems: CartItem[] = [];
 
-    for (let i = 0; i < this.detailCart.length; i++) {
-      const item = this.detailCart[i];
+    for (let i = 0; i < this.detailCart().length; i++) {
+      const item = this.detailCart()[i];
       const units = selectedCountByIdx.get(i) ?? 0;
 
       if (!item.isPaid && units > 0) {
@@ -1223,15 +1240,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.detailCart = newCart;
-    this.selectedConsumableKeys = new Set();
+    this.detailCart.set(newCart);
+    this.selectedConsumableKeys.set(new Set());
     return preCommitItems;
   }
 
   /** Registra el pago en efectivo de un jugador e incrementa el contador de pagados. */
   addPaidByCash(): void {
     if (
-      this.detailPaidCount >= this.detailPlayerCount ||
+      this.detailPaidCount() >= this.detailPlayerCount() ||
       this.detailSaldoPendiente <= 0
     )
       return;
@@ -1242,25 +1259,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     const consumableItems = this.buildSelectedConsumableItems();
     this.detailAmountCash = (Number(this.detailAmountCash) || 0) + amount;
     const preCommitItems = this.commitSelectedConsumables(paymentId);
-    this.lastPaidSummary = { courtAmount, consumablesTotal, total: amount };
-    this.playerPaymentHistory.push({
-      method: 'cash',
-      amount,
-      courtAmount,
-      consumablesTotal,
-      paymentId,
-      preCommitItems,
-      consumableItems,
-    });
-    this.partialCashCount++;
-    this.detailPaidCount++;
+    this.lastPaidSummary.set({ courtAmount, consumablesTotal, total: amount });
+    this.playerPaymentHistory.update((h) => [
+      ...h,
+      {
+        method: 'cash',
+        amount,
+        courtAmount,
+        consumablesTotal,
+        paymentId,
+        preCommitItems,
+        consumableItems,
+      },
+    ]);
+    this.partialCashCount.update((v) => v + 1);
+    this.detailPaidCount.update((v) => v + 1);
     this.scrollToPlayerCostBlock();
   }
 
   /** Registra el pago por transferencia de un jugador e incrementa el contador de pagados. */
   addPaidByTransfer(): void {
     if (
-      this.detailPaidCount >= this.detailPlayerCount ||
+      this.detailPaidCount() >= this.detailPlayerCount() ||
       this.detailSaldoPendiente <= 0
     )
       return;
@@ -1272,18 +1292,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.detailAmountTransfer =
       (Number(this.detailAmountTransfer) || 0) + amount;
     const preCommitItems = this.commitSelectedConsumables(paymentId);
-    this.lastPaidSummary = { courtAmount, consumablesTotal, total: amount };
-    this.playerPaymentHistory.push({
-      method: 'transfer',
-      amount,
-      courtAmount,
-      consumablesTotal,
-      paymentId,
-      preCommitItems,
-      consumableItems,
-    });
-    this.partialTransferCount++;
-    this.detailPaidCount++;
+    this.lastPaidSummary.set({ courtAmount, consumablesTotal, total: amount });
+    this.playerPaymentHistory.update((h) => [
+      ...h,
+      {
+        method: 'transfer',
+        amount,
+        courtAmount,
+        consumablesTotal,
+        paymentId,
+        preCommitItems,
+        consumableItems,
+      },
+    ]);
+    this.partialTransferCount.update((v) => v + 1);
+    this.detailPaidCount.update((v) => v + 1);
     this.scrollToPlayerCostBlock();
   }
 
@@ -1295,7 +1318,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }[] {
     const qtyByName = new Map<string, { unitPrice: number; qty: number }>();
     for (const unit of this.flatUnpaidConsumables) {
-      if (!unit.committed && this.selectedConsumableKeys.has(unit.key)) {
+      if (!unit.committed && this.selectedConsumableKeys().has(unit.key)) {
         const existing = qtyByName.get(unit.name);
         if (existing) {
           existing.qty++;
@@ -1321,38 +1344,38 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Revierte el monto y decrementa los contadores correspondientes.
    */
   undoPartialPayment(method: 'cash' | 'transfer'): void {
-    this.lastPaidSummary = null;
-    if (this.detailPaidCount <= 0) return;
-    const idx = [...this.playerPaymentHistory]
-      .reverse()
-      .findIndex((e) => e.method === method);
+    this.lastPaidSummary.set(null);
+    if (this.detailPaidCount() <= 0) return;
+    const history = this.playerPaymentHistory();
+    const idx = [...history].reverse().findIndex((e) => e.method === method);
     if (idx === -1) return;
-    const realIdx = this.playerPaymentHistory.length - 1 - idx;
-    const entry = this.playerPaymentHistory.splice(realIdx, 1)[0];
+    const realIdx = history.length - 1 - idx;
+    const entry = history[realIdx];
+    this.playerPaymentHistory.set(history.filter((_, i) => i !== realIdx));
     if (method === 'cash') {
       this.detailAmountCash = Math.max(
         0,
         (Number(this.detailAmountCash) || 0) - entry.amount,
       );
-      this.partialCashCount = Math.max(0, this.partialCashCount - 1);
+      this.partialCashCount.update((v) => Math.max(0, v - 1));
     } else {
       this.detailAmountTransfer = Math.max(
         0,
         (Number(this.detailAmountTransfer) || 0) - entry.amount,
       );
-      this.partialTransferCount = Math.max(0, this.partialTransferCount - 1);
+      this.partialTransferCount.update((v) => Math.max(0, v - 1));
     }
-    this.detailPaidCount--;
+    this.detailPaidCount.update((v) => v - 1);
 
-    const restoredItems: CartItem[] = [];
-    const cartWithoutCommitted = this.detailCart.filter(
+    const detailCart = this.detailCart();
+    const cartWithoutCommitted = detailCart.filter(
       (i) => i.committedByPaymentId !== entry.paymentId,
     );
-    const firstCommittedIdx = this.detailCart.findIndex(
+    const firstCommittedIdx = detailCart.findIndex(
       (i) => i.committedByPaymentId === entry.paymentId,
     );
     if (entry.preCommitItems.length > 0 && firstCommittedIdx >= 0) {
-      const itemsBefore = this.detailCart
+      const itemsBefore = detailCart
         .slice(0, firstCommittedIdx)
         .filter((i) => i.committedByPaymentId !== entry.paymentId).length;
       cartWithoutCommitted.splice(
@@ -1363,8 +1386,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     } else if (entry.preCommitItems.length > 0) {
       cartWithoutCommitted.push(...entry.preCommitItems.map((i) => ({ ...i })));
     }
-    this.detailCart = cartWithoutCommitted;
-    this.selectedConsumableKeys = new Set();
+    this.detailCart.set(cartWithoutCommitted);
+    this.selectedConsumableKeys.set(new Set());
   }
 
   /** Completa el saldo pendiente con efectivo y marca todos los jugadores como pagados. */
@@ -1372,7 +1395,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.detailSaldoPendienteReal <= 0) return;
     this.detailAmountCash =
       (Number(this.detailAmountCash) || 0) + this.detailSaldoPendienteReal;
-    this.detailPaidCount = this.detailPlayerCount;
+    this.detailPaidCount.set(this.detailPlayerCount());
   }
 
   /** Completa el saldo pendiente con transferencia y marca todos los jugadores como pagados. */
@@ -1380,7 +1403,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.detailSaldoPendienteReal <= 0) return;
     this.detailAmountTransfer =
       (Number(this.detailAmountTransfer) || 0) + this.detailSaldoPendienteReal;
-    this.detailPaidCount = this.detailPlayerCount;
+    this.detailPaidCount.set(this.detailPlayerCount());
   }
 
   /** Emite al Subject de auto-save del formulario de creación. */
@@ -1390,7 +1413,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Cambia la duración del turno y fuerza un guardado del borrador. */
   setDuration(minutes: number): void {
-    this.durationMinutes = minutes;
+    this.durationMinutes.set(minutes);
     this.triggerBookingDraftSave();
   }
 
@@ -1411,35 +1434,36 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.clientName = d.clientName ?? '';
       this.phoneNumber = d.phoneNumber ?? '';
       this.priceType = d.priceType ?? 'standard';
-      this.durationMinutes = d.durationMinutes ?? 60;
+      this.durationMinutes.set(d.durationMinutes ?? 60);
       this.cashPayment = d.pagoEfectivo ?? 0;
       this.cashTransfer = d.pagoTransferencia ?? 0;
     }
-    this.showBookingDraftBanner = false;
+    this.showBookingDraftBanner.set(false);
   }
 
   /** Descarta el borrador del formulario de creación sin restaurarlo. */
   dismissBookingDraft(): void {
     this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
-    this.showBookingDraftBanner = false;
+    this.showBookingDraftBanner.set(false);
   }
 
   /** Limpia los inputs de efectivo y transferencia de la sesión actual. */
   clearPaymentInputs(): void {
     this.detailAmountCash = 0;
     this.detailAmountTransfer = 0;
-    this.detailPaidCount = this.initialPaidCount;
-    this.playerPaymentHistory = [];
-    this.partialCashCount = 0;
-    this.partialTransferCount = 0;
-    this.lastPaidSummary = null;
+    this.detailPaidCount.set(this.initialPaidCount);
+    this.playerPaymentHistory.set([]);
+    this.partialCashCount.set(0);
+    this.partialTransferCount.set(0);
+    this.lastPaidSummary.set(null);
   }
 
   /** Hora de fin calculada a partir de la reserva actualmente mostrada en el detalle. */
   get detailEndHour(): string {
-    if (!this.selectedBooking) return '';
-    const [h, m] = this.selectedBooking.hour.split(':').map(Number);
-    const totalMin = h * 60 + m + (this.selectedBooking.durationMinutes ?? 60);
+    const selectedBooking = this.selectedBooking();
+    if (!selectedBooking) return '';
+    const [h, m] = selectedBooking.hour.split(':').map(Number);
+    const totalMin = h * 60 + m + (selectedBooking.durationMinutes ?? 60);
     const endH = Math.floor(totalMin / 60) % 24;
     const endM = totalMin % 60;
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
@@ -1480,7 +1504,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Los slots de continuación (donde la reserva inició antes) son ignorados.
    */
   onSlotClick(court: Court, hour: string): void {
-    if (this.isDragging || this.rescheduleDialogOpen) return;
+    if (this.isDragging || this.rescheduleDialogOpen()) return;
 
     const booking = this.getBooking(court.id, hour);
     if (booking && booking.hour === hour) {
@@ -1492,13 +1516,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Abre el diálogo en modo creación para el slot indicado. */
   private openCreateDialog(court: Court, hour: string): void {
-    this.dialogMode = 'create';
-    this.selectedSlot = { court, hour };
-    this.selectedBooking = null;
+    this.dialogMode.set('create');
+    this.selectedSlot.set({ court, hour });
+    this.selectedBooking.set(null);
     this.resetForm();
-    this.isDialogOpen = true;
-    this.showBookingDraftBanner = this.draftService.hasDraft(
-      this.DRAFT_KEY_BOOKING,
+    this.isDialogOpen.set(true);
+    this.showBookingDraftBanner.set(
+      this.draftService.hasDraft(this.DRAFT_KEY_BOOKING),
     );
   }
 
@@ -1508,11 +1532,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     hour: string,
     booking: BookingResponse,
   ): void {
-    this.dialogMode = 'detail';
-    this.selectedSlot = { court, hour };
-    this.selectedBooking = booking;
+    this.dialogMode.set('detail');
+    this.selectedSlot.set({ court, hour });
+    this.selectedBooking.set(booking);
     this.initDetailState(booking);
-    this.isDialogOpen = true;
+    this.isDialogOpen.set(true);
   }
 
   /**
@@ -1525,59 +1549,62 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       Number(booking.payment?.amountCash ?? 0) +
       Number(booking.payment?.amountTransfer ?? 0);
 
-    this.detailCart = booking.items.map((item) => ({
-      id: item.id,
-      productId: item.productId,
-      name: item.product.name,
-      unitPrice: Number(item.unitPrice),
-      quantity: item.quantity,
-      isPaid: item.isPaid ?? false,
-      selectedForPayment: false,
-    }));
+    this.detailCart.set(
+      booking.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        name: item.product.name,
+        unitPrice: Number(item.unitPrice),
+        quantity: item.quantity,
+        isPaid: item.isPaid ?? false,
+        selectedForPayment: false,
+      })),
+    );
 
     this.savedAmountCash = Number(booking.payment?.amountCash ?? 0);
     this.savedAmountTransfer = Number(booking.payment?.amountTransfer ?? 0);
     this.detailAmountCash = 0;
     this.detailAmountTransfer = 0;
-    this.detailPlayerCount = booking.playerCount ?? 4;
-    this.detailPaymentTab = 'quick';
+    this.detailPlayerCount.set(booking.playerCount ?? 4);
+    this.detailPaymentTab.set('quick');
 
     if (savedTotal > 0) {
-      const itemsSubtotal = this.detailCart.reduce(
+      const itemsSubtotal = this.detailCart().reduce(
         (s, i) => s + i.unitPrice * i.quantity,
         0,
       );
       const totalBooking = Number(booking.priceAmount ?? 0) + itemsSubtotal;
       const costPerPlayer =
-        this.detailPlayerCount > 0 ? totalBooking / this.detailPlayerCount : 1;
-      this.detailPaidCount =
+        this.detailPlayerCount() > 0 ? totalBooking / this.detailPlayerCount() : 1;
+      this.detailPaidCount.set(
         costPerPlayer > 0
           ? Math.min(
               Math.round(savedTotal / costPerPlayer),
-              this.detailPlayerCount,
+              this.detailPlayerCount(),
             )
-          : 0;
+          : 0,
+      );
     } else {
-      this.detailPaidCount = 0;
+      this.detailPaidCount.set(0);
     }
 
-    this.playerPaymentHistory = [];
-    this.finalizedPaymentHistory = (
-      booking.payment?.playerPaymentDetails ?? []
-    ).map((e) => ({
-      method: e.method,
-      amount: e.amount,
-      courtAmount: e.courtAmount,
-      consumablesTotal: e.consumablesTotal,
-      consumableItems: e.consumableItems,
-    }));
-    this.partialCashCount = 0;
-    this.partialTransferCount = 0;
-    this.lastPaidSummary = null;
-    this.splitMode = 'court+items';
-    this.initialPaidCount = this.detailPaidCount;
+    this.playerPaymentHistory.set([]);
+    this.finalizedPaymentHistory.set(
+      (booking.payment?.playerPaymentDetails ?? []).map((e) => ({
+        method: e.method,
+        amount: e.amount,
+        courtAmount: e.courtAmount,
+        consumablesTotal: e.consumablesTotal,
+        consumableItems: e.consumableItems,
+      })),
+    );
+    this.partialCashCount.set(0);
+    this.partialTransferCount.set(0);
+    this.lastPaidSummary.set(null);
+    this.splitMode.set('court+items');
+    this.initialPaidCount = this.detailPaidCount();
     this.detailProductSearch = '';
-    this.detailSearchResults = [];
+    this.detailSearchResults.set([]);
   }
 
   /** `true` si hay montos de pago ingresados en esta sesión que aún no se guardaron. */
@@ -1593,7 +1620,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Requiere que el `FixedBooking` tenga un número de teléfono registrado.
    */
   confirmFixedBookingWhatsApp(): void {
-    const booking = this.selectedBooking;
+    const booking = this.selectedBooking();
     if (!booking) return;
 
     const phone = booking.fixedBooking?.phoneNumber?.replace(/\D/g, '');
@@ -1618,14 +1645,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Limpia la notificación de recordatorio y el flag de WA del localStorage.
    */
   confirmBooking(): void {
-    const booking = this.selectedBooking;
-    if (!booking || this.isConfirmingBooking) return;
+    const booking = this.selectedBooking();
+    if (!booking || this.isConfirmingBooking()) return;
 
-    this.isConfirmingBooking = true;
+    this.isConfirmingBooking.set(true);
     this.bookingsService.confirm(booking.id).subscribe({
       next: (updated) => {
-        this.isConfirmingBooking = false;
-        this.selectedBooking = { ...booking, isConfirmed: true };
+        this.isConfirmingBooking.set(false);
+        this.selectedBooking.set({ ...booking, isConfirmed: true });
         this.addToBookingMap({ ...booking, isConfirmed: true });
         this.notificationService.removeByEntityId(booking.id);
         localStorage.removeItem(`wa_clicked_reminder-today-${booking.id}`);
@@ -1636,7 +1663,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         );
       },
       error: () => {
-        this.isConfirmingBooking = false;
+        this.isConfirmingBooking.set(false);
         this.toast.error('Error', 'No se pudo confirmar la asistencia.');
       },
     });
@@ -1648,17 +1675,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * No requiere caja abierta (es transferencia).
    * Actualiza el booking en el mapa para que el botón desaparezca inmediatamente.
    */
-  isConfirmingDeposit = false;
+  isConfirmingDeposit = signal(false);
 
   confirmExpectedDeposit(): void {
-    const booking = this.selectedBooking;
-    if (!booking || this.isConfirmingDeposit) return;
+    const booking = this.selectedBooking();
+    if (!booking || this.isConfirmingDeposit()) return;
 
-    this.isConfirmingDeposit = true;
+    this.isConfirmingDeposit.set(true);
     this.bookingsService.confirmExpectedDeposit(booking.id).subscribe({
       next: (updated) => {
-        this.isConfirmingDeposit = false;
-        this.selectedBooking = updated;
+        this.isConfirmingDeposit.set(false);
+        this.selectedBooking.set(updated);
         this.addToBookingMap(updated);
         this.toast.success(
           'Seña confirmada',
@@ -1666,7 +1693,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         );
       },
       error: (err) => {
-        this.isConfirmingDeposit = false;
+        this.isConfirmingDeposit.set(false);
         const msg = err?.error?.message ?? 'No se pudo confirmar la seña.';
         this.toast.error('Error', Array.isArray(msg) ? msg.join(' ') : msg);
       },
@@ -1675,22 +1702,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Cierra el diálogo de detalle o creación, solicitando confirmación si hay cambios sin guardar. */
   closeDialog(): void {
-    if (this.confirmDialogOpen) return;
+    if (this.confirmDialogOpen()) return;
 
-    if (this.dialogMode === 'detail') {
-      const hasPaid = this.detailPaidCount > this.initialPaidCount;
+    if (this.dialogMode() === 'detail') {
+      const hasPaid = this.detailPaidCount() > this.initialPaidCount;
       const hasPayment = this.hasUnsavedPaymentChanges;
 
       if (hasPaid || hasPayment) {
-        const newPaid = this.detailPaidCount - this.initialPaidCount;
+        const newPaid = this.detailPaidCount() - this.initialPaidCount;
         const paidMsg = hasPaid
           ? `${newPaid} jugador${newPaid > 1 ? 'es' : ''} marcado${newPaid > 1 ? 's' : ''} como pagado${newPaid > 1 ? 's' : ''}`
           : '';
         const paymentMsg = hasPayment ? 'montos de pago sin guardar' : '';
-        this.confirmDialogTitle = 'Pago sin registrar';
-        this.confirmDialogMessage = `Hay ${[paidMsg, paymentMsg].filter(Boolean).join(' y ')}. ¿Cerrar sin registrar el pago?`;
+        this.confirmDialogTitle.set('Pago sin registrar');
+        this.confirmDialogMessage.set(`Hay ${[paidMsg, paymentMsg].filter(Boolean).join(' y ')}. ¿Cerrar sin registrar el pago?`);
         this.confirmCallback = () => this.forceCloseDialog();
-        this.confirmDialogOpen = true;
+        this.confirmDialogOpen.set(true);
         return;
       }
     }
@@ -1699,7 +1726,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Acepta el diálogo de confirmación y ejecuta el callback registrado. */
   confirmDialogAccept(): void {
-    this.confirmDialogOpen = false;
+    this.confirmDialogOpen.set(false);
     if (this.confirmCallback) {
       this.confirmCallback();
       this.confirmCallback = null;
@@ -1708,28 +1735,28 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Cancela el diálogo de confirmación sin ejecutar ninguna acción. */
   confirmDialogCancel(): void {
-    this.confirmDialogOpen = false;
+    this.confirmDialogOpen.set(false);
     this.confirmCallback = null;
   }
 
   /** Cierra el diálogo sin validaciones, limpiando todo el estado temporal. */
   private forceCloseDialog(): void {
-    this.isDialogOpen = false;
+    this.isDialogOpen.set(false);
     this.productSearch = '';
-    this.searchResults = [];
-    this.detailCart = [];
+    this.searchResults.set([]);
+    this.detailCart.set([]);
     this.detailProductSearch = '';
-    this.detailSearchResults = [];
-    this.detailPaidCount = 0;
+    this.detailSearchResults.set([]);
+    this.detailPaidCount.set(0);
     this.initialPaidCount = 0;
     this.savedAmountCash = 0;
     this.savedAmountTransfer = 0;
-    this.playerPaymentHistory = [];
-    this.partialCashCount = 0;
-    this.partialTransferCount = 0;
-    this.lastPaidSummary = null;
-    this.selectedConsumableKeys = new Set();
-    this.splitMode = 'court+items';
+    this.playerPaymentHistory.set([]);
+    this.partialCashCount.set(0);
+    this.partialTransferCount.set(0);
+    this.lastPaidSummary.set(null);
+    this.selectedConsumableKeys.set(new Set());
+    this.splitMode.set('court+items');
   }
 
   /** Resetea el formulario de creación a sus valores iniciales. */
@@ -1737,12 +1764,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.clientName = '';
     this.phoneNumber = '';
     this.priceType = 'standard';
-    this.durationMinutes = 60;
-    this.cart = [];
+    this.durationMinutes.set(60);
+    this.cart.set([]);
     this.cashPayment = 0;
     this.cashTransfer = 0;
     this.productSearch = '';
-    this.searchResults = [];
+    this.searchResults.set([]);
     this.isFixedBookingMode = false;
     this.isTeacherBooking = false;
     this.selectedTeacherId = null;
@@ -1755,7 +1782,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   onTeacherToggleChange(): void {
     if (this.isTeacherBooking) {
-      this.durationMinutes = 60;
+      this.durationMinutes.set(60);
     } else {
       this.selectedTeacherId = null;
       if (this.clientName.startsWith('Clase - ')) {
@@ -1766,13 +1793,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Al seleccionar un profesor, autocompleta el nombre del cliente para evitar entrada manual. */
   onTeacherSelectChange(teacherId: string | null): void {
-    const teacher = this.teachers.find((t) => t.id === teacherId);
+    const teacher = this.teachers().find((t) => t.id === teacherId);
     this.clientName = teacher ? `Clase - ${teacher.fullName}` : '';
   }
 
   /** Valida el formulario y envía la petición de creación al servidor. */
   saveBooking(): void {
-    if (!this.selectedSlot || this.isSaving) return;
+    const selectedSlot = this.selectedSlot();
+    if (!selectedSlot || this.isSaving()) return;
 
     if (!this.clientName.trim()) {
       this.toast.error(
@@ -1790,7 +1818,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isCashRegisterOpen && Number(this.cashPayment) > 0) {
+    if (!this.isCashRegisterOpen() && Number(this.cashPayment) > 0) {
       Swal.fire({
         title: '¡Caja Cerrada!',
         text: 'Necesitas abrir un turno en la caja para poder registrar cobros en efectivo.',
@@ -1807,7 +1835,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSaving = true;
+    this.isSaving.set(true);
 
     if (this.isFixedBookingMode) {
       const [y, mo, dy] = this.selectedDate.split('-').map(Number);
@@ -1820,9 +1848,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             clientName: this.clientName.trim(),
             phoneNumber: this.phoneNumber.trim(),
             dayOfWeek,
-            hour: this.selectedSlot.hour,
-            durationMinutes: this.durationMinutes,
-            courtId: this.selectedSlot.court.id,
+            hour: selectedSlot.hour,
+            durationMinutes: this.durationMinutes(),
+            courtId: selectedSlot.court.id,
             startDate: this.selectedDate,
             teacherId: this.isTeacherBooking
               ? this.selectedTeacherId || null
@@ -1830,18 +1858,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           })
           .subscribe({
             next: () => {
-              this.isSaving = false;
+              this.isSaving.set(false);
               this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
-              this.showBookingDraftBanner = false;
+              this.showBookingDraftBanner.set(false);
               this.toast.success(
                 '⭐ Turno Fijo creado',
-                `${this.clientName.trim()} — ${this.selectedSlot!.court.name} los ${this.selectedDate} a las ${this.selectedSlot!.hour}hs y todas las semanas.`,
+                `${this.clientName.trim()} — ${selectedSlot.court.name} los ${this.selectedDate} a las ${selectedSlot.hour}hs y todas las semanas.`,
               );
               this.closeDialog();
               this.loadBookings();
             },
             error: (err) => {
-              this.isSaving = false;
+              this.isSaving.set(false);
               const msg = err?.error?.message;
               this.toast.error(
                 'Error al crear turno fijo',
@@ -1856,15 +1884,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
 
     const dto: CreateBookingDto = {
-      courtId: this.selectedSlot.court.id,
+      courtId: selectedSlot.court.id,
       date: this.selectedDate,
-      hour: this.selectedSlot.hour,
+      hour: selectedSlot.hour,
       clientName: this.clientName.trim(),
       priceType: this.isTeacherBooking ? 'professor' : this.priceType,
-      durationMinutes: this.durationMinutes,
+      durationMinutes: this.durationMinutes(),
       amountCash: Number(this.cashPayment) || 0,
       amountTransfer: Number(this.cashTransfer) || 0,
-      items: this.cart.map((i) => ({
+      items: this.cart().map((i) => ({
         productId: i.productId,
         quantity: i.quantity,
       })),
@@ -1876,10 +1904,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.create(dto).subscribe({
         next: (booking) => {
-          this.isSaving = false;
+          this.isSaving.set(false);
           this.addToBookingMap(booking);
           this.draftService.clearDraft(this.DRAFT_KEY_BOOKING);
-          this.showBookingDraftBanner = false;
+          this.showBookingDraftBanner.set(false);
           if (dto.items && dto.items.length > 0) {
             this.productsService.clearLowStockCache();
           }
@@ -1890,7 +1918,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.closeDialog();
         },
         error: (err) => {
-          this.isSaving = false;
+          this.isSaving.set(false);
           if (err.status === 409) {
             this.toast.error(
               'Turno ocupado',
@@ -1929,9 +1957,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Registra el pago (efectivo/transferencia) SIN cambiar estado ni items. */
   saveDetailChanges(): void {
-    const prevCash = Number(this.selectedBooking?.payment?.amountCash ?? 0);
+    const prevCash = Number(this.selectedBooking()?.payment?.amountCash ?? 0);
     const newCash = Math.max(0, this.totalPaidCash);
-    if (!this.isCashRegisterOpen && newCash > prevCash) {
+    if (!this.isCashRegisterOpen() && newCash > prevCash) {
       Swal.fire({
         title: '¡Caja Cerrada!',
         text: 'Necesitas abrir un turno en la caja para poder registrar pagos en efectivo.',
@@ -1948,36 +1976,37 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.selectedBooking || this.isSavingDetail) return;
+    const selectedBooking = this.selectedBooking();
+    if (!selectedBooking || this.isSavingDetail()) return;
     this.cancelPendingAutoSave();
-    this.isSavingDetail = true;
+    this.isSavingDetail.set(true);
     this.detailSaveSeq++;
 
-    const sessionCash = this.playerPaymentHistory
+    const sessionCash = this.playerPaymentHistory()
       .filter((e) => e.method === 'cash')
       .reduce((s, e) => s + e.amount, 0);
-    const sessionTransfer = this.playerPaymentHistory
+    const sessionTransfer = this.playerPaymentHistory()
       .filter((e) => e.method === 'transfer')
       .reduce((s, e) => s + e.amount, 0);
     const totalCash =
-      this.detailPaymentTab === 'split'
+      this.detailPaymentTab() === 'split'
         ? Math.max(0, this.savedAmountCash + sessionCash)
         : Math.max(0, this.totalPaidCash);
     const totalTransfer =
-      this.detailPaymentTab === 'split'
+      this.detailPaymentTab() === 'split'
         ? Math.max(0, this.savedAmountTransfer + sessionTransfer)
         : Math.max(0, this.totalPaidTransfer);
 
     const allPlayersPaid =
-      this.detailPaymentTab === 'split' &&
-      this.splitMode === 'court+items' &&
-      this.detailPaidCount >= this.detailPlayerCount;
-    const cartAfterPayment = this.detailCart.map((i) => ({
+      this.detailPaymentTab() === 'split' &&
+      this.splitMode() === 'court+items' &&
+      this.detailPaidCount() >= this.detailPlayerCount();
+    const cartAfterPayment = this.detailCart().map((i) => ({
       ...i,
       isPaid:
         i.isPaid ||
         i.committedBySplit === true ||
-        (this.detailPaymentTab !== 'split' && i.selectedForPayment === true) ||
+        (this.detailPaymentTab() !== 'split' && i.selectedForPayment === true) ||
         allPlayersPaid,
     }));
     const dto: UpdateBookingDto = {
@@ -1990,8 +2019,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         isPaid: i.isPaid ?? false,
       })),
       playerPaymentDetails:
-        this.playerPaymentHistory.length > 0
-          ? this.playerPaymentHistory.map((e) => ({
+        this.playerPaymentHistory().length > 0
+          ? this.playerPaymentHistory().map((e) => ({
               method: e.method,
               amount: e.amount,
               courtAmount: e.courtAmount,
@@ -2002,38 +2031,40 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     };
 
     this.sub.add(
-      this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
+      this.bookingsService.update(selectedBooking.id, dto).subscribe({
         next: (updated) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
 
-          this.detailCart = this.detailCart.map((i) => ({
-            ...i,
-            isPaid: i.isPaid || i.selectedForPayment === true,
-            selectedForPayment: false,
-            committedBySplit: false,
-          }));
+          this.detailCart.update((cart) =>
+            cart.map((i) => ({
+              ...i,
+              isPaid: i.isPaid || i.selectedForPayment === true,
+              selectedForPayment: false,
+              committedBySplit: false,
+            })),
+          );
 
-          if (this.playerPaymentHistory.length > 0) {
-            this.finalizedPaymentHistory = [
-              ...this.finalizedPaymentHistory,
-              ...this.playerPaymentHistory.map((e) => ({
+          if (this.playerPaymentHistory().length > 0) {
+            this.finalizedPaymentHistory.set([
+              ...this.finalizedPaymentHistory(),
+              ...this.playerPaymentHistory().map((e) => ({
                 method: e.method,
                 amount: e.amount,
                 courtAmount: e.courtAmount,
                 consumablesTotal: e.consumablesTotal,
                 consumableItems: e.consumableItems,
               })),
-            ];
+            ]);
           }
-          this.playerPaymentHistory = [];
-          this.partialCashCount = 0;
-          this.partialTransferCount = 0;
-          this.lastPaidSummary = null;
-          this.selectedConsumableKeys = new Set();
+          this.playerPaymentHistory.set([]);
+          this.partialCashCount.set(0);
+          this.partialTransferCount.set(0);
+          this.lastPaidSummary.set(null);
+          this.selectedConsumableKeys.set(new Set());
 
-          this.removeFromBookingMap(this.selectedBooking!);
+          this.removeFromBookingMap(this.selectedBooking()!);
           this.addToBookingMap(updated);
-          this.selectedBooking = updated;
+          this.selectedBooking.set(updated);
 
           const dbCash = Number(updated.payment?.amountCash ?? 0);
           const dbTransfer = Number(updated.payment?.amountTransfer ?? 0);
@@ -2044,26 +2075,27 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           this.detailAmountTransfer = 0;
           const dbTotal = dbCash + dbTransfer;
           const costPerPlayer =
-            this.detailPlayerCount > 0
-              ? this.detailTotalReserva / this.detailPlayerCount
+            this.detailPlayerCount() > 0
+              ? this.detailTotalReserva / this.detailPlayerCount()
               : 1;
-          this.detailPaidCount =
+          this.detailPaidCount.set(
             costPerPlayer > 0
               ? Math.min(
                   Math.round(dbTotal / costPerPlayer),
-                  this.detailPlayerCount,
+                  this.detailPlayerCount(),
                 )
-              : 0;
-          this.initialPaidCount = this.detailPaidCount;
+              : 0,
+          );
+          this.initialPaidCount = this.detailPaidCount();
 
           this.productsService.clearLowStockCache();
           this.toast.success(
             'Pago registrado',
-            `Pagaron ${this.detailPaidCount}/${this.detailPlayerCount} jugadores.`,
+            `Pagaron ${this.detailPaidCount()}/${this.detailPlayerCount()} jugadores.`,
           );
         },
         error: (err) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo guardar el pago.',
@@ -2080,13 +2112,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    */
   /** Actualiza la cantidad de jugadores y dispara el auto-save con debounce. */
   changePlayerCount(newCount: number): void {
-    this.detailPlayerCount = newCount;
+    this.detailPlayerCount.set(newCount);
     this.playerCountSave$.next(newCount);
   }
 
   toggleDetailCartItem(index: number, checked: boolean): void {
-    this.detailCart = this.detailCart.map((item, i) =>
-      i === index ? { ...item, selectedForPayment: checked } : item,
+    this.detailCart.update((cart) =>
+      cart.map((item, i) =>
+        i === index ? { ...item, selectedForPayment: checked } : item,
+      ),
     );
     this.onProductCheckChange();
   }
@@ -2104,23 +2138,23 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Paso 1: el cajero elige el método de pago para los productos tildados (sin enviar al backend). */
   selectProductPaymentMethod(method: 'cash' | 'transfer'): void {
-    this.pendingProductPaymentMethod =
-      this.pendingProductPaymentMethod === method ? null : method;
+    this.pendingProductPaymentMethod.set(this.pendingProductPaymentMethod() === method ? null : method);
   }
 
   /** Paso 2: confirma y persiste el cobro de los productos tildados con el método elegido. */
   confirmProductPayment(): void {
-    const method = this.pendingProductPaymentMethod;
-    if (!method || !this.selectedBooking || this.isSavingDetail) return;
+    const method = this.pendingProductPaymentMethod();
+    const selectedBooking = this.selectedBooking();
+    if (!method || !selectedBooking || this.isSavingDetail()) return;
 
     const amount = this.pendingProductPaymentAmount;
 
-    const updatedCart = this.detailCart.map((i) =>
+    const updatedCart = this.detailCart().map((i) =>
       !i.isPaid && i.selectedForPayment
         ? { ...i, isPaid: true, selectedForPayment: false }
         : i,
     );
-    this.pendingProductPaymentMethod = null;
+    this.pendingProductPaymentMethod.set(null);
 
     const newCash =
       method === 'cash' ? this.savedAmountCash + amount : this.savedAmountCash;
@@ -2141,25 +2175,27 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     };
 
     this.cancelPendingAutoSave();
-    this.isSavingDetail = true;
+    this.isSavingDetail.set(true);
     this.detailSaveSeq++;
     this.sub.add(
-      this.bookingsService.update(this.selectedBooking.id, dto).subscribe({
+      this.bookingsService.update(selectedBooking.id, dto).subscribe({
         next: (updated) => {
-          this.isSavingDetail = false;
-          this.removeFromBookingMap(this.selectedBooking!);
+          this.isSavingDetail.set(false);
+          this.removeFromBookingMap(selectedBooking);
           this.addToBookingMap(updated);
-          this.selectedBooking = updated;
+          this.selectedBooking.set(updated);
 
-          this.detailCart = updated.items.map((serverItem) => ({
-            id: serverItem.id,
-            productId: serverItem.productId,
-            name: serverItem.product.name,
-            unitPrice: Number(serverItem.unitPrice),
-            quantity: serverItem.quantity,
-            isPaid: serverItem.isPaid ?? false,
-            selectedForPayment: false,
-          }));
+          this.detailCart.set(
+            updated.items.map((serverItem) => ({
+              id: serverItem.id,
+              productId: serverItem.productId,
+              name: serverItem.product.name,
+              unitPrice: Number(serverItem.unitPrice),
+              quantity: serverItem.quantity,
+              isPaid: serverItem.isPaid ?? false,
+              selectedForPayment: false,
+            })),
+          );
 
           this.savedAmountCash = Number(updated.payment?.amountCash ?? 0);
           this.savedAmountTransfer = Number(
@@ -2175,7 +2211,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           );
         },
         error: (err) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo guardar el cobro.',
@@ -2187,20 +2223,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Descarta la selección de productos (destilda todos) y limpia el método pendiente. */
   dismissProductPaymentPrompt(): void {
-    this.detailCart = this.detailCart.map((i) =>
-      !i.isPaid ? { ...i, selectedForPayment: false } : i,
+    this.detailCart.update((cart) =>
+      cart.map((i) => (!i.isPaid ? { ...i, selectedForPayment: false } : i)),
     );
-    this.pendingProductPaymentMethod = null;
+    this.pendingProductPaymentMethod.set(null);
   }
 
   /** Auto-guarda los ítems del carrito de detalle inmediatamente, sin tocar el pago. */
   private autoSaveItems(): void {
-    if (this.playerPaymentHistory.length > 0) return;
-    if (!this.selectedBooking || this.isAutoSavingItems) return;
-    this.isAutoSavingItems = true;
+    if (this.playerPaymentHistory().length > 0) return;
+    const selectedBooking = this.selectedBooking();
+    if (!selectedBooking || this.isAutoSavingItems()) return;
+    this.isAutoSavingItems.set(true);
 
     const dto: UpdateBookingDto = {
-      items: this.detailCart.map((i) => ({
+      items: this.detailCart().map((i) => ({
         ...(i.id ? { id: i.id } : {}),
         productId: i.productId,
         quantity: i.quantity,
@@ -2210,7 +2247,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     const prevSelectedForPayment = new Map<string, boolean>();
     const prevCommittedBySplit = new Map<string, boolean>();
-    for (const i of this.detailCart) {
+    for (const i of this.detailCart()) {
       const key = i.id ?? `product_${i.productId}_${i.isPaid}`;
       if (!i.isPaid && i.selectedForPayment) {
         prevSelectedForPayment.set(key, true);
@@ -2222,38 +2259,40 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     const savedSeq = ++this.detailSaveSeq;
     this.autoSaveSub = this.bookingsService
-      .update(this.selectedBooking.id, dto)
+      .update(selectedBooking.id, dto)
       .subscribe({
         next: (updated) => {
-          this.isAutoSavingItems = false;
+          this.isAutoSavingItems.set(false);
           this.autoSaveSub = null;
           if (savedSeq !== this.detailSaveSeq) return;
-          this.removeFromBookingMap(this.selectedBooking!);
+          this.removeFromBookingMap(this.selectedBooking()!);
           this.addToBookingMap(updated);
-          this.selectedBooking = updated;
-          this.detailCart = updated.items.map((serverItem) => {
-            const key =
-              serverItem.id ??
-              `product_${serverItem.productId}_${serverItem.isPaid}`;
-            return {
-              id: serverItem.id,
-              productId: serverItem.productId,
-              name: serverItem.product.name,
-              unitPrice: Number(serverItem.unitPrice),
-              quantity: serverItem.quantity,
-              isPaid: serverItem.isPaid ?? false,
-              committedBySplit: serverItem.isPaid
-                ? (prevCommittedBySplit.get(key) ?? false)
-                : false,
-              selectedForPayment:
-                !serverItem.isPaid &&
-                (prevSelectedForPayment.get(key) ?? false),
-            };
-          });
+          this.selectedBooking.set(updated);
+          this.detailCart.set(
+            updated.items.map((serverItem) => {
+              const key =
+                serverItem.id ??
+                `product_${serverItem.productId}_${serverItem.isPaid}`;
+              return {
+                id: serverItem.id,
+                productId: serverItem.productId,
+                name: serverItem.product.name,
+                unitPrice: Number(serverItem.unitPrice),
+                quantity: serverItem.quantity,
+                isPaid: serverItem.isPaid ?? false,
+                committedBySplit: serverItem.isPaid
+                  ? (prevCommittedBySplit.get(key) ?? false)
+                  : false,
+                selectedForPayment:
+                  !serverItem.isPaid &&
+                  (prevSelectedForPayment.get(key) ?? false),
+              };
+            }),
+          );
           this.productsService.clearLowStockCache();
         },
         error: (err) => {
-          this.isAutoSavingItems = false;
+          this.isAutoSavingItems.set(false);
           this.autoSaveSub = null;
           this.toast.error(
             'Error al guardar consumo',
@@ -2268,14 +2307,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.autoSaveSub && !this.autoSaveSub.closed) {
       this.autoSaveSub.unsubscribe();
       this.autoSaveSub = null;
-      this.isAutoSavingItems = false;
+      this.isAutoSavingItems.set(false);
       this.detailSaveSeq++;
     }
   }
 
   /** Cambia el estado de la reserva a "jugando" (o auto-completa para Profesores). */
   onStartPlaying(booking: BookingResponse): void {
-    this.isSavingDetail = true;
+    this.isSavingDetail.set(true);
     const isProfessor = booking.priceType === 'professor';
 
     const dto: UpdateBookingDto = {
@@ -2285,10 +2324,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.update(booking.id, dto).subscribe({
         next: (updated) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
-          this.selectedBooking = updated;
+          this.selectedBooking.set(updated);
           this.notificationService.removeByEntityId(booking.id);
           if (isProfessor) {
             this.toast.success(
@@ -2304,7 +2343,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo iniciar el partido.',
@@ -2316,7 +2355,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Finaliza el turno registrando el pago final y cambiando el estado a "completado". */
   onFinishPlaying(booking: BookingResponse): void {
-    this.isSavingDetail = true;
+    this.isSavingDetail.set(true);
 
     const dto: UpdateBookingDto = {
       status: 'completed',
@@ -2327,10 +2366,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.bookingsService.update(booking.id, dto).subscribe({
         next: (updated) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.removeFromBookingMap(booking);
           this.addToBookingMap(updated);
-          this.selectedBooking = updated;
+          this.selectedBooking.set(updated);
           this.productsService.clearCache();
           this.toast.success(
             'Turno finalizado',
@@ -2338,11 +2377,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           );
           this.detailAmountCash = 0;
           this.detailAmountTransfer = 0;
-          this.detailPaidCount = this.initialPaidCount;
+          this.detailPaidCount.set(this.initialPaidCount);
           this.closeDialog();
         },
         error: (err) => {
-          this.isSavingDetail = false;
+          this.isSavingDetail.set(false);
           this.toast.error(
             'Error',
             err.error?.message ?? 'No se pudo finalizar el turno.',
@@ -2362,15 +2401,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.isSavingDetail) return;
-    this.isSavingDetail = true;
+    if (this.isSavingDetail()) return;
+    this.isSavingDetail.set(true);
 
     this.sub.add(
       this.bookingsService
         .cancel(booking.id)
         .pipe(
           finalize(() => {
-            this.isSavingDetail = false;
+            this.isSavingDetail.set(false);
           }),
         )
         .subscribe({
@@ -2411,31 +2450,33 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Agrega un producto al carrito de creación o incrementa su cantidad si ya existe. */
   addToCart(product: Product): void {
-    const idx = this.cart.findIndex((i) => i.productId === product.id);
+    const idx = this.cart().findIndex((i) => i.productId === product.id);
 
     if (idx >= 0) {
-      this.cart = this.cart.map((i) =>
-        i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+      this.cart.set(
+        this.cart().map((i) =>
+          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+        ),
       );
     } else {
-      this.cart = [
-        ...this.cart,
+      this.cart.set([
+        ...this.cart(),
         {
           productId: product.id,
           name: product.name,
           unitPrice: product.salePrice,
           quantity: 1,
         },
-      ];
+      ]);
     }
 
     this.productSearch = '';
-    this.searchResults = [];
+    this.searchResults.set([]);
   }
 
   /** Elimina un ítem del carrito de creación por su id de producto. */
   removeFromCart(productId: string): void {
-    this.cart = this.cart.filter((i) => i.productId !== productId);
+    this.cart.set(this.cart().filter((i) => i.productId !== productId));
   }
 
   /** Actualiza la cantidad de un ítem del carrito de creación; lo elimina si la cantidad llega a 0. */
@@ -2443,8 +2484,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (qty <= 0) {
       this.removeFromCart(productId);
     } else {
-      this.cart = this.cart.map((i) =>
-        i.productId === productId ? { ...i, quantity: qty } : i,
+      this.cart.set(
+        this.cart().map((i) =>
+          i.productId === productId ? { ...i, quantity: qty } : i,
+        ),
       );
     }
   }
@@ -2461,17 +2504,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   onSearchChange(): void {
     const term = this.normalize(this.productSearch.trim());
     if (!term) {
-      this.searchResults = [];
+      this.searchResults.set([]);
       return;
     }
-    this.searchResults = this.allProducts.filter((p) =>
-      this.normalize(p.name).includes(term),
+    this.searchResults.set(
+      this.allProducts().filter((p) => this.normalize(p.name).includes(term)),
     );
   }
 
   /** Agrega un producto al carrito de detalle y dispara el auto-guardado. */
   addToDetailCart(product: Product): void {
-    const totalInCart = this.detailCart
+    const totalInCart = this.detailCart()
       .filter((i) => i.productId === product.id)
       .reduce((s, i) => s + i.quantity, 0);
 
@@ -2486,16 +2529,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const unpaidIdx = this.detailCart.findIndex(
+    const unpaidIdx = this.detailCart().findIndex(
       (i) => i.productId === product.id && !i.isPaid,
     );
     if (unpaidIdx >= 0) {
-      this.detailCart = this.detailCart.map((i, idx) =>
-        idx === unpaidIdx ? { ...i, quantity: i.quantity + 1 } : i,
+      this.detailCart.set(
+        this.detailCart().map((i, idx) =>
+          idx === unpaidIdx ? { ...i, quantity: i.quantity + 1 } : i,
+        ),
       );
     } else {
-      this.detailCart = [
-        ...this.detailCart,
+      this.detailCart.set([
+        ...this.detailCart(),
         {
           productId: product.id,
           name: product.name,
@@ -2504,33 +2549,33 @@ export class ScheduleComponent implements OnInit, OnDestroy {
           isPaid: false,
           selectedForPayment: false,
         },
-      ];
+      ]);
     }
     this.detailProductSearch = '';
-    this.detailSearchResults = [];
+    this.detailSearchResults.set([]);
     this.autoSaveItems();
   }
 
   /** Elimina un ítem del carrito de detalle por índice y dispara el auto-guardado. */
   removeFromDetailCartByIndex(index: number): void {
-    this.detailCart = this.detailCart.filter((_, i) => i !== index);
+    this.detailCart.set(this.detailCart().filter((_, i) => i !== index));
     this.autoSaveItems();
   }
 
   /** Actualiza la cantidad de un ítem del carrito por índice y dispara el auto-guardado. */
   updateDetailQtyByIndex(index: number, qty: number): void {
     if (qty <= 0) {
-      this.detailCart = this.detailCart.filter((_, i) => i !== index);
+      this.detailCart.set(this.detailCart().filter((_, i) => i !== index));
     } else {
-      const item = this.detailCart[index];
+      const item = this.detailCart()[index];
       if (item) {
-        const product = this.allProducts.find((p) => p.id === item.productId);
+        const product = this.allProducts().find((p) => p.id === item.productId);
         if (product) {
           const isRental = (product.category?.name ?? '')
             .toLowerCase()
             .includes('alquiler');
           if (!isRental) {
-            const otherQty = this.detailCart
+            const otherQty = this.detailCart()
               .filter((it, i) => i !== index && it.productId === item.productId)
               .reduce((s, it) => s + it.quantity, 0);
             const maxAllowed = product.stock - otherQty;
@@ -2543,8 +2588,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
             }
           }
         }
-        this.detailCart = this.detailCart.map((it, i) =>
-          i === index ? { ...it, quantity: qty } : it,
+        this.detailCart.set(
+          this.detailCart().map((it, i) =>
+            i === index ? { ...it, quantity: qty } : it,
+          ),
         );
       }
     }
@@ -2555,22 +2602,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   onDetailSearchChange(): void {
     const term = this.normalize(this.detailProductSearch.trim());
     if (!term) {
-      this.detailSearchResults = [];
+      this.detailSearchResults.set([]);
       return;
     }
-    this.detailSearchResults = this.allProducts.filter((p) =>
-      this.normalize(p.name).includes(term),
+    this.detailSearchResults.set(
+      this.allProducts().filter((p) => this.normalize(p.name).includes(term)),
     );
   }
 
   @HostListener('document:keydown.escape')
   /** Cierra el diálogo de confirmación o el modal principal al presionar Escape. */
   onEscape(): void {
-    if (this.confirmDialogOpen) {
+    if (this.confirmDialogOpen()) {
       this.confirmDialogCancel();
       return;
     }
-    if (this.isDialogOpen) this.closeDialog();
+    if (this.isDialogOpen()) this.closeDialog();
   }
 
   /**
@@ -2747,7 +2794,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.zone.run(() => {
-        this.rescheduleDialogOpen = true;
+        this.rescheduleDialogOpen.set(true);
       });
     });
   }
@@ -2757,18 +2804,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Pre-carga los valores actuales del turno para que el usuario solo elija el destino.
    */
   openRescheduleFromModal(): void {
-    if (!this.selectedBooking) return;
-    this.rescheduleSourceId = this.selectedBooking.id;
-    this.rescheduleTargetCourtId = this.selectedBooking.court?.id ?? '';
+    const selectedBooking = this.selectedBooking();
+    if (!selectedBooking) return;
+    this.rescheduleSourceId = selectedBooking.id;
+    this.rescheduleTargetCourtId = selectedBooking.court?.id ?? '';
     this.rescheduleTargetDate = this.selectedDate;
-    this.rescheduleTargetHour = this.selectedBooking.hour;
+    this.rescheduleTargetHour = selectedBooking.hour;
     this.rescheduleFromModal = true;
-    this.rescheduleDialogOpen = true;
+    this.rescheduleDialogOpen.set(true);
   }
 
   /** Cierra el diálogo sin hacer nada. */
   closeRescheduleDialog(): void {
-    this.rescheduleDialogOpen = false;
+    this.rescheduleDialogOpen.set(false);
     this.rescheduleSourceId = '';
   }
 
@@ -2841,13 +2889,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     dto: RescheduleBookingDto,
     action: 'move' | 'duplicate' = 'move',
   ): void {
-    this.isRescheduling = true;
+    this.isRescheduling.set(true);
     const request$ =
       action === 'move'
         ? this.bookingsService.move(this.rescheduleSourceId, dto)
         : this.bookingsService.duplicate(this.rescheduleSourceId, dto);
 
-    request$.pipe(finalize(() => (this.isRescheduling = false))).subscribe({
+    request$.pipe(finalize(() => this.isRescheduling.set(false))).subscribe({
       next: () => {
         const label = action === 'move' ? 'Turno movido' : 'Turno duplicado';
         this.toast.success(label, 'La agenda fue actualizada.');

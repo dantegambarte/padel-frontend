@@ -178,12 +178,12 @@ describe('ScheduleComponent', () => {
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
-    expect(component.courts).toEqual([court]);
-    expect(component.allProducts).toEqual([product]);
+    expect(component.courts()).toEqual([court]);
+    expect(component.allProducts()).toEqual([product]);
     expect(component.horarioApertura).toBe('09:00');
-    expect(component.horarioCierre).toBe('23:00');
-    expect(component.pricingShifts).toEqual([shift]);
-    expect(component.isLoading).toBe(false);
+    expect(component.horarioCierre()).toBe('23:00');
+    expect(component.pricingShifts()).toEqual([shift]);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('shows a connection error when the initial parallel load fails', () => {
@@ -191,7 +191,7 @@ describe('ScheduleComponent', () => {
     courtsServiceSpy.findAll.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(ScheduleComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.loadError).toContain('No se pudo conectar');
+    expect(fixture.componentInstance.loadError()).toContain('No se pudo conectar');
   });
 
   it('loadBookings() populates the bookingMap and excludes cancelled bookings', () => {
@@ -210,7 +210,7 @@ describe('ScheduleComponent', () => {
     setup();
     const fixture = TestBed.createComponent(ScheduleComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.isCashRegisterOpen).toBe(true);
+    expect(fixture.componentInstance.isCashRegisterOpen()).toBe(true);
   });
 
   it('onSlotClick() opens the create dialog for a free slot and the detail dialog for an occupied one', () => {
@@ -221,13 +221,13 @@ describe('ScheduleComponent', () => {
     const component = fixture.componentInstance;
 
     component.onSlotClick(court, '14:00');
-    expect(component.dialogMode).toBe('create');
-    expect(component.isDialogOpen).toBe(true);
+    expect(component.dialogMode()).toBe('create');
+    expect(component.isDialogOpen()).toBe(true);
 
     component.closeDialog();
     component.onSlotClick(court, '10:00');
-    expect(component.dialogMode).toBe('detail');
-    expect(component.selectedBooking?.id).toBe('b1');
+    expect(component.dialogMode()).toBe('detail');
+    expect(component.selectedBooking()?.id).toBe('b1');
   });
 
   it('onSlotClick() is a no-op while a drag is in progress', () => {
@@ -239,7 +239,7 @@ describe('ScheduleComponent', () => {
 
     component.onSlotClick(court, '14:00');
 
-    expect(component.isDialogOpen).toBe(false);
+    expect(component.isDialogOpen()).toBe(false);
   });
 
   describe('pricing getters', () => {
@@ -249,7 +249,7 @@ describe('ScheduleComponent', () => {
       fixture.detectChanges();
       const component = fixture.componentInstance;
       component.onSlotClick(court, '10:00');
-      component.durationMinutes = 60;
+      component.durationMinutes.set(60);
       expect(component.courtPrice).toBe(3000);
     });
 
@@ -260,7 +260,7 @@ describe('ScheduleComponent', () => {
       const component = fixture.componentInstance;
       component.onSlotClick(court, '10:00');
       component.isTeacherBooking = true;
-      component.durationMinutes = 60;
+      component.durationMinutes.set(60);
       expect(component.courtPrice).toBe(2500);
     });
 
@@ -280,7 +280,7 @@ describe('ScheduleComponent', () => {
       fixture.detectChanges();
       const component = fixture.componentInstance;
       component.onSlotClick(court, '22:30');
-      component.durationMinutes = 90;
+      component.durationMinutes.set(90);
       expect(component.exceedsClosingTime).toBe(true);
     });
 
@@ -315,8 +315,8 @@ describe('ScheduleComponent', () => {
       component.addToCart(product);
       component.addToCart(product);
 
-      expect(component.cart.length).toBe(1);
-      expect(component.cart[0].quantity).toBe(2);
+      expect(component.cart().length).toBe(1);
+      expect(component.cart()[0].quantity).toBe(2);
     });
 
     it('updateQty() removes the item when quantity drops to 0', () => {
@@ -328,7 +328,7 @@ describe('ScheduleComponent', () => {
 
       component.updateQty(product.id, 0);
 
-      expect(component.cart.length).toBe(0);
+      expect(component.cart().length).toBe(0);
     });
 
     it('removeFromCart() removes the matching product', () => {
@@ -338,7 +338,7 @@ describe('ScheduleComponent', () => {
       const component = fixture.componentInstance;
       component.addToCart(product);
       component.removeFromCart(product.id);
-      expect(component.cart.length).toBe(0);
+      expect(component.cart().length).toBe(0);
     });
   });
 
@@ -384,7 +384,7 @@ describe('ScheduleComponent', () => {
       component.saveBooking();
 
       expect(bookingsServiceSpy.create).toHaveBeenCalled();
-      expect(component.isDialogOpen).toBe(false);
+      expect(component.isDialogOpen()).toBe(false);
       expect(toastServiceSpy.success).toHaveBeenCalled();
     });
 
@@ -459,12 +459,12 @@ describe('ScheduleComponent', () => {
       const fixture = TestBed.createComponent(ScheduleComponent);
       fixture.detectChanges();
       const component = fixture.componentInstance;
-      component.isDialogOpen = true;
+      component.isDialogOpen.set(true);
 
       component.onStartPlaying(booking);
 
       expect(toastServiceSpy.success).toHaveBeenCalledWith('Clase registrada', jasmine.any(String));
-      expect(component.isDialogOpen).toBe(false);
+      expect(component.isDialogOpen()).toBe(false);
     });
 
     it('onFinishPlaying() completes the booking with the paid amounts', () => {
@@ -521,7 +521,7 @@ describe('ScheduleComponent', () => {
         item: { data: makeBooking() },
       } as any);
 
-      expect(fixture.componentInstance.rescheduleDialogOpen).toBe(false);
+      expect(fixture.componentInstance.rescheduleDialogOpen()).toBe(false);
     });
 
     it('onBookingDrop() ignores completed bookings', fakeAsync(() => {
@@ -536,7 +536,7 @@ describe('ScheduleComponent', () => {
       } as any);
       tick(4000);
 
-      expect(fixture.componentInstance.rescheduleDialogOpen).toBe(false);
+      expect(fixture.componentInstance.rescheduleDialogOpen()).toBe(false);
       discardPeriodicTasks();
     }));
 
@@ -552,7 +552,7 @@ describe('ScheduleComponent', () => {
       } as any);
       tick(4000);
 
-      expect(fixture.componentInstance.rescheduleDialogOpen).toBe(true);
+      expect(fixture.componentInstance.rescheduleDialogOpen()).toBe(true);
       expect(fixture.componentInstance.rescheduleTargetCourtId).toBe('c2');
       discardPeriodicTasks();
     }));
