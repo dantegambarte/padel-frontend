@@ -88,8 +88,8 @@ describe('InternalConsumptionFormComponent', () => {
     fixture.detectChanges();
 
     expect(usersServiceSpy.findAll).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.products).toEqual([product]);
-    expect(fixture.componentInstance.loadingData).toBe(false);
+    expect(fixture.componentInstance.products()).toEqual([product]);
+    expect(fixture.componentInstance.loadingData()).toBe(false);
     expect(fixture.componentInstance.itemsArray.length).toBe(1);
   });
 
@@ -105,7 +105,7 @@ describe('InternalConsumptionFormComponent', () => {
     productsServiceSpy.findAll.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(InternalConsumptionFormComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.serverError).toContain('No se pudieron cargar');
+    expect(fixture.componentInstance.serverError()).toContain('No se pudieron cargar');
   });
 
   it('canSubmit requires a consumer and at least one product', () => {
@@ -141,7 +141,7 @@ describe('InternalConsumptionFormComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.serverError).toContain('Seleccioná un profesor');
+    expect(fixture.componentInstance.serverError()).toContain('Seleccioná un profesor');
     expect(serviceSpy.create).not.toHaveBeenCalled();
   });
 
@@ -175,7 +175,7 @@ describe('InternalConsumptionFormComponent', () => {
 
     fixture.componentInstance.onSubmit();
 
-    expect(fixture.componentInstance.showWhatsAppPrompt).toBe(true);
+    expect(fixture.componentInstance.showWhatsAppPrompt()).toBe(true);
     expect(emitSpy).not.toHaveBeenCalled();
   });
 
@@ -184,7 +184,7 @@ describe('InternalConsumptionFormComponent', () => {
     const windowOpenSpy = spyOn(window, 'open');
     const fixture = TestBed.createComponent(InternalConsumptionFormComponent);
     fixture.detectChanges();
-    fixture.componentInstance.whatsAppUrl = 'https://wa.me/123';
+    fixture.componentInstance.whatsAppUrl.set('https://wa.me/123');
     const emitSpy = spyOn(fixture.componentInstance.saved, 'emit');
 
     fixture.componentInstance.confirmWhatsApp(true);

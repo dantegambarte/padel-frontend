@@ -72,7 +72,7 @@
           class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <option value="">Todas las categorías</option>
-          <option *ngFor="let cat of categories" [value]="cat.id">
+          <option *ngFor="let cat of categories()" [value]="cat.id">
             {{ cat.name }}
           </option>
         </select>
@@ -151,7 +151,7 @@
         </thead>
 
         <tbody class="block md:table-row-group">
-          <ng-container *ngIf="isLoading; else productRows">
+          <ng-container *ngIf="isLoading(); else productRows">
             <tr
               *ngFor="let i of [1, 2, 3, 4, 5]"
               class="block md:table-row border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0"
@@ -172,9 +172,9 @@
               <tr
                 *ngFor="let product of filteredProducts"
                 [id]="'product-' + product.id"
-                [class.ring-2]="highlightedProductId === product.id"
-                [class.ring-amber-400]="highlightedProductId === product.id"
-                [class.bg-amber-50]="highlightedProductId === product.id"
+                [class.ring-2]="highlightedProductId() === product.id"
+                [class.ring-amber-400]="highlightedProductId() === product.id"
+                [class.bg-amber-50]="highlightedProductId() === product.id"
                 class="block md:table-row bg-card md:bg-transparent border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0 transition-colors md:hover:bg-muted/50"
               >
                 <td class="block md:table-cell px-0 md:px-3 py-0 md:py-3">
@@ -343,7 +343,7 @@
                     role="switch"
                     [attr.aria-checked]="product.isFeatured"
                     [disabled]="
-                      isReadOnly || togglingFeaturedIds.has(product.id)
+                      isReadOnly || togglingFeaturedIds().has(product.id)
                     "
                     (click)="persistToggleFeatured(product)"
                     [title]="
@@ -357,7 +357,7 @@
                       'bg-input': !product.isFeatured,
                       'cursor-pointer': !isReadOnly,
                       'cursor-default': isReadOnly,
-                      'animate-pulse': togglingFeaturedIds.has(product.id),
+                      'animate-pulse': togglingFeaturedIds().has(product.id),
                     }"
                   >
                     <span
@@ -427,7 +427,7 @@
                       <button
                         type="button"
                         (click)="deleteProduct(product)"
-                        [disabled]="deletingId === product.id"
+                        [disabled]="deletingId() === product.id"
                         title="Eliminar producto"
                         class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
@@ -484,21 +484,21 @@
         <div class="rounded-lg border border-border p-4">
           <p class="text-sm text-muted-foreground">Total</p>
           <p class="text-2xl font-bold text-card-foreground">
-            {{ totalProducts }}
+            {{ totalProducts() }}
           </p>
         </div>
 
         <div class="rounded-lg border border-border p-4 md:col-span-2">
           <p class="text-sm text-muted-foreground">Valor inventario</p>
           <p class="text-2xl font-bold text-card-foreground">
-            ${{ fmt(totalInventoryValue) }}
+            ${{ fmt(totalInventoryValue()) }}
           </p>
         </div>
 
         <div
           class="rounded-lg border p-4"
           [ngClass]="
-            outOfStockCount > 0
+            outOfStockCount() > 0
               ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20'
               : 'border-border'
           "
@@ -506,7 +506,7 @@
           <p
             class="text-sm font-medium"
             [ngClass]="
-              outOfStockCount > 0
+              outOfStockCount() > 0
                 ? 'text-red-600 dark:text-red-400'
                 : 'text-muted-foreground'
             "
@@ -516,19 +516,19 @@
           <p
             class="text-2xl font-bold"
             [ngClass]="
-              outOfStockCount > 0
+              outOfStockCount() > 0
                 ? 'text-red-700 dark:text-red-300'
                 : 'text-card-foreground'
             "
           >
-            {{ outOfStockCount }}
+            {{ outOfStockCount() }}
           </p>
         </div>
 
         <div
           class="rounded-lg border p-4"
           [ngClass]="
-            lowStockCount > 0
+            lowStockCount() > 0
               ? 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20'
               : 'border-border'
           "
@@ -536,7 +536,7 @@
           <p
             class="text-sm font-medium"
             [ngClass]="
-              lowStockCount > 0
+              lowStockCount() > 0
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-muted-foreground'
             "
@@ -546,12 +546,12 @@
           <p
             class="text-2xl font-bold"
             [ngClass]="
-              lowStockCount > 0
+              lowStockCount() > 0
                 ? 'text-amber-700 dark:text-amber-300'
                 : 'text-card-foreground'
             "
           >
-            {{ lowStockCount }}
+            {{ lowStockCount() }}
           </p>
         </div>
       </div>
@@ -559,7 +559,7 @@
   </div>
 </div>
 
-<ng-container *ngIf="isDialogOpen">
+<ng-container *ngIf="isDialogOpen()">
   <div appModalScrollLock class="modal-backdrop" (click)="closeDialog()">
     <div
       role="dialog"
@@ -571,10 +571,10 @@
         <h2
           class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
         >
-          {{ dialogTitle }}
+          {{ dialogTitle() }}
         </h2>
         <p class="mt-1 text-sm text-muted-foreground">
-          {{ dialogDescription }}
+          {{ dialogDescription() }}
         </p>
       </div>
 
@@ -589,17 +589,17 @@
               type="text"
               placeholder="Ej: Pelotas Wilson"
               [(ngModel)]="form.name"
-              [disabled]="viewMode"
+              [disabled]="viewMode()"
               (blur)="touchField('name')"
               [ngClass]="
-                formTouched.name && !form.name.trim() && !viewMode
+                formTouched.name && !form.name.trim() && !viewMode()
                   ? 'border-destructive focus-visible:ring-destructive'
                   : 'border-input'
               "
               class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <p
-              *ngIf="formTouched.name && !form.name.trim() && !viewMode"
+              *ngIf="formTouched.name && !form.name.trim() && !viewMode()"
               class="text-xs text-destructive"
             >
               * Campo requerido
@@ -616,30 +616,30 @@
             <select
               id="prod-categoria"
               [(ngModel)]="form.category"
-              [disabled]="viewMode"
+              [disabled]="viewMode()"
               (change)="onCategoryChange()"
               (blur)="touchField('category')"
               [ngClass]="
-                formTouched.category && !form.category && !viewMode
+                formTouched.category && !form.category && !viewMode()
                   ? 'border-destructive focus-visible:ring-destructive'
                   : 'border-input'
               "
               class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="" disabled>Seleccione una categoría</option>
-              <option *ngFor="let cat of categories" [value]="cat.id">
+              <option *ngFor="let cat of categories()" [value]="cat.id">
                 {{ cat.name }}
               </option>
               <option value="__nueva__">+ Nueva categoría...</option>
             </select>
             <p
-              *ngIf="formTouched.category && !form.category && !viewMode"
+              *ngIf="formTouched.category && !form.category && !viewMode()"
               class="text-xs text-destructive"
             >
               * Campo requerido
             </p>
 
-            <ng-container *ngIf="isNewCategory && !viewMode">
+            <ng-container *ngIf="isNewCategory && !viewMode()">
               <p class="text-xs text-muted-foreground">
                 💡 Para servicios retornables (paletas, pelotas) usá la
                 categoría
@@ -656,7 +656,7 @@
             </ng-container>
 
             <p
-              *ngIf="isRentalCategory && !viewMode"
+              *ngIf="isRentalCategory && !viewMode()"
               class="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-md px-2 py-1"
             >
               <svg
@@ -699,7 +699,7 @@
               <select
                 id="prod-icono"
                 [(ngModel)]="form.icon"
-                [disabled]="viewMode"
+                [disabled]="viewMode()"
                 class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option *ngFor="let opt of iconOptions" [value]="opt.value">
@@ -723,18 +723,18 @@
                 min="0"
                 placeholder="0"
                 [(ngModel)]="form.costPrice"
-                [disabled]="viewMode"
+                [disabled]="viewMode()"
                 (blur)="touchField('costPrice')"
                 (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.costPrice && !form.costPrice && !viewMode
+                  formTouched.costPrice && !form.costPrice && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
                 class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <p
-                *ngIf="formTouched.costPrice && !form.costPrice && !viewMode"
+                *ngIf="formTouched.costPrice && !form.costPrice && !viewMode()"
                 class="text-xs text-destructive"
               >
                 * Campo requerido
@@ -751,18 +751,18 @@
                 min="0"
                 placeholder="0"
                 [(ngModel)]="form.salePrice"
-                [disabled]="viewMode"
+                [disabled]="viewMode()"
                 (blur)="touchField('salePrice')"
                 (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.salePrice && !form.salePrice && !viewMode
+                  formTouched.salePrice && !form.salePrice && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
                 class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <p
-                *ngIf="formTouched.salePrice && !form.salePrice && !viewMode"
+                *ngIf="formTouched.salePrice && !form.salePrice && !viewMode()"
                 class="text-xs text-destructive"
               >
                 * Campo requerido
@@ -781,18 +781,18 @@
                 min="0"
                 placeholder="0"
                 [(ngModel)]="form.stock"
-                [disabled]="viewMode"
+                [disabled]="viewMode()"
                 (blur)="touchField('stock')"
                 (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.stock && !form.stock && !viewMode
+                  formTouched.stock && !form.stock && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
                 class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <p
-                *ngIf="formTouched.stock && !form.stock && !viewMode"
+                *ngIf="formTouched.stock && !form.stock && !viewMode()"
                 class="text-xs text-destructive"
               >
                 * Campo requerido
@@ -812,7 +812,7 @@
                 min="0"
                 placeholder="5"
                 [(ngModel)]="form.minStock"
-                [disabled]="viewMode"
+                [disabled]="viewMode()"
                 (focus)="$any($event.target).select()"
                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -835,7 +835,7 @@
               type="button"
               role="switch"
               [attr.aria-checked]="form.isFeatured"
-              [disabled]="viewMode"
+              [disabled]="viewMode()"
               (click)="toggleFeatured()"
               [ngClass]="form.isFeatured ? 'bg-primary' : 'bg-input'"
               class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -855,19 +855,19 @@
           (click)="closeDialog()"
           class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {{ viewMode ? "Cerrar" : "Cancelar" }}
+          {{ viewMode() ? "Cerrar" : "Cancelar" }}
         </button>
         <button
-          *ngIf="!viewMode"
+          *ngIf="!viewMode()"
           type="button"
           (click)="saveProduct()"
-          [disabled]="isSubmitting"
+          [disabled]="isSubmitting()"
           class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <ng-container *ngIf="isSubmitting; else submitLabelTpl"
+          <ng-container *ngIf="isSubmitting(); else submitLabelTpl"
             >Guardando...</ng-container
           >
-          <ng-template #submitLabelTpl>{{ submitLabel }}</ng-template>
+          <ng-template #submitLabelTpl>{{ submitLabel() }}</ng-template>
         </button>
       </div>
     </div>

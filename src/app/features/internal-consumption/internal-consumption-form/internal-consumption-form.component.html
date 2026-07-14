@@ -1,11 +1,11 @@
-<div *ngIf="showWhatsAppPrompt" appModalScrollLock class="modal-backdrop" style="z-index:10001">
+<div *ngIf="showWhatsAppPrompt()" appModalScrollLock class="modal-backdrop" style="z-index:10001">
   <div class="relative w-full max-w-sm rounded-2xl bg-card shadow-2xl p-6 space-y-4 text-center border border-border">
     <div class="flex justify-center">
       <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500">
         <span class="material-symbols-rounded text-green-500 text-2xl">chat</span>
       </div>
     </div>
-    <h3 class="text-base font-semibold">¿Notificar a {{ savedTeacherName }}?</h3>
+    <h3 class="text-base font-semibold">¿Notificar a {{ savedTeacherName() }}?</h3>
     <p class="text-sm text-muted-foreground">
       Se abrirá WhatsApp con el resumen del consumo del mes para que el profesor esté al tanto de su deuda.
     </p>
@@ -46,14 +46,14 @@
       </button>
     </div>
 
-    <div *ngIf="loadingData" class="flex justify-center py-12">
+    <div *ngIf="loadingData()" class="flex justify-center py-12">
       <svg class="h-8 w-8 animate-spin text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
       </svg>
     </div>
 
     <form
-      *ngIf="!loadingData"
+      *ngIf="!loadingData()"
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
       novalidate
@@ -104,7 +104,7 @@
           <ng-container *ngIf="isEmployeeRole && !isTeacher; else searchableConsumer">
             <input
               type="text"
-              [value]="selectedConsumerName"
+              [value]="selectedConsumerName()"
               disabled
               class="w-full rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed opacity-75 shadow-sm"
             />
@@ -116,29 +116,29 @@
               <input
                 type="text"
                 [placeholder]="isTeacher ? 'Buscar profesor...' : 'Buscar empleado...'"
-                [value]="consumerSearch"
+                [value]="consumerSearch()"
                 (input)="onConsumerSearch($any($event.target).value)"
-                (focus)="showConsumerDropdown = true"
+                (focus)="showConsumerDropdown.set(true)"
                 autocomplete="off"
                 class="w-full rounded-md border bg-background px-3 py-2 pr-8 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
-              <button *ngIf="selectedConsumerName" type="button" (click)="clearConsumer()"
+              <button *ngIf="selectedConsumerName()" type="button" (click)="clearConsumer()"
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             </div>
-            <div *ngIf="showConsumerDropdown"
+            <div *ngIf="showConsumerDropdown()"
               class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
               <ng-container *ngIf="isTeacher">
-                <div *ngIf="filteredTeachers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
-                <button *ngFor="let t of filteredTeachers" type="button" (click)="selectTeacher(t)"
+                <div *ngIf="filteredTeachers().length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+                <button *ngFor="let t of filteredTeachers()" type="button" (click)="selectTeacher(t)"
                   class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
                   {{ t.fullName }}
                 </button>
               </ng-container>
               <ng-container *ngIf="!isTeacher">
-                <div *ngIf="filteredUsers.length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
-                <button *ngFor="let u of filteredUsers" type="button" (click)="selectUser(u)"
+                <div *ngIf="filteredUsers().length === 0" class="px-3 py-2 text-sm text-muted-foreground">Sin resultados.</div>
+                <button *ngFor="let u of filteredUsers()" type="button" (click)="selectUser(u)"
                   class="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
                   {{ u.fullName }}
                 </button>
@@ -244,9 +244,9 @@
           </div>
         </div>
 
-        <div *ngIf="serverError"
+        <div *ngIf="serverError()"
           class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {{ serverError }}
+          {{ serverError() }}
         </div>
 
       </div>
@@ -264,10 +264,10 @@
           [disabled]="!canSubmit"
           class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <svg *ngIf="submitting" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg *ngIf="submitting()" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
           </svg>
-          {{ submitting ? 'Guardando...' : 'Registrar ' + itemControls.length + ' producto' + (itemControls.length !== 1 ? 's' : '') }}
+          {{ submitting() ? 'Guardando...' : 'Registrar ' + itemControls.length + ' producto' + (itemControls.length !== 1 ? 's' : '') }}
         </button>
       </div>
     </form>

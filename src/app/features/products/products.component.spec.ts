@@ -85,9 +85,9 @@ describe('ProductsComponent', () => {
     setup();
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.products.length).toBe(3);
-    expect(fixture.componentInstance.categories).toEqual([bebidas, alquileres]);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.products().length).toBe(3);
+    expect(fixture.componentInstance.categories()).toEqual([bebidas, alquileres]);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('toasts an error when products fail to load', () => {
@@ -96,15 +96,15 @@ describe('ProductsComponent', () => {
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
     expect(toastServiceSpy.error).toHaveBeenCalled();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('outOfStockCount / lowStockCount classify by minStock threshold', () => {
     setup();
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.outOfStockCount).toBe(1);
-    expect(fixture.componentInstance.lowStockCount).toBe(1);
+    expect(fixture.componentInstance.outOfStockCount()).toBe(1);
+    expect(fixture.componentInstance.lowStockCount()).toBe(1);
   });
 
   it('totalInventoryValue sums salePrice * stock across all products', () => {
@@ -112,7 +112,7 @@ describe('ProductsComponent', () => {
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
     // 800*10 + 800*0 + 400*1 = 8400
-    expect(fixture.componentInstance.totalInventoryValue).toBe(8400);
+    expect(fixture.componentInstance.totalInventoryValue()).toBe(8400);
   });
 
   it('filteredProducts applies search, category and stock filters', () => {
@@ -153,7 +153,7 @@ describe('ProductsComponent', () => {
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.highlightedProductId).toBe('p1');
+    expect(fixture.componentInstance.highlightedProductId()).toBe('p1');
     document.body.removeChild(div);
   });
 
@@ -162,8 +162,8 @@ describe('ProductsComponent', () => {
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.isDialogOpen).toBe(true);
-    expect(fixture.componentInstance.dialogMode).toBe('create');
+    expect(fixture.componentInstance.isDialogOpen()).toBe(true);
+    expect(fixture.componentInstance.dialogMode()).toBe('create');
     expect(fixture.componentInstance.form.name).toBe('');
   });
 
@@ -172,7 +172,7 @@ describe('ProductsComponent', () => {
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
     fixture.componentInstance.openEdit(productA);
-    expect(fixture.componentInstance.dialogMode).toBe('edit');
+    expect(fixture.componentInstance.dialogMode()).toBe('edit');
     expect(fixture.componentInstance.form.name).toBe('Gatorade');
     expect(fixture.componentInstance.form.category).toBe('cat1');
   });
@@ -219,8 +219,8 @@ describe('ProductsComponent', () => {
     fixture.componentInstance.saveProduct();
 
     expect(productsServiceSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.isDialogOpen).toBe(false);
-    expect(fixture.componentInstance.products.some((p) => p.id === 'p4')).toBe(true);
+    expect(fixture.componentInstance.isDialogOpen()).toBe(false);
+    expect(fixture.componentInstance.products().some((p) => p.id === 'p4')).toBe(true);
   });
 
   it('saveProduct() for a rental category forces costPrice/stock to 0', () => {
@@ -265,7 +265,7 @@ describe('ProductsComponent', () => {
 
     expect(productsServiceSpy.createCategory).toHaveBeenCalledWith('Snacks');
     expect(productsServiceSpy.create).toHaveBeenCalled();
-    expect(fixture.componentInstance.categories.some((c) => c.id === 'cat3')).toBe(true);
+    expect(fixture.componentInstance.categories().some((c) => c.id === 'cat3')).toBe(true);
   });
 
   it('saveProduct() shows a specific error on 409 conflict', () => {
@@ -300,7 +300,7 @@ describe('ProductsComponent', () => {
 
     fixture.componentInstance.deleteProduct(productA);
 
-    expect(fixture.componentInstance.products.find((p) => p.id === 'p1')).toBeUndefined();
+    expect(fixture.componentInstance.products().find((p) => p.id === 'p1')).toBeUndefined();
     expect(toastServiceSpy.success).toHaveBeenCalled();
   });
 
@@ -309,7 +309,7 @@ describe('ProductsComponent', () => {
     productsServiceSpy.update.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    const product = fixture.componentInstance.products.find((p) => p.id === 'p1')!;
+    const product = fixture.componentInstance.products().find((p) => p.id === 'p1')!;
     const original = product.isFeatured;
 
     fixture.componentInstance.persistToggleFeatured(product);
@@ -324,7 +324,7 @@ describe('ProductsComponent', () => {
     productsServiceSpy.update.and.returnValue(of(productA));
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    fixture.componentInstance.togglingFeaturedIds.add('p1');
+    fixture.componentInstance.togglingFeaturedIds.update((ids) => new Set(ids).add('p1'));
 
     fixture.componentInstance.persistToggleFeatured(productA);
 
