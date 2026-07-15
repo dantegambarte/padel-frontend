@@ -1,4 +1,6 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   OnInit,
   OnDestroy,
@@ -84,6 +86,7 @@ interface CartItem {
         AsyncPipe,
         DecimalPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
   selectedDate = (() => {
@@ -429,6 +432,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     private pricingShiftsService: PricingShiftsService,
     private draftService: DraftService,
     public holidayService: HolidayService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -633,9 +637,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   /** `true` si el usuario actual es administrador. */
-  get isAdmin(): boolean {
-    return this.authService.isAdmin;
-  }
+  isAdmin = this.authService.isAdminSignal;
 
   /**
    * Genera el valor de `grid-template-columns` para la grilla de turnos.
@@ -2393,7 +2395,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   /** Cancela una reserva (solo admins). Evita doble-click con el guard `isSavingDetail`. */
   onCancelBooking(booking: BookingResponse): void {
-    if (!this.isAdmin) {
+    if (!this.isAdmin()) {
       this.toast.error(
         'Sin permisos',
         'Solo los administradores pueden cancelar reservas pagadas.',
@@ -2640,6 +2642,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       if (this.bookingMap.has(key)) continue;
       this.bookingMap.set(key, booking);
     }
+
+    // bookingMap es un Map plano (mutado in-place, no signal) leído por la
+    // grilla a través de getSlotBooking(). Algunos call sites de este helper
+    // (ej. el listener global bookingUpdated$) no escriben ningún signal en
+    // el mismo callback síncrono, así que bajo OnPush no dispararían CD sin
+    // este markForCheck() explícito.
+    this.cdr.markForCheck();
   }
 
   /** Elimina una reserva del bookingMap para su slot de inicio y todas sus continuaciones (30 min). */
@@ -2657,6 +2666,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       const slotHour = `${rH.toString().padStart(2, '0')}:${rM.toString().padStart(2, '0')}`;
       this.bookingMap.delete(`${booking.courtId}-${slotHour}`);
     }
+
+    this.cdr.markForCheck();
   }
 
   /** Devuelve la hora de fin de una reserva a partir de su hora de inicio y duración. */

@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgZone } from '@angular/core';
 import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
@@ -26,6 +26,7 @@ import { PricingShift } from '../../core/models/pricing-shift.model';
 
 describe('ScheduleComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let isAdminSignalMock: ReturnType<typeof signal<boolean>>;
   let configServiceSpy: jasmine.SpyObj<ConfigService>;
   let courtsServiceSpy: jasmine.SpyObj<CourtsService>;
   let bookingsServiceSpy: jasmine.SpyObj<BookingsService>;
@@ -98,7 +99,11 @@ describe('ScheduleComponent', () => {
     queryParams = new Subject();
     bookingUpdatedSubject = new Subject<BookingResponse>();
 
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], { isAdmin: true });
+    isAdminSignalMock = signal(true);
+    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
+      isAdmin: true,
+      isAdminSignal: isAdminSignalMock,
+    });
     configServiceSpy = jasmine.createSpyObj('ConfigService', ['getAll']);
     courtsServiceSpy = jasmine.createSpyObj('CourtsService', ['findAll']);
     bookingsServiceSpy = jasmine.createSpyObj('BookingsService', [
@@ -485,7 +490,7 @@ describe('ScheduleComponent', () => {
 
     it('onCancelBooking() blocks non-admin users', () => {
       setup();
-      Object.defineProperty(authServiceSpy, 'isAdmin', { get: () => false });
+      isAdminSignalMock.set(false);
       const fixture = TestBed.createComponent(ScheduleComponent);
       fixture.detectChanges();
 
