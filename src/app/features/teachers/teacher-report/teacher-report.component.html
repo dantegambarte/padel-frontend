@@ -10,490 +10,497 @@
 
   <div
     class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-  >
+    >
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div class="flex flex-col gap-1.5 lg:col-span-2">
         <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
           >Profesor</label
-        >
-        <select
-          [(ngModel)]="selectedTeacherId"
-          class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        >
-          <option value="" disabled>Seleccioná un profesor...</option>
-          <option *ngFor="let t of teachers()" [value]="t.id">
-            {{ t.fullName }}{{ !t.isActive ? " (inactivo)" : "" }}
-          </option>
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
-          >Período</label
-        >
-        <select
-          [(ngModel)]="periodType"
-          (ngModelChange)="recalcDates()"
-          class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        >
-          <option value="mensual">Mensual</option>
-          <option value="quincenal">Quincenal</option>
-          <option value="semanal">Semanal</option>
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5" *ngIf="showStartDay">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
-          >Día de inicio</label
-        >
-        <input
-          type="number" appDisableScroll
-          [(ngModel)]="startDay"
-          (ngModelChange)="recalcDates()"
-          min="1"
-          max="28"
-          class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        />
-      </div>
-    </div>
-
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
-          >Desde</label
-        >
-        <input
-          type="date"
-          [(ngModel)]="startDate"
-          class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        />
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
-          >Hasta</label
-        >
-        <input
-          type="date"
-          [(ngModel)]="endDate"
-          class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        />
-      </div>
-    </div>
-
-    <div class="mt-4 flex justify-end">
-      <button
-        type="button"
-        (click)="search()"
-        [disabled]="!canSearch || isLoading()"
-        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
-      >
-        <svg
-          *ngIf="!isLoading()"
-          class="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <svg
-          *ngIf="isLoading()"
-          class="h-4 w-4 animate-spin"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-        {{ isLoading() ? "Generando..." : "Generar Reporte" }}
-      </button>
-    </div>
-  </div>
-
-  <div *ngIf="isLoading()" class="space-y-4">
-    <div class="grid gap-4 sm:grid-cols-3">
-      <div
-        *ngFor="let _ of [1, 2, 3]"
-        class="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
-      ></div>
-    </div>
-    <div
-      class="h-64 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
-    ></div>
-  </div>
-
-  <ng-container *ngIf="report() as report">
-  <div
-    *ngIf="hasSearched() && !isLoading() && report.bookings.length === 0"
-    class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900"
-  >
-    <svg
-      class="mb-4 h-12 w-12 text-gray-300 dark:text-slate-600"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
-    </svg>
-    <p class="font-medium text-gray-500 dark:text-slate-400">
-      Sin turnos completados en el período
-    </p>
-    <p class="mt-1 text-sm text-gray-400 dark:text-slate-500">
-      {{ report.teacher.fullName }} no tiene turnos completados entre
-      {{ fmtDate(report.period.startDate) }} y
-      {{ fmtDate(report.period.endDate) }}.
-    </p>
-  </div>
-
-  <ng-container *ngIf="report.bookings.length > 0 && !isLoading()">
-    <div id="print-area" class="teacher-report-print-area space-y-6">
-      <div
-        class="hidden print:flex print:items-start print:justify-between print:border-b print:pb-4"
-      >
-        <div>
-          <h2 class="text-xl font-bold">
-            Liquidación — {{ report.teacher.fullName }}
-          </h2>
-          <p class="text-sm text-gray-500">
-            Período:
-            {{ fmtDateRange(report.period.startDate, report.period.endDate) }}
-          </p>
-        </div>
-        <div class="text-right text-sm text-gray-500">
-          <p>La Caldera — Club de Pádel</p>
-          <p>Emitido: {{ fmtDate(startDate) }}</p>
-        </div>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-3">
-        <div
-          class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-        >
-          <p
-            class="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500"
           >
-            Turnos
-          </p>
-          <p
-            class="mt-2 text-4xl font-extrabold text-gray-900 dark:text-slate-100"
-          >
-            {{ report.summary.totalBookings }}
-          </p>
-          <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
-            turnos completados
-          </p>
-        </div>
-
-        <div
-          class="rounded-xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/30"
-        >
-          <p
-            class="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400"
-          >
-            Horas trabajadas
-          </p>
-          <p
-            class="mt-2 text-4xl font-extrabold text-indigo-700 dark:text-indigo-300"
-          >
-            {{ fmtHours(report.summary.totalMinutes) }}
-          </p>
-          <p class="mt-1 text-sm text-indigo-500 dark:text-indigo-400">
-            en el período seleccionado
-          </p>
-        </div>
-
-        <div
-          class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
-        >
-          <p
-            class="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400"
-          >
-            Total a liquidar
-          </p>
-          <p
-            class="mt-2 text-4xl font-extrabold text-emerald-700 dark:text-emerald-300"
-          >
-            ${{ fmt(report.summary.totalAmount) }}
-          </p>
-          <p class="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
-            según tarifas históricas
-          </p>
-        </div>
-      </div>
-
-      <div
-        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      >
-        <div
-          class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 dark:border-slate-800 print:hidden md:flex-row md:items-center md:justify-between"
-        >
-          <div>
-            <p class="font-semibold text-gray-900 dark:text-slate-100">
-              Detalle de turnos — {{ report.teacher.fullName }}
-            </p>
-            <p class="text-sm text-gray-500 dark:text-slate-400">
-              {{ fmtDateRange(report.period.startDate, report.period.endDate) }}
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              (click)="openSettlement('clases')"
-              class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-600 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/30 print:hidden md:flex-none md:px-4"
+          <select
+            [(ngModel)]="selectedTeacherId"
+            class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
-              <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-              </svg>
-              Liquidar Solo Clases
-            </button>
-            <button
-              type="button"
-              (click)="openSettlement('completa')"
-              class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 print:hidden md:flex-none md:px-4"
+            <option value="" disabled>Seleccioná un profesor...</option>
+            @for (t of teachers(); track t) {
+              <option [value]="t.id">
+                {{ t.fullName }}{{ !t.isActive ? " (inactivo)" : "" }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+            >Período</label
             >
-              <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
-              Liquidar Deuda Completa
-            </button>
-            <button
-              type="button"
-              (click)="print()"
-              class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 md:w-auto md:px-4"
-            >
-              <svg
-                class="h-4 w-4 shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            <select
+              [(ngModel)]="periodType"
+              (ngModelChange)="recalcDates()"
+              class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               >
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path
-                  d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                />
-                <rect width="12" height="8" x="6" y="14" />
-              </svg>
-              Imprimir / PDF
-            </button>
+              <option value="mensual">Mensual</option>
+              <option value="quincenal">Quincenal</option>
+              <option value="semanal">Semanal</option>
+            </select>
           </div>
-        </div>
 
-        <!-- Cards mobile -->
-        <div class="divide-y divide-gray-100 dark:divide-slate-800 md:hidden">
-          <div
-            *ngFor="let b of report.bookings"
-            class="px-4 py-3"
-          >
-            <div class="flex items-start justify-between">
-              <div>
-                <p class="font-semibold text-gray-900 dark:text-slate-100">{{ fmtDate(b.date) }}</p>
-                <p class="text-sm text-gray-500 dark:text-slate-400">{{ b.hour }} · {{ fmtHours(b.durationMinutes) }} · {{ b.courtName }}</p>
-              </div>
-              <div class="text-right">
-                <p class="font-mono font-semibold text-gray-900 dark:text-slate-100">${{ fmt(b.teacherAmount) }}</p>
-                <p class="text-xs font-mono text-gray-400 dark:text-slate-500">${{ fmt(b.hourlyRate) }}/h</p>
-              </div>
+          @if (showStartDay) {
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+                >Día de inicio</label
+                >
+                <input
+                  type="number" appDisableScroll
+                  [(ngModel)]="startDay"
+                  (ngModelChange)="recalcDates()"
+                  min="1"
+                  max="28"
+                  class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </div>
+              }
             </div>
-          </div>
-          <div class="flex items-center justify-between bg-gray-50 px-4 py-3 dark:bg-slate-800">
-            <p class="font-semibold text-gray-700 dark:text-slate-300">
-              TOTAL — {{ report.summary.totalBookings }} turno{{ report.summary.totalBookings !== 1 ? "s" : "" }}
-              · {{ fmtHours(report.summary.totalMinutes) }}
-            </p>
-            <p class="font-mono font-semibold text-emerald-700 dark:text-emerald-400">${{ fmt(report.summary.totalAmount) }}</p>
-          </div>
-        </div>
 
-        <!-- Tabla desktop -->
-        <div class="hidden overflow-x-auto md:block">
-          <table class="w-full text-sm">
-            <thead>
-              <tr
-                class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
-              >
-                <th class="px-5 py-3">Fecha</th>
-                <th class="px-5 py-3">Horario</th>
-                <th class="px-5 py-3">Duración</th>
-                <th class="px-5 py-3">Cancha</th>
-                <th class="px-5 py-3 text-right">Tarifa/h</th>
-                <th class="px-5 py-3 text-right">Importe</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
-              <tr
-                *ngFor="let b of report.bookings"
-                class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
-              >
-                <td
-                  class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100"
-                >
-                  {{ fmtDate(b.date) }}
-                </td>
-                <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
-                  {{ b.hour }}
-                </td>
-                <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
-                  {{ fmtHours(b.durationMinutes) }}
-                </td>
-                <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
-                  {{ b.courtName }}
-                </td>
-                <td
-                  class="px-5 py-3 text-right font-mono text-gray-500 dark:text-slate-400"
-                >
-                  ${{ fmt(b.hourlyRate) }}
-                </td>
-                <td
-                  class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100"
-                >
-                  ${{ fmt(b.teacherAmount) }}
-                </td>
-              </tr>
-            </tbody>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+                  >Desde</label
+                  >
+                  <input
+                    type="date"
+                    [(ngModel)]="startDate"
+                    class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    />
+                  </div>
 
-            <tfoot>
-              <tr
-                class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
-              >
-                <td
-                  colspan="2"
-                  class="px-5 py-3 text-gray-700 dark:text-slate-300"
-                >
-                  TOTAL — {{ report.summary.totalBookings }} turno{{
-                    report.summary.totalBookings !== 1 ? "s" : ""
-                  }}
-                </td>
-                <td class="px-5 py-3 text-gray-700 dark:text-slate-300">
-                  {{ fmtHours(report.summary.totalMinutes) }}
-                </td>
-                <td colspan="2"></td>
-                <td
-                  class="px-5 py-3 text-right font-mono text-emerald-700 dark:text-emerald-400"
-                >
-                  ${{ fmt(report.summary.totalAmount) }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-gray-600 dark:text-slate-400"
+                      >Hasta</label
+                      >
+                      <input
+                        type="date"
+                        [(ngModel)]="endDate"
+                        class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        />
+                      </div>
+                    </div>
 
-      <div
-        *ngIf="report.consumptions.length > 0"
-        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      >
-        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800">
-          <div>
-            <p class="font-semibold text-gray-900 dark:text-slate-100">
-              Consumos Internos
-            </p>
-            <p class="text-sm text-gray-500 dark:text-slate-400">
-              {{ report.teacher.fullName }} — pendientes de pago
-            </p>
-          </div>
-          <button
-            type="button"
-            (click)="toggleConsumptions()"
-            class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            {{ showConsumptions() ? "Ocultar consumos internos" : "Ver consumos internos" }}
-          </button>
-        </div>
+                    <div class="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        (click)="search()"
+                        [disabled]="!canSearch || isLoading()"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                        @if (!isLoading()) {
+                          <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                          </svg>
+                        }
+                        @if (isLoading()) {
+                          <svg
+                            class="h-4 w-4 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                          </svg>
+                        }
+                        {{ isLoading() ? "Generando..." : "Generar Reporte" }}
+                      </button>
+                    </div>
+                  </div>
 
-        <div *ngIf="showConsumptions()" class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr
-                class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
-              >
-                <th class="px-5 py-3">Fecha</th>
-                <th class="px-5 py-3">Producto</th>
-                <th class="px-5 py-3 text-right">Cantidad</th>
-                <th class="px-5 py-3 text-right">Precio Unitario</th>
-                <th class="px-5 py-3 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
-              <tr
-                *ngFor="let c of report.consumptions"
-                class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
-              >
-                <td class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">
-                  {{ fmtDate(c.date) }}
-                </td>
-                <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
-                  {{ c.productName }}
-                </td>
-                <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-400">
-                  {{ c.quantity }}
-                </td>
-                <td class="px-5 py-3 text-right font-mono text-gray-500 dark:text-slate-400">
-                  ${{ fmt(c.unitCostPrice) }}
-                </td>
-                <td class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100">
-                  ${{ fmt(c.totalCost) }}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr
-                class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
-              >
-                <td colspan="4" class="px-5 py-3 text-gray-700 dark:text-slate-300">
-                  TOTAL CONSUMOS — {{ report.summary.totalConsumptions }} item{{
-                    report.summary.totalConsumptions !== 1 ? "s" : ""
-                  }}
-                </td>
-                <td class="px-5 py-3 text-right font-mono text-rose-700 dark:text-rose-400">
-                  ${{ fmt(report.summary.consumptionsTotal) }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+                  @if (isLoading()) {
+                    <div class="space-y-4">
+                      <div class="grid gap-4 sm:grid-cols-3">
+                        @for (_ of [1, 2, 3]; track _) {
+                          <div
+                            class="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
+                          ></div>
+                        }
+                      </div>
+                      <div
+                        class="h-64 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
+                      ></div>
+                    </div>
+                  }
 
-      <div
-        class="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
-      >
-        <span class="text-base font-semibold text-emerald-700 dark:text-emerald-300">
-          Total a Cobrar
-          <span
-            *ngIf="report.consumptions.length > 0 && !showConsumptions()"
-            class="text-xs font-normal text-emerald-600/80 dark:text-emerald-400/70"
-          >
-            (sin consumos internos)
-          </span>
-        </span>
-        <span class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
-          ${{ fmt(netTotal()) }}
-        </span>
-      </div>
-    </div>
-  </ng-container>
-  </ng-container>
-</div>
+                  @if (report(); as report) {
+                    @if (hasSearched() && !isLoading() && report.bookings.length === 0) {
+                      <div
+                        class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900"
+                        >
+                        <svg
+                          class="mb-4 h-12 w-12 text-gray-300 dark:text-slate-600"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          >
+                          <rect width="18" height="18" x="3" y="4" rx="2" />
+                          <path d="M16 2v4M8 2v4M3 10h18" />
+                          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+                        </svg>
+                        <p class="font-medium text-gray-500 dark:text-slate-400">
+                          Sin turnos completados en el período
+                        </p>
+                        <p class="mt-1 text-sm text-gray-400 dark:text-slate-500">
+                          {{ report.teacher.fullName }} no tiene turnos completados entre
+                          {{ fmtDate(report.period.startDate) }} y
+                          {{ fmtDate(report.period.endDate) }}.
+                        </p>
+                      </div>
+                    }
+                    @if (report.bookings.length > 0 && !isLoading()) {
+                      <div id="print-area" class="teacher-report-print-area space-y-6">
+                        <div
+                          class="hidden print:flex print:items-start print:justify-between print:border-b print:pb-4"
+                          >
+                          <div>
+                            <h2 class="text-xl font-bold">
+                              Liquidación — {{ report.teacher.fullName }}
+                            </h2>
+                            <p class="text-sm text-gray-500">
+                              Período:
+                              {{ fmtDateRange(report.period.startDate, report.period.endDate) }}
+                            </p>
+                          </div>
+                          <div class="text-right text-sm text-gray-500">
+                            <p>La Caldera — Club de Pádel</p>
+                            <p>Emitido: {{ fmtDate(startDate) }}</p>
+                          </div>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-3">
+                          <div
+                            class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                            >
+                            <p
+                              class="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500"
+                              >
+                              Turnos
+                            </p>
+                            <p
+                              class="mt-2 text-4xl font-extrabold text-gray-900 dark:text-slate-100"
+                              >
+                              {{ report.summary.totalBookings }}
+                            </p>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
+                              turnos completados
+                            </p>
+                          </div>
+                          <div
+                            class="rounded-xl border border-indigo-200 bg-indigo-50 p-5 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/30"
+                            >
+                            <p
+                              class="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400"
+                              >
+                              Horas trabajadas
+                            </p>
+                            <p
+                              class="mt-2 text-4xl font-extrabold text-indigo-700 dark:text-indigo-300"
+                              >
+                              {{ fmtHours(report.summary.totalMinutes) }}
+                            </p>
+                            <p class="mt-1 text-sm text-indigo-500 dark:text-indigo-400">
+                              en el período seleccionado
+                            </p>
+                          </div>
+                          <div
+                            class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
+                            >
+                            <p
+                              class="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400"
+                              >
+                              Total a liquidar
+                            </p>
+                            <p
+                              class="mt-2 text-4xl font-extrabold text-emerald-700 dark:text-emerald-300"
+                              >
+                              ${{ fmt(report.summary.totalAmount) }}
+                            </p>
+                            <p class="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
+                              según tarifas históricas
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                          >
+                          <div
+                            class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 dark:border-slate-800 print:hidden md:flex-row md:items-center md:justify-between"
+                            >
+                            <div>
+                              <p class="font-semibold text-gray-900 dark:text-slate-100">
+                                Detalle de turnos — {{ report.teacher.fullName }}
+                              </p>
+                              <p class="text-sm text-gray-500 dark:text-slate-400">
+                                {{ fmtDateRange(report.period.startDate, report.period.endDate) }}
+                              </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                (click)="openSettlement('clases')"
+                                class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-600 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/30 print:hidden md:flex-none md:px-4"
+                                >
+                                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                                </svg>
+                                Liquidar Solo Clases
+                              </button>
+                              <button
+                                type="button"
+                                (click)="openSettlement('completa')"
+                                class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 print:hidden md:flex-none md:px-4"
+                                >
+                                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                Liquidar Deuda Completa
+                              </button>
+                              <button
+                                type="button"
+                                (click)="print()"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 md:w-auto md:px-4"
+                                >
+                                <svg
+                                  class="h-4 w-4 shrink-0"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <polyline points="6 9 6 2 18 2 18 9" />
+                                  <path
+                                    d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                                    />
+                                    <rect width="12" height="8" x="6" y="14" />
+                                  </svg>
+                                  Imprimir / PDF
+                                </button>
+                              </div>
+                            </div>
+                            <!-- Cards mobile -->
+                            <div class="divide-y divide-gray-100 dark:divide-slate-800 md:hidden">
+                              @for (b of report.bookings; track b) {
+                                <div
+                                  class="px-4 py-3"
+                                  >
+                                  <div class="flex items-start justify-between">
+                                    <div>
+                                      <p class="font-semibold text-gray-900 dark:text-slate-100">{{ fmtDate(b.date) }}</p>
+                                      <p class="text-sm text-gray-500 dark:text-slate-400">{{ b.hour }} · {{ fmtHours(b.durationMinutes) }} · {{ b.courtName }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                      <p class="font-mono font-semibold text-gray-900 dark:text-slate-100">${{ fmt(b.teacherAmount) }}</p>
+                                      <p class="text-xs font-mono text-gray-400 dark:text-slate-500">${{ fmt(b.hourlyRate) }}/h</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                              <div class="flex items-center justify-between bg-gray-50 px-4 py-3 dark:bg-slate-800">
+                                <p class="font-semibold text-gray-700 dark:text-slate-300">
+                                  TOTAL — {{ report.summary.totalBookings }} turno{{ report.summary.totalBookings !== 1 ? "s" : "" }}
+                                  · {{ fmtHours(report.summary.totalMinutes) }}
+                                </p>
+                                <p class="font-mono font-semibold text-emerald-700 dark:text-emerald-400">${{ fmt(report.summary.totalAmount) }}</p>
+                              </div>
+                            </div>
+                            <!-- Tabla desktop -->
+                            <div class="hidden overflow-x-auto md:block">
+                              <table class="w-full text-sm">
+                                <thead>
+                                  <tr
+                                    class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                                    >
+                                    <th class="px-5 py-3">Fecha</th>
+                                    <th class="px-5 py-3">Horario</th>
+                                    <th class="px-5 py-3">Duración</th>
+                                    <th class="px-5 py-3">Cancha</th>
+                                    <th class="px-5 py-3 text-right">Tarifa/h</th>
+                                    <th class="px-5 py-3 text-right">Importe</th>
+                                  </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
+                                  @for (b of report.bookings; track b) {
+                                    <tr
+                                      class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                                      >
+                                      <td
+                                        class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100"
+                                        >
+                                        {{ fmtDate(b.date) }}
+                                      </td>
+                                      <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
+                                        {{ b.hour }}
+                                      </td>
+                                      <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
+                                        {{ fmtHours(b.durationMinutes) }}
+                                      </td>
+                                      <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
+                                        {{ b.courtName }}
+                                      </td>
+                                      <td
+                                        class="px-5 py-3 text-right font-mono text-gray-500 dark:text-slate-400"
+                                        >
+                                        ${{ fmt(b.hourlyRate) }}
+                                      </td>
+                                      <td
+                                        class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100"
+                                        >
+                                        ${{ fmt(b.teacherAmount) }}
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                                <tfoot>
+                                  <tr
+                                    class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
+                                    >
+                                    <td
+                                      colspan="2"
+                                      class="px-5 py-3 text-gray-700 dark:text-slate-300"
+                                      >
+                                      TOTAL — {{ report.summary.totalBookings }} turno{{
+                                      report.summary.totalBookings !== 1 ? "s" : ""
+                                      }}
+                                    </td>
+                                    <td class="px-5 py-3 text-gray-700 dark:text-slate-300">
+                                      {{ fmtHours(report.summary.totalMinutes) }}
+                                    </td>
+                                    <td colspan="2"></td>
+                                    <td
+                                      class="px-5 py-3 text-right font-mono text-emerald-700 dark:text-emerald-400"
+                                      >
+                                      ${{ fmt(report.summary.totalAmount) }}
+                                    </td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          </div>
+                          @if (report.consumptions.length > 0) {
+                            <div
+                              class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                              >
+                              <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+                                <div>
+                                  <p class="font-semibold text-gray-900 dark:text-slate-100">
+                                    Consumos Internos
+                                  </p>
+                                  <p class="text-sm text-gray-500 dark:text-slate-400">
+                                    {{ report.teacher.fullName }} — pendientes de pago
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  (click)="toggleConsumptions()"
+                                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                  >
+                                  {{ showConsumptions() ? "Ocultar consumos internos" : "Ver consumos internos" }}
+                                </button>
+                              </div>
+                              @if (showConsumptions()) {
+                                <div class="overflow-x-auto">
+                                  <table class="w-full text-sm">
+                                    <thead>
+                                      <tr
+                                        class="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                                        >
+                                        <th class="px-5 py-3">Fecha</th>
+                                        <th class="px-5 py-3">Producto</th>
+                                        <th class="px-5 py-3 text-right">Cantidad</th>
+                                        <th class="px-5 py-3 text-right">Precio Unitario</th>
+                                        <th class="px-5 py-3 text-right">Subtotal</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
+                                      @for (c of report.consumptions; track c) {
+                                        <tr
+                                          class="transition-colors hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                                          >
+                                          <td class="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">
+                                            {{ fmtDate(c.date) }}
+                                          </td>
+                                          <td class="px-5 py-3 text-gray-600 dark:text-slate-400">
+                                            {{ c.productName }}
+                                          </td>
+                                          <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-400">
+                                            {{ c.quantity }}
+                                          </td>
+                                          <td class="px-5 py-3 text-right font-mono text-gray-500 dark:text-slate-400">
+                                            ${{ fmt(c.unitCostPrice) }}
+                                          </td>
+                                          <td class="px-5 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100">
+                                            ${{ fmt(c.totalCost) }}
+                                          </td>
+                                        </tr>
+                                      }
+                                    </tbody>
+                                    <tfoot>
+                                      <tr
+                                        class="border-t-2 border-gray-200 bg-gray-50 font-semibold dark:border-slate-700 dark:bg-slate-800"
+                                        >
+                                        <td colspan="4" class="px-5 py-3 text-gray-700 dark:text-slate-300">
+                                          TOTAL CONSUMOS — {{ report.summary.totalConsumptions }} item{{
+                                          report.summary.totalConsumptions !== 1 ? "s" : ""
+                                          }}
+                                        </td>
+                                        <td class="px-5 py-3 text-right font-mono text-rose-700 dark:text-rose-400">
+                                          ${{ fmt(report.summary.consumptionsTotal) }}
+                                        </td>
+                                      </tr>
+                                    </tfoot>
+                                  </table>
+                                </div>
+                              }
+                            </div>
+                          }
+                          <div
+                            class="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
+                            >
+                            <span class="text-base font-semibold text-emerald-700 dark:text-emerald-300">
+                              Total a Cobrar
+                              @if (report.consumptions.length > 0 && !showConsumptions()) {
+                                <span
+                                  class="text-xs font-normal text-emerald-600/80 dark:text-emerald-400/70"
+                                  >
+                                  (sin consumos internos)
+                                </span>
+                              }
+                            </span>
+                            <span class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                              ${{ fmt(netTotal()) }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
 
-<app-teacher-settlement-modal
-  *ngIf="showSettlementModal() && report()"
-  [report]="report()!"
-  [mode]="settlementMode()"
-  (settled)="onSettled()"
-  (cancelled)="closeSettlement()"
-></app-teacher-settlement-modal>
+                  @if (showSettlementModal() && report()) {
+                    <app-teacher-settlement-modal
+                      [report]="report()!"
+                      [mode]="settlementMode()"
+                      (settled)="onSettled()"
+                      (cancelled)="closeSettlement()"
+                    ></app-teacher-settlement-modal>
+                  }

@@ -24,19 +24,17 @@ import { ExpensesService } from '../../../core/services/expenses.service';
 import { DraftService } from '../../../core/services/draft.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
 
 @Component({
     selector: 'app-expense-form',
     templateUrl: './expense-form.component.html',
     imports: [
-        ModalScrollLockDirective,
-        NgIf,
-        ReactiveFormsModule,
-        DisableScrollDirective,
-        NgFor,
-    ],
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    DisableScrollDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpenseFormComponent implements OnInit, OnDestroy {

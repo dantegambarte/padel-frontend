@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
 import { PricingShift } from '../../core/models/pricing-shift.model';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
@@ -11,13 +11,11 @@ import { DisableScrollDirective } from '../../shared/directives/disable-scroll.d
     selector: 'app-pricing-shifts',
     templateUrl: './pricing-shifts.component.html',
     imports: [
-        NgIf,
-        NgFor,
-        NgClass,
-        ModalScrollLockDirective,
-        ReactiveFormsModule,
-        DisableScrollDirective,
-    ],
+    NgClass,
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    DisableScrollDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PricingShiftsComponent implements OnInit {

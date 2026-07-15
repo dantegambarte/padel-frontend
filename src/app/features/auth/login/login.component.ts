@@ -4,16 +4,15 @@ import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
-import { NgIf, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'app-login',
     templateUrl: './login.component.html',
     imports: [
-        NgIf,
-        ReactiveFormsModule,
-        AsyncPipe,
-    ],
+    ReactiveFormsModule,
+    AsyncPipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {

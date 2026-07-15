@@ -5,7 +5,7 @@ import { TeachersService } from '../../core/services/teachers.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Teacher, CreateTeacherDto } from '../../core/models/teacher.model';
 import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
@@ -23,13 +23,11 @@ const EMPTY_FORM = (): FormState => ({
     selector: 'app-teachers',
     templateUrl: './teachers.component.html',
     imports: [
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        NgClass,
-        ModalScrollLockDirective,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    ModalScrollLockDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeachersComponent implements OnInit, CanComponentDeactivate {

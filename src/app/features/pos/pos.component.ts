@@ -28,7 +28,7 @@ import { DraftService } from '../../core/services/draft.service';
 import { getCategoryColor } from '../../core/utils/category-colors';
 import Swal from 'sweetalert2';
 import { TicketModalComponent } from '../cash-register/ticket-modal.component';
-import { NgIf, NgFor, NgTemplateOutlet, NgClass } from '@angular/common';
+import { NgTemplateOutlet, NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 interface PosCartItem {
@@ -45,14 +45,12 @@ interface PosCartItem {
     selector: 'app-pos',
     templateUrl: './pos.component.html',
     imports: [
-        TicketModalComponent,
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        NgTemplateOutlet,
-        NgClass,
-    ],
+    TicketModalComponent,
+    ReactiveFormsModule,
+    FormsModule,
+    NgTemplateOutlet,
+    NgClass
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosComponent implements OnInit, OnDestroy, AfterViewInit {

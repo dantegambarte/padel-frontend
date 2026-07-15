@@ -3,31 +3,32 @@
   (closeModal)="closeTicket()"
 ></app-ticket-modal>
 
-<div
-  *ngIf="toastMessage()"
-  class="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 shadow-lg pointer-events-none animate-[fadeInUp_0.2s_ease-out] md:hidden"
->
-  <svg
-    class="h-4 w-4 text-emerald-400 flex-shrink-0"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <path d="M16 10a4 4 0 0 1-8 0" />
-  </svg>
-  {{ toastMessage() }}
-</div>
+@if (toastMessage()) {
+  <div
+    class="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 shadow-lg pointer-events-none animate-[fadeInUp_0.2s_ease-out] md:hidden"
+    >
+    <svg
+      class="h-4 w-4 text-emerald-400 flex-shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      >
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+    {{ toastMessage() }}
+  </div>
+}
 
 <ng-template #tmplCartSection>
-  <ng-container *ngIf="cart().length === 0; else itemsList">
+  @if (cart().length === 0) {
     <div
       class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
-    >
+      >
       <svg
         class="mb-3 h-14 w-14 opacity-30"
         viewBox="0 0 24 24"
@@ -36,553 +37,552 @@
         stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
-      >
+        >
         <circle cx="8" cy="21" r="1" />
         <circle cx="19" cy="21" r="1" />
         <path
           d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-        />
-      </svg>
-      <p class="font-medium">No hay productos en el carrito</p>
-      <p class="text-sm mt-1">Seleccione productos del catálogo</p>
-    </div>
-  </ng-container>
-
-  <ng-template #itemsList>
-    <div class="space-y-2">
-      <div
-        *ngFor="let item of cart()"
-        class="flex flex-col gap-2 p-3 border border-border rounded-lg"
-      >
-        <div class="flex items-start gap-1">
-          <div class="flex-1 min-w-0">
-            <p class="line-clamp-2 text-sm font-medium leading-snug">
-              {{ item.name }}
-            </p>
-            <p class="text-xs text-muted-foreground mt-0.5">
-              ${{ fmt(item.salePrice) }} c/u
-            </p>
-          </div>
-
-          <button
-            type="button"
-            (click)="showItemDetails(item)"
-            aria-label="Ver detalles del producto"
-            class="shrink-0 p-1 text-primary/50 hover:text-primary rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
+          />
+        </svg>
+        <p class="font-medium">No hay productos en el carrito</p>
+        <p class="text-sm mt-1">Seleccione productos del catálogo</p>
+      </div>
+    } @else {
+      <div class="space-y-2">
+        @for (item of cart(); track item) {
+          <div
+            class="flex flex-col gap-2 p-3 border border-border rounded-lg"
             >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4" />
-              <path d="M12 8h.01" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            aria-label="Eliminar producto"
-            (click)="removeFromCart(item.productId)"
-            class="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-              <path d="M9 6V4h6v2" />
-            </svg>
-          </button>
-        </div>
-
-        <p
-          *ngIf="isLowStockItem(item)"
-          class="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-        >
-          <svg
-            class="h-3.5 w-3.5 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-            />
-            <path d="M12 9v4" />
-            <path d="M12 17h.01" />
-          </svg>
-          Últimas unidades ({{ item.stock }} en stock)
-        </p>
-
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Decrementar cantidad"
-              (click)="updateQuantity(item.productId, -1)"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <svg
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M5 12h14" />
-              </svg>
-            </button>
-            <span class="w-8 text-center font-bold text-sm">
-              {{ item.quantity }}
-            </span>
-            <button
-              type="button"
-              aria-label="Incrementar cantidad"
-              (click)="updateQuantity(item.productId, 1)"
-              [disabled]="isAtStockLimit(item)"
+            <div class="flex items-start gap-1">
+              <div class="flex-1 min-w-0">
+                <p class="line-clamp-2 text-sm font-medium leading-snug">
+                  {{ item.name }}
+                </p>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  ${{ fmt(item.salePrice) }} c/u
+                </p>
+              </div>
+              <button
+                type="button"
+                (click)="showItemDetails(item)"
+                aria-label="Ver detalles del producto"
+                class="shrink-0 p-1 text-primary/50 hover:text-primary rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Eliminar producto"
+                (click)="removeFromCart(item.productId)"
+                class="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+              </button>
+            </div>
+            @if (isLowStockItem(item)) {
+              <p
+                class="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                >
+                <svg
+                  class="h-3.5 w-3.5 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                    />
+                    <path d="M12 9v4" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                  Últimas unidades ({{ item.stock }} en stock)
+                </p>
+              }
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    aria-label="Decrementar cantidad"
+                    (click)="updateQuantity(item.productId, -1)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                    <svg
+                      class="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      >
+                      <path d="M5 12h14" />
+                    </svg>
+                  </button>
+                  <span class="w-8 text-center font-bold text-sm">
+                    {{ item.quantity }}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Incrementar cantidad"
+                    (click)="updateQuantity(item.productId, 1)"
+                    [disabled]="isAtStockLimit(item)"
               [title]="
                 isAtStockLimit(item)
                   ? 'Stock máximo alcanzado (' + item.stock + ' uds.)'
                   : ''
               "
-              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
-            >
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-transparent text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
+                    >
+                    <svg
+                      class="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      >
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="font-bold text-sm">
+                  ${{ fmt(item.salePrice * item.quantity) }}
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </ng-template>
+
+    <ng-template #tmplPaymentSection>
+      <div class="space-y-4">
+        @if (!isEditingOpenAccount()) {
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="customerName">
+              Nombre del Cliente
+              <span class="ml-1 text-xs font-normal text-muted-foreground">
+                (Opcional)
+              </span>
+            </label>
+            <input
+              id="customerName"
+              type="text"
+              placeholder="Ej: Juan Pérez"
+              [(ngModel)]="customerName"
+              (ngModelChange)="triggerCartDraftSave()"
+              maxlength="100"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+          }
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <label class="text-sm font-medium leading-none" for="efectivo">
+                Efectivo
+              </label>
+              <input
+                id="efectivo"
+                type="number"
+                appDisableScroll
+                min="0"
+                placeholder="0"
+                [(ngModel)]="montoEfectivo"
+                (ngModelChange)="triggerCartDraftSave()"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium leading-none" for="transferencia">
+                  Transferencia
+                </label>
+                <input
+                  id="transferencia"
+                  type="number"
+                  appDisableScroll
+                  min="0"
+                  placeholder="0"
+                  [(ngModel)]="montoTransferencia"
+                  (ngModelChange)="triggerCartDraftSave()"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2 rounded-lg bg-muted p-4">
+                <div class="flex justify-between text-sm">
+                  <span class="text-muted-foreground">Subtotal:</span>
+                  <span class="font-mono">${{ fmt(total()) }}</span>
+                </div>
+                @if (showPaymentDetails) {
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Total Pagado:</span>
+                    <span class="font-mono">${{ fmt(totalPagado) }}</span>
+                  </div>
+                  @if (faltante > 0) {
+                    <div class="flex justify-between text-sm text-destructive">
+                      <span>Faltante:</span>
+                      <span class="font-mono font-bold">${{ fmt(faltante) }}</span>
+                    </div>
+                  } @else {
+                    <div class="flex justify-between text-sm text-accent">
+                      <span>Vuelto:</span>
+                      <span class="font-mono font-bold">${{ fmt(-faltante) }}</span>
+                    </div>
+                  }
+                }
+                <div class="border-t border-border pt-2">
+                  <div class="flex justify-between">
+                    <span class="text-lg font-semibold">TOTAL:</span>
+                    <span class="text-2xl font-bold text-primary">
+                      ${{ fmt(total()) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-template>
+
+          <ng-template #tmplOpenAccountBanner>
+            @if (isEditingOpenAccount()) {
+              <div
+                class="mb-2 flex items-center justify-between gap-2 rounded-lg bg-amber-50 pl-3 pr-1.5 py-1.5 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                >
+                <span class="truncate flex items-center gap-1.5">
+                  <svg
+                    class="h-4 w-4 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Cliente: <strong class="truncate">{{ activeSaleCustomerName() }}</strong>
+                </span>
+                <button
+                  type="button"
+                  (click)="cancelOpenAccountEdit()"
+                  class="shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40 transition-colors"
+                  >
+                  <svg
+                    class="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                  Salir
+                </button>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template #tmplLeaveOpenBtn>
+            <button
+              type="button"
+              (click)="leaveOpenAccount()"
+              [disabled]="isLeaveOpenDisabled"
+              class="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-amber-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
               <svg
-                class="h-4 w-4"
+                class="h-4 w-4 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-              >
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
+                >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
               </svg>
+              {{ leaveOpenLabel() }}
             </button>
-          </div>
+          </ng-template>
 
-          <p class="font-bold text-sm">
-            ${{ fmt(item.salePrice * item.quantity) }}
-          </p>
-        </div>
-      </div>
-    </div>
-  </ng-template>
-</ng-template>
-
-<ng-template #tmplPaymentSection>
-  <div class="space-y-4">
-    <div class="space-y-2" *ngIf="!isEditingOpenAccount()">
-      <label class="text-sm font-medium leading-none" for="customerName">
-        Nombre del Cliente
-        <span class="ml-1 text-xs font-normal text-muted-foreground">
-          (Opcional)
-        </span>
-      </label>
-      <input
-        id="customerName"
-        type="text"
-        placeholder="Ej: Juan Pérez"
-        [(ngModel)]="customerName"
-        (ngModelChange)="triggerCartDraftSave()"
-        maxlength="100"
-        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      />
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div class="space-y-2">
-        <label class="text-sm font-medium leading-none" for="efectivo">
-          Efectivo
-        </label>
-        <input
-          id="efectivo"
-          type="number"
-          appDisableScroll
-          min="0"
-          placeholder="0"
-          [(ngModel)]="montoEfectivo"
-          (ngModelChange)="triggerCartDraftSave()"
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        />
-      </div>
-      <div class="space-y-2">
-        <label class="text-sm font-medium leading-none" for="transferencia">
-          Transferencia
-        </label>
-        <input
-          id="transferencia"
-          type="number"
-          appDisableScroll
-          min="0"
-          placeholder="0"
-          [(ngModel)]="montoTransferencia"
-          (ngModelChange)="triggerCartDraftSave()"
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        />
-      </div>
-    </div>
-
-    <div class="space-y-2 rounded-lg bg-muted p-4">
-      <div class="flex justify-between text-sm">
-        <span class="text-muted-foreground">Subtotal:</span>
-        <span class="font-mono">${{ fmt(total()) }}</span>
-      </div>
-      <ng-container *ngIf="showPaymentDetails">
-        <div class="flex justify-between text-sm">
-          <span class="text-muted-foreground">Total Pagado:</span>
-          <span class="font-mono">${{ fmt(totalPagado) }}</span>
-        </div>
-        <ng-container *ngIf="faltante > 0; else cambioBlock">
-          <div class="flex justify-between text-sm text-destructive">
-            <span>Faltante:</span>
-            <span class="font-mono font-bold">${{ fmt(faltante) }}</span>
-          </div>
-        </ng-container>
-        <ng-template #cambioBlock>
-          <div class="flex justify-between text-sm text-accent">
-            <span>Vuelto:</span>
-            <span class="font-mono font-bold">${{ fmt(-faltante) }}</span>
-          </div>
-        </ng-template>
-      </ng-container>
-      <div class="border-t border-border pt-2">
-        <div class="flex justify-between">
-          <span class="text-lg font-semibold">TOTAL:</span>
-          <span class="text-2xl font-bold text-primary">
-            ${{ fmt(total()) }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</ng-template>
-
-<ng-template #tmplOpenAccountBanner>
-  <div
-    *ngIf="isEditingOpenAccount()"
-    class="mb-2 flex items-center justify-between gap-2 rounded-lg bg-amber-50 pl-3 pr-1.5 py-1.5 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
-  >
-    <span class="truncate flex items-center gap-1.5">
-      <svg
-        class="h-4 w-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-      </svg>
-      Cliente: <strong class="truncate">{{ activeSaleCustomerName() }}</strong>
-    </span>
-    <button
-      type="button"
-      (click)="cancelOpenAccountEdit()"
-      class="shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40 transition-colors"
-    >
-      <svg
-        class="h-3.5 w-3.5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M18 6 6 18" />
-        <path d="m6 6 12 12" />
-      </svg>
-      Salir
-    </button>
-  </div>
-</ng-template>
-
-<ng-template #tmplLeaveOpenBtn>
-  <button
-    type="button"
-    (click)="leaveOpenAccount()"
-    [disabled]="isLeaveOpenDisabled"
-    class="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-amber-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-  >
-    <svg
-      class="h-4 w-4 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </svg>
-    {{ leaveOpenLabel() }}
-  </button>
-</ng-template>
-
-<ng-template #tmplConfirmBtn>
-  <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
-  <div class="flex gap-2">
-    <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
-    <button
-      type="button"
-      (click)="confirmSale()"
-      [disabled]="isConfirmDisabled"
+          <ng-template #tmplConfirmBtn>
+            <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
+            <div class="flex gap-2">
+              <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
+              <button
+                type="button"
+                (click)="confirmSale()"
+                [disabled]="isConfirmDisabled"
       [ngClass]="
         isCashRegisterOpen()
           ? 'bg-primary text-primary-foreground hover:bg-primary/90'
           : 'bg-amber-600 text-white hover:bg-amber-700'
       "
-      class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <svg
-        class="h-5 w-5 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-      <ng-container *ngIf="isSubmitting(); else confirmarLabel">
-        Procesando...
-      </ng-container>
-      <ng-template #confirmarLabel>
-        {{ isCashRegisterOpen() ? "Cobrar" : "Caja Cerrada (Clic para abrir)" }}
-      </ng-template>
-    </button>
-  </div>
-</ng-template>
+                class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                <svg
+                  class="h-5 w-5 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  >
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                @if (isSubmitting()) {
+                  Procesando...
+                } @else {
+                  {{ isCashRegisterOpen() ? "Cobrar" : "Caja Cerrada (Clic para abrir)" }}
+                }
+              </button>
+            </div>
+          </ng-template>
 
-<div class="flex flex-col md:flex-row md:items-start gap-6">
-  <div
-    class="w-full md:flex-1 md:min-w-0 flex flex-col pb-20 md:pb-0 rounded-lg border border-border bg-card text-card-foreground shadow-md"
-  >
-    <div class="flex flex-col space-y-1.5 border-b border-border p-6">
-      <h3
-        class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
-      >
-        <svg
-          class="h-5 w-5 shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="8" cy="21" r="1" />
-          <circle cx="19" cy="21" r="1" />
-          <path
-            d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-          />
-        </svg>
-        Catálogo de Productos
-      </h3>
-      <p class="text-sm text-muted-foreground">
-        Seleccione los productos para agregar al carrito
-      </p>
+          <div class="flex flex-col md:flex-row md:items-start gap-6">
+            <div
+              class="w-full md:flex-1 md:min-w-0 flex flex-col pb-20 md:pb-0 rounded-lg border border-border bg-card text-card-foreground shadow-md"
+              >
+              <div class="flex flex-col space-y-1.5 border-b border-border p-6">
+                <h3
+                  class="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight text-card-foreground"
+                  >
+                  <svg
+                    class="h-5 w-5 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <circle cx="8" cy="21" r="1" />
+                    <circle cx="19" cy="21" r="1" />
+                    <path
+                      d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+                      />
+                    </svg>
+                    Catálogo de Productos
+                  </h3>
+                  <p class="text-sm text-muted-foreground">
+                    Seleccione los productos para agregar al carrito
+                  </p>
 
-      <div class="relative mt-4" *ngIf="mainView() === 'catalog'">
-        <svg
-          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
-        <input
-          type="text"
-          placeholder="Buscar productos..."
-          [ngModel]="searchQuery"
-          (ngModelChange)="onSearchChange($event)"
-          class="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        />
-      </div>
-    </div>
+                  @if (mainView() === 'catalog') {
+                    <div class="relative mt-4">
+                      <svg
+                        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Buscar productos..."
+                        [ngModel]="searchQuery"
+                        (ngModelChange)="onSearchChange($event)"
+                        class="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                      </div>
+                    }
+                  </div>
 
-    <div
-      class="grid grid-cols-2 text-sm font-medium border-b border-border flex-shrink-0"
-    >
-      <button
-        type="button"
-        (click)="mainView.set('catalog')"
-        class="flex items-center justify-center gap-1.5 py-3 border-b-2 transition-colors"
+                  <div
+                    class="grid grid-cols-2 text-sm font-medium border-b border-border flex-shrink-0"
+                    >
+                    <button
+                      type="button"
+                      (click)="mainView.set('catalog')"
+                      class="flex items-center justify-center gap-1.5 py-3 border-b-2 transition-colors"
         [ngClass]="
           mainView() === 'catalog'
             ? 'border-primary text-primary'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         "
-      >
-        <svg
-          class="h-4 w-4 shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="8" cy="21" r="1" />
-          <circle cx="19" cy="21" r="1" />
-          <path
-            d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-          />
-        </svg>
-        Catálogo
-      </button>
-      <button
-        type="button"
-        (click)="mainView.set('open-accounts')"
-        class="flex items-center justify-center gap-1.5 py-3 border-b-2 transition-colors"
+                      >
+                      <svg
+                        class="h-4 w-4 shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        >
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path
+                          d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+                          />
+                        </svg>
+                        Catálogo
+                      </button>
+                      <button
+                        type="button"
+                        (click)="mainView.set('open-accounts')"
+                        class="flex items-center justify-center gap-1.5 py-3 border-b-2 transition-colors"
         [ngClass]="
           mainView() === 'open-accounts'
             ? 'border-primary text-primary'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         "
-      >
-        <svg
-          class="h-4 w-4 shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-        </svg>
-        Cuentas Abiertas
-        <span
-          *ngIf="openSales().length"
-          class="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-primary"
-        >
-          {{ openSales().length }}
-        </span>
-      </button>
-    </div>
+                        >
+                        <svg
+                          class="h-4 w-4 shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                        Cuentas Abiertas
+                        @if (openSales().length) {
+                          <span
+                            class="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-primary"
+                            >
+                            {{ openSales().length }}
+                          </span>
+                        }
+                      </button>
+                    </div>
 
-    <div class="flex-1 overflow-auto p-4">
-      <ng-container *ngIf="mainView() === 'open-accounts'; else catalogView">
-        <ng-container *ngIf="isLoadingOpenSales(); else openAccountsList">
-          <div class="space-y-2">
-            <div
-              *ngFor="let i of [1, 2, 3]"
-              class="h-16 animate-pulse rounded-lg border border-border bg-muted"
-            ></div>
-          </div>
-        </ng-container>
-        <ng-template #openAccountsList>
-          <div class="space-y-2">
-            <button
-              *ngFor="let sale of openSales()"
-              type="button"
-              (click)="selectOpenSale(sale)"
-              class="flex w-full items-center gap-3 rounded-lg border border-input p-3 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-              >
-                {{ (sale.customerName ?? "?").charAt(0).toUpperCase() }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold">
-                  {{ sale.customerName }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ sale.items.length }} ítem{{
-                    sale.items.length !== 1 ? "s" : ""
-                  }}
-                </p>
-              </div>
-              <p class="shrink-0 font-bold text-primary">
-                ${{ fmt(+sale.total) }}
-              </p>
-              <svg
-                class="h-4 w-4 shrink-0 text-muted-foreground"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-            <div
-              *ngIf="!openSales().length"
-              class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
-            >
-              <svg
-                class="mb-3 h-14 w-14 opacity-30"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-              <p class="font-medium">No hay cuentas abiertas</p>
-              <p class="text-sm mt-1">
-                Usá "Dejar Abierta" para guardar una mesa o cliente
-              </p>
-            </div>
-          </div>
-        </ng-template>
-      </ng-container>
-
-      <ng-template #catalogView>
-        <ng-container *ngIf="isLoadingProducts(); else productList">
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div
-              *ngFor="let i of [1, 2, 3, 4, 5, 6]"
-              class="h-28 animate-pulse rounded-md border border-border bg-muted"
-            ></div>
-          </div>
-        </ng-container>
-
-        <ng-template #productList>
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <button
-              *ngFor="let product of filteredProducts()"
-              type="button"
-              (click)="addToCart(product)"
+                    <div class="flex-1 overflow-auto p-4">
+                      @if (mainView() === 'open-accounts') {
+                        @if (isLoadingOpenSales()) {
+                          <div class="space-y-2">
+                            @for (i of [1, 2, 3]; track i) {
+                              <div
+                                class="h-16 animate-pulse rounded-lg border border-border bg-muted"
+                              ></div>
+                            }
+                          </div>
+                        } @else {
+                          <div class="space-y-2">
+                            @for (sale of openSales(); track sale) {
+                              <button
+                                type="button"
+                                (click)="selectOpenSale(sale)"
+                                class="flex w-full items-center gap-3 rounded-lg border border-input p-3 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                <div
+                                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                  >
+                                  {{ (sale.customerName ?? "?").charAt(0).toUpperCase() }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                  <p class="truncate text-sm font-semibold">
+                                    {{ sale.customerName }}
+                                  </p>
+                                  <p class="text-xs text-muted-foreground">
+                                    {{ sale.items.length }} ítem{{
+                                    sale.items.length !== 1 ? "s" : ""
+                                    }}
+                                  </p>
+                                </div>
+                                <p class="shrink-0 font-bold text-primary">
+                                  ${{ fmt(+sale.total) }}
+                                </p>
+                                <svg
+                                  class="h-4 w-4 shrink-0 text-muted-foreground"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <path d="m9 18 6-6-6-6" />
+                                </svg>
+                              </button>
+                            }
+                            @if (!openSales().length) {
+                              <div
+                                class="flex flex-col items-center justify-center py-10 text-center text-muted-foreground"
+                                >
+                                <svg
+                                  class="mb-3 h-14 w-14 opacity-30"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <path d="M12 20h9" />
+                                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                </svg>
+                                <p class="font-medium">No hay cuentas abiertas</p>
+                                <p class="text-sm mt-1">
+                                  Usá "Dejar Abierta" para guardar una mesa o cliente
+                                </p>
+                              </div>
+                            }
+                          </div>
+                        }
+                      } @else {
+                        @if (isLoadingProducts()) {
+                          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                              <div
+                                class="h-28 animate-pulse rounded-md border border-border bg-muted"
+                              ></div>
+                            }
+                          </div>
+                        } @else {
+                          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            @for (product of filteredProducts(); track product) {
+                              <button
+                                type="button"
+                                (click)="addToCart(product)"
               [class.opacity-50]="
                 !isRental(product) &&
                 getQuantityInCart(product) >= product.stock
@@ -591,7 +591,7 @@
                 !isRental(product) &&
                 getQuantityInCart(product) >= product.stock
               "
-              [class.grayscale]="!isRental(product) && product.stock === 0"
+                                [class.grayscale]="!isRental(product) && product.stock === 0"
               [class.cursor-not-allowed]="
                 !isRental(product) && product.stock === 0
               "
@@ -607,641 +607,662 @@
                   ? 'Stock máximo alcanzado (' + product.stock + ' uds.)'
                   : ''
               "
-              class="flex h-auto flex-col items-center justify-center gap-2 rounded-md border border-input bg-transparent p-4 text-sm font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div class="text-center">
-                <p class="line-clamp-2 font-semibold leading-snug">
-                  {{ product.name }}
-                </p>
-                <span
-                  class="mt-1 inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+                                class="flex h-auto flex-col items-center justify-center gap-2 rounded-md border border-input bg-transparent p-4 text-sm font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                <div class="text-center">
+                                  <p class="line-clamp-2 font-semibold leading-snug">
+                                    {{ product.name }}
+                                  </p>
+                                  <span
+                                    class="mt-1 inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
                   [ngClass]="[
                     categoryColor(product).bg,
                     categoryColor(product).text,
                   ]"
-                >
-                  {{ product.category?.name }}
-                </span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <p class="text-lg font-bold text-primary">
-                  ${{ fmt(product.salePrice) }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  <ng-container
-                    *ngIf="
-                      (product.category?.name ?? '')
-                        .toLowerCase()
-                        .includes('alquiler');
-                      else stockLabel
-                    "
-                  >
-                    Servicio
-                  </ng-container>
-                  <ng-template #stockLabel>
-                    <span
+                                    >
+                                    {{ product.category?.name }}
+                                  </span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1">
+                                  <p class="text-lg font-bold text-primary">
+                                    ${{ fmt(product.salePrice) }}
+                                  </p>
+                                  <p class="text-xs text-muted-foreground">
+                                    @if (
+                                      (product.category?.name ?? '')
+                                      .toLowerCase()
+                                      .includes('alquiler')) {
+                                      Servicio
+                                    } @else {
+                                      <span
                       [ngClass]="
                         isLowStockProduct(product)
                           ? 'text-amber-600 font-semibold'
                           : ''
                       "
-                      class="inline-flex items-center gap-0.5"
-                    >
-                      <svg
-                        *ngIf="isLowStockProduct(product)"
-                        class="h-3 w-3 shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                                        class="inline-flex items-center gap-0.5"
+                                        >
+                                        @if (isLowStockProduct(product)) {
+                                          <svg
+                                            class="h-3 w-3 shrink-0"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2.5"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            >
+                                            <path
+                                              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                                              />
+                                              <path d="M12 9v4" />
+                                              <path d="M12 17h.01" />
+                                            </svg>
+                                          }
+                                          Stock: {{ product.stock }}
+                                        </span>
+                                      }
+                                    </p>
+                                  </div>
+                                </button>
+                              }
+                              @if (filteredProducts().length === 0) {
+                                <p
+                                  class="col-span-full py-8 text-center text-sm text-muted-foreground"
+                                  >
+                                  No se encontraron productos
+                                </p>
+                              }
+                            </div>
+                          }
+                        }
+
+                      </div>
+                    </div>
+
+                    <div
+                      class="hidden md:flex md:flex-col md:w-80 lg:w-96 md:flex-shrink-0 md:sticky md:top-4 md:h-[calc(100vh-7rem)] rounded-2xl border border-border bg-card text-card-foreground shadow-lg overflow-hidden"
                       >
-                        <path
-                          d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                        />
-                        <path d="M12 9v4" />
-                        <path d="M12 17h.01" />
-                      </svg>
-                      Stock: {{ product.stock }}
-                    </span>
-                  </ng-template>
-                </p>
-              </div>
-            </button>
+                      <div class="flex-shrink-0 border-b border-border">
+                        <div class="flex items-center gap-2 px-4 py-3">
+                          <svg
+                            class="h-5 w-5 shrink-0 text-primary"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                          </svg>
+                          <h3
+                            class="text-base font-semibold leading-none tracking-tight text-card-foreground"
+                            >
+                            Ticket Actual
+                          </h3>
+                          @if (totalItems() > 0) {
+                            <span
+                              class="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                              >
+                              {{ totalItems() }} ítem{{ totalItems() !== 1 ? "s" : "" }}
+                            </span>
+                          }
+                        </div>
 
-            <p
-              *ngIf="filteredProducts().length === 0"
-              class="col-span-full py-8 text-center text-sm text-muted-foreground"
-            >
-              No se encontraron productos
-            </p>
-          </div>
-        </ng-template>
-      </ng-template>
-    </div>
-  </div>
-
-  <div
-    class="hidden md:flex md:flex-col md:w-80 lg:w-96 md:flex-shrink-0 md:sticky md:top-4 md:h-[calc(100vh-7rem)] rounded-2xl border border-border bg-card text-card-foreground shadow-lg overflow-hidden"
-  >
-    <div class="flex-shrink-0 border-b border-border">
-      <div class="flex items-center gap-2 px-4 py-3">
-        <svg
-          class="h-5 w-5 shrink-0 text-primary"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-        <h3
-          class="text-base font-semibold leading-none tracking-tight text-card-foreground"
-        >
-          Ticket Actual
-        </h3>
-        <span
-          *ngIf="totalItems() > 0"
-          class="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
-        >
-          {{ totalItems() }} ítem{{ totalItems() !== 1 ? "s" : "" }}
-        </span>
-      </div>
-
-      <div class="grid grid-cols-2 text-xs font-medium">
-        <button
-          type="button"
-          (click)="prevDesktopStep()"
-          class="flex items-center justify-center gap-1.5 py-2 border-b-2 transition-colors"
+                        <div class="grid grid-cols-2 text-xs font-medium">
+                          <button
+                            type="button"
+                            (click)="prevDesktopStep()"
+                            class="flex items-center justify-center gap-1.5 py-2 border-b-2 transition-colors"
           [ngClass]="
             desktopStep() === 1
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           "
-        >
-          <svg
-            class="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="8" cy="21" r="1" />
-            <circle cx="19" cy="21" r="1" />
-            <path
-              d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-            />
-          </svg>
-          Ítems
-        </button>
-        <button
-          type="button"
-          (click)="nextDesktopStep()"
-          [disabled]="cart().length === 0"
-          class="flex items-center justify-center gap-1.5 py-2 border-b-2 transition-colors disabled:pointer-events-none disabled:opacity-40"
+                            >
+                            <svg
+                              class="h-3.5 w-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <circle cx="8" cy="21" r="1" />
+                              <circle cx="19" cy="21" r="1" />
+                              <path
+                                d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+                                />
+                              </svg>
+                              Ítems
+                            </button>
+                            <button
+                              type="button"
+                              (click)="nextDesktopStep()"
+                              [disabled]="cart().length === 0"
+                              class="flex items-center justify-center gap-1.5 py-2 border-b-2 transition-colors disabled:pointer-events-none disabled:opacity-40"
           [ngClass]="
             desktopStep() === 2
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           "
-        >
-          <svg
-            class="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-          Pago
-        </button>
-      </div>
-    </div>
+                              >
+                              <svg
+                                class="h-3.5 w-3.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                >
+                                <line x1="12" y1="1" x2="12" y2="23" />
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                              </svg>
+                              Pago
+                            </button>
+                          </div>
+                        </div>
 
-    <div
-      *ngIf="showCartDraftBanner()"
-      class="flex-shrink-0 flex items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm"
-    >
-      <span class="flex items-center gap-2 text-amber-800 font-medium">
-        <svg
-          class="h-4 w-4 shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polyline points="1 4 1 10 7 10" />
-          <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
-        </svg>
-        {{ cartDraftItemCount() }} ítem{{
-          cartDraftItemCount() !== 1 ? "s" : ""
-        }}
-        guardado{{ cartDraftItemCount() !== 1 ? "s" : "" }}
-      </span>
-      <div class="flex items-center gap-1">
-        <button
-          type="button"
-          (click)="restoreCartDraft()"
-          class="rounded px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 transition-colors"
-        >
-          Restaurar
-        </button>
-        <button
-          type="button"
-          (click)="dismissCartDraft()"
-          class="text-amber-600 hover:text-amber-900 transition-colors text-lg leading-none px-1"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+                        @if (showCartDraftBanner()) {
+                          <div
+                            class="flex-shrink-0 flex items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm"
+                            >
+                            <span class="flex items-center gap-2 text-amber-800 font-medium">
+                              <svg
+                                class="h-4 w-4 shrink-0"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                >
+                                <polyline points="1 4 1 10 7 10" />
+                                <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                              </svg>
+                              {{ cartDraftItemCount() }} ítem{{
+                              cartDraftItemCount() !== 1 ? "s" : ""
+                              }}
+                              guardado{{ cartDraftItemCount() !== 1 ? "s" : "" }}
+                            </span>
+                            <div class="flex items-center gap-1">
+                              <button
+                                type="button"
+                                (click)="restoreCartDraft()"
+                                class="rounded px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 transition-colors"
+                                >
+                                Restaurar
+                              </button>
+                              <button
+                                type="button"
+                                (click)="dismissCartDraft()"
+                                class="text-amber-600 hover:text-amber-900 transition-colors text-lg leading-none px-1"
+                                >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        }
 
-    <div #cartScrollContainer class="flex-1 overflow-y-auto scroll-smooth p-4">
-      <div *ngIf="desktopStep() === 1">
-        <ng-container *ngTemplateOutlet="tmplCartSection"></ng-container>
-      </div>
+                        <div #cartScrollContainer class="flex-1 overflow-y-auto scroll-smooth p-4">
+                          @if (desktopStep() === 1) {
+                            <div>
+                              <ng-container *ngTemplateOutlet="tmplCartSection"></ng-container>
+                            </div>
+                          }
 
-      <div *ngIf="desktopStep() === 2">
-        <ng-container *ngTemplateOutlet="tmplPaymentSection"></ng-container>
-      </div>
-    </div>
+                          @if (desktopStep() === 2) {
+                            <div>
+                              <ng-container *ngTemplateOutlet="tmplPaymentSection"></ng-container>
+                            </div>
+                          }
+                        </div>
 
-    <div class="flex-shrink-0 border-t border-border bg-muted/30 p-3">
-      <div *ngIf="desktopStep() === 1">
-        <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
-        <div class="flex gap-2">
-          <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
-          <button
-            type="button"
-            (click)="nextDesktopStep()"
-            [disabled]="cart().length === 0"
-            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Ir al Pago
-            <span class="opacity-75 font-normal">· ${{ fmt(total()) }}</span>
-            <svg
-              class="h-4 w-4 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
-        </div>
-      </div>
+                        <div class="flex-shrink-0 border-t border-border bg-muted/30 p-3">
+                          @if (desktopStep() === 1) {
+                            <div>
+                              <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
+                              <div class="flex gap-2">
+                                <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
+                                <button
+                                  type="button"
+                                  (click)="nextDesktopStep()"
+                                  [disabled]="cart().length === 0"
+                                  class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                  >
+                                  Ir al Pago
+                                  <span class="opacity-75 font-normal">· ${{ fmt(total()) }}</span>
+                                  <svg
+                                    class="h-4 w-4 shrink-0"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    >
+                                    <path d="m9 18 6-6-6-6" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          }
 
-      <div *ngIf="desktopStep() === 2">
-        <ng-container *ngTemplateOutlet="tmplConfirmBtn"></ng-container>
-      </div>
-    </div>
-  </div>
-</div>
+                          @if (desktopStep() === 2) {
+                            <div>
+                              <ng-container *ngTemplateOutlet="tmplConfirmBtn"></ng-container>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
 
-<div
-  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-200"
+                    <div
+                      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-200"
   [ngClass]="{
     'opacity-100 pointer-events-auto': isDetailModalOpen(),
     'opacity-0  pointer-events-none': !isDetailModalOpen(),
   }"
-  (click)="closeDetailModal()"
->
-  <div
-    class="relative w-full max-w-sm rounded-2xl bg-card text-card-foreground shadow-2xl border border-border p-6 flex flex-col gap-4 transition-transform duration-200"
+                      (click)="closeDetailModal()"
+                      >
+                      <div
+                        class="relative w-full max-w-sm rounded-2xl bg-card text-card-foreground shadow-2xl border border-border p-6 flex flex-col gap-4 transition-transform duration-200"
     [ngClass]="{
       'scale-100': isDetailModalOpen(),
       'scale-95': !isDetailModalOpen(),
     }"
-    (click)="$event.stopPropagation()"
-  >
-    <div class="flex items-start justify-between gap-3">
-      <h4
-        class="text-base font-semibold leading-snug text-card-foreground flex items-center gap-2"
-      >
-        <svg
-          class="h-5 w-5 shrink-0 text-primary"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v-4" />
-          <path d="M12 8h.01" />
-        </svg>
-        Detalle del Producto
-      </h4>
-      <button
-        type="button"
-        (click)="closeDetailModal()"
-        aria-label="Cerrar"
-        class="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <svg
-          class="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-      </button>
-    </div>
+                        (click)="$event.stopPropagation()"
+                        >
+                        <div class="flex items-start justify-between gap-3">
+                          <h4
+                            class="text-base font-semibold leading-snug text-card-foreground flex items-center gap-2"
+                            >
+                            <svg
+                              class="h-5 w-5 shrink-0 text-primary"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 16v-4" />
+                              <path d="M12 8h.01" />
+                            </svg>
+                            Detalle del Producto
+                          </h4>
+                          <button
+                            type="button"
+                            (click)="closeDetailModal()"
+                            aria-label="Cerrar"
+                            class="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                            <svg
+                              class="h-4 w-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <path d="M18 6 6 18" />
+                              <path d="m6 6 12 12" />
+                            </svg>
+                          </button>
+                        </div>
 
-    <ng-container *ngIf="selectedItemDetail() as item">
-      <p
-        class="text-sm font-medium text-card-foreground leading-snug rounded-lg bg-muted px-4 py-3"
-      >
-        {{ item.name }}
-      </p>
+                        @if (selectedItemDetail(); as item) {
+                          <p
+                            class="text-sm font-medium text-card-foreground leading-snug rounded-lg bg-muted px-4 py-3"
+                            >
+                            {{ item.name }}
+                          </p>
+                          <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                            <div class="flex flex-col gap-0.5">
+                              <dt
+                                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                >
+                                Categoría
+                              </dt>
+                              <dd class="font-semibold text-card-foreground">
+                                {{ item.category || "—" }}
+                              </dd>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                              <dt
+                                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                >
+                                Stock disponible
+                              </dt>
+                              <dd class="font-semibold text-card-foreground">
+                                {{ item.stock }} unidades
+                              </dd>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                              <dt
+                                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                >
+                                Precio unitario
+                              </dt>
+                              <dd class="font-semibold text-card-foreground">
+                                ${{ fmt(item.salePrice) }}
+                              </dd>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                              <dt
+                                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                >
+                                Cantidad en carrito
+                              </dt>
+                              <dd class="font-semibold text-card-foreground">
+                                {{ item.quantity }}
+                              </dd>
+                            </div>
+                            <div
+                              class="col-span-2 flex flex-col gap-0.5 border-t border-border pt-3"
+                              >
+                              <dt
+                                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                >
+                                Subtotal
+                              </dt>
+                              <dd class="text-xl font-bold text-primary">
+                                ${{ fmt(item.salePrice * item.quantity) }}
+                              </dd>
+                            </div>
+                          </dl>
+                        }
 
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-          >
-            Categoría
-          </dt>
-          <dd class="font-semibold text-card-foreground">
-            {{ item.category || "—" }}
-          </dd>
-        </div>
+                        <button
+                          type="button"
+                          (click)="closeDetailModal()"
+                          class="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                          Entendido
+                        </button>
+                      </div>
+                    </div>
 
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-          >
-            Stock disponible
-          </dt>
-          <dd class="font-semibold text-card-foreground">
-            {{ item.stock }} unidades
-          </dd>
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-          >
-            Precio unitario
-          </dt>
-          <dd class="font-semibold text-card-foreground">
-            ${{ fmt(item.salePrice) }}
-          </dd>
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <dt
-            class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-          >
-            Cantidad en carrito
-          </dt>
-          <dd class="font-semibold text-card-foreground">
-            {{ item.quantity }}
-          </dd>
-        </div>
-
-        <div
-          class="col-span-2 flex flex-col gap-0.5 border-t border-border pt-3"
-        >
-          <dt
-            class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-          >
-            Subtotal
-          </dt>
-          <dd class="text-xl font-bold text-primary">
-            ${{ fmt(item.salePrice * item.quantity) }}
-          </dd>
-        </div>
-      </dl>
-    </ng-container>
-
-    <button
-      type="button"
-      (click)="closeDetailModal()"
-      class="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      Entendido
-    </button>
-  </div>
-</div>
-
-<div
-  class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+                    <div
+                      class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
   [ngClass]="{
     'opacity-100 pointer-events-auto': isMobileCartOpen(),
     'opacity-0  pointer-events-none': !isMobileCartOpen(),
   }"
-  (click)="toggleMobileCart()"
-  aria-hidden="true"
-></div>
+                      (click)="toggleMobileCart()"
+                      aria-hidden="true"
+                    ></div>
 
-<div
-  class="fixed bottom-0 left-0 right-0 z-[101] flex flex-col max-h-[90dvh] bg-card text-card-foreground rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-out md:hidden"
+                    <div
+                      class="fixed bottom-0 left-0 right-0 z-[101] flex flex-col max-h-[90dvh] bg-card text-card-foreground rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-out md:hidden"
   [ngClass]="{
     'translate-y-0': isMobileCartOpen(),
     'translate-y-full': !isMobileCartOpen(),
   }"
->
-  <div
-    class="flex-shrink-0"
-    data-swipe-zone
-    (touchstart)="onTouchStart($event)"
-    (touchend)="onTouchEnd()"
-  >
-    <div
-      class="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
-    >
-      <div class="w-12 h-1.5 rounded-full bg-border"></div>
-    </div>
+                      >
+                      <div
+                        class="flex-shrink-0"
+                        data-swipe-zone
+                        (touchstart)="onTouchStart($event)"
+                        (touchend)="onTouchEnd()"
+                        >
+                        <div
+                          class="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+                          >
+                          <div class="w-12 h-1.5 rounded-full bg-border"></div>
+                        </div>
 
-    <div
-      class="flex items-center justify-between px-5 py-3 border-b border-border"
-    >
-      <div class="w-20">
-        <button
-          *ngIf="checkoutStep() === 2"
-          type="button"
-          (click)="prevStep()"
-          class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-        >
-          <svg
-            class="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          Volver
-        </button>
-      </div>
+                        <div
+                          class="flex items-center justify-between px-5 py-3 border-b border-border"
+                          >
+                          <div class="w-20">
+                            @if (checkoutStep() === 2) {
+                              <button
+                                type="button"
+                                (click)="prevStep()"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                                >
+                                <svg
+                                  class="h-4 w-4"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <path d="m15 18-6-6 6-6" />
+                                </svg>
+                                Volver
+                              </button>
+                            }
+                          </div>
 
-      <h3 class="text-base font-semibold leading-none text-card-foreground">
-        <span *ngIf="checkoutStep() === 1">
-          Ticket
-          <span *ngIf="totalItems() > 0">({{ totalItems() }})</span>
-        </span>
-        <span *ngIf="checkoutStep() === 2">Método de Pago</span>
-      </h3>
+                          <h3 class="text-base font-semibold leading-none text-card-foreground">
+                            @if (checkoutStep() === 1) {
+                              <span>
+                                Ticket
+                                @if (totalItems() > 0) {
+                                  <span>({{ totalItems() }})</span>
+                                }
+                              </span>
+                            }
+                            @if (checkoutStep() === 2) {
+                              <span>Método de Pago</span>
+                            }
+                          </h3>
 
-      <div class="w-20 flex justify-end">
-        <button
-          *ngIf="checkoutStep() === 1"
-          type="button"
-          (click)="toggleMobileCart()"
-          aria-label="Cerrar carrito"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <svg
-            class="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
+                          <div class="w-20 flex justify-end">
+                            @if (checkoutStep() === 1) {
+                              <button
+                                type="button"
+                                (click)="toggleMobileCart()"
+                                aria-label="Cerrar carrito"
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                <svg
+                                  class="h-5 w-5"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <path d="M18 6 6 18" />
+                                  <path d="m6 6 12 12" />
+                                </svg>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
 
-  <div
-    *ngIf="showCartDraftBanner()"
-    class="flex-shrink-0 flex items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm"
-  >
-    <span class="flex items-center gap-2 text-amber-800 font-medium">
-      <svg
-        class="h-4 w-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
-      </svg>
-      {{ cartDraftItemCount() }} ítem{{
-        cartDraftItemCount() !== 1 ? "s" : ""
-      }}
-      guardado{{ cartDraftItemCount() !== 1 ? "s" : "" }}
-    </span>
-    <div class="flex items-center gap-1">
-      <button
-        type="button"
-        (click)="restoreCartDraft()"
-        class="rounded px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 transition-colors"
-      >
-        Restaurar
-      </button>
-      <button
-        type="button"
-        (click)="dismissCartDraft()"
-        class="text-amber-600 hover:text-amber-900 transition-colors text-lg leading-none px-1"
-      >
-        ×
-      </button>
-    </div>
-  </div>
+                      @if (showCartDraftBanner()) {
+                        <div
+                          class="flex-shrink-0 flex items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm"
+                          >
+                          <span class="flex items-center gap-2 text-amber-800 font-medium">
+                            <svg
+                              class="h-4 w-4 shrink-0"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <polyline points="1 4 1 10 7 10" />
+                              <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                            </svg>
+                            {{ cartDraftItemCount() }} ítem{{
+                            cartDraftItemCount() !== 1 ? "s" : ""
+                            }}
+                            guardado{{ cartDraftItemCount() !== 1 ? "s" : "" }}
+                          </span>
+                          <div class="flex items-center gap-1">
+                            <button
+                              type="button"
+                              (click)="restoreCartDraft()"
+                              class="rounded px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 transition-colors"
+                              >
+                              Restaurar
+                            </button>
+                            <button
+                              type="button"
+                              (click)="dismissCartDraft()"
+                              class="text-amber-600 hover:text-amber-900 transition-colors text-lg leading-none px-1"
+                              >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      }
 
-  <div
-    #cartScrollContainer
-    class="flex-1 overflow-y-auto overscroll-contain scroll-smooth p-4 space-y-3"
-  >
-    <div *ngIf="checkoutStep() === 1">
-      <ng-container *ngTemplateOutlet="tmplCartSection"></ng-container>
-    </div>
+                      <div
+                        #cartScrollContainer
+                        class="flex-1 overflow-y-auto overscroll-contain scroll-smooth p-4 space-y-3"
+                        >
+                        @if (checkoutStep() === 1) {
+                          <div>
+                            <ng-container *ngTemplateOutlet="tmplCartSection"></ng-container>
+                          </div>
+                        }
 
-    <div *ngIf="checkoutStep() === 2">
-      <ng-container *ngTemplateOutlet="tmplPaymentSection"></ng-container>
-    </div>
-  </div>
+                        @if (checkoutStep() === 2) {
+                          <div>
+                            <ng-container *ngTemplateOutlet="tmplPaymentSection"></ng-container>
+                          </div>
+                        }
+                      </div>
 
-  <div class="flex-shrink-0 border-t border-border bg-card p-4">
-    <div *ngIf="checkoutStep() === 1">
-      <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
-      <div class="flex gap-2">
-        <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
-        <button
-          type="button"
-          (click)="nextStep()"
-          [disabled]="cart().length === 0"
-          class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-2 text-sm sm:text-base font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          Continuar
-          <span class="opacity-75 font-normal">· ${{ fmt(total()) }}</span>
-          <svg
-            class="h-5 w-5 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </button>
-      </div>
-    </div>
+                      <div class="flex-shrink-0 border-t border-border bg-card p-4">
+                        @if (checkoutStep() === 1) {
+                          <div>
+                            <ng-container *ngTemplateOutlet="tmplOpenAccountBanner"></ng-container>
+                            <div class="flex gap-2">
+                              <ng-container *ngTemplateOutlet="tmplLeaveOpenBtn"></ng-container>
+                              <button
+                                type="button"
+                                (click)="nextStep()"
+                                [disabled]="cart().length === 0"
+                                class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-2 text-sm sm:text-base font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
+                                Continuar
+                                <span class="opacity-75 font-normal">· ${{ fmt(total()) }}</span>
+                                <svg
+                                  class="h-5 w-5 shrink-0"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  >
+                                  <path d="m9 18 6-6-6-6" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        }
 
-    <div *ngIf="checkoutStep() === 2">
-      <ng-container *ngTemplateOutlet="tmplConfirmBtn"></ng-container>
-    </div>
-  </div>
-</div>
+                        @if (checkoutStep() === 2) {
+                          <div>
+                            <ng-container *ngTemplateOutlet="tmplConfirmBtn"></ng-container>
+                          </div>
+                        }
+                      </div>
+                    </div>
 
-<div
-  *ngIf="showCartDraftBanner() && !isMobileCartOpen()"
-  class="md:hidden fixed bottom-16 left-0 right-0 z-[41] mx-3 mb-1 rounded-xl border border-amber-300 bg-amber-50 shadow-lg px-4 py-3 flex items-center justify-between gap-3 text-sm"
->
-  <span class="flex items-center gap-2 text-amber-800 font-medium min-w-0">
-    <svg
-      class="h-4 w-4 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polyline points="1 4 1 10 7 10" />
-      <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
-    </svg>
-    <span class="truncate">
-      Carrito guardado · {{ cartDraftItemCount() }} ítem{{
-        cartDraftItemCount() !== 1 ? "s" : ""
-      }}
-    </span>
-  </span>
-  <div class="flex items-center gap-1 shrink-0">
-    <button
-      type="button"
-      (click)="restoreCartDraft()"
-      class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-200 hover:bg-amber-300 transition-colors"
-    >
-      Restaurar
-    </button>
-    <button
-      type="button"
-      (click)="dismissCartDraft()"
-      class="text-amber-600 hover:text-amber-900 transition-colors text-xl leading-none px-1"
-    >
-      ×
-    </button>
-  </div>
-</div>
+                    @if (showCartDraftBanner() && !isMobileCartOpen()) {
+                      <div
+                        class="md:hidden fixed bottom-16 left-0 right-0 z-[41] mx-3 mb-1 rounded-xl border border-amber-300 bg-amber-50 shadow-lg px-4 py-3 flex items-center justify-between gap-3 text-sm"
+                        >
+                        <span class="flex items-center gap-2 text-amber-800 font-medium min-w-0">
+                          <svg
+                            class="h-4 w-4 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
+                          </svg>
+                          <span class="truncate">
+                            Carrito guardado · {{ cartDraftItemCount() }} ítem{{
+                            cartDraftItemCount() !== 1 ? "s" : ""
+                            }}
+                          </span>
+                        </span>
+                        <div class="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            (click)="restoreCartDraft()"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-200 hover:bg-amber-300 transition-colors"
+                            >
+                            Restaurar
+                          </button>
+                          <button
+                            type="button"
+                            (click)="dismissCartDraft()"
+                            class="text-amber-600 hover:text-amber-900 transition-colors text-xl leading-none px-1"
+                            >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    }
 
-<div
-  class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-primary text-primary-foreground shadow-[0_-4px_24px_rgba(0,0,0,0.15)] cursor-pointer transition-transform duration-300"
-  [class.translate-y-full]="isMobileCartOpen()"
-  (click)="toggleMobileCart()"
->
-  <div class="flex items-center justify-between px-5 py-4">
-    <div class="flex items-center gap-2">
-      <svg
-        class="h-5 w-5 opacity-80 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="8" cy="21" r="1" />
-        <circle cx="19" cy="21" r="1" />
-        <path
-          d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-        />
-      </svg>
-      <span class="text-sm font-medium">
-        <span class="font-bold">{{ totalItems() }}</span>
-        {{ totalItems() === 1 ? "ítem" : "ítems" }}
-        &nbsp;·&nbsp;${{ fmt(total()) }}
-      </span>
-    </div>
-    <div class="flex items-center gap-1 text-sm font-semibold">
-      Ver Ticket
-      <svg
-        class="h-4 w-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="m9 18 6-6-6-6" />
-      </svg>
-    </div>
-  </div>
-</div>
+                    <div
+                      class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-primary text-primary-foreground shadow-[0_-4px_24px_rgba(0,0,0,0.15)] cursor-pointer transition-transform duration-300"
+                      [class.translate-y-full]="isMobileCartOpen()"
+                      (click)="toggleMobileCart()"
+                      >
+                      <div class="flex items-center justify-between px-5 py-4">
+                        <div class="flex items-center gap-2">
+                          <svg
+                            class="h-5 w-5 opacity-80 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <circle cx="8" cy="21" r="1" />
+                            <circle cx="19" cy="21" r="1" />
+                            <path
+                              d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+                              />
+                            </svg>
+                            <span class="text-sm font-medium">
+                              <span class="font-bold">{{ totalItems() }}</span>
+                              {{ totalItems() === 1 ? "ítem" : "ítems" }}
+                              &nbsp;·&nbsp;${{ fmt(total()) }}
+                            </span>
+                          </div>
+                          <div class="flex items-center gap-1 text-sm font-semibold">
+                            Ver Ticket
+                            <svg
+                              class="h-4 w-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>

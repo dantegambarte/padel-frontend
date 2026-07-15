@@ -6,12 +6,12 @@ import {
   SessionAlertType,
 } from '../../core/services/session-alert.service';
 import { AuthService } from '../../core/services/auth.service';
-import { NgIf, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-session-alert',
     templateUrl: './session-alert.component.html',
-    imports: [NgIf, NgClass],
+    imports: [NgClass],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionAlertComponent implements OnInit, OnDestroy {

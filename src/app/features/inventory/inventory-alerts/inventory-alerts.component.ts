@@ -4,19 +4,17 @@ import { Router } from '@angular/router';
 import { ProductsService } from '../../../core/services/products.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LowStockProduct } from '../../../core/models/product.model';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-inventory-alerts',
     templateUrl: './inventory-alerts.component.html',
     imports: [
-        NgIf,
-        ReactiveFormsModule,
-        FormsModule,
-        NgFor,
-        NgClass,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryAlertsComponent implements OnInit {

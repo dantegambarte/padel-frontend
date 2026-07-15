@@ -11,17 +11,15 @@ import {
 import { finalize } from 'rxjs';
 
 import { SalesService, SaleDetail } from '../../core/services/sales.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
 @Component({
     selector: 'app-ticket-modal',
     templateUrl: './ticket-modal.component.html',
     imports: [
-        NgIf,
-        ModalScrollLockDirective,
-        NgFor,
-    ],
+    ModalScrollLockDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketModalComponent implements OnChanges {

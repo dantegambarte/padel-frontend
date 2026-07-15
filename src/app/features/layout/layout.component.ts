@@ -7,7 +7,7 @@ import { CashService } from '../../core/services/cash.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { RemindersApiService } from '../../core/services/reminders-api.service';
 import { User } from '../../core/models/user.model';
-import { NgIf, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
@@ -29,13 +29,12 @@ const PAGE_TITLES: Record<string, string> = {
     selector: 'app-layout',
     templateUrl: './layout.component.html',
     imports: [
-        NgIf,
-        ModalScrollLockDirective,
-        SidebarComponent,
-        ToolbarComponent,
-        NgClass,
-        RouterOutlet,
-    ],
+    ModalScrollLockDirective,
+    SidebarComponent,
+    ToolbarComponent,
+    NgClass,
+    RouterOutlet
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit, OnDestroy {

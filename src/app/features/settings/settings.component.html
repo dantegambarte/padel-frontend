@@ -4,7 +4,7 @@
       <div class="flex items-center gap-3">
         <div
           class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
-        >
+          >
           <svg
             class="h-6 w-6 text-primary"
             viewBox="0 0 24 24"
@@ -13,456 +13,449 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-          >
+            >
             <circle cx="12" cy="12" r="3" />
             <path
               d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"
-            />
-            <path
+              />
+              <path
               d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
                      M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-            />
-          </svg>
-        </div>
-        <div>
-          <h2 class="text-xl font-semibold text-card-foreground">
-            Configuración del Sistema
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            Administre los parámetros globales del complejo y las canchas
-            disponibles
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <ng-container *ngIf="isLoading()">
-    <div
-      *ngFor="let i of [1, 2, 3]"
-      class="h-40 animate-pulse rounded-lg border border-border bg-muted/40"
-    ></div>
-  </ng-container>
-
-  <ng-container *ngIf="!isLoading()">
-    <div class="rounded-lg border border-border bg-card shadow-md">
-      <div class="border-b border-border p-6">
-        <div class="flex items-center gap-2">
-          <svg
-            class="h-5 w-5 text-muted-foreground"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <h3 class="text-lg font-semibold text-card-foreground">
-            Horarios de Operación
-          </h3>
-        </div>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Defina el horario de apertura y cierre del establecimiento
-        </p>
-      </div>
-
-      <div class="p-6 space-y-4">
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="space-y-1.5">
-            <label
-              class="text-sm font-medium text-foreground"
-              for="horario-apertura"
-            >
-              Horario de Apertura
-            </label>
-            <input
-              id="horario-apertura"
-              type="time"
-              [(ngModel)]="horarioApertura"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <label
-              class="text-sm font-medium text-foreground"
-              for="horario-cierre"
-            >
-              Horario de Cierre
-            </label>
-            <input
-              id="horario-cierre"
-              type="time"
-              [(ngModel)]="horarioCierre"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-semibold text-card-foreground">
+                Configuración del Sistema
+              </h2>
+              <p class="text-sm text-muted-foreground">
+                Administre los parámetros globales del complejo y las canchas
+                disponibles
+              </p>
+            </div>
           </div>
         </div>
-
-        <div class="rounded-lg border border-border bg-muted/30 p-3">
-          <p class="text-sm text-muted-foreground">
-            El establecimiento estará operativo de
-            <span class="font-semibold text-foreground"
-              >{{ horarioApertura }}hs</span
-            >
-            a
-            <span class="font-semibold text-foreground"
-              >{{ horarioCierre }}hs</span
-            >
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-lg border border-border bg-card shadow-md">
-      <div class="border-b border-border p-6">
-        <div class="flex items-center gap-2">
-          <svg
-            class="h-5 w-5 text-muted-foreground"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-          <h3 class="text-lg font-semibold text-card-foreground">
-            Fondo de Caja Base
-          </h3>
-        </div>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Monto por defecto que se pre-carga al abrir un nuevo turno de caja (cambio inicial)
-        </p>
       </div>
 
-      <div class="p-6 space-y-4">
-        <div class="space-y-1.5 max-w-xs">
-          <label class="text-sm font-medium text-foreground" for="fondo-caja-base">
-            Fondo por defecto
-          </label>
-          <div class="relative">
-            <span
-              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold"
-              >$</span
-            >
-            <input
-              id="fondo-caja-base"
-              type="number" appDisableScroll
-              min="0"
-              step="500"
-              [(ngModel)]="fondoCajaBase"
-              class="w-full rounded-md border border-input bg-background pl-7 pr-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-          <p class="text-xs text-muted-foreground">
-            No se contabiliza como ganancia. Se incluye en el total físico del cajón al cierre.
-          </p>
-        </div>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            (click)="guardarFondoCaja()"
-            [disabled]="isSavingFondo() || !isFondoDirty"
-            class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <span *ngIf="isSavingFondo()">Guardando…</span>
-            <span *ngIf="!isSavingFondo()">Guardar Fondo</span>
-          </button>
-        </div>
-      </div>
-    </div>
+      @if (isLoading()) {
+        @for (i of [1, 2, 3]; track i) {
+          <div
+            class="h-40 animate-pulse rounded-lg border border-border bg-muted/40"
+          ></div>
+        }
+      }
 
-    <div class="rounded-lg border border-border bg-card shadow-md">
-      <div class="border-b border-border p-6">
-        <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
-        >
-          <div>
-            <h3 class="text-lg font-semibold text-card-foreground">Canchas</h3>
+      @if (!isLoading()) {
+        <div class="rounded-lg border border-border bg-card shadow-md">
+          <div class="border-b border-border p-6">
+            <div class="flex items-center gap-2">
+              <svg
+                class="h-5 w-5 text-muted-foreground"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <h3 class="text-lg font-semibold text-card-foreground">
+                Horarios de Operación
+              </h3>
+            </div>
             <p class="mt-1 text-sm text-muted-foreground">
-              Administrá las canchas disponibles en el sistema
+              Defina el horario de apertura y cierre del establecimiento
             </p>
           </div>
-          <button
-            type="button"
-            (click)="openCreateCourtModal()"
-            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="M12 5v14" />
-            </svg>
-            Nueva Cancha
-          </button>
-        </div>
-      </div>
-
-      <div class="p-6">
-        <div
-          *ngIf="courts().length === 0"
-          class="flex flex-col items-center justify-center py-10 text-center"
-        >
-          <svg
-            class="h-10 w-10 text-muted-foreground/40 mb-3"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-          </svg>
-          <p class="text-sm font-medium text-muted-foreground">
-            No hay canchas registradas
-          </p>
-          <p class="text-xs text-muted-foreground mt-1">
-            Hacé clic en "Nueva Cancha" para agregar la primera.
-          </p>
-        </div>
-
-        <div *ngIf="courts().length > 0">
-          <table class="w-full text-sm">
-            <thead class="hidden md:table-header-group">
-              <tr class="border-b border-border">
-                <th class="pb-3 text-left font-medium text-muted-foreground">
-                  Cancha
-                </th>
-                <th class="pb-3 text-left font-medium text-muted-foreground">
-                  Descripción
-                </th>
-                <th class="pb-3 text-center font-medium text-muted-foreground">
-                  Estado
-                </th>
-                <th class="pb-3 text-right font-medium text-muted-foreground">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-
-            <tbody class="block md:table-row-group">
-              <tr
-                *ngFor="let court of courts()"
-                class="block md:table-row bg-card md:bg-transparent border border-border md:border-0 md:border-b rounded-xl md:rounded-none shadow-sm md:shadow-none mb-3 md:mb-0 p-4 md:p-0 last:mb-0 md:hover:bg-muted/20 md:transition-colors"
-              >
-                <td
-                  class="block md:table-cell py-2 md:py-3 md:pr-4 border-b border-border md:border-0 last:border-0"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sm font-bold"
+          <div class="p-6 space-y-4">
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="space-y-1.5">
+                <label
+                  class="text-sm font-medium text-foreground"
+                  for="horario-apertura"
+                  >
+                  Horario de Apertura
+                </label>
+                <input
+                  id="horario-apertura"
+                  type="time"
+                  [(ngModel)]="horarioApertura"
+                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+                <div class="space-y-1.5">
+                  <label
+                    class="text-sm font-medium text-foreground"
+                    for="horario-cierre"
+                    >
+                    Horario de Cierre
+                  </label>
+                  <input
+                    id="horario-cierre"
+                    type="time"
+                    [(ngModel)]="horarioCierre"
+                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+                <div class="rounded-lg border border-border bg-muted/30 p-3">
+                  <p class="text-sm text-muted-foreground">
+                    El establecimiento estará operativo de
+                    <span class="font-semibold text-foreground"
+                      >{{ horarioApertura }}hs</span
+                      >
+                      a
+                      <span class="font-semibold text-foreground"
+                        >{{ horarioCierre }}hs</span
+                        >
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="rounded-lg border border-border bg-card shadow-md">
+                  <div class="border-b border-border p-6">
+                    <div class="flex items-center gap-2">
+                      <svg
+                        class="h-5 w-5 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        >
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                      <h3 class="text-lg font-semibold text-card-foreground">
+                        Fondo de Caja Base
+                      </h3>
+                    </div>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                      Monto por defecto que se pre-carga al abrir un nuevo turno de caja (cambio inicial)
+                    </p>
+                  </div>
+                  <div class="p-6 space-y-4">
+                    <div class="space-y-1.5 max-w-xs">
+                      <label class="text-sm font-medium text-foreground" for="fondo-caja-base">
+                        Fondo por defecto
+                      </label>
+                      <div class="relative">
+                        <span
+                          class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold"
+                          >$</span
+                          >
+                          <input
+                            id="fondo-caja-base"
+                            type="number" appDisableScroll
+                            min="0"
+                            step="500"
+                            [(ngModel)]="fondoCajaBase"
+                            class="w-full rounded-md border border-input bg-background pl-7 pr-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            />
+                          </div>
+                          <p class="text-xs text-muted-foreground">
+                            No se contabiliza como ganancia. Se incluye en el total físico del cajón al cierre.
+                          </p>
+                        </div>
+                        <div class="flex justify-end">
+                          <button
+                            type="button"
+                            (click)="guardarFondoCaja()"
+                            [disabled]="isSavingFondo() || !isFondoDirty"
+                            class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                            @if (isSavingFondo()) {
+                              <span>Guardando…</span>
+                            }
+                            @if (!isSavingFondo()) {
+                              <span>Guardar Fondo</span>
+                            }
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="rounded-lg border border-border bg-card shadow-md">
+                      <div class="border-b border-border p-6">
+                        <div
+                          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+                          >
+                          <div>
+                            <h3 class="text-lg font-semibold text-card-foreground">Canchas</h3>
+                            <p class="mt-1 text-sm text-muted-foreground">
+                              Administrá las canchas disponibles en el sistema
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="openCreateCourtModal()"
+                            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                            <svg
+                              class="h-4 w-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <path d="M5 12h14" />
+                              <path d="M12 5v14" />
+                            </svg>
+                            Nueva Cancha
+                          </button>
+                        </div>
+                      </div>
+                      <div class="p-6">
+                        @if (courts().length === 0) {
+                          <div
+                            class="flex flex-col items-center justify-center py-10 text-center"
+                            >
+                            <svg
+                              class="h-10 w-10 text-muted-foreground/40 mb-3"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              >
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                            </svg>
+                            <p class="text-sm font-medium text-muted-foreground">
+                              No hay canchas registradas
+                            </p>
+                            <p class="text-xs text-muted-foreground mt-1">
+                              Hacé clic en "Nueva Cancha" para agregar la primera.
+                            </p>
+                          </div>
+                        }
+                        @if (courts().length > 0) {
+                          <div>
+                            <table class="w-full text-sm">
+                              <thead class="hidden md:table-header-group">
+                                <tr class="border-b border-border">
+                                  <th class="pb-3 text-left font-medium text-muted-foreground">
+                                    Cancha
+                                  </th>
+                                  <th class="pb-3 text-left font-medium text-muted-foreground">
+                                    Descripción
+                                  </th>
+                                  <th class="pb-3 text-center font-medium text-muted-foreground">
+                                    Estado
+                                  </th>
+                                  <th class="pb-3 text-right font-medium text-muted-foreground">
+                                    Acciones
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody class="block md:table-row-group">
+                                @for (court of courts(); track court) {
+                                  <tr
+                                    class="block md:table-row bg-card md:bg-transparent border border-border md:border-0 md:border-b rounded-xl md:rounded-none shadow-sm md:shadow-none mb-3 md:mb-0 p-4 md:p-0 last:mb-0 md:hover:bg-muted/20 md:transition-colors"
+                                    >
+                                    <td
+                                      class="block md:table-cell py-2 md:py-3 md:pr-4 border-b border-border md:border-0 last:border-0"
+                                      >
+                                      <div class="flex items-center gap-3">
+                                        <div
+                                          class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sm font-bold"
                       [ngClass]="
                         court.isActive
                           ? 'bg-primary/10 text-primary'
                           : 'bg-muted text-muted-foreground'
                       "
-                    >
-                      {{ court.name.charAt(0).toUpperCase() }}
-                    </div>
-                    <span class="font-medium text-card-foreground">
-                      {{ court.name }}
-                    </span>
-                  </div>
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell border-b border-border md:border-0 py-2 md:py-3 md:pr-4 last:border-0"
-                >
-                  <span
-                    class="md:hidden text-xs font-semibold text-muted-foreground"
-                  >
-                    Descripción
-                  </span>
-                  <span class="text-muted-foreground">
-                    {{ court.description || "—" }}
-                  </span>
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell md:text-center border-b border-border md:border-0 py-2 md:py-3 last:border-0"
-                >
-                  <span
-                    class="md:hidden text-xs font-semibold text-muted-foreground"
-                  >
-                    Estado
-                  </span>
-                  <span
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                                          >
+                                          {{ court.name.charAt(0).toUpperCase() }}
+                                        </div>
+                                        <span class="font-medium text-card-foreground">
+                                          {{ court.name }}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td
+                                      class="flex justify-between items-center md:table-cell border-b border-border md:border-0 py-2 md:py-3 md:pr-4 last:border-0"
+                                      >
+                                      <span
+                                        class="md:hidden text-xs font-semibold text-muted-foreground"
+                                        >
+                                        Descripción
+                                      </span>
+                                      <span class="text-muted-foreground">
+                                        {{ court.description || "—" }}
+                                      </span>
+                                    </td>
+                                    <td
+                                      class="flex justify-between items-center md:table-cell md:text-center border-b border-border md:border-0 py-2 md:py-3 last:border-0"
+                                      >
+                                      <span
+                                        class="md:hidden text-xs font-semibold text-muted-foreground"
+                                        >
+                                        Estado
+                                      </span>
+                                      <span
+                                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                     [ngClass]="
                       court.isActive
                         ? 'bg-green-100 text-green-800'
                         : 'bg-destructive/10 text-destructive'
                     "
-                  >
-                    {{ court.isActive ? "Activa" : "Inactiva" }}
-                  </span>
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell md:text-right py-2 md:py-3 last:border-0"
-                >
-                  <span
-                    class="md:hidden text-xs font-semibold text-muted-foreground"
-                  >
-                    Acciones
-                  </span>
-                  <div class="inline-flex items-center gap-2">
-                    <button
-                      type="button"
-                      (click)="openEditCourtModal(court)"
-                      class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <svg
-                        class="h-3.5 w-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                        />
-                        <path
-                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                        />
-                      </svg>
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      (click)="confirmDeleteCourt(court)"
-                      class="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-background px-3 py-1.5 text-xs font-medium text-destructive shadow-sm transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <svg
-                        class="h-3.5 w-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path
-                          d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-                        />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <ng-container *ngIf="courtToDelete() as courtToDelete">
-      <div
-        appModalScrollLock
-        class="modal-backdrop"
-        (click)="cancelDeleteCourt()"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="modal-card max-w-sm"
-          (click)="$event.stopPropagation()"
-        >
-          <div class="modal-header">
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10"
-              >
-                <svg
-                  class="h-5 w-5 text-destructive"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold text-card-foreground">
-                  Eliminar Cancha
-                </h3>
-                <p class="text-sm text-muted-foreground">
-                  Esta acción no se puede deshacer
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-body">
-            <p class="text-sm text-foreground">
-              ¿Estás seguro de que querés eliminar la cancha
-              <span class="font-semibold">"{{ courtToDelete.name }}"</span>?
-            </p>
-            <p class="mt-2 text-xs text-muted-foreground">
-              Solo se puede eliminar si no tiene turnos asociados. En caso
-              contrario, te recomendamos inactivarla.
-            </p>
-          </div>
-
-          <div class="modal-footer">
-            <button
-              type="button"
-              (click)="cancelDeleteCourt()"
-              class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              (click)="deleteCourt()"
-              class="rounded-md bg-destructive px-5 py-2 text-sm font-semibold text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
-            >
-              Sí, eliminar
-            </button>
-          </div>
-        </div>
-      </div>
-    </ng-container>
-
-    <p-dialog
-      [visible]="isCourtModalOpen()"
-      (visibleChange)="onCourtModalVisibleChange($event)"
-      [modal]="true"
-      [dismissableMask]="true"
-      [closable]="true"
-      [closeOnEscape]="false"
-      [draggable]="false"
-      [resizable]="false"
-      [blockScroll]="true"
-      role="dialog"
-      styleClass="max-w-md w-full"
+                                        >
+                                        {{ court.isActive ? "Activa" : "Inactiva" }}
+                                      </span>
+                                    </td>
+                                    <td
+                                      class="flex justify-between items-center md:table-cell md:text-right py-2 md:py-3 last:border-0"
+                                      >
+                                      <span
+                                        class="md:hidden text-xs font-semibold text-muted-foreground"
+                                        >
+                                        Acciones
+                                      </span>
+                                      <div class="inline-flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          (click)="openEditCourtModal(court)"
+                                          class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                          >
+                                          <svg
+                                            class="h-3.5 w-3.5"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            >
+                                            <path
+                                              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                              />
+                                              <path
+                                                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                                />
+                                              </svg>
+                                              Editar
+                                            </button>
+                                            <button
+                                              type="button"
+                                              (click)="confirmDeleteCourt(court)"
+                                              class="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-background px-3 py-1.5 text-xs font-medium text-destructive shadow-sm transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                              >
+                                              <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                >
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path
+                                                  d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+                                                  />
+                                                  <path d="M10 11v6M14 11v6" />
+                                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                </svg>
+                                                Eliminar
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      }
+                                    </tbody>
+                                  </table>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                          @if (courtToDelete(); as courtToDelete) {
+                            <div
+                              appModalScrollLock
+                              class="modal-backdrop"
+                              (click)="cancelDeleteCourt()"
+                              >
+                              <div
+                                role="dialog"
+                                aria-modal="true"
+                                class="modal-card max-w-sm"
+                                (click)="$event.stopPropagation()"
+                                >
+                                <div class="modal-header">
+                                  <div class="flex items-center gap-3">
+                                    <div
+                                      class="flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10"
+                                      >
+                                      <svg
+                                        class="h-5 w-5 text-destructive"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        >
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                        <path d="M10 11v6M14 11v6" />
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                      </svg>
+                                    </div>
+                                    <div>
+                                      <h3 class="text-lg font-semibold text-card-foreground">
+                                        Eliminar Cancha
+                                      </h3>
+                                      <p class="text-sm text-muted-foreground">
+                                        Esta acción no se puede deshacer
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="modal-body">
+                                  <p class="text-sm text-foreground">
+                                    ¿Estás seguro de que querés eliminar la cancha
+                                    <span class="font-semibold">"{{ courtToDelete.name }}"</span>?
+                                  </p>
+                                  <p class="mt-2 text-xs text-muted-foreground">
+                                    Solo se puede eliminar si no tiene turnos asociados. En caso
+                                    contrario, te recomendamos inactivarla.
+                                  </p>
+                                </div>
+                                <div class="modal-footer">
+                                  <button
+                                    type="button"
+                                    (click)="cancelDeleteCourt()"
+                                    class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+                                    >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    (click)="deleteCourt()"
+                                    class="rounded-md bg-destructive px-5 py-2 text-sm font-semibold text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+                                    >
+                                    Sí, eliminar
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          }
+                          <p-dialog
+                            [visible]="isCourtModalOpen()"
+                            (visibleChange)="onCourtModalVisibleChange($event)"
+                            [modal]="true"
+                            [dismissableMask]="true"
+                            [closable]="true"
+                            [closeOnEscape]="false"
+                            [draggable]="false"
+                            [resizable]="false"
+                            [blockScroll]="true"
+                            role="dialog"
+                            styleClass="max-w-md w-full"
       [pt]="{
         mask: 'modal-backdrop',
         root: 'modal-card max-w-md',
@@ -471,153 +464,154 @@
         footer: 'modal-footer',
         pcCloseButton: { root: 'hidden' },
       }"
-    >
-      <ng-template #header>
-        <div class="flex items-center gap-3">
-          <div
-            class="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10"
-          >
-            <svg
-              class="h-5 w-5 text-primary"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-card-foreground">
-              {{
-                courtModalMode() === "create"
-                  ? "Nueva Cancha"
-                  : "Editar Cancha"
-              }}
-            </h3>
-            <p class="text-sm text-muted-foreground">
-              {{
-                courtModalMode() === "create"
-                  ? "Completá los datos para agregar la cancha"
-                  : "Modificá los datos de la cancha"
-              }}
-            </p>
-          </div>
-        </div>
-      </ng-template>
-
-      <div
-        *ngIf="courtFormError()"
-        class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-      >
-        {{ courtFormError() }}
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-foreground" for="court-name">
-          Nombre <span class="text-destructive">*</span>
-        </label>
-        <input
-          id="court-name"
-          type="text"
-          [(ngModel)]="courtForm.name"
-          placeholder="Ej: Cancha 1"
-          maxlength="100"
-          class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-foreground" for="court-desc">
-          Descripción
-          <span class="text-xs font-normal text-muted-foreground"
-            >(opcional)</span
-          >
-        </label>
-        <input
-          id="court-desc"
-          type="text"
-          [(ngModel)]="courtForm.description"
-          placeholder="Ej: Cancha cubierta, césped sintético"
-          maxlength="255"
-          class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-      </div>
-
-      <div
-        class="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3"
-      >
-        <div>
-          <p class="text-sm font-medium text-foreground">Cancha activa</p>
-          <p class="text-xs text-muted-foreground">
-            Las canchas inactivas no aparecen en la Agenda
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="courtForm.isActive = !courtForm.isActive"
+                            >
+                            <ng-template #header>
+                              <div class="flex items-center gap-3">
+                                <div
+                                  class="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10"
+                                  >
+                                  <svg
+                                    class="h-5 w-5 text-primary"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    >
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <h3 class="text-lg font-semibold text-card-foreground">
+                                    {{
+                                    courtModalMode() === "create"
+                                    ? "Nueva Cancha"
+                                    : "Editar Cancha"
+                                    }}
+                                  </h3>
+                                  <p class="text-sm text-muted-foreground">
+                                    {{
+                                    courtModalMode() === "create"
+                                    ? "Completá los datos para agregar la cancha"
+                                    : "Modificá los datos de la cancha"
+                                    }}
+                                  </p>
+                                </div>
+                              </div>
+                            </ng-template>
+                            @if (courtFormError()) {
+                              <div
+                                class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                >
+                                {{ courtFormError() }}
+                              </div>
+                            }
+                            <div class="flex flex-col gap-1.5">
+                              <label class="text-sm font-medium text-foreground" for="court-name">
+                                Nombre <span class="text-destructive">*</span>
+                              </label>
+                              <input
+                                id="court-name"
+                                type="text"
+                                [(ngModel)]="courtForm.name"
+                                placeholder="Ej: Cancha 1"
+                                maxlength="100"
+                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                />
+                              </div>
+                              <div class="flex flex-col gap-1.5">
+                                <label class="text-sm font-medium text-foreground" for="court-desc">
+                                  Descripción
+                                  <span class="text-xs font-normal text-muted-foreground"
+                                    >(opcional)</span
+                                    >
+                                  </label>
+                                  <input
+                                    id="court-desc"
+                                    type="text"
+                                    [(ngModel)]="courtForm.description"
+                                    placeholder="Ej: Cancha cubierta, césped sintético"
+                                    maxlength="255"
+                                    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                    />
+                                  </div>
+                                  <div
+                                    class="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3"
+                                    >
+                                    <div>
+                                      <p class="text-sm font-medium text-foreground">Cancha activa</p>
+                                      <p class="text-xs text-muted-foreground">
+                                        Las canchas inactivas no aparecen en la Agenda
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      (click)="courtForm.isActive = !courtForm.isActive"
           [ngClass]="
             courtForm.isActive ? 'bg-primary' : 'bg-muted-foreground/30'
           "
-          class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <span
+                                      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                      >
+                                      <span
             [ngClass]="
               courtForm.isActive ? 'translate-x-5' : 'translate-x-0'
             "
-            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
-          ></span>
-        </button>
-      </div>
-
-      <ng-template #footer>
-        <button
-          type="button"
-          (click)="closeCourtModal()"
-          [disabled]="isCourtSubmitting()"
-          class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          (click)="saveCourtModal()"
-          [disabled]="isCourtSubmitting()"
-          class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <ng-container *ngIf="isCourtSubmitting()">Guardando…</ng-container>
-          <ng-container *ngIf="!isCourtSubmitting()">
-            {{
-              courtModalMode() === "create"
-                ? "Crear Cancha"
-                : "Guardar Cambios"
-            }}
-          </ng-container>
-        </button>
-      </ng-template>
-    </p-dialog>
-
-    <div class="flex justify-end gap-3">
-      <button
-        type="button"
-        (click)="cancel()"
-        [disabled]="isSubmitting()"
-        class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
-      >
-        Cancelar
-      </button>
-      <button
-        type="button"
-        (click)="save()"
-        [disabled]="isSubmitting() || !isHorariosDirty"
-        class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <span *ngIf="isSubmitting()">Guardando…</span>
-        <span *ngIf="!isSubmitting()">Guardar Horarios</span>
-      </button>
-    </div>
-  </ng-container>
-</div>
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                                      ></span>
+                                    </button>
+                                  </div>
+                                  <ng-template #footer>
+                                    <button
+                                      type="button"
+                                      (click)="closeCourtModal()"
+                                      [disabled]="isCourtSubmitting()"
+                                      class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
+                                      >
+                                      Cancelar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      (click)="saveCourtModal()"
+                                      [disabled]="isCourtSubmitting()"
+                                      class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                      @if (isCourtSubmitting()) {
+                                        Guardando…
+                                      }
+                                      @if (!isCourtSubmitting()) {
+                                        {{
+                                        courtModalMode() === "create"
+                                        ? "Crear Cancha"
+                                        : "Guardar Cambios"
+                                        }}
+                                      }
+                                    </button>
+                                  </ng-template>
+                                </p-dialog>
+                                <div class="flex justify-end gap-3">
+                                  <button
+                                    type="button"
+                                    (click)="cancel()"
+                                    [disabled]="isSubmitting()"
+                                    class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:opacity-50"
+                                    >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    (click)="save()"
+                                    [disabled]="isSubmitting() || !isHorariosDirty"
+                                    class="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                    @if (isSubmitting()) {
+                                      <span>Guardando…</span>
+                                    }
+                                    @if (!isSubmitting()) {
+                                      <span>Guardar Horarios</span>
+                                    }
+                                  </button>
+                                </div>
+                              }
+                            </div>

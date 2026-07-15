@@ -7,7 +7,7 @@ import { ProductsService } from '../../core/services/products.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { getCategoryColor } from '../../core/utils/category-colors';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
@@ -63,14 +63,12 @@ type DialogMode = 'create' | 'edit' | 'view';
     selector: 'app-products',
     templateUrl: './products.component.html',
     imports: [
-        NgIf,
-        ReactiveFormsModule,
-        FormsModule,
-        NgFor,
-        NgClass,
-        ModalScrollLockDirective,
-        DisableScrollDirective,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    ModalScrollLockDirective,
+    DisableScrollDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsComponent implements OnInit {

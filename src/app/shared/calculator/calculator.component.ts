@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, Component, HostListener, inject, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CalculatorService } from '../../core/services/calculator.service';
-import { NgIf } from '@angular/common';
+
 import { ModalScrollLockDirective } from '../modal-scroll-lock.directive';
 
 @Component({
     selector: 'app-calculator',
     templateUrl: './calculator.component.html',
     imports: [
-        NgIf,
-        ModalScrollLockDirective,
-    ],
+    ModalScrollLockDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalculatorComponent {

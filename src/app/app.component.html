@@ -1,12 +1,13 @@
-<div
-  *ngIf="isRouting"
-  class="fixed top-0 left-0 z-[200] h-[3px] w-full overflow-hidden bg-transparent"
-  aria-hidden="true"
->
+@if (isRouting) {
   <div
-    class="h-full w-full origin-left animate-router-progress bg-primary"
-  ></div>
-</div>
+    class="fixed top-0 left-0 z-[200] h-[3px] w-full overflow-hidden bg-transparent"
+    aria-hidden="true"
+    >
+    <div
+      class="h-full w-full origin-left animate-router-progress bg-primary"
+    ></div>
+  </div>
+}
 
 <router-outlet></router-outlet>
 <app-toast></app-toast>

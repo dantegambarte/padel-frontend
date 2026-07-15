@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ToastService, ToastMessage } from '../../core/services/toast.service';
-import { NgFor, NgClass, NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 /**
  * Animación de entrada/salida estilo Sileo/iOS:
@@ -31,13 +31,8 @@ export const toastAnimation = trigger('toastState', [
     templateUrl: './toast.component.html',
     animations: [toastAnimation],
     imports: [
-        NgFor,
-        NgClass,
-        NgSwitch,
-        NgSwitchCase,
-        NgSwitchDefault,
-        NgIf,
-    ],
+    NgClass
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent {

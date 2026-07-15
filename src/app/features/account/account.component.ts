@@ -5,7 +5,7 @@ import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { NgIf, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
@@ -13,13 +13,12 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
     selector: 'app-account',
     templateUrl: './account.component.html',
     imports: [
-        NgIf,
-        ModalScrollLockDirective,
-        ReactiveFormsModule,
-        FormsModule,
-        NgClass,
-        RouterLink,
-    ],
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    RouterLink
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountComponent implements OnDestroy {

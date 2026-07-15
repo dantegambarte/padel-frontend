@@ -17,7 +17,7 @@ import { Subscription, filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { User, UserRole } from '../../../core/models/user.model';
-import { NgIf, NgClass, NgFor, NgSwitch, NgSwitchCase } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 interface NavItem {
   id: string;
@@ -36,12 +36,8 @@ interface NavGroup {
     selector: 'app-sidebar',
     templateUrl: './sidebar.component.html',
     imports: [
-        NgIf,
-        NgClass,
-        NgFor,
-        NgSwitch,
-        NgSwitchCase,
-    ],
+    NgClass
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit, OnDestroy {

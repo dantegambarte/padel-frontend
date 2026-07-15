@@ -11,7 +11,7 @@ import { InternalConsumptionService } from '../../../core/services/internal-cons
 import { ProductsService } from '../../../core/services/products.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { UsersService } from '../../../core/services/users.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
 
@@ -19,12 +19,10 @@ import { DisableScrollDirective } from '../../../shared/directives/disable-scrol
     selector: 'app-internal-consumption-form',
     templateUrl: './internal-consumption-form.component.html',
     imports: [
-        NgIf,
-        ModalScrollLockDirective,
-        ReactiveFormsModule,
-        NgFor,
-        DisableScrollDirective,
-    ],
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    DisableScrollDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionFormComponent implements OnInit {

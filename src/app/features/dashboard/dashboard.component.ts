@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
-import { NgIf } from '@angular/common';
+
 import { DashboardAdminComponent } from './admin/dashboard-admin.component';
 import { DashboardEmployeeComponent } from './employee/dashboard-employee.component';
 
@@ -8,10 +8,9 @@ import { DashboardEmployeeComponent } from './employee/dashboard-employee.compon
     selector: 'app-dashboard',
     templateUrl: './dashboard.component.html',
     imports: [
-        NgIf,
-        DashboardAdminComponent,
-        DashboardEmployeeComponent,
-    ],
+    DashboardAdminComponent,
+    DashboardEmployeeComponent
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {

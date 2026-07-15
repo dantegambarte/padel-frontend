@@ -25,7 +25,7 @@ import {
   DailySummaryResponse,
   DailySummaryShift,
 } from '../../core/services/cash.service';
-import { NgIf, NgClass, NgFor } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 import { TicketModalComponent } from './ticket-modal.component';
@@ -67,15 +67,13 @@ export interface GroupedMovimiento {
     selector: 'app-cash-register',
     templateUrl: './cash-register.component.html',
     imports: [
-        NgIf,
-        ReactiveFormsModule,
-        DisableScrollDirective,
-        FormsModule,
-        NgClass,
-        NgFor,
-        TicketModalComponent,
-        ModalScrollLockDirective,
-    ],
+    ReactiveFormsModule,
+    DisableScrollDirective,
+    FormsModule,
+    NgClass,
+    TicketModalComponent,
+    ModalScrollLockDirective
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CashRegisterComponent implements OnInit, OnDestroy {

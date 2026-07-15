@@ -2,11 +2,11 @@
   <div class="rounded-lg border border-border bg-card shadow-md">
     <div
       class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-    >
+      >
       <div class="flex items-center gap-3">
         <div
           class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
-        >
+          >
           <svg
             class="h-6 w-6 text-primary"
             viewBox="0 0 24 24"
@@ -15,759 +15,788 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-          >
+            >
             <path
               d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"
-            />
-            <path d="M7 7h.01" />
-          </svg>
+              />
+              <path d="M7 7h.01" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold text-card-foreground">
+              Franjas Horarias de Precios
+            </h2>
+            <p class="text-sm text-muted-foreground">
+              Configurá los precios dinámicos según día y horario del turno.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 class="text-xl font-semibold text-card-foreground">
-            Franjas Horarias de Precios
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            Configurá los precios dinámicos según día y horario del turno.
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        (click)="openCreate()"
-        class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
-      >
-        <svg
-          class="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M5 12h14" />
-          <path d="M12 5v14" />
-        </svg>
-        Nueva Franja
-      </button>
-    </div>
-  </div>
-
-  <ng-container *ngIf="isLoading()">
-    <div
-      *ngFor="let _ of [1, 2, 3]"
-      class="h-16 animate-pulse rounded-xl border border-border bg-muted"
-    ></div>
-  </ng-container>
-
-  <div
-    *ngIf="serverError() && !isLoading()"
-    class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-  >
-    {{ serverError() }}
-  </div>
-
-  <div
-    *ngIf="!isLoading() && !serverError() && shifts().length === 0"
-    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center"
-  >
-    <svg
-      class="h-12 w-12 text-muted-foreground/40 mb-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path
-        d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"
-      />
-      <path d="M7 7h.01" />
-    </svg>
-    <p class="font-medium text-muted-foreground">
-      Sin franjas horarias configuradas
-    </p>
-    <p class="text-sm text-muted-foreground/70 mt-1">
-      Creá la primera franja para activar el motor de precios dinámico.
-    </p>
-    <button
-      type="button"
-      (click)="openCreate()"
-      class="mt-4 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
-    >
-      <svg
-        class="h-4 w-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
-      Crear Primera Franja
-    </button>
-  </div>
-
-  <div
-    *ngIf="!isLoading() && shifts().length > 0"
-    class="hidden md:block rounded-xl border border-border overflow-hidden shadow-sm"
-  >
-    <div class="w-full overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead class="bg-muted/50 border-b border-border">
-        <tr>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-            Nombre
-          </th>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-            Horario
-          </th>
-          <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-            Días
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            30'
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            60'
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            90'
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            120'
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            Profesor/h
-          </th>
-          <th class="px-4 py-3 text-center font-medium text-muted-foreground">
-            Estado
-          </th>
-          <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-            Acciones
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-border">
-        <tr
-          *ngFor="let s of shifts()"
-          class="hover:bg-muted/20 transition-colors"
-          [class.opacity-50]="!s.isActive"
-        >
-          <td class="px-4 py-3 font-medium">{{ s.name }}</td>
-          <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
-            {{ s.startTime }} – {{ s.endTime }}hs
-          </td>
-          <td class="px-4 py-3 text-muted-foreground">
-            {{ formatDays(s.daysOfWeek) }}
-          </td>
-          <td class="px-4 py-3 text-right tabular-nums">
-            ${{ fmt(s.price30min) }}
-          </td>
-          <td class="px-4 py-3 text-right font-semibold tabular-nums">
-            ${{ fmt(s.price60min) }}
-          </td>
-          <td class="px-4 py-3 text-right tabular-nums">
-            ${{ fmt(s.price90min) }}
-          </td>
-          <td class="px-4 py-3 text-right tabular-nums">
-            ${{ fmt(s.price120min) }}
-          </td>
-          <td class="px-4 py-3 text-right tabular-nums text-muted-foreground">
-            {{
-              s.teacherPricePerHour > 0
-                ? "$" + fmt(s.teacherPricePerHour) + "/h"
-                : "—"
-            }}
-          </td>
-          <td class="px-4 py-3 text-center">
-            <button
-              type="button"
-              (click)="toggleActive(s)"
-              [title]="s.isActive ? 'Desactivar franja' : 'Activar franja'"
-              class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors"
-              [ngClass]="
-                s.isActive
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              "
-            >
-              {{ s.isActive ? "Activa" : "Inactiva" }}
-            </button>
-          </td>
-          <td class="px-4 py-3 text-right">
-            <div class="flex items-center justify-end gap-1.5">
-              <button
-                type="button"
-                (click)="openEdit(s)"
-                title="Editar franja"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                  />
-                  <path
-                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                  />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                (click)="requestDelete(s.id)"
-                title="Eliminar franja"
-                [disabled]="deletingId() === s.id"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-background text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M3 6h18" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-  </div>
-
-  <div *ngIf="!isLoading() && shifts().length > 0" class="md:hidden space-y-3">
-    <div
-      *ngFor="let s of shifts()"
-      class="rounded-xl border border-border bg-card p-4 space-y-3"
-      [class.opacity-60]="!s.isActive"
-    >
-      <div class="flex items-start justify-between gap-2">
-        <p class="font-semibold text-sm">{{ s.name }}</p>
         <button
           type="button"
-          (click)="toggleActive(s)"
-          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold shrink-0"
-          [ngClass]="
-            s.isActive
-              ? 'bg-green-100 text-green-700'
-              : 'bg-gray-100 text-gray-500'
-          "
-        >
-          {{ s.isActive ? "Activa" : "Inactiva" }}
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <p class="text-xs text-muted-foreground">Horario</p>
-          <p class="font-medium">{{ s.startTime }} – {{ s.endTime }}hs</p>
-        </div>
-        <div>
-          <p class="text-xs text-muted-foreground">60 min</p>
-          <p class="font-semibold tabular-nums">${{ fmt(s.price60min) }}</p>
-        </div>
-        <div>
-          <p class="text-xs text-muted-foreground">30 / 90 / 120 min</p>
-          <p class="font-medium tabular-nums">
-            ${{ fmt(s.price30min) }} / ${{ fmt(s.price90min) }} / ${{
-              fmt(s.price120min)
-            }}
-          </p>
-        </div>
-        <div class="col-span-2">
-          <p class="text-xs text-muted-foreground">Días</p>
-          <p class="font-medium">{{ formatDays(s.daysOfWeek) }}</p>
-        </div>
-        <div *ngIf="s.teacherPricePerHour > 0">
-          <p class="text-xs text-muted-foreground">Profesor/hora</p>
-          <p class="font-medium tabular-nums">
-            ${{ fmt(s.teacherPricePerHour) }}/h
-          </p>
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-1 border-t border-border">
-        <button
-          type="button"
-          (click)="openEdit(s)"
-          class="flex-1 rounded-md border border-border py-1.5 text-sm text-center hover:bg-accent transition-colors"
-        >
-          Editar
-        </button>
-        <button
-          type="button"
-          (click)="requestDelete(s.id)"
-          class="flex-1 rounded-md border border-red-200 py-1.5 text-sm text-center text-red-600 hover:bg-red-50 transition-colors"
-        >
-          Eliminar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div
-  *ngIf="showModal()"
-  appModalScrollLock
-  class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
-  (click)="closeModal()"
->
-  <div
-    class="relative w-full max-w-lg rounded-xl border bg-background shadow-xl flex flex-col max-h-[85vh] overflow-hidden"
-    (click)="$event.stopPropagation()"
-  >
-    <div class="flex-shrink-0 flex items-center justify-between border-b px-6 py-4">
-      <h2 class="text-lg font-semibold">
-        {{ editingId() ? "Editar Franja Horaria" : "Nueva Franja Horaria" }}
-      </h2>
-      <button
-        type="button"
-        (click)="closeModal()"
-        class="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      >
-        <svg
-          class="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-      </button>
-    </div>
-
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      novalidate
-      class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-5"
-    >
-      <div class="space-y-1">
-        <label class="block text-sm font-medium">
-          Nombre <span class="text-destructive">*</span>
-        </label>
-        <input
-          type="text"
-          formControlName="name"
-          placeholder="Ej: Turno Mañana Lunes a Viernes"
-          maxlength="100"
-          class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          [class.border-destructive]="hasError('name', 'required')"
-        />
-        <p
-          *ngIf="hasError('name', 'required')"
-          class="text-xs text-destructive"
-        >
-          El nombre es obligatorio.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1">
-          <label class="block text-sm font-medium">
-            Hora Inicio <span class="text-destructive">*</span>
-          </label>
-          <div class="flex gap-1">
-            <select
-              [value]="getHour('startTime')"
-              (change)="
-                setTimePart('startTime', 'h', $any($event.target).value)
-              "
-              class="flex-1 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="hasError('startTime', 'required')"
-              translate="no"
-            >
-              <option value="" disabled class="notranslate">HH</option>
-              <option *ngFor="let h of HOURS" [value]="h" class="notranslate">{{ h }}</option>
-            </select>
-            <span class="flex items-center text-muted-foreground font-medium"
-              >:</span
-            >
-            <select
-              [value]="getMinute('startTime')"
-              (change)="
-                setTimePart('startTime', 'm', $any($event.target).value)
-              "
-              class="w-16 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="hasError('startTime', 'required')"
-              translate="no"
-            >
-              <option value="" disabled class="notranslate">MM</option>
-              <option *ngFor="let m of MINUTES" [value]="m" class="notranslate">{{ m }}</option>
-            </select>
-          </div>
-          <p
-            *ngIf="hasError('startTime', 'required')"
-            class="text-xs text-destructive"
+          (click)="openCreate()"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
           >
-            Obligatorio.
-          </p>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-sm font-medium">
-            Hora Fin <span class="text-destructive">*</span>
-          </label>
-          <div class="flex gap-1">
-            <select
-              [value]="getHour('endTime')"
-              (change)="setTimePart('endTime', 'h', $any($event.target).value)"
-              class="flex-1 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="hasError('endTime', 'required')"
-              translate="no"
-            >
-              <option value="" disabled class="notranslate">HH</option>
-              <option *ngFor="let h of HOURS" [value]="h" class="notranslate">{{ h }}</option>
-            </select>
-            <span class="flex items-center text-muted-foreground font-medium"
-              >:</span
-            >
-            <select
-              [value]="getMinute('endTime')"
-              (change)="setTimePart('endTime', 'm', $any($event.target).value)"
-              class="w-16 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="hasError('endTime', 'required')"
-              translate="no"
-            >
-              <option value="" disabled class="notranslate">MM</option>
-              <option *ngFor="let m of MINUTES" [value]="m" class="notranslate">{{ m }}</option>
-            </select>
-          </div>
-          <p
-            *ngIf="hasError('endTime', 'required')"
-            class="text-xs text-destructive"
-          >
-            Obligatorio.
-          </p>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium">
-          Días de la semana <span class="text-destructive">*</span>
-        </label>
-        <div class="flex flex-wrap gap-2">
-          <button
-            *ngFor="let label of DAY_LABELS; let i = index"
-            type="button"
-            (click)="toggleDay(i)"
-            translate="no"
-            class="notranslate rounded-full px-3 py-1 text-xs font-semibold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            [ngClass]="
-              isDaySelected(i)
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-background text-muted-foreground border-border hover:bg-muted'
-            "
-          >
-            {{ label }}
-          </button>
-        </div>
-        <p
-          *ngIf="modalError() && selectedDays().length === 0"
-          class="text-xs text-destructive"
-        >
-          Seleccioná al menos un día.
-        </p>
-      </div>
-
-      <div class="space-y-3">
-        <p
-          class="text-sm font-semibold text-foreground border-b border-border pb-1"
-        >
-          Alquiler Normal
-        </p>
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <label class="block text-sm font-medium">
-              30 min ($) <span class="text-destructive">*</span>
-            </label>
-            <input
-              type="number" appDisableScroll
-              step="0.01"
-              min="0"
-              formControlName="price30min"
-              placeholder="0.00"
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="
-                hasError('price30min', 'required') ||
-                hasError('price30min', 'min')
-              "
-            />
-            <p
-              *ngIf="hasError('price30min', 'required')"
-              class="text-xs text-destructive"
-            >
-              Obligatorio.
-            </p>
-            <p
-              *ngIf="hasError('price30min', 'min')"
-              class="text-xs text-destructive"
-            >
-              Debe ser ≥ 0.
-            </p>
-          </div>
-          <div class="space-y-1">
-            <label class="block text-sm font-medium">
-              60 min ($) <span class="text-destructive">*</span>
-            </label>
-            <input
-              type="number" appDisableScroll
-              step="0.01"
-              min="0"
-              formControlName="price60min"
-              placeholder="0.00"
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="
-                hasError('price60min', 'required') ||
-                hasError('price60min', 'min')
-              "
-            />
-            <p
-              *ngIf="hasError('price60min', 'required')"
-              class="text-xs text-destructive"
-            >
-              Obligatorio.
-            </p>
-            <p
-              *ngIf="hasError('price60min', 'min')"
-              class="text-xs text-destructive"
-            >
-              Debe ser ≥ 0.
-            </p>
-          </div>
-          <div class="space-y-1">
-            <label class="block text-sm font-medium">
-              90 min ($) <span class="text-destructive">*</span>
-            </label>
-            <input
-              type="number" appDisableScroll
-              step="0.01"
-              min="0"
-              formControlName="price90min"
-              placeholder="0.00"
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="
-                hasError('price90min', 'required') ||
-                hasError('price90min', 'min')
-              "
-            />
-            <p
-              *ngIf="hasError('price90min', 'required')"
-              class="text-xs text-destructive"
-            >
-              Obligatorio.
-            </p>
-            <p
-              *ngIf="hasError('price90min', 'min')"
-              class="text-xs text-destructive"
-            >
-              Debe ser ≥ 0.
-            </p>
-          </div>
-          <div class="space-y-1">
-            <label class="block text-sm font-medium">
-              120 min ($) <span class="text-destructive">*</span>
-            </label>
-            <input
-              type="number" appDisableScroll
-              step="0.01"
-              min="0"
-              formControlName="price120min"
-              placeholder="0.00"
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              [class.border-destructive]="
-                hasError('price120min', 'required') ||
-                hasError('price120min', 'min')
-              "
-            />
-            <p
-              *ngIf="hasError('price120min', 'required')"
-              class="text-xs text-destructive"
-            >
-              Obligatorio.
-            </p>
-            <p
-              *ngIf="hasError('price120min', 'min')"
-              class="text-xs text-destructive"
-            >
-              Debe ser ≥ 0.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <p
-          class="text-sm font-semibold text-foreground border-b border-blue-200 pb-1 text-blue-700"
-        >
-          Clases / Profesores
-        </p>
-        <div class="space-y-1 max-w-[220px]">
-          <label class="block text-sm font-medium"
-            >Precio por hora ($) <span class="text-destructive">*</span></label
-          >
-          <input
-            type="number" appDisableScroll
-            step="0.01"
-            min="0"
-            formControlName="teacherPricePerHour"
-            placeholder="0.00"
-            class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            [class.border-destructive]="
-              hasError('teacherPricePerHour', 'required') ||
-              hasError('teacherPricePerHour', 'min')
-            "
-          />
-          <p
-            *ngIf="hasError('teacherPricePerHour', 'required')"
-            class="text-xs text-destructive"
-          >
-            Obligatorio.
-          </p>
-          <p
-            *ngIf="hasError('teacherPricePerHour', 'min')"
-            class="text-xs text-destructive"
-          >
-            Debe ser ≥ 0.
-          </p>
-          <p
-            *ngIf="
-              !hasError('teacherPricePerHour', 'required') &&
-              !hasError('teacherPricePerHour', 'min')
-            "
-            class="text-xs text-muted-foreground"
-          >
-            Se prorratea proporcionalmente según la duración del turno.
-          </p>
-        </div>
-      </div>
-
-      <div *ngIf="editingId()" class="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="isActive"
-          formControlName="isActive"
-          class="h-4 w-4 rounded border-border"
-        />
-        <label for="isActive" class="text-sm font-medium cursor-pointer"
-          >Franja activa</label
-        >
-      </div>
-
-      <div
-        *ngIf="modalError()"
-        class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-      >
-        {{ modalError() }}
-      </div>
-
-      <div class="flex gap-3 pt-1">
-        <button
-          type="button"
-          (click)="closeModal()"
-          class="flex-1 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          [disabled]="submitting() || !isFormReady"
-          class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
           <svg
-            *ngIf="submitting()"
-            class="h-4 w-4 animate-spin"
+            class="h-4 w-4"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-          >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            >
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
           </svg>
-          {{
-            submitting()
-              ? "Guardando..."
-              : editingId()
-                ? "Guardar Cambios"
-                : "Crear Franja"
-          }}
+          Nueva Franja
         </button>
       </div>
-    </form>
-  </div>
-</div>
+    </div>
 
-<div
-  *ngIf="deleteConfirmId()"
-  appModalScrollLock
-  class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
->
-  <div
-    class="w-full max-w-sm rounded-xl bg-background shadow-xl p-6 space-y-4 text-center"
-  >
-    <div class="flex justify-center">
+    @if (isLoading()) {
+      @for (_ of [1, 2, 3]; track _) {
+        <div
+          class="h-16 animate-pulse rounded-xl border border-border bg-muted"
+        ></div>
+      }
+    }
+
+    @if (serverError() && !isLoading()) {
       <div
-        class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-red-400 text-red-500"
-      >
+        class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+        {{ serverError() }}
+      </div>
+    }
+
+    @if (!isLoading() && !serverError() && shifts().length === 0) {
+      <div
+        class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center"
+        >
         <svg
-          class="h-7 w-7"
+          class="h-12 w-12 text-muted-foreground/40 mb-4"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="1.5"
           stroke-linecap="round"
           stroke-linejoin="round"
-        >
-          <path d="M3 6h18" />
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-        </svg>
-      </div>
-    </div>
-    <h3 class="text-lg font-semibold">¿Eliminar franja?</h3>
-    <p class="text-sm text-muted-foreground">
-      Esta acción es permanente. Los turnos ya creados conservarán su precio
-      original.
-    </p>
-    <div class="flex gap-3 pt-2">
-      <button
-        type="button"
-        (click)="cancelDelete()"
-        class="flex-1 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-      >
-        Cancelar
-      </button>
-      <button
-        type="button"
-        (click)="confirmDelete()"
-        class="flex-1 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors"
-      >
-        Eliminar
-      </button>
-    </div>
-  </div>
-</div>
+          >
+          <path
+            d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"
+            />
+            <path d="M7 7h.01" />
+          </svg>
+          <p class="font-medium text-muted-foreground">
+            Sin franjas horarias configuradas
+          </p>
+          <p class="text-sm text-muted-foreground/70 mt-1">
+            Creá la primera franja para activar el motor de precios dinámico.
+          </p>
+          <button
+            type="button"
+            (click)="openCreate()"
+            class="mt-4 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
+            >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+            Crear Primera Franja
+          </button>
+        </div>
+      }
+
+      @if (!isLoading() && shifts().length > 0) {
+        <div
+          class="hidden md:block rounded-xl border border-border overflow-hidden shadow-sm"
+          >
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-muted/50 border-b border-border">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                    Nombre
+                  </th>
+                  <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                    Horario
+                  </th>
+                  <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                    Días
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    30'
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    60'
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    90'
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    120'
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Profesor/h
+                  </th>
+                  <th class="px-4 py-3 text-center font-medium text-muted-foreground">
+                    Estado
+                  </th>
+                  <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (s of shifts(); track s) {
+                  <tr
+                    class="hover:bg-muted/20 transition-colors"
+                    [class.opacity-50]="!s.isActive"
+                    >
+                    <td class="px-4 py-3 font-medium">{{ s.name }}</td>
+                    <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      {{ s.startTime }} – {{ s.endTime }}hs
+                    </td>
+                    <td class="px-4 py-3 text-muted-foreground">
+                      {{ formatDays(s.daysOfWeek) }}
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums">
+                      ${{ fmt(s.price30min) }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold tabular-nums">
+                      ${{ fmt(s.price60min) }}
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums">
+                      ${{ fmt(s.price90min) }}
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums">
+                      ${{ fmt(s.price120min) }}
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                      {{
+                      s.teacherPricePerHour > 0
+                      ? "$" + fmt(s.teacherPricePerHour) + "/h"
+                      : "—"
+                      }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        (click)="toggleActive(s)"
+                        [title]="s.isActive ? 'Desactivar franja' : 'Activar franja'"
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors"
+              [ngClass]="
+                s.isActive
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              "
+                        >
+                        {{ s.isActive ? "Activa" : "Inactiva" }}
+                      </button>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          (click)="openEdit(s)"
+                          title="Editar franja"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                          >
+                          <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            >
+                            <path
+                              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                              />
+                              <path
+                                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              (click)="requestDelete(s.id)"
+                              title="Eliminar franja"
+                              [disabled]="deletingId() === s.id"
+                              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-background text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+                              >
+                              <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                >
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          @if (!isLoading() && shifts().length > 0) {
+            <div class="md:hidden space-y-3">
+              @for (s of shifts(); track s) {
+                <div
+                  class="rounded-xl border border-border bg-card p-4 space-y-3"
+                  [class.opacity-60]="!s.isActive"
+                  >
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-semibold text-sm">{{ s.name }}</p>
+                    <button
+                      type="button"
+                      (click)="toggleActive(s)"
+                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold shrink-0"
+          [ngClass]="
+            s.isActive
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-500'
+          "
+                      >
+                      {{ s.isActive ? "Activa" : "Inactiva" }}
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p class="text-xs text-muted-foreground">Horario</p>
+                      <p class="font-medium">{{ s.startTime }} – {{ s.endTime }}hs</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-muted-foreground">60 min</p>
+                      <p class="font-semibold tabular-nums">${{ fmt(s.price60min) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-muted-foreground">30 / 90 / 120 min</p>
+                      <p class="font-medium tabular-nums">
+                        ${{ fmt(s.price30min) }} / ${{ fmt(s.price90min) }} / ${{
+                        fmt(s.price120min)
+                        }}
+                      </p>
+                    </div>
+                    <div class="col-span-2">
+                      <p class="text-xs text-muted-foreground">Días</p>
+                      <p class="font-medium">{{ formatDays(s.daysOfWeek) }}</p>
+                    </div>
+                    @if (s.teacherPricePerHour > 0) {
+                      <div>
+                        <p class="text-xs text-muted-foreground">Profesor/hora</p>
+                        <p class="font-medium tabular-nums">
+                          ${{ fmt(s.teacherPricePerHour) }}/h
+                        </p>
+                      </div>
+                    }
+                  </div>
+                  <div class="flex gap-2 pt-1 border-t border-border">
+                    <button
+                      type="button"
+                      (click)="openEdit(s)"
+                      class="flex-1 rounded-md border border-border py-1.5 text-sm text-center hover:bg-accent transition-colors"
+                      >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="requestDelete(s.id)"
+                      class="flex-1 rounded-md border border-red-200 py-1.5 text-sm text-center text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (showModal()) {
+          <div
+            appModalScrollLock
+            class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+            (click)="closeModal()"
+            >
+            <div
+              class="relative w-full max-w-lg rounded-xl border bg-background shadow-xl flex flex-col max-h-[85vh] overflow-hidden"
+              (click)="$event.stopPropagation()"
+              >
+              <div class="flex-shrink-0 flex items-center justify-between border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">
+                  {{ editingId() ? "Editar Franja Horaria" : "Nueva Franja Horaria" }}
+                </h2>
+                <button
+                  type="button"
+                  (click)="closeModal()"
+                  class="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form
+                [formGroup]="form"
+                (ngSubmit)="onSubmit()"
+                novalidate
+                class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-5"
+                >
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium">
+                    Nombre <span class="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    formControlName="name"
+                    placeholder="Ej: Turno Mañana Lunes a Viernes"
+                    maxlength="100"
+                    class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    [class.border-destructive]="hasError('name', 'required')"
+                    />
+                    @if (hasError('name', 'required')) {
+                      <p
+                        class="text-xs text-destructive"
+                        >
+                        El nombre es obligatorio.
+                      </p>
+                    }
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                      <label class="block text-sm font-medium">
+                        Hora Inicio <span class="text-destructive">*</span>
+                      </label>
+                      <div class="flex gap-1">
+                        <select
+                          [value]="getHour('startTime')"
+              (change)="
+                setTimePart('startTime', 'h', $any($event.target).value)
+              "
+                          class="flex-1 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          [class.border-destructive]="hasError('startTime', 'required')"
+                          translate="no"
+                          >
+                          <option value="" disabled class="notranslate">HH</option>
+                          @for (h of HOURS; track h) {
+                            <option [value]="h" class="notranslate">{{ h }}</option>
+                          }
+                        </select>
+                        <span class="flex items-center text-muted-foreground font-medium"
+                          >:</span
+                          >
+                          <select
+                            [value]="getMinute('startTime')"
+              (change)="
+                setTimePart('startTime', 'm', $any($event.target).value)
+              "
+                            class="w-16 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            [class.border-destructive]="hasError('startTime', 'required')"
+                            translate="no"
+                            >
+                            <option value="" disabled class="notranslate">MM</option>
+                            @for (m of MINUTES; track m) {
+                              <option [value]="m" class="notranslate">{{ m }}</option>
+                            }
+                          </select>
+                        </div>
+                        @if (hasError('startTime', 'required')) {
+                          <p
+                            class="text-xs text-destructive"
+                            >
+                            Obligatorio.
+                          </p>
+                        }
+                      </div>
+                      <div class="space-y-1">
+                        <label class="block text-sm font-medium">
+                          Hora Fin <span class="text-destructive">*</span>
+                        </label>
+                        <div class="flex gap-1">
+                          <select
+                            [value]="getHour('endTime')"
+                            (change)="setTimePart('endTime', 'h', $any($event.target).value)"
+                            class="flex-1 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            [class.border-destructive]="hasError('endTime', 'required')"
+                            translate="no"
+                            >
+                            <option value="" disabled class="notranslate">HH</option>
+                            @for (h of HOURS; track h) {
+                              <option [value]="h" class="notranslate">{{ h }}</option>
+                            }
+                          </select>
+                          <span class="flex items-center text-muted-foreground font-medium"
+                            >:</span
+                            >
+                            <select
+                              [value]="getMinute('endTime')"
+                              (change)="setTimePart('endTime', 'm', $any($event.target).value)"
+                              class="w-16 rounded-md border bg-background px-2 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              [class.border-destructive]="hasError('endTime', 'required')"
+                              translate="no"
+                              >
+                              <option value="" disabled class="notranslate">MM</option>
+                              @for (m of MINUTES; track m) {
+                                <option [value]="m" class="notranslate">{{ m }}</option>
+                              }
+                            </select>
+                          </div>
+                          @if (hasError('endTime', 'required')) {
+                            <p
+                              class="text-xs text-destructive"
+                              >
+                              Obligatorio.
+                            </p>
+                          }
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <label class="block text-sm font-medium">
+                          Días de la semana <span class="text-destructive">*</span>
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                          @for (label of DAY_LABELS; track label; let i = $index) {
+                            <button
+                              type="button"
+                              (click)="toggleDay(i)"
+                              translate="no"
+                              class="notranslate rounded-full px-3 py-1 text-xs font-semibold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            [ngClass]="
+              isDaySelected(i)
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-border hover:bg-muted'
+            "
+                              >
+                              {{ label }}
+                            </button>
+                          }
+                        </div>
+                        @if (modalError() && selectedDays().length === 0) {
+                          <p
+                            class="text-xs text-destructive"
+                            >
+                            Seleccioná al menos un día.
+                          </p>
+                        }
+                      </div>
+                      <div class="space-y-3">
+                        <p
+                          class="text-sm font-semibold text-foreground border-b border-border pb-1"
+                          >
+                          Alquiler Normal
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                          <div class="space-y-1">
+                            <label class="block text-sm font-medium">
+                              30 min ($) <span class="text-destructive">*</span>
+                            </label>
+                            <input
+                              type="number" appDisableScroll
+                              step="0.01"
+                              min="0"
+                              formControlName="price30min"
+                              placeholder="0.00"
+                              class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [class.border-destructive]="
+                hasError('price30min', 'required') ||
+                hasError('price30min', 'min')
+              "
+                              />
+                              @if (hasError('price30min', 'required')) {
+                                <p
+                                  class="text-xs text-destructive"
+                                  >
+                                  Obligatorio.
+                                </p>
+                              }
+                              @if (hasError('price30min', 'min')) {
+                                <p
+                                  class="text-xs text-destructive"
+                                  >
+                                  Debe ser ≥ 0.
+                                </p>
+                              }
+                            </div>
+                            <div class="space-y-1">
+                              <label class="block text-sm font-medium">
+                                60 min ($) <span class="text-destructive">*</span>
+                              </label>
+                              <input
+                                type="number" appDisableScroll
+                                step="0.01"
+                                min="0"
+                                formControlName="price60min"
+                                placeholder="0.00"
+                                class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [class.border-destructive]="
+                hasError('price60min', 'required') ||
+                hasError('price60min', 'min')
+              "
+                                />
+                                @if (hasError('price60min', 'required')) {
+                                  <p
+                                    class="text-xs text-destructive"
+                                    >
+                                    Obligatorio.
+                                  </p>
+                                }
+                                @if (hasError('price60min', 'min')) {
+                                  <p
+                                    class="text-xs text-destructive"
+                                    >
+                                    Debe ser ≥ 0.
+                                  </p>
+                                }
+                              </div>
+                              <div class="space-y-1">
+                                <label class="block text-sm font-medium">
+                                  90 min ($) <span class="text-destructive">*</span>
+                                </label>
+                                <input
+                                  type="number" appDisableScroll
+                                  step="0.01"
+                                  min="0"
+                                  formControlName="price90min"
+                                  placeholder="0.00"
+                                  class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [class.border-destructive]="
+                hasError('price90min', 'required') ||
+                hasError('price90min', 'min')
+              "
+                                  />
+                                  @if (hasError('price90min', 'required')) {
+                                    <p
+                                      class="text-xs text-destructive"
+                                      >
+                                      Obligatorio.
+                                    </p>
+                                  }
+                                  @if (hasError('price90min', 'min')) {
+                                    <p
+                                      class="text-xs text-destructive"
+                                      >
+                                      Debe ser ≥ 0.
+                                    </p>
+                                  }
+                                </div>
+                                <div class="space-y-1">
+                                  <label class="block text-sm font-medium">
+                                    120 min ($) <span class="text-destructive">*</span>
+                                  </label>
+                                  <input
+                                    type="number" appDisableScroll
+                                    step="0.01"
+                                    min="0"
+                                    formControlName="price120min"
+                                    placeholder="0.00"
+                                    class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [class.border-destructive]="
+                hasError('price120min', 'required') ||
+                hasError('price120min', 'min')
+              "
+                                    />
+                                    @if (hasError('price120min', 'required')) {
+                                      <p
+                                        class="text-xs text-destructive"
+                                        >
+                                        Obligatorio.
+                                      </p>
+                                    }
+                                    @if (hasError('price120min', 'min')) {
+                                      <p
+                                        class="text-xs text-destructive"
+                                        >
+                                        Debe ser ≥ 0.
+                                      </p>
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="space-y-3">
+                                <p
+                                  class="text-sm font-semibold text-foreground border-b border-blue-200 pb-1 text-blue-700"
+                                  >
+                                  Clases / Profesores
+                                </p>
+                                <div class="space-y-1 max-w-[220px]">
+                                  <label class="block text-sm font-medium"
+                                    >Precio por hora ($) <span class="text-destructive">*</span></label
+                                    >
+                                    <input
+                                      type="number" appDisableScroll
+                                      step="0.01"
+                                      min="0"
+                                      formControlName="teacherPricePerHour"
+                                      placeholder="0.00"
+                                      class="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            [class.border-destructive]="
+              hasError('teacherPricePerHour', 'required') ||
+              hasError('teacherPricePerHour', 'min')
+            "
+                                      />
+                                      @if (hasError('teacherPricePerHour', 'required')) {
+                                        <p
+                                          class="text-xs text-destructive"
+                                          >
+                                          Obligatorio.
+                                        </p>
+                                      }
+                                      @if (hasError('teacherPricePerHour', 'min')) {
+                                        <p
+                                          class="text-xs text-destructive"
+                                          >
+                                          Debe ser ≥ 0.
+                                        </p>
+                                      }
+                                      @if (
+                                        !hasError('teacherPricePerHour', 'required') &&
+                                        !hasError('teacherPricePerHour', 'min')
+                                        ) {
+                                        <p
+                                          class="text-xs text-muted-foreground"
+                                          >
+                                          Se prorratea proporcionalmente según la duración del turno.
+                                        </p>
+                                      }
+                                    </div>
+                                  </div>
+                                  @if (editingId()) {
+                                    <div class="flex items-center gap-3">
+                                      <input
+                                        type="checkbox"
+                                        id="isActive"
+                                        formControlName="isActive"
+                                        class="h-4 w-4 rounded border-border"
+                                        />
+                                        <label for="isActive" class="text-sm font-medium cursor-pointer"
+                                          >Franja activa</label
+                                          >
+                                        </div>
+                                      }
+                                      @if (modalError()) {
+                                        <div
+                                          class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                          >
+                                          {{ modalError() }}
+                                        </div>
+                                      }
+                                      <div class="flex gap-3 pt-1">
+                                        <button
+                                          type="button"
+                                          (click)="closeModal()"
+                                          class="flex-1 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                          >
+                                          Cancelar
+                                        </button>
+                                        <button
+                                          type="submit"
+                                          [disabled]="submitting() || !isFormReady"
+                                          class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                          >
+                                          @if (submitting()) {
+                                            <svg
+                                              class="h-4 w-4 animate-spin"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              >
+                                              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                            </svg>
+                                          }
+                                          {{
+                                          submitting()
+                                          ? "Guardando..."
+                                          : editingId()
+                                          ? "Guardar Cambios"
+                                          : "Crear Franja"
+                                          }}
+                                        </button>
+                                      </div>
+                                    </form>
+                                  </div>
+                                </div>
+                              }
+
+                              @if (deleteConfirmId()) {
+                                <div
+                                  appModalScrollLock
+                                  class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+                                  >
+                                  <div
+                                    class="w-full max-w-sm rounded-xl bg-background shadow-xl p-6 space-y-4 text-center"
+                                    >
+                                    <div class="flex justify-center">
+                                      <div
+                                        class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-red-400 text-red-500"
+                                        >
+                                        <svg
+                                          class="h-7 w-7"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="2"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          >
+                                          <path d="M3 6h18" />
+                                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        </svg>
+                                      </div>
+                                    </div>
+                                    <h3 class="text-lg font-semibold">¿Eliminar franja?</h3>
+                                    <p class="text-sm text-muted-foreground">
+                                      Esta acción es permanente. Los turnos ya creados conservarán su precio
+                                      original.
+                                    </p>
+                                    <div class="flex gap-3 pt-2">
+                                      <button
+                                        type="button"
+                                        (click)="cancelDelete()"
+                                        class="flex-1 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                                        >
+                                        Cancelar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        (click)="confirmDelete()"
+                                        class="flex-1 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                                        >
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              }

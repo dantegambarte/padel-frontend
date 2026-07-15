@@ -51,7 +51,7 @@ import {
   RescheduleBookingDto,
 } from '../../core/models/booking.model';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { NgClass, NgIf, NgFor, AsyncPipe, DecimalPipe } from '@angular/common';
+import { NgClass, AsyncPipe, DecimalPipe } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
@@ -71,21 +71,19 @@ interface CartItem {
     selector: 'app-schedule',
     templateUrl: './schedule.component.html',
     imports: [
-        ReactiveFormsModule,
-        FormsModule,
-        NgClass,
-        NgIf,
-        NgFor,
-        CdkDropListGroup,
-        CdkDropList,
-        CdkDrag,
-        CdkDragPlaceholder,
-        CdkDragHandle,
-        ModalScrollLockDirective,
-        DisableScrollDirective,
-        AsyncPipe,
-        DecimalPipe,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    CdkDropListGroup,
+    CdkDropList,
+    CdkDrag,
+    CdkDragPlaceholder,
+    CdkDragHandle,
+    ModalScrollLockDirective,
+    DisableScrollDirective,
+    AsyncPipe,
+    DecimalPipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScheduleComponent implements OnInit, OnDestroy {

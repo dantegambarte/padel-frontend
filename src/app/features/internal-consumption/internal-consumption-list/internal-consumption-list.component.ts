@@ -11,7 +11,7 @@ import { Teacher } from '../../../core/models/teacher.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { TeachersService } from '../../../core/services/teachers.service';
-import { NgIf, NgFor, NgClass, DecimalPipe } from '@angular/common';
+import { NgClass, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { InternalConsumptionFormComponent } from '../internal-consumption-form/internal-consumption-form.component';
 import { SettleDebtModalComponent } from '../settle-debt-modal/settle-debt-modal.component';
@@ -20,15 +20,13 @@ import { SettleDebtModalComponent } from '../settle-debt-modal/settle-debt-modal
     selector: 'app-internal-consumption-list',
     templateUrl: './internal-consumption-list.component.html',
     imports: [
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        NgClass,
-        InternalConsumptionFormComponent,
-        SettleDebtModalComponent,
-        DecimalPipe,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    InternalConsumptionFormComponent,
+    SettleDebtModalComponent,
+    DecimalPipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionListComponent implements OnInit {

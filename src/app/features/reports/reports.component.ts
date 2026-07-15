@@ -27,7 +27,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingResponse } from '../../core/models/booking.model';
 import Swal from 'sweetalert2';
-import { NgFor, NgClass, NgIf, DatePipe } from '@angular/common';
+import { NgClass, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { TicketModalComponent } from '../cash-register/ticket-modal.component';
@@ -41,15 +41,13 @@ interface Preset {
     selector: 'app-reports',
     templateUrl: './reports.component.html',
     imports: [
-        NgFor,
-        NgClass,
-        ReactiveFormsModule,
-        FormsModule,
-        NgIf,
-        NgChartsModule,
-        TicketModalComponent,
-        DatePipe,
-    ],
+    NgClass,
+    ReactiveFormsModule,
+    FormsModule,
+    NgChartsModule,
+    TicketModalComponent,
+    DatePipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportsComponent implements OnInit, OnDestroy {

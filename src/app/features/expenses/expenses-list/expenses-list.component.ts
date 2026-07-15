@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@a
 import { Expense } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ExpenseFormComponent } from '../expense-form/expense-form.component';
 
@@ -10,13 +10,11 @@ import { ExpenseFormComponent } from '../expense-form/expense-form.component';
     selector: 'app-expenses-list',
     templateUrl: './expenses-list.component.html',
     imports: [
-        NgIf,
-        ReactiveFormsModule,
-        FormsModule,
-        NgFor,
-        NgClass,
-        ExpenseFormComponent,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    ExpenseFormComponent
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpensesListComponent implements OnInit {

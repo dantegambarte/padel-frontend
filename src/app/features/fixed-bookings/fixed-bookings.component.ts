@@ -13,7 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TeachersService } from '../../core/services/teachers.service';
 import { Court } from '../../core/models/court.model';
 import { Teacher } from '../../core/models/teacher.model';
-import { NgClass, NgIf, NgFor, SlicePipe, DecimalPipe } from '@angular/common';
+import { NgClass, SlicePipe, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
@@ -59,16 +59,14 @@ const EMPTY_FORM = (): FormState => ({
     selector: 'app-fixed-bookings',
     templateUrl: './fixed-bookings.component.html',
     imports: [
-        NgClass,
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        ModalScrollLockDirective,
-        DisableScrollDirective,
-        SlicePipe,
-        DecimalPipe,
-    ],
+    NgClass,
+    ReactiveFormsModule,
+    FormsModule,
+    ModalScrollLockDirective,
+    DisableScrollDirective,
+    SlicePipe,
+    DecimalPipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FixedBookingsComponent implements OnInit, OnDestroy {

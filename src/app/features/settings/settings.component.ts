@@ -11,7 +11,7 @@ import {
 } from '../../core/models/court.model';
 import { ToastService } from '../../core/services/toast.service';
 import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
@@ -21,15 +21,13 @@ import { Dialog } from 'primeng/dialog';
     selector: 'app-settings',
     templateUrl: './settings.component.html',
     imports: [
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        DisableScrollDirective,
-        NgClass,
-        ModalScrollLockDirective,
-        Dialog,
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    DisableScrollDirective,
+    NgClass,
+    ModalScrollLockDirective,
+    Dialog
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactivate {

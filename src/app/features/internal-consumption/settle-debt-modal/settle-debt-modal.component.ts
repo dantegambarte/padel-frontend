@@ -9,20 +9,18 @@ import {
 import { Teacher } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
-import { NgIf, NgFor, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-settle-debt-modal',
     templateUrl: './settle-debt-modal.component.html',
     imports: [
-        ModalScrollLockDirective,
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-        DecimalPipe,
-    ],
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    FormsModule,
+    DecimalPipe
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettleDebtModalComponent implements OnInit {

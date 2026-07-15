@@ -9,19 +9,17 @@ import { PaymentMethod } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-teacher-settlement-modal',
     templateUrl: './teacher-settlement-modal.component.html',
     imports: [
-        ModalScrollLockDirective,
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        FormsModule,
-    ],
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    FormsModule
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherSettlementModalComponent implements OnInit {
