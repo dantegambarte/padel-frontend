@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnInit,
   OnDestroy,
@@ -52,6 +53,7 @@ interface PosCartItem {
         NgTemplateOutlet,
         NgClass,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   products = signal<Product[]>([]);

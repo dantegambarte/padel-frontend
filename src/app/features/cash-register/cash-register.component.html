@@ -325,7 +325,7 @@
       Mi Turno
     </button>
     <button
-      *ngIf="isAdmin"
+      *ngIf="isAdmin()"
       type="button"
       (click)="activeTab.set('historial'); loadDailySummary()"
       [class.border-accent]="activeTab() === 'historial'"
@@ -596,7 +596,7 @@
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
-            Caja abierta por: {{ cajeroActual }}
+            Caja abierta por: {{ cajeroActual() }}
           </span>
         </div>
       </div>
@@ -1498,7 +1498,7 @@
   (closeModal)="closeTicket()"
 ></app-ticket-modal>
 
-<div *ngIf="isAdmin && activeTab() === 'historial'" class="space-y-6">
+<div *ngIf="isAdmin() && activeTab() === 'historial'" class="space-y-6">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
     <div class="space-y-1.5">
       <label
@@ -1940,7 +1940,7 @@
           Confirmar Cierre de Turno
         </h2>
         <p class="mt-1.5 text-sm text-muted-foreground">
-          Caja abierta por <strong>{{ cajeroActual }}</strong
+          Caja abierta por <strong>{{ cajeroActual() }}</strong
           >. Esta acción cierra el turno actual y bloquea nuevas operaciones.
           ¿Está seguro?
         </p>

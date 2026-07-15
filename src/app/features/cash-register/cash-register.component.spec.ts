@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -88,7 +88,15 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
     imports: [CashRegisterComponent],
     providers: [
         { provide: CashService, useValue: cashService },
-        { provide: AuthService, useValue: { isAdmin: true, currentUser: { fullName: 'Cajero Test' } } },
+        {
+            provide: AuthService,
+            useValue: {
+                isAdmin: true,
+                isAdminSignal: signal(true),
+                currentUser: { fullName: 'Cajero Test' },
+                currentUserSignal: signal({ fullName: 'Cajero Test' }),
+            },
+        },
         { provide: ToastService, useValue: toastService },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         {

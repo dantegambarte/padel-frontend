@@ -1,9 +1,10 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  ChangeDetectorRef,
   HostListener,
   OnInit,
   OnDestroy,
+  computed,
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -75,6 +76,7 @@ export interface GroupedMovimiento {
         TicketModalComponent,
         ModalScrollLockDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CashRegisterComponent implements OnInit, OnDestroy {
   activeTab = signal<'turno' | 'historial'>('turno');
@@ -167,7 +169,6 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private router: Router,
     private draftService: DraftService,
-    private cdr: ChangeDetectorRef,
     private configService: ConfigService,
   ) {}
 
@@ -216,9 +217,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /** True cuando el usuario autenticado es administrador. */
-  get isAdmin(): boolean {
-    return this.authService.isAdmin;
-  }
+  isAdmin = this.authService.isAdminSignal;
 
   /**
    * Fecha comercial que se va a abrir al presionar "Abrir Jornada".
@@ -289,13 +288,11 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /** Devuelve el nombre completo del usuario autenticado actualmente (quien opera el sistema). */
   get userName(): string {
-    return this.authService.currentUser?.fullName ?? 'Usuario';
+    return this.authService.currentUserSignal()?.fullName ?? 'Usuario';
   }
 
   /** Nombre a mostrar como cajero del turno: quien abrió la sesión, no quien está logueado ahora. */
-  get cajeroActual(): string {
-    return this.openedByName() ?? this.userName;
-  }
+  cajeroActual = computed(() => this.openedByName() ?? this.userName);
 
   /**
    * Etiqueta del turno activo derivada de `openedAt` (fuente de verdad).
