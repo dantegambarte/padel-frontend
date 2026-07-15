@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -71,6 +71,7 @@ type DialogMode = 'create' | 'edit' | 'view';
         ModalScrollLockDirective,
         DisableScrollDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsComponent implements OnInit {
   products = signal<Product[]>([]);
@@ -211,9 +212,7 @@ export class ProductsComponent implements OnInit {
   }
 
   /** `true` cuando el usuario no es administrador y sólo puede ver los productos. */
-  get isReadOnly(): boolean {
-    return !this.authService.isAdmin;
-  }
+  isReadOnly = computed(() => !this.authService.isAdminSignal());
 
   /** `true` cuando el diálogo está en modo de sólo lectura. */
   viewMode = computed(() => this.dialogMode() === 'view');
@@ -575,10 +574,12 @@ export class ProductsComponent implements OnInit {
    * Usa actualización optimista: cambia el estado local de inmediato y lo revierte si falla.
    */
   persistToggleFeatured(product: Product): void {
-    if (this.isReadOnly || this.togglingFeaturedIds().has(product.id)) return;
+    if (this.isReadOnly() || this.togglingFeaturedIds().has(product.id)) return;
 
     const newValue = !product.isFeatured;
-    product.isFeatured = newValue;
+    this.products.update((list) =>
+      list.map((p) => (p.id === product.id ? { ...p, isFeatured: newValue } : p)),
+    );
     this.togglingFeaturedIds.update((ids) => new Set(ids).add(product.id));
 
     this.productsService
@@ -599,7 +600,11 @@ export class ProductsComponent implements OnInit {
           );
         },
         error: () => {
-          product.isFeatured = !newValue;
+          this.products.update((list) =>
+            list.map((p) =>
+              p.id === product.id ? { ...p, isFeatured: !newValue } : p,
+            ),
+          );
           this.toast.error(
             'Error al actualizar',
             'No se pudo cambiar el estado Destacado. Intente nuevamente.',

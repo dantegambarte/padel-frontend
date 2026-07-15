@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
@@ -25,6 +25,7 @@ import { DisableScrollDirective } from '../../../shared/directives/disable-scrol
         NgFor,
         DisableScrollDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionFormComponent implements OnInit {
   @Output() saved = new EventEmitter<void>();
@@ -102,6 +103,7 @@ export class InternalConsumptionFormComponent implements OnInit {
     private productsService: ProductsService,
     private teachersService: TeachersService,
     private usersService: UsersService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -164,7 +166,7 @@ export class InternalConsumptionFormComponent implements OnInit {
    * Método para intentar autocompletar el consumidor si el usuario logueado es un empleado y el tipo de consumidor seleccionado es "staff". Busca una coincidencia entre el ID del usuario logueado y la lista de usuarios activos, y si encuentra una coincidencia, selecciona automáticamente ese usuario como consumidor. Esto mejora la experiencia del usuario al reducir la cantidad de pasos necesarios para registrar un consumo interno para ellos mismos.
    */
   get isEmployeeRole(): boolean {
-    return this.authService.currentUser?.role === 'employee';
+    return this.authService.currentUserSignal()?.role === 'employee';
   }
 
   private tryAutofillEmployee(): void {
@@ -358,6 +360,9 @@ export class InternalConsumptionFormComponent implements OnInit {
         this.productsService.findAll().subscribe((products) => {
           this.products.set(products.filter((p) => p.isActive && p.stock > 0));
           this.rowStates.forEach((s) => (s.filtered = this.products()));
+          // rowStates es un array plano mutado in-place (ver comentario en su
+          // declaración); bajo OnPush esta mutación async no dispara CD sola.
+          this.cdr.markForCheck();
         });
 
         if (consumerType === 'teacher' && teacherId) {

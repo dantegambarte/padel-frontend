@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProductsComponent } from './products.component';
@@ -60,7 +60,10 @@ describe('ProductsComponent', () => {
       'update',
       'remove',
     ]);
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], { isAdmin });
+    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
+      isAdmin,
+      isAdminSignal: signal(isAdmin),
+    });
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'error']);
     activatedRouteStub = {
       snapshot: { queryParamMap: convertToParamMap(highlightId ? { highlight: highlightId } : {}) },
@@ -309,13 +312,20 @@ describe('ProductsComponent', () => {
     productsServiceSpy.update.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    const product = fixture.componentInstance.products().find((p) => p.id === 'p1')!;
-    const original = product.isFeatured;
+    const original = fixture.componentInstance
+      .products()
+      .find((p) => p.id === 'p1')!.isFeatured;
 
-    fixture.componentInstance.persistToggleFeatured(product);
+    fixture.componentInstance.persistToggleFeatured(
+      fixture.componentInstance.products().find((p) => p.id === 'p1')!,
+    );
 
-    // Optimistic flip happened synchronously before the error came back.
-    expect(product.isFeatured).toBe(original);
+    // The error observable resolves synchronously, so the revert already
+    // happened by the time this assertion runs.
+    const reverted = fixture.componentInstance
+      .products()
+      .find((p) => p.id === 'p1')!.isFeatured;
+    expect(reverted).toBe(original);
     expect(toastServiceSpy.error).toHaveBeenCalled();
   });
 
@@ -335,6 +345,6 @@ describe('ProductsComponent', () => {
     setup(false);
     const fixture = TestBed.createComponent(ProductsComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.isReadOnly).toBe(true);
+    expect(fixture.componentInstance.isReadOnly()).toBe(true);
   });
 });

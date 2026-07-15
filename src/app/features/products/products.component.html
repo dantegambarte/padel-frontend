@@ -10,11 +10,11 @@
           <h3
             class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
           >
-            {{ isReadOnly ? "Consulta de Productos" : "Gestión de Productos" }}
+            {{ isReadOnly() ? "Consulta de Productos" : "Gestión de Productos" }}
           </h3>
           <p class="mt-1.5 text-sm text-muted-foreground">
             {{
-              isReadOnly
+              isReadOnly()
                 ? "Visualice el inventario y verifique stock disponible"
                 : "Administre el inventario de productos y precios"
             }}
@@ -23,7 +23,7 @@
 
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
-            *ngIf="!isReadOnly"
+            *ngIf="!isReadOnly()"
             type="button"
             (click)="openCreate()"
             class="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -130,7 +130,7 @@
               Categoría
             </th>
             <th
-              *ngIf="!isReadOnly"
+              *ngIf="!isReadOnly()"
               class="p-3 text-right font-medium text-muted-foreground"
             >
               Costo
@@ -236,7 +236,7 @@
                 </td>
 
                 <td
-                  *ngIf="!isReadOnly"
+                  *ngIf="!isReadOnly()"
                   class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-right"
                 >
                   <span
@@ -343,7 +343,7 @@
                     role="switch"
                     [attr.aria-checked]="product.isFeatured"
                     [disabled]="
-                      isReadOnly || togglingFeaturedIds().has(product.id)
+                      isReadOnly() || togglingFeaturedIds().has(product.id)
                     "
                     (click)="persistToggleFeatured(product)"
                     [title]="
@@ -355,8 +355,8 @@
                     [ngClass]="{
                       'bg-primary': product.isFeatured,
                       'bg-input': !product.isFeatured,
-                      'cursor-pointer': !isReadOnly,
-                      'cursor-default': isReadOnly,
+                      'cursor-pointer': !isReadOnly(),
+                      'cursor-default': isReadOnly(),
                       'animate-pulse': togglingFeaturedIds().has(product.id),
                     }"
                   >
@@ -375,7 +375,7 @@
                   <div
                     class="flex gap-2 justify-end w-full mt-3 pt-3 border-t border-border md:border-0 md:mt-0 md:pt-0"
                   >
-                    <ng-container *ngIf="isReadOnly; else adminActions">
+                    <ng-container *ngIf="isReadOnly(); else adminActions">
                       <button
                         type="button"
                         (click)="openView(product)"
@@ -456,7 +456,7 @@
             <ng-template #emptyRow>
               <tr class="block md:table-row">
                 <td
-                  [attr.colspan]="isReadOnly ? 6 : 7"
+                  [attr.colspan]="isReadOnly() ? 6 : 7"
                   class="block md:table-cell py-10 text-center text-sm text-muted-foreground"
                 >
                   No se encontraron productos

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { InternalConsumptionFormComponent } from './internal-consumption-form.component';
@@ -49,6 +49,7 @@ describe('InternalConsumptionFormComponent', () => {
   function setup(role: 'admin' | 'employee') {
     authServiceSpy = jasmine.createSpyObj('AuthService', [], {
       currentUser: { id: 'u1', role },
+      currentUserSignal: signal({ id: 'u1', role }),
     });
     serviceSpy = jasmine.createSpyObj('InternalConsumptionService', [
       'create',
