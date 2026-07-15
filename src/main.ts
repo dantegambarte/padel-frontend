@@ -16,6 +16,7 @@ import { AppRoutingModule } from './app/app-routing.module';
 import { CoreModule } from './app/core/core.module';
 import { AppComponent } from './app/app.component';
 import { provideServiceWorker } from '@angular/service-worker';
+import { providePrimeNG } from 'primeng/config';
 
 registerLocaleData(localeEsAR);
 
@@ -30,5 +31,8 @@ bootstrapApplication(AppComponent, {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
+    // 'none' = sin CSS de tema propio; los componentes PrimeNG heredan
+    // exclusivamente las variables --accent/--background/etc. de styles.scss.
+    providePrimeNG({ theme: 'none' }),
   ],
 }).catch((err) => console.error(err));
