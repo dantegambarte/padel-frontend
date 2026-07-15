@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -69,6 +69,7 @@ const EMPTY_FORM = (): FormState => ({
         SlicePipe,
         DecimalPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FixedBookingsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();

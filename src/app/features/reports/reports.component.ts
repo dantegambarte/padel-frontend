@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
 import * as XLSX from 'xlsx';
 import { forkJoin, of, Subject } from 'rxjs';
 import {
@@ -50,6 +50,7 @@ interface Preset {
         TicketModalComponent,
         DatePipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportsComponent implements OnInit, OnDestroy {
   /** Emite el par from/to cada vez que cambia el filtro de período. */
