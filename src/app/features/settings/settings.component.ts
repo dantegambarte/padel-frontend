@@ -15,6 +15,7 @@ import { NgIf, NgFor, NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { Dialog } from 'primeng/dialog';
 
 @Component({
     selector: 'app-settings',
@@ -27,6 +28,7 @@ import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directi
         DisableScrollDirective,
         NgClass,
         ModalScrollLockDirective,
+        Dialog,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -243,6 +245,11 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
   closeCourtModal(): void {
     if (this.isCourtSubmitting()) return;
     this.isCourtModalOpen.set(false);
+  }
+
+  /** p-dialog emite visibleChange=false al cerrarse por click en el mask (dismissableMask). */
+  onCourtModalVisibleChange(visible: boolean): void {
+    if (!visible) this.closeCourtModal();
   }
 
   /** Valida y envía el formulario de cancha para creación o edición. */
