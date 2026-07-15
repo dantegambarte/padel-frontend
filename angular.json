@@ -35,7 +35,9 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "sweetalert2"
-            ]
+            ],
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json"
           },
           "configurations": {
             "production": {
