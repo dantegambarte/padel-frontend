@@ -1,30 +1,33 @@
 # La Caldera — Sistema de Gestión de Canchas de Padel
 
-Frontend desarrollado en **Angular 15** con **TailwindCSS** para la gestión integral de un club de padel: reservas de canchas, punto de venta, cierre de caja, inventario, reportes, egresos y administración de usuarios.
+Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para la gestión integral de un club de padel: reservas de canchas, punto de venta, cierre de caja, inventario, reportes, egresos y administración de usuarios. Es una **PWA instalable** con service worker.
 
 ---
 
 ## Stack tecnológico
 
-| Capa             | Tecnología                    |
-| ---------------- | ----------------------------- |
-| Framework        | Angular 15.2                  |
-| Estilos          | TailwindCSS 3.4 + SCSS        |
-| Gráficos         | Chart.js 4.5 + ng2-charts 4.1 |
-| Alertas/Modales  | SweetAlert2 11                |
-| Exportación      | XLSX 0.18                     |
-| Testing unitario | Karma + Jasmine               |
-| Testing E2E      | Playwright 1.58               |
-| Lenguaje         | TypeScript 4.9 (strict mode)  |
-| Target JS        | ES2022                        |
+| Capa              | Tecnología                      |
+| ----------------- | ------------------------------- |
+| Framework         | Angular 21.2                    |
+| Componentes UI    | PrimeNG 21.1 (modo unstyled)    |
+| Estilos           | TailwindCSS 3.4 + SCSS          |
+| Gráficos          | Chart.js 4.5 + ng2-charts 4.1   |
+| Alertas/Modales   | SweetAlert2 11                  |
+| Exportación       | XLSX 0.18                       |
+| PWA               | @angular/service-worker 21.2    |
+| Detección cambios | zone.js 0.15 + OnPush + signals |
+| Testing unitario  | Karma + Jasmine                 |
+| Testing E2E       | Playwright 1.58                 |
+| Lenguaje          | TypeScript 5.9 (strict mode)    |
+| Target JS         | ES2022                          |
 
 ---
 
 ## Requisitos previos
 
-- Node.js 18+
-- npm 9+
-- Angular CLI 15: `npm install -g @angular/cli@15`
+- Node.js 20.19+ / 22.12+ / 24+ (requisito de Angular 21)
+- npm 10+
+- Angular CLI 21: `npm install -g @angular/cli@21`
 - Backend corriendo (ver sección de entorno)
 
 ---
@@ -353,7 +356,40 @@ Utilidad para preservar formularios ante recargas o pérdidas de conexión.
 
 ---
 
+## PWA (Progressive Web App)
+
+La aplicación es instalable y funciona offline para el shell estático.
+
+- `@angular/service-worker` registrado en `main.ts` con `provideServiceWorker('ngsw-worker.js')`, habilitado solo fuera de dev (`enabled: !isDevMode()`) y con estrategia `registerWhenStable:30000`
+- `ngsw-config.json` define dos `assetGroups`: **app** (`index.html`, CSS y JS en `prefetch`) y **assets** (imágenes y fuentes en `lazy` + `updateMode: prefetch`)
+- **No hay `dataGroups`**: las llamadas a la API quedan deliberadamente en modo network-only para no servir datos de caja o reservas desactualizados
+- `public/manifest.webmanifest` con branding real (`La Caldera Padel`, `theme_color #008b45`, `display: standalone`) e íconos maskable en `public/icons/`
+
+---
+
+## PrimeNG (modo unstyled)
+
+PrimeNG se configura en `main.ts` con `providePrimeNG({ theme: 'none' })`.
+
+- `theme: 'none'` significa **sin CSS de tema propio**: los componentes heredan exclusivamente las variables (`--accent`, `--background`, etc.) definidas en `styles.scss`, por lo que conviven con Tailwind sin pelear especificidad ni romper el modo oscuro
+- Adopción progresiva: el primer componente migrado es el modal de "Nueva/Editar Cancha" en `settings.component` (`p-dialog`), elegido como piloto por ser admin-only y de bajo tráfico
+- El resto de los modales sigue con la implementación propia hasta que el patrón se valide
+
+---
+
 ## Caché y rendimiento
+
+### Detección de cambios
+
+- **OnPush** aplicado a los 31 componentes de la aplicación (`ChangeDetectionStrategy.OnPush`)
+- Estado expuesto como **signals** (`signal()` / `computed()`) en 36 archivos, incluido el estado de sesión de `AuthService`
+- `provideZoneChangeDetection({ eventCoalescing: true })` en el bootstrap
+
+### Sintaxis de templates
+
+Los templates usan **control flow nativo** de Angular (`@if` / `@for` / `@switch`). Las directivas estructurales `*ngIf` / `*ngFor` / `*ngSwitch` fueron migradas por completo — no quedan usos en `src/app`. Todo template nuevo debe usar la sintaxis nativa.
+
+### Caché HTTP
 
 Los servicios de mayor demanda implementan una caché con TTL para evitar peticiones redundantes:
 
@@ -434,6 +470,8 @@ npm run test:e2e:report
 npm run build
 # Output: dist/padel-frontend/
 ```
+
+> El proyecto sigue usando el builder legacy `@angular-devkit/build-angular:browser`, por eso el output es plano en `dist/padel-frontend/` y no `dist/padel-frontend/browser/`. Migrar al builder `application` queda pendiente.
 
 Configurar el servidor web para redirigir todas las rutas al `index.html` (SPA routing).
 
