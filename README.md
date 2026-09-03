@@ -55,7 +55,7 @@ npm start
 | Comando                   | Descripción                                   |
 | ------------------------- | --------------------------------------------- |
 | `npm start`               | Servidor de desarrollo en `localhost:4200`    |
-| `npm run build`           | Build de producción en `dist/padel-frontend/` |
+| `npm run build`           | Build de producción en `dist/padel-frontend/browser/` |
 | `npm run watch`           | Build en modo watch (desarrollo)              |
 | `npm test`                | Tests unitarios con Karma + Jasmine           |
 | `npm run test:e2e`        | Tests E2E headless con Playwright             |
@@ -476,21 +476,42 @@ npm run test:e2e:report
 
 ```bash
 npm run build
-# Output: dist/padel-frontend/
+# Output: dist/padel-frontend/browser/   ← ojo, la subcarpeta browser/
 ```
 
-> El proyecto sigue usando el builder legacy `@angular-devkit/build-angular:browser`, por eso el output es plano en `dist/padel-frontend/` y no `dist/padel-frontend/browser/`. Migrar al builder `application` queda pendiente.
+> ⚠️ **El contenido a publicar está en `dist/padel-frontend/browser/`, no en `dist/padel-frontend/`.**
+> El proyecto usa el builder `@angular-devkit/build-angular:application`, que separa la
+> salida en subcarpetas (`browser/` para el bundle del navegador). Junto a ella quedan
+> `3rdpartylicenses.txt` y `prerendered-routes.json`, que **no** hay que subir al servidor.
+>
+> Si venís de una versión anterior del proyecto (builder `browser`, output plano),
+> **actualizá tu comando de deploy**: copiar `dist/padel-frontend/*` ahora sube la
+> carpeta `browser` en vez de su contenido, y nginx termina sirviendo un directorio
+> sin `index.html`.
 
 Configurar el servidor web para redirigir todas las rutas al `index.html` (SPA routing).
+
+**Deploy manual al VPS** (no hay CI):
+
+```bash
+npm run build
+scp -r dist/padel-frontend/browser/* usuario@vps:<RUTA_NGINX>/
+```
 
 **Ejemplo nginx:**
 
 ```nginx
 location / {
-  root /var/www/padel-frontend;
+  root <RUTA_NGINX>;
   try_files $uri $uri/ /index.html;
 }
 ```
+
+> **`<RUTA_NGINX>` está sin verificar.** Los archivos versionados dicen
+> `/var/www/padelsys` (ver `back/padel-backend/nginx/padelsys.conf` y
+> `scripts/setup-vps.sh`), pero no se pudo confirmar contra el VPS real.
+> Antes del próximo deploy, verificalo en el servidor con
+> `nginx -T | grep -B5 root` y alineá el `.conf` versionado con la realidad.
 
 ### Límites de bundle
 
