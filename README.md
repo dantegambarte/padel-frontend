@@ -8,16 +8,16 @@ Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para l
 
 | Capa              | Tecnología                      |
 | ----------------- | ------------------------------- |
-| Framework         | Angular 21.2                    |
+| Framework         | Angular 21.2.22                 |
 | Componentes UI    | PrimeNG 21.1 (modo unstyled)    |
 | Estilos           | TailwindCSS 3.4 + SCSS          |
 | Gráficos          | Chart.js 4.5 + ng2-charts 4.1   |
 | Alertas/Modales   | SweetAlert2 11                  |
-| Exportación       | XLSX 0.18                       |
+| Exportación       | SheetJS (xlsx) 0.20.3           |
 | PWA               | @angular/service-worker 21.2    |
 | Detección cambios | zone.js 0.15 + OnPush + signals |
 | Testing unitario  | Karma + Jasmine                 |
-| Testing E2E       | Playwright 1.58                 |
+| Testing E2E       | Playwright 1.62                 |
 | Lenguaje          | TypeScript 5.9 (strict mode)    |
 | Target JS         | ES2022                          |
 
@@ -187,16 +187,16 @@ src/
 ```
 /                        → redirect a /auth/login
 /auth/login              → Pantalla de inicio de sesión
-/app/                    → Shell protegido (requiere AuthGuard)
+/app/                    → Shell protegido (requiere authGuard)
   ├── dashboard          → Panel de control con métricas
   ├── schedule           → Agenda de reservas de canchas
   ├── fixed-bookings     → Turnos fijos / abonos
   ├── cash-register      → Apertura y cierre de turno de caja
   ├── pos                → Nueva venta (Punto de Venta)
   ├── products           → Gestión de productos e inventario
-  ├── expenses           → Egresos del turno (solo admin — AdminGuard)
-  ├── pricing-shifts     → Franjas horarias de precios (solo admin — AdminGuard)
-  ├── inventory          → Alertas de stock bajo (solo admin — AdminGuard)
+  ├── expenses           → Egresos del turno (solo admin — adminGuard)
+  ├── pricing-shifts     → Franjas horarias de precios (solo admin — adminGuard)
+  ├── inventory          → Alertas de stock bajo (solo admin — adminGuard)
   ├── reports            → Reportes de ventas
   ├── teachers           → Gestión de profesores
   ├── users              → Gestión de usuarios
