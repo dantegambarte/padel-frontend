@@ -2225,7 +2225,7 @@
                                                                                                                                                                     <div class="flex flex-wrap gap-1 mt-1">
                                                                                                                                                                       @for (
                                                                                                                                                                         i of [].constructor(detailPlayerCount()); track
-                                                                                                                                                                        i; let idx = $index) {
+                                                                                                                                                                        $index; let idx = $index) {
                                                                                                                                                                         <div
                                                                                                                                                                           class="h-4 w-4 rounded-full border-2 transition-colors"
                                 [ngClass]="

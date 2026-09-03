@@ -1257,7 +1257,7 @@
                                                               ></div>
                                                             }
                                                           } @else {
-                                                            @for (item of groupedMovimientos; track item) {
+                                                            @for (item of groupedMovimientos(); track item.type + item.referenceId) {
                                                               @if (item.type === 'EXPENSE') {
                                                                 <div
                                                                   class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border border-red-100 bg-red-50 shadow-sm dark:border-red-900/40 dark:bg-red-950/20"

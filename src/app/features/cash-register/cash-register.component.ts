@@ -785,7 +785,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * El servidor devuelve las transacciones en orden DESC; las invertimos
    * para mantener el orden cronológico dentro de cada grupo.
    */
-  get groupedMovimientos(): GroupedMovimiento[] {
+  readonly groupedMovimientos = computed<GroupedMovimiento[]>(() => {
     const result: GroupedMovimiento[] = [];
     const bookingMap = new Map<string, GroupedMovimiento>();
 
@@ -895,7 +895,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     return result.sort((a, b) =>
       b.latestCreatedAt.localeCompare(a.latestCreatedAt),
     );
-  }
+  });
 
   /**
    * Abre un modal SweetAlert2 con el detalle completo del movimiento en 3 secciones:
