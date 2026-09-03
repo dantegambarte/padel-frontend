@@ -421,12 +421,20 @@ Los tests cubren los flujos principales de la aplicación.
 
 ### Requisitos previos
 
-```bash
-# Terminal 1 — Backend
-npm start   # en el proyecto backend
+**No levantes nada a mano.** Playwright arranca el backend y el frontend él mismo
+(ver `webServer` en `playwright.config.ts`), corriendo antes las migraciones y el
+seed. Solo necesitás PostgreSQL disponible.
 
-# Terminal 2 — Frontend
-npm start   # en este proyecto
+Los puertos **3000 y 4200 tienen que estar libres**: la config usa
+`reuseExistingServer: false`, así que si hay un server levantado la suite falla al
+arrancar en vez de reutilizarlo. Es deliberado — el backend debe correr con
+`NODE_ENV=test` (sin eso el login incrementa `sessionVersion` e invalida la sesión
+compartida, y toda la suite cae con `SESSION_OVERRIDDEN`), y un server arrancado a
+mano no cumple esa condición.
+
+```bash
+# Si los puertos están ocupados, liberalos antes de correr la suite
+netstat -ano | findstr "LISTENING" | findstr ":3000 :4200"
 ```
 
 ### Comandos

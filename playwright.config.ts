@@ -20,13 +20,25 @@ export default defineConfig({
       // provocando fallos en cascada por "no se pudo conectar con el servidor".
       command: `set NODE_ENV=test&& npm --prefix ${backendProject} run migration:run && npm --prefix ${backendProject} run seed && npm --prefix ${backendProject} run start`,
       url: `${backendUrl}/api/docs`,
-      reuseExistingServer: !process.env['CI'],
+      // Nunca reutilizar un backend ya levantado, ni siquiera en local.
+      // La suite depende de que el backend corra con NODE_ENV=test: solo así
+      // el login no incrementa sessionVersion (si lo incrementa, cada spec que
+      // hace su propio login invalida la sesión compartida del storageState y
+      // el resto falla en cascada con SESSION_OVERRIDDEN) y el throttle de
+      // login sube de 5 a 1000. Un backend arrancado a mano con `npm run
+      // start:dev` no cumple ninguna de las dos condiciones, y al reutilizarlo
+      // la suite fallaba masivamente aparentando una regresión de la app.
+      // Con `false`, si el puerto está ocupado Playwright falla al arrancar:
+      // preferimos ese error ruidoso antes que resultados que mienten.
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
       command: 'npm start',
       url: frontendUrl,
-      reuseExistingServer: !process.env['CI'],
+      // Mismo criterio que el backend: arrancar siempre nuestro propio server
+      // en vez de heredar uno con estado o build desconocidos.
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],
