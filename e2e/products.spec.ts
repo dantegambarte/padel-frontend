@@ -155,7 +155,7 @@ test.describe('Módulo de Productos', () => {
       .first()
       .or(page.locator('[data-testid="edit-product"]').first());
 
-    if (await editBtn.isVisible({ timeout: 3000 })) {
+    if (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await editBtn.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 3000 });
@@ -171,8 +171,8 @@ test.describe('Módulo de Productos', () => {
     const editBtn = page.locator('button[title="Editar producto"]').first();
     const deleteBtn = page.locator('button[title="Eliminar producto"]').first();
     const hasActions =
-      (await editBtn.isVisible({ timeout: 3000 }).catch(() => false)) ||
-      (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false));
+      (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) ||
+      (await deleteBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false));
     expect(hasActions).toBeTruthy();
   });
 
@@ -189,7 +189,7 @@ test.describe('Módulo de Productos', () => {
       .locator('select')
       .first()
       .or(page.getByRole('combobox').first());
-    if (await categoryFilter.isVisible({ timeout: 2000 })) {
+    if (await categoryFilter.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
       const options = await categoryFilter.locator('option').count();
       if (options > 1) {
         await categoryFilter.selectOption({ index: 1 });

@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Locator, Page } from '@playwright/test';
 
 const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   .toISOString()
@@ -15,6 +15,24 @@ async function goToSchedule(page: Page) {
 
 function availableSlot(page: Page) {
   return page.getByRole('button', { name: /Disponible \d{2}:\d{2}/ }).first();
+}
+
+/**
+ * Activa un elemento de la grilla respetando el tipo de dispositivo.
+ *
+ * En el proyecto Mobile (iPhone SE, `hasTouch: true`) un `click()` de Playwright
+ * despacha eventos de mouse y el handler del slot NO responde — casi seguro por
+ * el drag & drop del CDK, que en táctil captura los eventos de puntero. Un
+ * usuario real toca la pantalla, así que `tap()` es la interacción correcta y no
+ * un parche: verificado que `click()` no abre el modal y `tap()` sí.
+ */
+async function activar(page: Page, locator: Locator) {
+  const esTactil = await page.evaluate(() => 'ontouchstart' in window);
+  if (esTactil) {
+    await locator.tap();
+  } else {
+    await locator.click();
+  }
 }
 
 test.describe('Agenda / Reservas — Flujos CRUD', () => {
@@ -37,8 +55,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (await slotDisp.isVisible({ timeout: 5000 })) {
-      await slotDisp.click();
+    if (await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, slotDisp);
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 4000 });
       await expect(dialog.getByRole('textbox').first()).toBeVisible();
@@ -50,8 +68,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (await slotDisp.isVisible({ timeout: 5000 })) {
-      await slotDisp.click();
+    if (await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, slotDisp);
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 4000 });
 
@@ -70,12 +88,12 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (!(await slotDisp.isVisible({ timeout: 5000 }))) {
+    if (!(await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false))) {
       test.skip();
       return;
     }
 
-    await slotDisp.click();
+    await activar(page, slotDisp);
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible({ timeout: 4000 });
 
@@ -112,11 +130,11 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
       .getByRole('button', { name: /Reservado|Jugando/i })
       .first();
 
-    if (await bookingCard.isVisible({ timeout: 5000 })) {
-      await bookingCard.click();
+    if (await bookingCard.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, bookingCard);
       await page.waitForTimeout(500);
       const dialog = page.getByRole('dialog');
-      if (await dialog.isVisible({ timeout: 3000 })) {
+      if (await dialog.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
         await expect(
           dialog.getByText(/cliente|Cliente|Reserva/i).first(),
         ).toBeVisible();
@@ -165,8 +183,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (await slotDisp.isVisible({ timeout: 5000 })) {
-      await slotDisp.click();
+    if (await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, slotDisp);
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 4000 });
 
@@ -183,8 +201,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (await slotDisp.isVisible({ timeout: 5000 })) {
-      await slotDisp.click();
+    if (await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, slotDisp);
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 4000 });
 
@@ -203,8 +221,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
   }) => {
     const slotDisp = availableSlot(page);
 
-    if (await slotDisp.isVisible({ timeout: 5000 })) {
-      await slotDisp.click();
+    if (await slotDisp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+      await activar(page, slotDisp);
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 4000 });
 

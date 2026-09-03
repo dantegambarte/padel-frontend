@@ -354,7 +354,7 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     const bookingName = page
       .getByRole('textbox', { name: /Cliente|Jugador|Nombre/i })
       .first();
-    if (await bookingName.isVisible({ timeout: 1_500 }).catch(() => false)) {
+    if (await bookingName.waitFor({ state: 'visible', timeout: 1_500 }).then(() => true).catch(() => false)) {
       await bookingName.fill('Jugador en Cancha');
     }
   }
@@ -362,7 +362,7 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   const btnGuardarReserva = page.getByRole('button', {
     name: /Guardar Reserva/i,
   });
-  if (await btnGuardarReserva.isVisible({ timeout: 1_500 }).catch(() => false)) {
+  if (await btnGuardarReserva.waitFor({ state: 'visible', timeout: 1_500 }).then(() => true).catch(() => false)) {
     await screenshotWithHighlight(
       btnGuardarReserva,
       page,
@@ -385,7 +385,7 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   const closeTurnTab = page
     .getByRole('button', { name: /Cierre de Turno/i })
     .first();
-  if (await closeTurnTab.isVisible({ timeout: 2_000 }).catch(() => false)) {
+  if (await closeTurnTab.waitFor({ state: 'visible', timeout: 2_000 }).then(() => true).catch(() => false)) {
     await closeTurnTab.click();
     await page.waitForTimeout(1000);
   }

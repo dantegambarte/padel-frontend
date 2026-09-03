@@ -17,7 +17,7 @@ async function openBookingModal(page: Page) {
   await slot.click();
 
   const modal = page.getByTestId('booking-modal');
-  if (!(await modal.isVisible({ timeout: 1000 }).catch(() => false))) {
+  if (!(await modal.waitFor({ state: 'visible', timeout: 1000 }).then(() => true).catch(() => false))) {
     await slot.evaluate((el: HTMLElement) => el.click());
   }
   await expect(modal).toBeVisible({ timeout: 3_000 });
@@ -27,7 +27,7 @@ async function openBookingModal(page: Page) {
 async function waitForScheduleGrid(page: Page) {
   const grid = page.locator('.overflow-x-auto').first();
   for (let attempt = 0; attempt < 8; attempt += 1) {
-    if (await grid.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await grid.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
       return;
     }
 

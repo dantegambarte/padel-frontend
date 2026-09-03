@@ -17,22 +17,36 @@ function closeCashButton(page: Page) {
   }).first();
 }
 
+/**
+ * Navega a la pestaña "Cierre de Turno". Devuelve `false` cuando la caja no se
+ * puede cerrar (típicamente porque hay turnos pendientes y la app muestra el
+ * diálogo "Hay pendientes").
+ *
+ * OJO con `locator.isVisible()`: es un chequeo INSTANTÁNEO, no reintenta, y el
+ * `{ timeout }` que se le pase se ignora. Usarlo justo después del click era una
+ * carrera contra el render que en Mobile se perdía siempre: devolvía `false` y
+ * el helper concluía "no se puede cerrar" aunque la pantalla de arqueo estuviera
+ * por aparecer. Acá esperamos de verdad con `waitFor`.
+ *
+ * El heading "Arqueo de Turno" además NO está dentro de `<main>`, así que no se
+ * acota la búsqueda a ese contenedor.
+ */
 async function goToCierreTurno(page: Page) {
   const cierreTab = page.getByRole('button', { name: /Cierre de Turno/i });
-  if (await cierreTab.isVisible()) {
-    await cierreTab.click({ force: true });
-    const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
-    if (await pendingDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return false;
-    }
-    const cierreHeading = page
-      .locator('main')
-      .getByRole('heading', { name: /Arqueo de Turno/i });
-    if (!(await cierreHeading.isVisible({ timeout: 3000 }).catch(() => false))) {
-      return false;
-    }
-  }
-  return true;
+  if (!(await cierreTab.isVisible())) return true;
+
+  await cierreTab.click({ force: true });
+
+  const cierreHeading = page
+    .getByRole('heading', { name: /Arqueo de Turno/i })
+    .first();
+
+  const llegoAlArqueo = await cierreHeading
+    .waitFor({ state: 'visible', timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+
+  return llegoAlArqueo;
 }
 
 async function fillCashCount(page: Page, amount = '1000') {

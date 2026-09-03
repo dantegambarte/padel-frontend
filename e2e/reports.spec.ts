@@ -40,7 +40,7 @@ test.describe('Módulo de Reportes', () => {
     page,
   }) => {
     const todayBtn = page.getByRole('button', { name: /^(Hoy|Today)$/i });
-    if (await todayBtn.isVisible({ timeout: 2000 })) {
+    if (await todayBtn.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
       await todayBtn.click();
       await page.waitForLoadState('networkidle');
       await expect(reportsLoaded(page)).toBeVisible();
@@ -49,7 +49,7 @@ test.describe('Módulo de Reportes', () => {
 
   test('RE-05: el filtro "última semana" funciona', async ({ page }) => {
     const weekBtn = page.getByRole('button', { name: /semana|week|7 días/i });
-    if (await weekBtn.isVisible({ timeout: 2000 })) {
+    if (await weekBtn.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
       await weekBtn.click();
       await page.waitForLoadState('networkidle');
       await expect(reportsLoaded(page)).toBeVisible();
@@ -89,7 +89,7 @@ test.describe('Módulo de Reportes', () => {
     const exportBtn = page
       .getByRole('button', { name: /Exportar|Export|CSV|Excel/i })
       .first();
-    if (await exportBtn.isVisible({ timeout: 3000 })) {
+    if (await exportBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await expect(exportBtn).toBeEnabled();
     }
   });

@@ -34,7 +34,7 @@ async function addFirstProductAndPay(page: Page): Promise<void> {
   await productBtn.click();
 
   const pagoTab = page.getByRole('button', { name: 'Pago', exact: true });
-  if (await pagoTab.isVisible({ timeout: 2000 }).catch(() => false)) {
+  if (await pagoTab.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
     await pagoTab.click();
   }
 
@@ -104,7 +104,7 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
       .locator('input[id="fondoInicial"], input[placeholder*="fondo" i]')
       .first();
 
-    if (await fondoInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await fondoInput.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await fondoInput.fill('5000');
       const abrirBtn = page.getByRole('button', {
         name: /Abrir Jornada|Abrir Caja/i,
@@ -336,8 +336,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
       )
       .first();
     const bookingVisible = await booking
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
     if (!bookingVisible) {
       test.skip();
       return;
@@ -381,8 +380,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
       )
       .first();
     const bookingVisible = await booking
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
     if (!bookingVisible) {
       test.skip();
       return;
@@ -410,8 +408,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
 
     const dialog = page.getByRole('dialog');
     const dialogVisible = await dialog
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
     if (dialogVisible) {
       const cancelBtn = dialog.getByRole('button', { name: /Cancelar|No/i });
       if (await cancelBtn.isVisible()) {

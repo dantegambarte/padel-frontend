@@ -89,7 +89,7 @@ test.describe('Módulo de Configuración', () => {
     const newCourtBtn = page
       .getByRole('button', { name: /Nueva Cancha|Agregar Cancha/i })
       .first();
-    if (await newCourtBtn.isVisible({ timeout: 3000 })) {
+    if (await newCourtBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await newCourtBtn.click();
       const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });
@@ -100,7 +100,7 @@ test.describe('Módulo de Configuración', () => {
     const newCourtBtn = page
       .getByRole('button', { name: /Nueva Cancha|Agregar Cancha/i })
       .first();
-    if (!(await newCourtBtn.isVisible({ timeout: 3000 }))) {
+    if (!(await newCourtBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false))) {
       test.skip();
       return;
     }
@@ -133,7 +133,7 @@ test.describe('Módulo de Configuración', () => {
       .first()
       .or(page.locator('[data-testid="edit-court"]').first());
 
-    if (await editBtn.isVisible({ timeout: 3000 })) {
+    if (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await editBtn.click();
       const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });

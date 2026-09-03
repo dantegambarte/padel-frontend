@@ -1,12 +1,30 @@
 import { test, expect, Page } from '@playwright/test';
 
-/** En mobile el sidebar está colapsado — abrirlo antes de clickear nav items. */
+/**
+ * En mobile el sidebar está colapsado (`-translate-x-full`) — hay que abrirlo
+ * antes de clickear nav items. A partir del breakpoint `xl` (1280px) el aside
+ * es fijo y el hamburguesa está oculto por CSS (`xl:hidden`).
+ *
+ * Decidimos por viewport y NO por "¿se ve el botón?": el shell se carga de
+ * forma lazy, así que justo después de que la URL cambia el hamburguesa puede
+ * todavía no existir en el DOM. La versión anterior sondeaba con
+ * `isVisible({ timeout: 500 })` y un `.catch(() => false)`, con lo cual un
+ * "todavía no cargó" se volvía indistinguible de un "no hace falta abrirlo":
+ * el sidebar quedaba cerrado y los clicks posteriores fallaban con el nav item
+ * fuera del viewport.
+ */
+const XL_BREAKPOINT = 1280;
+
 async function openSidebarIfNeeded(page: Page) {
+  const width = page.viewportSize()?.width ?? 0;
+  if (width >= XL_BREAKPOINT) return;
+
   const hamburger = page.getByRole('button', { name: /Abrir menú|Open menu/i });
-  if (await hamburger.isVisible({ timeout: 500 }).catch(() => false)) {
-    await hamburger.click();
-    await page.waitForTimeout(300);
-  }
+  await hamburger.waitFor({ state: 'visible', timeout: 15000 });
+  await hamburger.click();
+
+  // Esperar el estado real, no un timeout arbitrario.
+  await expect(page.locator('aside').first()).toHaveClass(/translate-x-0/);
 }
 
 async function clickNavItem(page: Page, name: string) {
