@@ -9,6 +9,16 @@ function settingsHeading(page: Page) {
   return page.getByRole('heading', { name: /Configuración/i }).first();
 }
 
+/**
+ * El modal de canchas usa p-dialog de PrimeNG, que expone role="dialog" dos
+ * veces: en el host <p-dialog> y en el <div> interno que renderiza. Un
+ * getByRole('dialog') suelto matchea ambos y rompe por strict mode, así que
+ * acotamos al interno, que es el que tiene el contenido.
+ */
+function courtDialog(page: Page) {
+  return page.locator('p-dialog').getByRole('dialog');
+}
+
 test.describe('Módulo de Configuración', () => {
   test.beforeEach(async ({ page }) => {
     await goToSettings(page);
@@ -81,7 +91,7 @@ test.describe('Módulo de Configuración', () => {
       .first();
     if (await newCourtBtn.isVisible({ timeout: 3000 })) {
       await newCourtBtn.click();
-      const dialog = page.getByRole('dialog');
+      const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });
     }
   });
@@ -96,7 +106,7 @@ test.describe('Módulo de Configuración', () => {
     }
 
     await newCourtBtn.click();
-    const dialog = page.getByRole('dialog');
+    const dialog = courtDialog(page);
     await expect(dialog).toBeVisible({ timeout: 3000 });
 
     const nameInput = dialog.getByRole('textbox').first();
@@ -125,7 +135,7 @@ test.describe('Módulo de Configuración', () => {
 
     if (await editBtn.isVisible({ timeout: 3000 })) {
       await editBtn.click();
-      const dialog = page.getByRole('dialog');
+      const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });
       await expect(dialog.getByRole('textbox').first()).not.toHaveValue('');
     }
