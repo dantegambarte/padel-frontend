@@ -1,16 +1,11 @@
 import { registerLocaleData } from '@angular/common';
 import localeEsAR from '@angular/common/locales/es-AR';
-import {
-  LOCALE_ID,
-  importProvidersFrom,
-  provideZoneChangeDetection,
-  isDevMode,
-} from '@angular/core';
+import { LOCALE_ID, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { AppRoutingModule } from './app/app-routing.module';
-import { CoreModule } from './app/core/core.module';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { jwtInterceptor } from './app/core/interceptors/jwt.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -23,7 +18,10 @@ bootstrapApplication(AppComponent, {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
     provideHttpClient(withInterceptors([jwtInterceptor])),
-    importProvidersFrom(AppRoutingModule, CoreModule),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
+    ),
     { provide: LOCALE_ID, useValue: 'es-AR' },
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
