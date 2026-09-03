@@ -14,7 +14,11 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   webServer: [
     {
-      command: `set NODE_ENV=test&& npm --prefix ${backendProject} run migration:run && npm --prefix ${backendProject} run seed && npm --prefix ${backendProject} run start:dev`,
+      // start (no start:dev) a propósito: start:dev es `nest start --watch` y
+      // nest-cli.json tiene deleteOutDir, así que cualquier cambio en src/
+      // durante la corrida borra dist/ y reinicia el backend a mitad de suite,
+      // provocando fallos en cascada por "no se pudo conectar con el servidor".
+      command: `set NODE_ENV=test&& npm --prefix ${backendProject} run migration:run && npm --prefix ${backendProject} run seed && npm --prefix ${backendProject} run start`,
       url: `${backendUrl}/api/docs`,
       reuseExistingServer: !process.env['CI'],
       timeout: 120_000,
