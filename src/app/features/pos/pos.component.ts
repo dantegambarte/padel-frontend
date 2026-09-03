@@ -568,10 +568,9 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (existingIndex !== -1) {
       if (rental || cart[existingIndex].quantity < product.stock) {
-        const next = [...cart];
-        const item = next.splice(existingIndex, 1)[0];
-        item.quantity += 1;
-        next.push(item);
+        const item = cart[existingIndex];
+        const next = cart.filter((_, i) => i !== existingIndex);
+        next.push({ ...item, quantity: item.quantity + 1 });
         this.cart.set(next);
       } else {
         this.toast.error(

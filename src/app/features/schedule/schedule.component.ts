@@ -9,6 +9,7 @@ import {
   ViewChild,
   ElementRef,
   signal,
+  computed,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, forkJoin, timer, of } from 'rxjs';
@@ -267,14 +268,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    * Permite asignar individualmente cada unidad a un jugador distinto.
    * La key usa productId + contador global para ser única y estable (no depende del orden del carrito).
    */
-  get flatUnpaidConsumables(): {
-    key: string;
-    cartIdx: number;
-    unitIdx: number;
-    name: string;
-    unitPrice: number;
-    committed: boolean;
-  }[] {
+  readonly flatUnpaidConsumables = computed<
+    {
+      key: string;
+      cartIdx: number;
+      unitIdx: number;
+      name: string;
+      unitPrice: number;
+      committed: boolean;
+    }[]
+  >(() => {
     const result: {
       key: string;
       cartIdx: number;
@@ -308,13 +311,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       }
     }
     return result;
-  }
+  });
 
   /** Total de los consumos seleccionados individualmente para el jugador actual. */
   get selectedConsumablesTotal(): number {
     let total = 0;
     const selectedConsumableKeys = this.selectedConsumableKeys();
-    for (const unit of this.flatUnpaidConsumables) {
+    for (const unit of this.flatUnpaidConsumables()) {
       if (!unit.committed && selectedConsumableKeys.has(unit.key)) {
         total += unit.unitPrice;
       }
@@ -345,7 +348,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
     this.selectedConsumableKeys.set(next);
     // Sincronizar selectedForPayment usando flatUnpaidConsumables para obtener el cartIdx correcto
-    const flat = this.flatUnpaidConsumables;
+    const flat = this.flatUnpaidConsumables();
     const unit = flat.find((u) => u.key === key);
     if (unit) {
       const cartIdx = unit.cartIdx;
@@ -1192,7 +1195,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (this.selectedConsumableKeys().size === 0) return [];
 
     const selectedCountByIdx = new Map<number, number>();
-    for (const unit of this.flatUnpaidConsumables) {
+    for (const unit of this.flatUnpaidConsumables()) {
       if (!unit.committed && this.selectedConsumableKeys().has(unit.key)) {
         selectedCountByIdx.set(
           unit.cartIdx,
@@ -1317,7 +1320,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     qty: number;
   }[] {
     const qtyByName = new Map<string, { unitPrice: number; qty: number }>();
-    for (const unit of this.flatUnpaidConsumables) {
+    for (const unit of this.flatUnpaidConsumables()) {
       if (!unit.committed && this.selectedConsumableKeys().has(unit.key)) {
         const existing = qtyByName.get(unit.name);
         if (existing) {
@@ -2716,11 +2719,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   trackByCourt(_: number, court: Court): string {
     return court.id;
   }
-  /** TrackBy para el *ngFor de ítems del carrito de detalle. */
-  trackByProductId(index: number, item: CartItem): string {
-    return item.id ?? `${item.productId}_${index}`;
-  }
-
   /**
    * Inicia el drag-to-scroll solo si el click NO fue sobre una tarjeta
    * de reserva (cdk-drag). De lo contrario, el cdkDrag toma el control.
