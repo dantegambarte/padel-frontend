@@ -205,7 +205,7 @@ src/
 **                       → redirect a /auth/login
 ```
 
-Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `AuthGuard`. El `JwtInterceptor` adjunta automáticamente el token Bearer a cada petición HTTP e intercepta errores 401 para refrescar el token o forzar logout.
+Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `authGuard`. El `jwtInterceptor` adjunta automáticamente el token Bearer a cada petición HTTP e intercepta errores 401 para refrescar el token o forzar logout.
 
 ---
 
@@ -216,7 +216,7 @@ Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `AuthGu
 | `admin`    | Acceso completo a todos los módulos, incluidos egresos y franjas de precios |
 | `employee` | Dashboard simplificado, POS, agenda, caja y turnos fijos                    |
 
-Las rutas exclusivas de admin están protegidas en dos capas: **`AdminGuard`** (ruta) y visibilidad en el sidebar (solo se muestra el ítem si el rol es `admin`).
+Las rutas exclusivas de admin están protegidas en dos capas: **`adminGuard`** (ruta) y visibilidad en el sidebar (solo se muestra el ítem si el rol es `admin`).
 
 ---
 
@@ -409,9 +409,9 @@ Las cachés se invalidan automáticamente al logout y al realizar mutaciones (PO
 
 | Guard                 | Uso                                                                     |
 | --------------------- | ----------------------------------------------------------------------- |
-| `AuthGuard`           | Protege todas las rutas dentro de `/app`                                |
-| `AdminGuard`          | Restringe acceso a `expenses`, `pricing-shifts` e `inventory` a rol `admin` |
-| `UnsavedChangesGuard` | Alerta antes de navegar si hay cambios sin guardar (settings, teachers) |
+| `authGuard`           | Protege todas las rutas dentro de `/app` (`CanActivateFn` funcional)     |
+| `adminGuard`          | Restringe acceso a `expenses`, `pricing-shifts` e `inventory` a rol `admin` (`CanActivateFn` funcional) |
+| `unsavedChangesGuard` | Alerta antes de navegar si hay cambios sin guardar (settings, teachers) (`CanDeactivateFn` funcional) |
 
 ---
 
