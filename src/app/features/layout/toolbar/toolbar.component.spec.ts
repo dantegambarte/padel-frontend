@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { ToolbarComponent } from './toolbar.component';
@@ -40,7 +40,7 @@ describe('ToolbarComponent', () => {
     imports: [ToolbarComponent],
     providers: [
         { provide: CalculatorService, useValue: jasmine.createSpyObj('CalculatorService', ['open']) },
-        { provide: ThemeService, useValue: { isDark$: new BehaviorSubject(false), toggle: () => { } } },
+        { provide: ThemeService, useValue: { isDark: signal(false), toggle: () => { } } },
         { provide: HolidayService, useValue: { isHoliday$: new BehaviorSubject(false), toggle: () => { } } },
         { provide: Router, useValue: routerSpy },
         { provide: AuthService, useValue: authServiceSpy },

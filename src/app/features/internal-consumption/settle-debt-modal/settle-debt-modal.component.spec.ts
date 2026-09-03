@@ -57,8 +57,8 @@ describe('SettleDebtModalComponent', () => {
 
   function createWithInputs() {
     const fixture = TestBed.createComponent(SettleDebtModalComponent);
-    fixture.componentInstance.teacher = teacher;
-    fixture.componentInstance.summary = summary;
+    fixture.componentRef.setInput('teacher', teacher);
+    fixture.componentRef.setInput('summary', summary);
     fixture.detectChanges();
     return fixture;
   }
@@ -133,7 +133,7 @@ describe('SettleDebtModalComponent', () => {
   it('sendDebtReminder() does nothing when the teacher has no phone number', () => {
     const windowOpenSpy = spyOn(window, 'open');
     const fixture = createWithInputs();
-    fixture.componentInstance.teacher = { ...teacher, phoneNumber: null };
+    fixture.componentRef.setInput('teacher', { ...teacher, phoneNumber: null });
 
     fixture.componentInstance.sendDebtReminder();
 

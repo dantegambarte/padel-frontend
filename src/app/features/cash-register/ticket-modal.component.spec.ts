@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { TicketModalComponent } from './ticket-modal.component';
 import { SalesService, SaleDetail } from '../../core/services/sales.service';
@@ -33,43 +33,51 @@ describe('TicketModalComponent', () => {
     expect(fixture.componentInstance.sale()).toBeNull();
   });
 
-  it('ngOnChanges() fetches the sale when saleId is set', () => {
+  it('fetches the sale when saleId is set', () => {
     salesServiceSpy.findOne.and.returnValue(of(mockSale));
     const fixture = TestBed.createComponent(TicketModalComponent);
-    const component = fixture.componentInstance;
-    component.saleId = 's1';
+    fixture.detectChanges();
 
-    component.ngOnChanges({ saleId: new SimpleChange(null, 's1', true) });
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
 
     expect(salesServiceSpy.findOne).toHaveBeenCalledWith('s1');
-    expect(component.sale()).toEqual(mockSale);
-    expect(component.isLoading()).toBe(false);
+    expect(fixture.componentInstance.sale()).toEqual(mockSale);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
-  it('ngOnChanges() sets loadError when the fetch fails', () => {
+  it('sets loadError when the fetch fails', () => {
     salesServiceSpy.findOne.and.returnValue(throwError(() => new Error('boom')));
     const fixture = TestBed.createComponent(TicketModalComponent);
-    const component = fixture.componentInstance;
-    component.saleId = 's1';
+    fixture.detectChanges();
 
-    component.ngOnChanges({ saleId: new SimpleChange(null, 's1', true) });
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
 
-    expect(component.loadError()).toContain('No se pudo cargar');
+    expect(fixture.componentInstance.loadError()).toContain('No se pudo cargar');
   });
 
-  it('ngOnChanges() clears the sale when saleId becomes null', () => {
+  it('clears the sale when saleId becomes null', () => {
+    salesServiceSpy.findOne.and.returnValue(of(mockSale));
     const fixture = TestBed.createComponent(TicketModalComponent);
-    const component = fixture.componentInstance;
-    component.sale.set(mockSale);
-    component.saleId = null;
+    fixture.detectChanges();
 
-    component.ngOnChanges({ saleId: new SimpleChange('s1', null, false) });
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
 
-    expect(component.sale()).toBeNull();
+    fixture.componentRef.setInput('saleId', null);
+    fixture.detectChanges();
+    TestBed.flushEffects();
+
+    expect(fixture.componentInstance.sale()).toBeNull();
   });
 
   it('close() emits closeModal', () => {
     const fixture = TestBed.createComponent(TicketModalComponent);
+    fixture.detectChanges();
     const component = fixture.componentInstance;
     const emitSpy = spyOn(component.closeModal, 'emit');
     component.close();

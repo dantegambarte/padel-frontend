@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -10,12 +10,12 @@ import { ThemeService } from '../../../core/services/theme.service';
 describe('LoginComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let routerSpy: jasmine.SpyObj<Router>;
-  let themeServiceStub: { isDark$: BehaviorSubject<boolean> };
+  let themeServiceStub: { isDark: ReturnType<typeof signal<boolean>> };
 
   beforeEach(async () => {
     authServiceSpy = jasmine.createSpyObj('AuthService', ['login']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    themeServiceStub = { isDark$: new BehaviorSubject<boolean>(false) };
+    themeServiceStub = { isDark: signal<boolean>(false) };
 
     await TestBed.configureTestingModule({
     imports: [ReactiveFormsModule, LoginComponent],

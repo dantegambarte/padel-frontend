@@ -1,12 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
   OnInit,
   OnDestroy,
-  Output,
   computed,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -39,10 +38,10 @@ import { DisableScrollDirective } from '../../../shared/directives/disable-scrol
 })
 export class ExpenseFormComponent implements OnInit, OnDestroy {
   /** Si se pasa un Expense existente, el formulario trabaja en modo edición. */
-  @Input() expense: Expense | null = null;
+  readonly expense = input<Expense | null>(null);
 
-  @Output() saved = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
 
   form!: FormGroup;
   submitting = signal(false);
@@ -95,7 +94,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   }
 
   get isEditMode(): boolean {
-    return !!this.expense;
+    return !!this.expense();
   }
 
   constructor(
@@ -112,19 +111,19 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
 
     this.form = this.fb.group({
       amount: [
-        this.expense?.amount ?? null,
+        this.expense()?.amount ?? null,
         [Validators.required, Validators.min(0.01)],
       ],
       description: [
-        this.expense?.description ?? '',
+        this.expense()?.description ?? '',
         [Validators.required, Validators.maxLength(255)],
       ],
-      category: [this.expense?.category ?? 'Otro', Validators.required],
+      category: [this.expense()?.category ?? 'Otro', Validators.required],
       paymentMethod: [
-        this.expense?.paymentMethod ?? 'Efectivo',
+        this.expense()?.paymentMethod ?? 'Efectivo',
         Validators.required,
       ],
-      date: [this.expense?.date ?? today, Validators.required],
+      date: [this.expense()?.date ?? today, Validators.required],
       fundSource: ['cash_register'],
     });
 
@@ -178,7 +177,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     const value = this.form.getRawValue();
 
     const request$ = this.isEditMode
-      ? this.expensesService.update(this.expense!.id, value)
+      ? this.expensesService.update(this.expense()!.id, value)
       : this.expensesService.create(value);
 
     request$.subscribe({

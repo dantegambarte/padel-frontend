@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
@@ -23,11 +23,11 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherSettlementModalComponent implements OnInit {
-  @Input() report!: TeacherReport;
-  @Input() mode: 'clases' | 'completa' = 'completa';
+  readonly report = input.required<TeacherReport>();
+  readonly mode = input<'clases' | 'completa'>('completa');
 
-  @Output() settled = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly settled = output<void>();
+  readonly cancelled = output<void>();
 
   consumptions = signal<InternalConsumption[]>([]);
   loading = signal(true);
@@ -36,7 +36,7 @@ export class TeacherSettlementModalComponent implements OnInit {
 
   /** Devuelve el total de las clases del reporte. */
   get bookingTotal(): number {
-    return this.report.summary.totalAmount;
+    return this.report().summary.totalAmount;
   }
 
   /** Devuelve el total de los consumos pendientes. */
@@ -60,12 +60,12 @@ export class TeacherSettlementModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.mode === 'clases') {
+    if (this.mode() === 'clases') {
       this.loading.set(false);
       return;
     }
     this.consumptionSvc
-      .getAll({ teacherId: this.report.teacher.id, status: 'pending_payment' })
+      .getAll({ teacherId: this.report().teacher.id, status: 'pending_payment' })
       .subscribe({
         next: (data) => {
           this.consumptions.set(data);
@@ -90,10 +90,10 @@ export class TeacherSettlementModalComponent implements OnInit {
 
     this.teachersSvc
       .liquidate({
-        teacherId: this.report.teacher.id,
-        bookingIds: this.report.bookings.map((b) => b.id),
+        teacherId: this.report().teacher.id,
+        bookingIds: this.report().bookings.map((b) => b.id),
         consumptionIds:
-          this.mode === 'clases' ? [] : this.consumptions().map((c) => c.id),
+          this.mode() === 'clases' ? [] : this.consumptions().map((c) => c.id),
         paymentMethod: this.paymentMethod,
       })
       .subscribe({

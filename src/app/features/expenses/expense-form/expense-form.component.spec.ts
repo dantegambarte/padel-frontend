@@ -98,7 +98,7 @@ describe('ExpenseFormComponent', () => {
   it('pre-fills the form in edit mode from the given expense', () => {
     setup(false);
     const fixture = TestBed.createComponent(ExpenseFormComponent);
-    fixture.componentInstance.expense = mockExpense;
+    fixture.componentRef.setInput('expense', mockExpense);
     fixture.detectChanges();
     expect(fixture.componentInstance.isEditMode).toBe(true);
     expect(fixture.componentInstance.form.value.amount).toBe(5000);
@@ -132,7 +132,7 @@ describe('ExpenseFormComponent', () => {
     setup(false);
     expensesServiceSpy.update.and.returnValue(of(mockExpense));
     const fixture = TestBed.createComponent(ExpenseFormComponent);
-    fixture.componentInstance.expense = mockExpense;
+    fixture.componentRef.setInput('expense', mockExpense);
     fixture.detectChanges();
 
     fixture.componentInstance.onSubmit();

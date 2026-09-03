@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 import {
@@ -24,11 +24,11 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettleDebtModalComponent implements OnInit {
-  @Input() teacher!: Teacher;
-  @Input() summary!: TeacherDebtSummary;
+  readonly teacher = input.required<Teacher>();
+  readonly summary = input.required<TeacherDebtSummary>();
 
-  @Output() settled = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly settled = output<void>();
+  readonly cancelled = output<void>();
 
   consumptions = signal<InternalConsumption[]>([]);
   loading = signal(true);
@@ -44,7 +44,7 @@ export class SettleDebtModalComponent implements OnInit {
   ngOnInit(): void {
     this.service
       .getAll({
-        teacherId: this.teacher.id,
+        teacherId: this.teacher().id,
         status: 'pending_payment',
       })
       .subscribe({
@@ -71,7 +71,7 @@ export class SettleDebtModalComponent implements OnInit {
 
     this.service
       .settleTeacherDebt({
-        teacherId: this.teacher.id,
+        teacherId: this.teacher().id,
         paymentMethod: this.paymentMethod,
       })
       .subscribe({
@@ -105,10 +105,10 @@ export class SettleDebtModalComponent implements OnInit {
    * @returns
    */
   sendDebtReminder(): void {
-    if (!this.teacher.phoneNumber) return;
+    if (!this.teacher().phoneNumber) return;
     const url = this.service.buildDebtReminderWhatsAppUrl(
-      this.teacher.phoneNumber,
-      this.teacher.fullName,
+      this.teacher().phoneNumber!,
+      this.teacher().fullName,
       this.total(),
     );
     window.open(url, '_blank', 'noopener,noreferrer');

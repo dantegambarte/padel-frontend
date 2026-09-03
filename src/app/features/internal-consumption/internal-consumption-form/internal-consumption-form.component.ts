@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, output, signal } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
@@ -26,8 +26,8 @@ import { DisableScrollDirective } from '../../../shared/directives/disable-scrol
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionFormComponent implements OnInit {
-  @Output() saved = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
 
   form!: FormGroup;
   submitting = signal(false);

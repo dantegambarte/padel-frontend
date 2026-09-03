@@ -23,14 +23,14 @@ describe('ThemeService', () => {
   it('falls back to the OS preference when nothing is persisted (dark)', () => {
     mockMatchMedia(true);
     const service = TestBed.inject(ThemeService);
-    expect(service.isDark$.value).toBe(true);
+    expect(service.isDark()).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
   it('falls back to the OS preference when nothing is persisted (light)', () => {
     mockMatchMedia(false);
     const service = TestBed.inject(ThemeService);
-    expect(service.isDark$.value).toBe(false);
+    expect(service.isDark()).toBe(false);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 
@@ -38,7 +38,7 @@ describe('ThemeService', () => {
     mockMatchMedia(false);
     localStorage.setItem('padelsys-theme', 'dark');
     const service = TestBed.inject(ThemeService);
-    expect(service.isDark$.value).toBe(true);
+    expect(service.isDark()).toBe(true);
   });
 
   it('toggle() flips the theme, updates the DOM class and persists it', () => {
@@ -46,12 +46,12 @@ describe('ThemeService', () => {
     const service = TestBed.inject(ThemeService);
 
     service.toggle();
-    expect(service.isDark$.value).toBe(true);
+    expect(service.isDark()).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(localStorage.getItem('padelsys-theme')).toBe('dark');
 
     service.toggle();
-    expect(service.isDark$.value).toBe(false);
+    expect(service.isDark()).toBe(false);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
     expect(localStorage.getItem('padelsys-theme')).toBe('light');
   });

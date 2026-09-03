@@ -6,12 +6,12 @@
     (click)="themeService.toggle()"
     class="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-card-foreground shadow-sm transition-colors hover:bg-accent"
     [attr.aria-label]="
-      (themeService.isDark$ | async)
+      themeService.isDark()
         ? 'Cambiar a modo claro'
         : 'Cambiar a modo oscuro'
     "
     >
-    @if (themeService.isDark$ | async) {
+    @if (themeService.isDark()) {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-4 w-4"

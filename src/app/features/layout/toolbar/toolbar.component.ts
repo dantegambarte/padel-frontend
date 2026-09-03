@@ -1,13 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   HostListener,
-  Input,
   OnDestroy,
   OnInit,
-  Output,
   computed,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -50,9 +49,9 @@ import { TicketModalComponent } from '../../cash-register/ticket-modal.component
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToolbarComponent implements OnInit, OnDestroy {
-  @Input() title = '';
-  @Input() currentUser: User | null = null;
-  @Output() toggleMenu = new EventEmitter<void>();
+  readonly title = input('');
+  readonly currentUser = input<User | null>(null);
+  readonly toggleMenu = output<void>();
 
   isNotifOpen = signal(false);
   isUserMenuOpen = signal(false);
@@ -135,12 +134,12 @@ export class ToolbarComponent implements OnInit, OnDestroy {
 
   /** Clase de color de fondo del avatar según el rol: verde para admin, azul para empleado. */
   get avatarColorClass(): string {
-    return this.currentUser?.role === 'admin' ? 'bg-emerald-600' : 'bg-indigo-600';
+    return this.currentUser()?.role === 'admin' ? 'bg-emerald-600' : 'bg-indigo-600';
   }
 
   /** Iniciales del usuario autenticado (máx. 2 letras) para el avatar de la toolbar. */
   get userInitials(): string {
-    const name = this.currentUser?.fullName ?? '';
+    const name = this.currentUser()?.fullName ?? '';
     return name
       .trim()
       .split(/\s+/)

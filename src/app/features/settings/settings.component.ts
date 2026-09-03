@@ -348,7 +348,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
   /**
    * Requerido por CanComponentDeactivate.
    * Retorna `false` si hay cambios en horarios O en precios globales sin guardar,
-   * lo que dispara el modal de confirmación del UnsavedChangesGuard.
+   * lo que dispara el modal de confirmación del unsavedChangesGuard.
    */
   canDeactivate(): boolean {
     return !this.isHorariosDirty && !this.isFondoDirty;

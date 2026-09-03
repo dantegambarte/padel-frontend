@@ -1,4 +1,4 @@
-@if (isOpen) {
+@if (isOpen()) {
   <div
     class="fixed inset-0 bg-black/50 z-40 xl:hidden"
     (click)="closeMenu.emit()"
@@ -6,7 +6,7 @@
 }
 
 <aside
-  [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  [ngClass]="isOpen() ? 'translate-x-0' : '-translate-x-full'"
   class="fixed top-0 left-0 h-[100dvh] w-64 z-50 transition-transform duration-300 ease-in-out xl:[transform:none] xl:static xl:h-[100dvh] flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
   >
   <div class="border-b border-sidebar-border p-4">

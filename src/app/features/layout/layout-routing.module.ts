@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { LayoutComponent } from './layout.component';
-import { AdminGuard } from '../../core/guards/admin.guard';
+import { adminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
   {
@@ -49,21 +49,21 @@ const routes: Routes = [
         path: 'reports',
         loadChildren: () =>
           import('../reports/reports.module').then((m) => m.ReportsModule),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Reports', roles: ['admin'] },
       },
       {
         path: 'users',
         loadChildren: () =>
           import('../users/users.module').then((m) => m.UsersModule),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Users', roles: ['admin'] },
       },
       {
         path: 'settings',
         loadChildren: () =>
           import('../settings/settings.module').then((m) => m.SettingsModule),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Settings', roles: ['admin'] },
       },
       {
@@ -72,14 +72,14 @@ const routes: Routes = [
           import('../fixed-bookings/fixed-bookings.module').then(
             (m) => m.FixedBookingsModule,
           ),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Turnos Fijos', roles: ['admin'] },
       },
       {
         path: 'teachers',
         loadChildren: () =>
           import('../teachers/teachers.module').then((m) => m.TeachersModule),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Profesores', roles: ['admin', 'employee'] },
       },
       {
@@ -93,7 +93,7 @@ const routes: Routes = [
         path: 'expenses',
         loadChildren: () =>
           import('../expenses/expenses.module').then((m) => m.ExpensesModule),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Egresos', roles: ['admin', 'employee'] },
       },
 
@@ -103,7 +103,7 @@ const routes: Routes = [
           import('../internal-consumption/internal-consumption.module').then(
             (m) => m.InternalConsumptionModule,
           ),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Consumo Interno', roles: ['admin', 'employee'] },
       },
 
@@ -113,7 +113,7 @@ const routes: Routes = [
           import('../inventory/inventory.module').then(
             (m) => m.InventoryModule,
           ),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Stock Bajo', roles: ['admin'] },
       },
 
@@ -123,7 +123,7 @@ const routes: Routes = [
           import('../pricing-shifts/pricing-shifts.module').then(
             (m) => m.PricingShiftsModule,
           ),
-        canActivate: [AdminGuard],
+        canActivate: [adminGuard],
         data: { title: 'Franjas Horarias', roles: ['admin'] },
       },
     ],

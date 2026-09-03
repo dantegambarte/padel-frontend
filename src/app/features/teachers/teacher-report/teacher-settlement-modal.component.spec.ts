@@ -72,8 +72,8 @@ describe('TeacherSettlementModalComponent', () => {
 
   function createWithInputs(mode: 'clases' | 'completa' = 'completa') {
     const fixture = TestBed.createComponent(TeacherSettlementModalComponent);
-    fixture.componentInstance.report = report;
-    fixture.componentInstance.mode = mode;
+    fixture.componentRef.setInput('report', report);
+    fixture.componentRef.setInput('mode', mode);
     fixture.detectChanges();
     return fixture;
   }

@@ -13,20 +13,20 @@ describe('StatCardComponent', () => {
   it('creates with default inputs and renders without throwing', () => {
     const fixture = TestBed.createComponent(StatCardComponent);
     expect(() => fixture.detectChanges()).not.toThrow();
-    expect(fixture.componentInstance.icon).toBe('dollar-sign');
+    expect(fixture.componentInstance.icon()).toBe('dollar-sign');
   });
 
   it('accepts custom title, value, icon and trend inputs', () => {
     const fixture = TestBed.createComponent(StatCardComponent);
     const component = fixture.componentInstance;
-    component.title = 'Ingresos';
-    component.value = '$10.000';
-    component.icon = 'trending-up';
-    component.trend = { value: '+12%', positive: true };
+    fixture.componentRef.setInput('title', 'Ingresos');
+    fixture.componentRef.setInput('value', '$10.000');
+    fixture.componentRef.setInput('icon', 'trending-up');
+    fixture.componentRef.setInput('trend', { value: '+12%', positive: true });
     fixture.detectChanges();
 
-    expect(component.title).toBe('Ingresos');
-    expect(component.value).toBe('$10.000');
-    expect(component.trend?.positive).toBe(true);
+    expect(component.title()).toBe('Ingresos');
+    expect(component.value()).toBe('$10.000');
+    expect(component.trend()?.positive).toBe(true);
   });
 });

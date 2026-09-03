@@ -2,13 +2,13 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { InventoryAlertsComponent } from './inventory-alerts/inventory-alerts.component';
-import { AdminGuard } from '../../core/guards/admin.guard';
+import { adminGuard } from '../../core/guards/admin.guard';
 
 const routes: Routes = [
   {
     path: 'alerts',
     component: InventoryAlertsComponent,
-    canActivate: [AdminGuard],
+    canActivate: [adminGuard],
     data: { roles: ['admin'] },
   },
   { path: '', redirectTo: 'alerts', pathMatch: 'full' },

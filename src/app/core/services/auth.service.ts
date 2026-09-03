@@ -118,7 +118,7 @@ export class AuthService {
 
   /**
    * Solicita un nuevo access token usando el refresh token almacenado.
-   * Es llamado automáticamente por {@link JwtInterceptor} ante respuestas 401.
+   * Es llamado automáticamente por `jwtInterceptor` ante respuestas 401.
    * Dispara el logout cuando el refresh token expiró.
    */
   refresh(): Observable<AuthResponse> {

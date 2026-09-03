@@ -228,7 +228,7 @@ export class TeachersComponent implements OnInit, CanComponentDeactivate {
   /**
    * Requerido por CanComponentDeactivate.
    * Retorna `false` si el diálogo está abierto con cambios no guardados,
-   * lo que dispara el modal de confirmación del UnsavedChangesGuard.
+   * lo que dispara el modal de confirmación del unsavedChangesGuard.
    */
   canDeactivate(): boolean {
     return !this.isDialogFormDirty();

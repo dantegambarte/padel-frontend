@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { Observable, map, take } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
@@ -19,50 +19,35 @@ import { SessionAlertService } from '../services/session-alert.service';
  * Nota: el caso de arranque con token expirado queda resuelto en AuthService
  * (loadUserFromStorage limpia el storage → currentUser$ emite null → punto 1 activo).
  *
- * Implementa CanActivateChild para interceptar también la navegación entre child routes.
+ * `CanActivateFn` y `CanActivateChildFn` comparten firma `(route, state)`, así que
+ * este mismo guard se registra tanto en `canActivate` como en `canActivateChild`
+ * para interceptar también la navegación entre child routes.
  */
-@Injectable({ providedIn: 'root' })
-export class AuthGuard  {
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private sessionAlertService: SessionAlertService,
-  ) {}
+function check(url: string): Observable<boolean | UrlTree> {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const sessionAlertService = inject(SessionAlertService);
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot,
-  ): Observable<boolean | UrlTree> {
-    return this.check(state.url);
-  }
+  return authService.currentUser$.pipe(
+    take(1),
+    map((user) => {
+      if (!user) {
+        return router.createUrlTree(['/auth/login']);
+      }
 
-  canActivateChild(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot,
-  ): Observable<boolean | UrlTree> {
-    return this.check(state.url);
-  }
+      if (authService.isTokenExpired()) {
+        sessionAlertService.show('TOKEN_EXPIRED');
+        authService.logout();
+        return false;
+      }
 
-  private check(url: string): Observable<boolean | UrlTree> {
-    return this.authService.currentUser$.pipe(
-      take(1),
-      map((user) => {
-        if (!user) {
-          return this.router.createUrlTree(['/auth/login']);
-        }
+      if (user.mustChangePassword && !url.startsWith('/app/account')) {
+        return router.createUrlTree(['/app/account']);
+      }
 
-        if (this.authService.isTokenExpired()) {
-          this.sessionAlertService.show('TOKEN_EXPIRED');
-          this.authService.logout();
-          return false;
-        }
-
-        if (user.mustChangePassword && !url.startsWith('/app/account')) {
-          return this.router.createUrlTree(['/app/account']);
-        }
-
-        return true;
-      }),
-    );
-  }
+      return true;
+    }),
+  );
 }
+
+export const authGuard: CanActivateFn = (route, state) => check(state.url);

@@ -1,11 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
+  effect,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { finalize } from 'rxjs';
@@ -22,25 +20,27 @@ import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directi
 ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TicketModalComponent implements OnChanges {
-  @Input() saleId: string | null = null;
+export class TicketModalComponent {
+  readonly saleId = input<string | null>(null);
 
-  @Output() closeModal = new EventEmitter<void>();
+  readonly closeModal = output<void>();
 
   sale = signal<SaleDetail | null>(null);
   isLoading = signal(false);
   loadError = signal('');
 
-  constructor(private salesService: SalesService) {}
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['saleId'] && this.saleId) {
-      this.fetchSale(this.saleId);
-    }
-    if (changes['saleId'] && !this.saleId) {
-      this.sale.set(null);
-      this.loadError.set('');
-    }
+  constructor(private salesService: SalesService) {
+    /** Reacciona a cambios de saleId reemplazando la lógica que antes vivía en ngOnChanges
+     * (los signal inputs no disparan ese hook). */
+    effect(() => {
+      const id = this.saleId();
+      if (id) {
+        this.fetchSale(id);
+      } else {
+        this.sale.set(null);
+        this.loadError.set('');
+      }
+    });
   }
 
   /** Solicita el detalle de la venta al servicio y lo almacena para renderizar el ticket. */

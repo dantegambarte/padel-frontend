@@ -2,13 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
   NgZone,
   OnInit,
   OnDestroy,
-  Output,
   computed,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
@@ -41,8 +40,8 @@ interface NavGroup {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  @Input() isOpen: boolean = false;
-  @Output() closeMenu = new EventEmitter<void>();
+  readonly isOpen = input<boolean>(false);
+  readonly closeMenu = output<void>();
 
   currentUser = signal<User | null>(null);
   currentUrl = signal('');
