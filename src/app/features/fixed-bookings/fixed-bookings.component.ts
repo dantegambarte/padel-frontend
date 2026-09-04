@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -13,6 +13,10 @@ import { ToastService } from '../../core/services/toast.service';
 import { TeachersService } from '../../core/services/teachers.service';
 import { Court } from '../../core/models/court.model';
 import { Teacher } from '../../core/models/teacher.model';
+import { NgClass, SlicePipe, DecimalPipe } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 /** Dato de una celda de la grilla semanal. */
 type SlotData = {
@@ -52,36 +56,46 @@ const EMPTY_FORM = (): FormState => ({
 });
 
 @Component({
-  selector: 'app-fixed-bookings',
-  templateUrl: './fixed-bookings.component.html',
+    selector: 'app-fixed-bookings',
+    templateUrl: './fixed-bookings.component.html',
+    imports: [
+    NgClass,
+    ReactiveFormsModule,
+    FormsModule,
+    ModalScrollLockDirective,
+    DisableScrollDirective,
+    SlicePipe,
+    DecimalPipe
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FixedBookingsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  fixedBookings: FixedBooking[] = [];
-  courts: Court[] = [];
-  teachers: Teacher[] = [];
-  isLoading = true;
+  fixedBookings = signal<FixedBooking[]>([]);
+  courts = signal<Court[]>([]);
+  teachers = signal<Teacher[]>([]);
+  isLoading = signal(true);
 
-  availableCourts: { id: string; name: string }[] = [];
+  availableCourts = signal<{ id: string; name: string }[]>([]);
 
   readonly selectedCourtId$ = new BehaviorSubject<string>('');
 
-  isSubmitting = false;
-  generatingId: string | null = null;
-  deletingId: string | null = null;
+  isSubmitting = signal(false);
+  generatingId = signal<string | null>(null);
+  deletingId = signal<string | null>(null);
 
-  isDialogOpen = false;
-  editingId: string | null = null;
+  isDialogOpen = signal(false);
+  editingId = signal<string | null>(null);
   form: FormState = EMPTY_FORM();
-  formError = '';
+  formError = signal('');
 
   searchTerm = '';
   filterDay = '';
   filterCourt = '';
 
-  activeTab: 'lista' | 'grilla' = 'grilla';
+  activeTab = signal<'lista' | 'grilla'>('grilla');
   private slotMap = new Map<string, SlotData>();
-  selectedFixedBooking: FixedBooking | null = null;
+  selectedFixedBooking = signal<FixedBooking | null>(null);
 
   /** Cancha actualmente seleccionada (shortcut para el template). */
   get selectedCourtId(): string {
@@ -142,7 +156,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     const day = this.filterDay ? Number(this.filterDay) : null;
     const court = this.filterCourt || null;
 
-    return this.fixedBookings.filter((item) => {
+    return this.fixedBookings().filter((item) => {
       if (term) {
         const nameMatch = item.clientName.toLowerCase().includes(term);
         const phoneMatch = (item.phoneNumber ?? '')
@@ -168,13 +182,13 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
 
   /** Devuelve la clase CSS de color asignada a una cancha, rotando la paleta. */
   courtColorClass(courtId: string): string {
-    const idx = this.courts.findIndex((c) => c.id === courtId);
+    const idx = this.courts().findIndex((c) => c.id === courtId);
     return this.COURT_COLORS[Math.max(0, idx) % this.COURT_COLORS.length];
   }
 
   /** Devuelve la clase del dot de color para los pills del selector de cancha. */
   courtColorDot(courtId: string): string {
-    const idx = this.availableCourts.findIndex((c) => c.id === courtId);
+    const idx = this.availableCourts().findIndex((c) => c.id === courtId);
     return this.COURT_DOT_COLORS[
       Math.max(0, idx) % this.COURT_DOT_COLORS.length
     ];
@@ -211,17 +225,17 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       );
       return;
     }
-    this.selectedFixedBooking = booking;
+    this.selectedFixedBooking.set(booking);
   }
 
   /** Cierra el panel de detalle lateral. */
   closeDetail(): void {
-    this.selectedFixedBooking = null;
+    this.selectedFixedBooking.set(null);
   }
 
   /** Abre el diálogo de creación pre-poblado con día, hora y cancha desde la grilla. */
   openCreateFromGrid(day: number, hour: string): void {
-    this.editingId = null;
+    this.editingId.set(null);
     this.form = EMPTY_FORM();
     this.form.dayOfWeek = day;
     this.form.hour = hour;
@@ -234,8 +248,8 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     }
 
     this.onDayOfWeekChange();
-    this.formError = '';
-    this.isDialogOpen = true;
+    this.formError.set('');
+    this.isDialogOpen.set(true);
   }
 
   constructor(
@@ -249,7 +263,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     this.courtsSvc.courts$
       .pipe(takeUntil(this.destroy$))
       .subscribe((courts) => {
-        this.courts = courts.filter((c) => c.isActive);
+        this.courts.set(courts.filter((c) => c.isActive));
       });
 
     this.loadAll();
@@ -263,17 +277,17 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown.escape')
   /** Cierra el modal o panel de detalle abierto al presionar Escape. */
   onEscape(): void {
-    if (this.selectedFixedBooking) {
+    if (this.selectedFixedBooking()) {
       this.closeDetail();
       return;
     }
-    if (this.isDialogOpen) this.closeDialog();
+    if (this.isDialogOpen()) this.closeDialog();
   }
 
   /** Título del diálogo de formulario según si se está creando o editando. */
-  get dialogTitle(): string {
-    return this.editingId ? 'Editar Turno Fijo' : 'Nuevo Turno Fijo';
-  }
+  dialogTitle = computed(() =>
+    this.editingId() ? 'Editar Turno Fijo' : 'Nuevo Turno Fijo',
+  );
 
   /** Devuelve el nombre del día de la semana a partir de su número (0=Domingo). */
   dayLabel(d: number): string {
@@ -315,15 +329,15 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
 
   /** Abre el diálogo de creación de turno fijo con el formulario vacío. */
   openCreateDialog(): void {
-    this.editingId = null;
+    this.editingId.set(null);
     this.form = EMPTY_FORM();
-    this.formError = '';
-    this.isDialogOpen = true;
+    this.formError.set('');
+    this.isDialogOpen.set(true);
   }
 
   /** Abre el diálogo de edición pre-poblado con los datos del turno fijo. */
   openEditDialog(item: FixedBooking): void {
-    this.editingId = item.id;
+    this.editingId.set(item.id);
     this.form = {
       clientName: item.clientName,
       phoneNumber: item.phoneNumber ?? '',
@@ -337,14 +351,14 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
       isTeacherClass: !!item.teacherId,
       recurringDepositAmount: item.recurringDepositAmount ?? null,
     };
-    this.formError = '';
-    this.isDialogOpen = true;
+    this.formError.set('');
+    this.isDialogOpen.set(true);
   }
 
   /** Cierra el diálogo de formulario y limpia el estado de edición. */
   closeDialog(): void {
-    this.isDialogOpen = false;
-    this.editingId = null;
+    this.isDialogOpen.set(false);
+    this.editingId.set(null);
   }
 
   /**
@@ -366,7 +380,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
    * estándar "Clase - Prof. {nombre}". Si se deselecciona, limpia el campo.
    */
   onTeacherSelectChange(teacherId: string): void {
-    const teacher = this.teachers.find((t) => t.id === teacherId);
+    const teacher = this.teachers().find((t) => t.id === teacherId);
     this.form.clientName = teacher ? `Clase - Prof. ${teacher.fullName}` : '';
     this.form.phoneNumber = teacher?.phoneNumber ?? '';
   }
@@ -378,19 +392,19 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
    */
   submitForm(): void {
     if (!this.form.clientName.trim()) {
-      this.formError = 'El nombre del cliente es obligatorio.';
+      this.formError.set('El nombre del cliente es obligatorio.');
       return;
     }
     if (!this.form.courtId) {
-      this.formError = 'Debe seleccionar una cancha.';
+      this.formError.set('Debe seleccionar una cancha.');
       return;
     }
     if (!this.form.startDate) {
-      this.formError = 'La fecha de inicio es obligatoria.';
+      this.formError.set('La fecha de inicio es obligatoria.');
       return;
     }
 
-    this.formError = '';
+    this.formError.set('');
 
     const dto: CreateFixedBookingDto = {
       clientName: this.form.clientName.trim(),
@@ -406,8 +420,9 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     };
 
     // Detectar si se modificó algún campo estructural en modo edición.
-    if (this.editingId) {
-      const original = this.fixedBookings.find((f) => f.id === this.editingId);
+    const editingId = this.editingId();
+    if (editingId) {
+      const original = this.fixedBookings().find((f) => f.id === editingId);
       const hasStructuralChange =
         original &&
         (dto.dayOfWeek !== original.dayOfWeek ||
@@ -443,26 +458,27 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
 
   /** Envía la petición de creación o actualización al servicio. */
   private executeUpdate(dto: CreateFixedBookingDto): void {
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
-    const op = this.editingId
-      ? this.fixedSvc.update(this.editingId, dto)
+    const editingId = this.editingId();
+    const op = editingId
+      ? this.fixedSvc.update(editingId, dto)
       : this.fixedSvc.create(dto);
 
     op.subscribe({
       next: () => {
         this.toast.success(
-          this.editingId ? 'Turno fijo actualizado' : 'Turno fijo creado',
-          this.editingId
+          editingId ? 'Turno fijo actualizado' : 'Turno fijo creado',
+          editingId
             ? 'Los cambios fueron guardados. Los turnos futuros fueron regenerados.'
             : 'Se generaron los turnos para las próximas 8 semanas.',
         );
         this.closeDialog();
         this.loadAll();
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
       },
       error: (err) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
 
         if (err?.status === 409 && err?.error?.message === 'CONFLICT_OVERLAP') {
           const detail: string =
@@ -514,25 +530,25 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
 
         const msg =
           err?.error?.message ?? 'Error al guardar. Intente nuevamente.';
-        this.formError = Array.isArray(msg) ? msg.join(' ') : msg;
+        this.formError.set(Array.isArray(msg) ? msg.join(' ') : msg);
       },
     });
   }
 
   /** Genera los próximos turnos individuales a partir del patrón semanal del turno fijo. */
   generateNext(item: FixedBooking): void {
-    this.generatingId = item.id;
+    this.generatingId.set(item.id);
     this.fixedSvc.generateNext(item.id).subscribe({
       next: (res) => {
         this.toast.success(
           'Turnos generados',
           `Se crearon ${res.generated} turno(s) nuevo(s).`,
         );
-        this.generatingId = null;
+        this.generatingId.set(null);
       },
       error: () => {
         this.toast.error('Error', 'No se pudieron generar los turnos.');
-        this.generatingId = null;
+        this.generatingId.set(null);
       },
     });
   }
@@ -556,7 +572,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     }).then((result) => {
       if (!result.isConfirmed) return;
 
-      this.deletingId = item.id;
+      this.deletingId.set(item.id);
       this.fixedSvc.deleteFixedBookingCascade(item.id).subscribe({
         next: (res) => {
           const detail =
@@ -567,12 +583,12 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
             'Turno fijo eliminado',
             `${item.clientName} — ${detail}`,
           );
-          this.deletingId = null;
+          this.deletingId.set(null);
           this.loadAll();
         },
         error: () => {
           this.toast.error('Error', 'No se pudo eliminar el turno fijo.');
-          this.deletingId = null;
+          this.deletingId.set(null);
         },
       });
     });
@@ -592,7 +608,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
   private buildGrid(): void {
     this.slotMap.clear();
     const courtId = this.selectedCourtId$.value;
-    for (const b of this.fixedBookings) {
+    for (const b of this.fixedBookings()) {
       if (!b.isActive) continue;
       if (courtId && b.courtId !== courtId) continue;
       const startIdx = this.validHours.indexOf(b.hour);
@@ -621,13 +637,13 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
 
   /** Carga todos los turnos fijos, canchas y profesores en paralelo para inicializar la vista. */
   private loadAll(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.fixedSvc.findAll().subscribe({
       next: (data) => {
-        this.fixedBookings = data;
+        this.fixedBookings.set(data);
         // Extrae canchas únicas presentes en los turnos, ordenadas por nombre.
         const seen = new Set<string>();
-        this.availableCourts = data
+        const availableCourts = data
           .filter((b) => b.isActive && b.court)
           .reduce(
             (acc, b) => {
@@ -640,23 +656,22 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
             [] as { id: string; name: string }[],
           )
           .sort((a, b) => a.name.localeCompare(b.name));
+        this.availableCourts.set(availableCourts);
 
         // Selecciona la primera cancha disponible si no hay ninguna seleccionada.
         if (
-          this.availableCourts.length > 0 &&
-          !this.availableCourts.find(
-            (c) => c.id === this.selectedCourtId$.value,
-          )
+          availableCourts.length > 0 &&
+          !availableCourts.find((c) => c.id === this.selectedCourtId$.value)
         ) {
-          this.selectedCourtId$.next(this.availableCourts[0].id);
+          this.selectedCourtId$.next(availableCourts[0].id);
         }
 
         this.buildGrid();
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: () => {
         this.toast.error('Error', 'No se pudieron cargar los turnos fijos.');
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
 
@@ -664,7 +679,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     this.courtsSvc.loadCourts();
 
     this.teachersSvc.findAll().subscribe({
-      next: (data) => (this.teachers = data),
+      next: (data) => this.teachers.set(data),
       error: () => {},
     });
   }

@@ -1,11 +1,13 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly STORAGE_KEY = 'padelsys-theme';
 
-  isDark$ = new BehaviorSubject<boolean>(false);
+  private readonly isDarkSignal = signal<boolean>(false);
+
+  /** Signal readonly con el estado actual del tema (true = oscuro). */
+  readonly isDark = this.isDarkSignal.asReadonly();
 
   constructor() {
     const saved = localStorage.getItem(this.STORAGE_KEY);
@@ -18,13 +20,13 @@ export class ThemeService {
 
   /** Alterna entre tema claro y oscuro. */
   toggle(): void {
-    this.applyTheme(!this.isDark$.value);
+    this.applyTheme(!this.isDarkSignal());
   }
 
-  /** Aplica el tema al DOM, persiste la preferencia y notifica el BehaviorSubject. */
+  /** Aplica el tema al DOM, persiste la preferencia y notifica el signal. */
   private applyTheme(dark: boolean): void {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem(this.STORAGE_KEY, dark ? 'dark' : 'light');
-    this.isDark$.next(dark);
+    this.isDarkSignal.set(dark);
   }
 }

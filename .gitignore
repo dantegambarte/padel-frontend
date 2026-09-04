@@ -5,12 +5,13 @@
 /tmp
 /out-tsc
 /bazel-out
+/docs
 
 # Node
 /node_modules
+.pnpm-store/
 npm-debug.log
 yarn-error.log
-package-lock.json
 
 # Playwright E2E
 /e2e/auth-state.json

@@ -9,10 +9,19 @@ import {
   UpdateUserDto,
   UserRole,
 } from '../../core/models/user.model';
+import { NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-users',
-  templateUrl: './users.component.html',
+    selector: 'app-users',
+    templateUrl: './users.component.html',
+    imports: [
+    NgClass,
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    FormsModule
+],
 })
 export class UsersComponent implements OnInit {
   users: User[] = [];

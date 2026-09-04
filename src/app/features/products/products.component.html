@@ -1,47 +1,48 @@
 <div class="space-y-6">
   <div
     class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
-  >
+    >
     <div class="p-6">
       <div
         class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-      >
+        >
         <div>
           <h3
             class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
-          >
-            {{ isReadOnly ? "Consulta de Productos" : "Gestión de Productos" }}
+            >
+            {{ isReadOnly() ? "Consulta de Productos" : "Gestión de Productos" }}
           </h3>
           <p class="mt-1.5 text-sm text-muted-foreground">
             {{
-              isReadOnly
-                ? "Visualice el inventario y verifique stock disponible"
-                : "Administre el inventario de productos y precios"
+            isReadOnly()
+            ? "Visualice el inventario y verifique stock disponible"
+            : "Administre el inventario de productos y precios"
             }}
           </p>
         </div>
 
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <button
-            *ngIf="!isReadOnly"
-            type="button"
-            (click)="openCreate()"
-            class="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 5v14" />
-              <path d="M5 12h14" />
-            </svg>
-            Agregar producto
-          </button>
+          @if (!isReadOnly()) {
+            <button
+              type="button"
+              (click)="openCreate()"
+              class="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+              Agregar producto
+            </button>
+          }
         </div>
       </div>
 
@@ -55,7 +56,7 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-          >
+            >
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
@@ -64,812 +65,810 @@
             placeholder="Buscar productos..."
             [(ngModel)]="searchQuery"
             class="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-        </div>
+            />
+          </div>
 
-        <select
-          [(ngModel)]="filterCategory"
-          class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <option value="">Todas las categorías</option>
-          <option *ngFor="let cat of categories" [value]="cat.id">
-            {{ cat.name }}
-          </option>
-        </select>
-
-        <select
-          [(ngModel)]="filterStock"
-          class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <option value="">Todo el stock</option>
-          <option value="zero">🚫 Agotados (stock = 0)</option>
-          <option value="low">⚠️ Stock bajo (bajo mínimo)</option>
-        </select>
-
-        <button
-          *ngIf="hasActiveFilters"
-          type="button"
-          (click)="clearFilters()"
-          title="Limpiar filtros"
-          class="inline-flex h-10 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <svg
-            class="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-          Limpiar
-        </button>
-
-        <span
-          *ngIf="hasActiveFilters"
-          class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
-        >
-          {{ filteredProducts.length }} resultado{{
-            filteredProducts.length !== 1 ? "s" : ""
-          }}
-        </span>
-      </div>
-    </div>
-
-    <div class="px-6 pb-6">
-      <table class="w-full text-sm">
-        <thead class="hidden md:table-header-group">
-          <tr class="border-b border-border">
-            <th class="p-3 text-left font-medium text-muted-foreground">
-              Producto
-            </th>
-            <th class="p-3 text-left font-medium text-muted-foreground">
-              Categoría
-            </th>
-            <th
-              *ngIf="!isReadOnly"
-              class="p-3 text-right font-medium text-muted-foreground"
+          <select
+            [(ngModel)]="filterCategory"
+            class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Costo
-            </th>
-            <th class="p-3 text-right font-medium text-muted-foreground">
-              Precio Venta
-            </th>
-            <th class="p-3 text-center font-medium text-muted-foreground">
-              Stock
-            </th>
-            <th class="p-3 text-center font-medium text-muted-foreground">
-              Destacado
-            </th>
-            <th class="p-3 text-right font-medium text-muted-foreground">
-              Acciones
-            </th>
-          </tr>
-        </thead>
+            <option value="">Todas las categorías</option>
+            @for (cat of categories(); track cat) {
+              <option [value]="cat.id">
+                {{ cat.name }}
+              </option>
+            }
+          </select>
 
-        <tbody class="block md:table-row-group">
-          <ng-container *ngIf="isLoading; else productRows">
-            <tr
-              *ngFor="let i of [1, 2, 3, 4, 5]"
-              class="block md:table-row border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0"
+          <select
+            [(ngModel)]="filterStock"
+            class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <td
-                class="block md:table-cell px-0 md:px-3 py-2 md:py-3"
-                colspan="7"
+            <option value="">Todo el stock</option>
+            <option value="zero">🚫 Agotados (stock = 0)</option>
+            <option value="low">⚠️ Stock bajo (bajo mínimo)</option>
+          </select>
+
+          @if (hasActiveFilters) {
+            <button
+              type="button"
+              (click)="clearFilters()"
+              title="Limpiar filtros"
+              class="inline-flex h-10 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <div
-                  class="h-10 w-full animate-pulse rounded-md bg-muted"
-                ></div>
-              </td>
-            </tr>
-          </ng-container>
-
-          <ng-template #productRows>
-            <ng-container *ngIf="filteredProducts.length > 0; else emptyRow">
-              <tr
-                *ngFor="let product of filteredProducts"
-                [id]="'product-' + product.id"
-                [class.ring-2]="highlightedProductId === product.id"
-                [class.ring-amber-400]="highlightedProductId === product.id"
-                [class.bg-amber-50]="highlightedProductId === product.id"
-                class="block md:table-row bg-card md:bg-transparent border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0 transition-colors md:hover:bg-muted/50"
-              >
-                <td class="block md:table-cell px-0 md:px-3 py-0 md:py-3">
-                  <div
-                    class="flex items-center gap-3 pb-3 mb-3 border-b border-border md:hidden"
-                  >
-                    <div
-                      class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
-                      [ngClass]="[
-                        iconColor(product).bg,
-                        iconColor(product).text,
-                      ]"
-                    >
-                      <span
-                        class="material-symbols-rounded"
-                        style="font-size: 22px"
-                        >{{ product.icon || "inventory_2" }}</span
-                      >
-                    </div>
-                    <span class="text-base font-bold text-card-foreground">{{
-                      product.name
-                    }}</span>
-                  </div>
-
-                  <div class="hidden md:flex items-center gap-3">
-                    <div
-                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                      [ngClass]="[
-                        iconColor(product).bg,
-                        iconColor(product).text,
-                      ]"
-                    >
-                      <span
-                        class="material-symbols-rounded"
-                        style="font-size: 20px"
-                        >{{ product.icon || "inventory_2" }}</span
-                      >
-                    </div>
-                    <span class="font-medium">{{ product.name }}</span>
-                  </div>
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0"
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
                 >
-                  <span
-                    class="text-sm font-medium text-muted-foreground md:hidden"
-                    >Categoría</span
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+              Limpiar
+            </button>
+          }
+
+          @if (hasActiveFilters) {
+            <span
+              class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+              >
+              {{ filteredProducts.length }} resultado{{
+              filteredProducts.length !== 1 ? "s" : ""
+              }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="px-6 pb-6">
+        <table class="w-full text-sm">
+          <thead class="hidden md:table-header-group">
+            <tr class="border-b border-border">
+              <th class="p-3 text-left font-medium text-muted-foreground">
+                Producto
+              </th>
+              <th class="p-3 text-left font-medium text-muted-foreground">
+                Categoría
+              </th>
+              @if (!isReadOnly()) {
+                <th
+                  class="p-3 text-right font-medium text-muted-foreground"
                   >
-                  <span
-                    class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
+                  Costo
+                </th>
+              }
+              <th class="p-3 text-right font-medium text-muted-foreground">
+                Precio Venta
+              </th>
+              <th class="p-3 text-center font-medium text-muted-foreground">
+                Stock
+              </th>
+              <th class="p-3 text-center font-medium text-muted-foreground">
+                Destacado
+              </th>
+              <th class="p-3 text-right font-medium text-muted-foreground">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+
+          <tbody class="block md:table-row-group">
+            @if (isLoading()) {
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+                <tr
+                  class="block md:table-row border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0"
+                  >
+                  <td
+                    class="block md:table-cell px-0 md:px-3 py-2 md:py-3"
+                    colspan="7"
+                    >
+                    <div
+                      class="h-10 w-full animate-pulse rounded-md bg-muted"
+                    ></div>
+                  </td>
+                </tr>
+              }
+            } @else {
+              @if (filteredProducts.length > 0) {
+                @for (product of filteredProducts; track product) {
+                  <tr
+                    [id]="'product-' + product.id"
+                    [class.ring-2]="highlightedProductId() === product.id"
+                    [class.ring-amber-400]="highlightedProductId() === product.id"
+                    [class.bg-amber-50]="highlightedProductId() === product.id"
+                    class="block md:table-row bg-card md:bg-transparent border border-border md:border-b md:border-x-0 md:border-t-0 md:last:border-0 rounded-xl md:rounded-none shadow-sm md:shadow-none mb-4 md:mb-0 p-4 md:p-0 transition-colors md:hover:bg-muted/50"
+                    >
+                    <td class="block md:table-cell px-0 md:px-3 py-0 md:py-3">
+                      <div
+                        class="flex items-center gap-3 pb-3 mb-3 border-b border-border md:hidden"
+                        >
+                        <div
+                          class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
+                      [ngClass]="[
+                        iconColor(product).bg,
+                        iconColor(product).text,
+                      ]"
+                          >
+                          <span
+                            class="material-symbols-rounded"
+                            style="font-size: 22px"
+                            >{{ product.icon || "inventory_2" }}</span
+                            >
+                          </div>
+                          <span class="text-base font-bold text-card-foreground">{{
+                            product.name
+                          }}</span>
+                        </div>
+                        <div class="hidden md:flex items-center gap-3">
+                          <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      [ngClass]="[
+                        iconColor(product).bg,
+                        iconColor(product).text,
+                      ]"
+                            >
+                            <span
+                              class="material-symbols-rounded"
+                              style="font-size: 20px"
+                              >{{ product.icon || "inventory_2" }}</span
+                              >
+                            </div>
+                            <span class="font-medium">{{ product.name }}</span>
+                          </div>
+                        </td>
+                        <td
+                          class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0"
+                          >
+                          <span
+                            class="text-sm font-medium text-muted-foreground md:hidden"
+                            >Categoría</span
+                            >
+                            <span
+                              class="inline-flex items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold"
                     [ngClass]="[
                       categoryColor(product).bg,
                       categoryColor(product).text,
                     ]"
-                  >
-                    {{ product.category?.name }}
-                  </span>
-                </td>
-
-                <td
-                  *ngIf="!isReadOnly"
-                  class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-right"
-                >
-                  <span
-                    class="text-sm font-medium text-muted-foreground md:hidden"
-                    >Precio Costo</span
-                  >
-                  <span class="font-mono text-muted-foreground"
-                    >${{ fmt(product.costPrice) }}</span
-                  >
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-right"
-                >
-                  <span
-                    class="text-sm font-medium text-muted-foreground md:hidden"
-                    >Precio Venta</span
-                  >
-                  <span class="font-mono font-semibold"
-                    >${{ fmt(product.salePrice) }}</span
-                  >
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-center"
-                >
-                  <span
-                    class="text-sm font-medium text-muted-foreground md:hidden"
-                    >Stock</span
-                  >
-
-                  <span
-                    *ngIf="isRentalProduct(product); else stockBadge"
-                    class="inline-flex items-center rounded-full border border-transparent bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-600"
-                    title="Disponibilidad ilimitada"
-                  >
-                    &infin;
-                  </span>
-
-                  <ng-template #stockBadge>
-                    <span
-                      *ngIf="isOutOfStock(product)"
-                      class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      title="Sin stock disponible"
-                    >
-                      <svg
-                        class="h-3 w-3 shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="m4.9 4.9 14.2 14.2" />
-                      </svg>
-                      Agotado
-                    </span>
-
-                    <span
-                      *ngIf="isLowStock(product)"
-                      class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              >
+                              {{ product.category?.name }}
+                            </span>
+                          </td>
+                          @if (!isReadOnly()) {
+                            <td
+                              class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-right"
+                              >
+                              <span
+                                class="text-sm font-medium text-muted-foreground md:hidden"
+                                >Precio Costo</span
+                                >
+                                <span class="font-mono text-muted-foreground"
+                                  >${{ fmt(product.costPrice) }}</span
+                                  >
+                                </td>
+                              }
+                              <td
+                                class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-right"
+                                >
+                                <span
+                                  class="text-sm font-medium text-muted-foreground md:hidden"
+                                  >Precio Venta</span
+                                  >
+                                  <span class="font-mono font-semibold"
+                                    >${{ fmt(product.salePrice) }}</span
+                                    >
+                                  </td>
+                                  <td
+                                    class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 md:text-center"
+                                    >
+                                    <span
+                                      class="text-sm font-medium text-muted-foreground md:hidden"
+                                      >Stock</span
+                                      >
+                                      @if (isRentalProduct(product)) {
+                                        <span
+                                          class="inline-flex items-center rounded-full border border-transparent bg-green-100 px-2.5 py-0.5 text-sm font-bold text-green-600"
+                                          title="Disponibilidad ilimitada"
+                                          >
+                                          &infin;
+                                        </span>
+                                      } @else {
+                                        @if (isOutOfStock(product)) {
+                                          <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                            title="Sin stock disponible"
+                                            >
+                                            <svg
+                                              class="h-3 w-3 shrink-0"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="2.5"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              >
+                                              <circle cx="12" cy="12" r="10" />
+                                              <path d="m4.9 4.9 14.2 14.2" />
+                                            </svg>
+                                            Agotado
+                                          </span>
+                                        }
+                                        @if (isLowStock(product)) {
+                                          <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                       title="Stock bajo el mínimo configurado (mínimo: {{
                         product.minStock
                       }} uds.)"
-                    >
-                      <svg
-                        class="h-3 w-3 shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                        />
-                        <path d="M12 9v4" />
-                        <path d="M12 17h.01" />
-                      </svg>
-                      {{ product.stock }}
-                    </span>
-
-                    <span
-                      *ngIf="!isOutOfStock(product) && !isLowStock(product)"
-                      class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                    >
-                      {{ product.stock }}
-                    </span>
-                  </ng-template>
-                </td>
-
-                <td
-                  class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 last:border-0 md:text-center"
-                >
-                  <span
-                    class="text-sm font-medium text-muted-foreground md:hidden"
-                    >Destacado</span
-                  >
-                  <button
-                    type="button"
-                    role="switch"
-                    [attr.aria-checked]="product.isFeatured"
+                                            >
+                                            <svg
+                                              class="h-3 w-3 shrink-0"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="2.5"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              >
+                                              <path
+                                                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                                                />
+                                                <path d="M12 9v4" />
+                                                <path d="M12 17h.01" />
+                                              </svg>
+                                              {{ product.stock }}
+                                            </span>
+                                          }
+                                          @if (!isOutOfStock(product) && !isLowStock(product)) {
+                                            <span
+                                              class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                                              >
+                                              {{ product.stock }}
+                                            </span>
+                                          }
+                                        }
+                                      </td>
+                                      <td
+                                        class="flex justify-between items-center md:table-cell px-0 md:px-3 py-2 md:py-3 border-b border-border/50 md:border-0 last:border-0 md:text-center"
+                                        >
+                                        <span
+                                          class="text-sm font-medium text-muted-foreground md:hidden"
+                                          >Destacado</span
+                                          >
+                                          <button
+                                            type="button"
+                                            role="switch"
+                                            [attr.aria-checked]="product.isFeatured"
                     [disabled]="
-                      isReadOnly || togglingFeaturedIds.has(product.id)
+                      isReadOnly() || togglingFeaturedIds().has(product.id)
                     "
-                    (click)="persistToggleFeatured(product)"
+                                            (click)="persistToggleFeatured(product)"
                     [title]="
                       product.isFeatured
                         ? 'Quitar de destacados'
                         : 'Marcar como destacado'
                     "
-                    class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                                            class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                     [ngClass]="{
                       'bg-primary': product.isFeatured,
                       'bg-input': !product.isFeatured,
-                      'cursor-pointer': !isReadOnly,
-                      'cursor-default': isReadOnly,
-                      'animate-pulse': togglingFeaturedIds.has(product.id),
+                      'cursor-pointer': !isReadOnly(),
+                      'cursor-default': isReadOnly(),
+                      'animate-pulse': togglingFeaturedIds().has(product.id),
                     }"
-                  >
-                    <span
-                      class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg transition-transform"
+                                            >
+                                            <span
+                                              class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg transition-transform"
                       [ngClass]="
                         product.isFeatured ? 'translate-x-4' : 'translate-x-0'
                       "
-                    ></span>
-                  </button>
-                </td>
+                                            ></span>
+                                          </button>
+                                        </td>
+                                        <td
+                                          class="block md:table-cell px-0 md:px-3 py-0 md:py-3 md:text-right"
+                                          >
+                                          <div
+                                            class="flex gap-2 justify-end w-full mt-3 pt-3 border-t border-border md:border-0 md:mt-0 md:pt-0"
+                                            >
+                                            @if (isReadOnly()) {
+                                              <button
+                                                type="button"
+                                                (click)="openView(product)"
+                                                title="Ver detalles"
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                >
+                                                <svg
+                                                  class="h-4 w-4"
+                                                  viewBox="0 0 24 24"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  stroke-width="2"
+                                                  stroke-linecap="round"
+                                                  stroke-linejoin="round"
+                                                  >
+                                                  <path
+                                                    d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
+                                                    />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                  </svg>
+                                                </button>
+                                              } @else {
+                                                <button
+                                                  type="button"
+                                                  (click)="openEdit(product)"
+                                                  title="Editar producto"
+                                                  class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                  >
+                                                  <svg
+                                                    class="h-4 w-4"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    >
+                                                    <path
+                                                      d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                                      />
+                                                      <path
+                                                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                                        />
+                                                      </svg>
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      (click)="deleteProduct(product)"
+                                                      [disabled]="deletingId() === product.id"
+                                                      title="Eliminar producto"
+                                                      class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                      >
+                                                      <svg
+                                                        class="h-4 w-4"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        >
+                                                        <polyline points="3 6 5 6 21 6" />
+                                                        <path d="M19 6l-1 14H6L5 6" />
+                                                        <path d="M10 11v6" />
+                                                        <path d="M14 11v6" />
+                                                        <path d="M9 6V4h6v2" />
+                                                      </svg>
+                                                    </button>
+                                                  }
+                                                </div>
+                                              </td>
+                                            </tr>
+                                          }
+                                        } @else {
+                                          <tr class="block md:table-row">
+                                            <td
+                                              [attr.colspan]="isReadOnly() ? 6 : 7"
+                                              class="block md:table-cell py-10 text-center text-sm text-muted-foreground"
+                                              >
+                                              No se encontraron productos
+                                            </td>
+                                          </tr>
+                                        }
+                                      }
 
-                <td
-                  class="block md:table-cell px-0 md:px-3 py-0 md:py-3 md:text-right"
-                >
-                  <div
-                    class="flex gap-2 justify-end w-full mt-3 pt-3 border-t border-border md:border-0 md:mt-0 md:pt-0"
-                  >
-                    <ng-container *ngIf="isReadOnly; else adminActions">
-                      <button
-                        type="button"
-                        (click)="openView(product)"
-                        title="Ver detalles"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <svg
-                          class="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path
-                            d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
-                          />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </ng-container>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
 
-                    <ng-template #adminActions>
-                      <button
-                        type="button"
-                        (click)="openEdit(product)"
-                        title="Editar producto"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <svg
-                          class="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path
-                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                          />
-                          <path
-                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                      </button>
+                              <div
+                                class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
+                                >
+                                <div class="p-6">
+                                  <h3
+                                    class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
+                                    >
+                                    Resumen de Inventario
+                                  </h3>
+                                </div>
+                                <div class="px-6 pb-6">
+                                  <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-5">
+                                    <div class="rounded-lg border border-border p-4">
+                                      <p class="text-sm text-muted-foreground">Total</p>
+                                      <p class="text-2xl font-bold text-card-foreground">
+                                        {{ totalProducts() }}
+                                      </p>
+                                    </div>
 
-                      <button
-                        type="button"
-                        (click)="deleteProduct(product)"
-                        [disabled]="deletingId === product.id"
-                        title="Eliminar producto"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <svg
-                          class="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6l-1 14H6L5 6" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                          <path d="M9 6V4h6v2" />
-                        </svg>
-                      </button>
-                    </ng-template>
-                  </div>
-                </td>
-              </tr>
-            </ng-container>
+                                    <div class="rounded-lg border border-border p-4 md:col-span-2">
+                                      <p class="text-sm text-muted-foreground">Valor inventario</p>
+                                      <p class="text-2xl font-bold text-card-foreground">
+                                        ${{ fmt(totalInventoryValue()) }}
+                                      </p>
+                                    </div>
 
-            <ng-template #emptyRow>
-              <tr class="block md:table-row">
-                <td
-                  [attr.colspan]="isReadOnly ? 6 : 7"
-                  class="block md:table-cell py-10 text-center text-sm text-muted-foreground"
-                >
-                  No se encontraron productos
-                </td>
-              </tr>
-            </ng-template>
-          </ng-template>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div
-    class="rounded-lg border border-border bg-card text-card-foreground shadow-md"
-  >
-    <div class="p-6">
-      <h3
-        class="text-xl font-semibold leading-none tracking-tight text-card-foreground"
-      >
-        Resumen de Inventario
-      </h3>
-    </div>
-    <div class="px-6 pb-6">
-      <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-5">
-        <div class="rounded-lg border border-border p-4">
-          <p class="text-sm text-muted-foreground">Total</p>
-          <p class="text-2xl font-bold text-card-foreground">
-            {{ totalProducts }}
-          </p>
-        </div>
-
-        <div class="rounded-lg border border-border p-4 md:col-span-2">
-          <p class="text-sm text-muted-foreground">Valor inventario</p>
-          <p class="text-2xl font-bold text-card-foreground">
-            ${{ fmt(totalInventoryValue) }}
-          </p>
-        </div>
-
-        <div
-          class="rounded-lg border p-4"
+                                    <div
+                                      class="rounded-lg border p-4"
           [ngClass]="
-            outOfStockCount > 0
+            outOfStockCount() > 0
               ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20'
               : 'border-border'
           "
-        >
-          <p
-            class="text-sm font-medium"
+                                      >
+                                      <p
+                                        class="text-sm font-medium"
             [ngClass]="
-              outOfStockCount > 0
+              outOfStockCount() > 0
                 ? 'text-red-600 dark:text-red-400'
                 : 'text-muted-foreground'
             "
-          >
-            Agotados
-          </p>
-          <p
-            class="text-2xl font-bold"
+                                        >
+                                        Agotados
+                                      </p>
+                                      <p
+                                        class="text-2xl font-bold"
             [ngClass]="
-              outOfStockCount > 0
+              outOfStockCount() > 0
                 ? 'text-red-700 dark:text-red-300'
                 : 'text-card-foreground'
             "
-          >
-            {{ outOfStockCount }}
-          </p>
-        </div>
+                                        >
+                                        {{ outOfStockCount() }}
+                                      </p>
+                                    </div>
 
-        <div
-          class="rounded-lg border p-4"
+                                    <div
+                                      class="rounded-lg border p-4"
           [ngClass]="
-            lowStockCount > 0
+            lowStockCount() > 0
               ? 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20'
               : 'border-border'
           "
-        >
-          <p
-            class="text-sm font-medium"
+                                      >
+                                      <p
+                                        class="text-sm font-medium"
             [ngClass]="
-              lowStockCount > 0
+              lowStockCount() > 0
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-muted-foreground'
             "
-          >
-            Stock bajo
-          </p>
-          <p
-            class="text-2xl font-bold"
+                                        >
+                                        Stock bajo
+                                      </p>
+                                      <p
+                                        class="text-2xl font-bold"
             [ngClass]="
-              lowStockCount > 0
+              lowStockCount() > 0
                 ? 'text-amber-700 dark:text-amber-300'
                 : 'text-card-foreground'
             "
-          >
-            {{ lowStockCount }}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                                        >
+                                        {{ lowStockCount() }}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
-<ng-container *ngIf="isDialogOpen">
-  <div appModalScrollLock class="modal-backdrop" (click)="closeDialog()">
-    <div
-      role="dialog"
-      aria-modal="true"
-      class="modal-card"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="modal-header">
-        <h2
-          class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
-        >
-          {{ dialogTitle }}
-        </h2>
-        <p class="mt-1 text-sm text-muted-foreground">
-          {{ dialogDescription }}
-        </p>
-      </div>
-
-      <div class="modal-body">
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium leading-none" for="prod-nombre">
-              Nombre del Producto <span class="text-destructive">*</span>
-            </label>
-            <input
-              id="prod-nombre"
-              type="text"
-              placeholder="Ej: Pelotas Wilson"
-              [(ngModel)]="form.name"
-              [disabled]="viewMode"
-              (blur)="touchField('name')"
+                            @if (isDialogOpen()) {
+                              <div appModalScrollLock class="modal-backdrop" (click)="closeDialog()">
+                                <div
+                                  role="dialog"
+                                  aria-modal="true"
+                                  class="modal-card"
+                                  (click)="$event.stopPropagation()"
+                                  >
+                                  <div class="modal-header">
+                                    <h2
+                                      class="text-lg font-semibold leading-none tracking-tight text-card-foreground"
+                                      >
+                                      {{ dialogTitle() }}
+                                    </h2>
+                                    <p class="mt-1 text-sm text-muted-foreground">
+                                      {{ dialogDescription() }}
+                                    </p>
+                                  </div>
+                                  <div class="modal-body">
+                                    <div class="flex flex-col gap-4">
+                                      <div class="flex flex-col gap-1.5">
+                                        <label class="text-sm font-medium leading-none" for="prod-nombre">
+                                          Nombre del Producto <span class="text-destructive">*</span>
+                                        </label>
+                                        <input
+                                          id="prod-nombre"
+                                          type="text"
+                                          placeholder="Ej: Pelotas Wilson"
+                                          [(ngModel)]="form.name"
+                                          [disabled]="viewMode()"
+                                          (blur)="touchField('name')"
               [ngClass]="
-                formTouched.name && !form.name.trim() && !viewMode
+                formTouched.name && !form.name.trim() && !viewMode()
                   ? 'border-destructive focus-visible:ring-destructive'
                   : 'border-input'
               "
-              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <p
-              *ngIf="formTouched.name && !form.name.trim() && !viewMode"
-              class="text-xs text-destructive"
-            >
-              * Campo requerido
-            </p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label
-              class="text-sm font-medium leading-none"
-              for="prod-categoria"
-            >
-              Categoría <span class="text-destructive">*</span>
-            </label>
-            <select
-              id="prod-categoria"
-              [(ngModel)]="form.category"
-              [disabled]="viewMode"
-              (change)="onCategoryChange()"
-              (blur)="touchField('category')"
+                                          class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                          />
+                                          @if (formTouched.name && !form.name.trim() && !viewMode()) {
+                                            <p
+                                              class="text-xs text-destructive"
+                                              >
+                                              * Campo requerido
+                                            </p>
+                                          }
+                                        </div>
+                                        <div class="flex flex-col gap-1.5">
+                                          <label
+                                            class="text-sm font-medium leading-none"
+                                            for="prod-categoria"
+                                            >
+                                            Categoría <span class="text-destructive">*</span>
+                                          </label>
+                                          <select
+                                            id="prod-categoria"
+                                            [(ngModel)]="form.category"
+                                            [disabled]="viewMode()"
+                                            (change)="onCategoryChange()"
+                                            (blur)="touchField('category')"
               [ngClass]="
-                formTouched.category && !form.category && !viewMode
+                formTouched.category && !form.category && !viewMode()
                   ? 'border-destructive focus-visible:ring-destructive'
                   : 'border-input'
               "
-              class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="" disabled>Seleccione una categoría</option>
-              <option *ngFor="let cat of categories" [value]="cat.id">
-                {{ cat.name }}
-              </option>
-              <option value="__nueva__">+ Nueva categoría...</option>
-            </select>
-            <p
-              *ngIf="formTouched.category && !form.category && !viewMode"
-              class="text-xs text-destructive"
-            >
-              * Campo requerido
-            </p>
-
-            <ng-container *ngIf="isNewCategory && !viewMode">
-              <p class="text-xs text-muted-foreground">
-                💡 Para servicios retornables (paletas, pelotas) usá la
-                categoría
-                <strong>Alquileres</strong> — el POS no bloqueará la venta por
-                stock.
-              </p>
-              <input
-                type="text"
-                placeholder="Ej: Alquileres"
-                [(ngModel)]="newCategoryName"
-                (input)="onCategoryChange()"
-                class="flex h-10 w-full rounded-md border border-primary bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </ng-container>
-
-            <p
-              *ngIf="isRentalCategory && !viewMode"
-              class="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-md px-2 py-1"
-            >
-              <svg
-                class="h-3.5 w-3.5 shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4" />
-                <path d="M12 8h.01" />
-              </svg>
-              Categoría Alquileres: Precio Costo y Stock se establecen en 0
-              automáticamente.
-            </p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium leading-none" for="prod-icono"
-              >Icono</label
-            >
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+                                            class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                            <option value="" disabled>Seleccione una categoría</option>
+                                            @for (cat of categories(); track cat) {
+                                              <option [value]="cat.id">
+                                                {{ cat.name }}
+                                              </option>
+                                            }
+                                            <option value="__nueva__">+ Nueva categoría...</option>
+                                          </select>
+                                          @if (formTouched.category && !form.category && !viewMode()) {
+                                            <p
+                                              class="text-xs text-destructive"
+                                              >
+                                              * Campo requerido
+                                            </p>
+                                          }
+                                          @if (isNewCategory && !viewMode()) {
+                                            <p class="text-xs text-muted-foreground">
+                                              💡 Para servicios retornables (paletas, pelotas) usá la
+                                              categoría
+                                              <strong>Alquileres</strong> — el POS no bloqueará la venta por
+                                              stock.
+                                            </p>
+                                            <input
+                                              type="text"
+                                              placeholder="Ej: Alquileres"
+                                              [(ngModel)]="newCategoryName"
+                                              (input)="onCategoryChange()"
+                                              class="flex h-10 w-full rounded-md border border-primary bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                              />
+                                            }
+                                            @if (isRentalCategory && !viewMode()) {
+                                              <p
+                                                class="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-md px-2 py-1"
+                                                >
+                                                <svg
+                                                  class="h-3.5 w-3.5 shrink-0"
+                                                  viewBox="0 0 24 24"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  stroke-width="2"
+                                                  stroke-linecap="round"
+                                                  stroke-linejoin="round"
+                                                  >
+                                                  <circle cx="12" cy="12" r="10" />
+                                                  <path d="M12 16v-4" />
+                                                  <path d="M12 8h.01" />
+                                                </svg>
+                                                Categoría Alquileres: Precio Costo y Stock se establecen en 0
+                                                automáticamente.
+                                              </p>
+                                            }
+                                          </div>
+                                          <div class="flex flex-col gap-1.5">
+                                            <label class="text-sm font-medium leading-none" for="prod-icono"
+                                              >Icono</label
+                                              >
+                                              <div class="flex items-center gap-3">
+                                                <div
+                                                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
                 [ngClass]="[
                   (ICON_COLORS[form.icon] || ICON_COLORS['inventory_2']).bg,
                   (ICON_COLORS[form.icon] || ICON_COLORS['inventory_2']).text,
                 ]"
-              >
-                <span
-                  class="material-symbols-rounded"
-                  style="font-size: 22px"
-                  >{{ form.icon || "inventory_2" }}</span
-                >
-              </div>
-
-              <select
-                id="prod-icono"
-                [(ngModel)]="form.icon"
-                [disabled]="viewMode"
-                class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option *ngFor="let opt of iconOptions" [value]="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div
-            class="grid gap-4"
-            [ngClass]="isRentalCategory ? 'grid-cols-1' : 'grid-cols-2'"
-          >
-            <div *ngIf="!isRentalCategory" class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium leading-none" for="prod-costo">
-                Precio Costo <span class="text-destructive">*</span>
-              </label>
-              <input
-                id="prod-costo"
-                type="number" appDisableScroll
-                min="0"
-                placeholder="0"
-                [(ngModel)]="form.costPrice"
-                [disabled]="viewMode"
-                (blur)="touchField('costPrice')"
-                (focus)="$any($event.target).select()"
+                                                  >
+                                                  <span
+                                                    class="material-symbols-rounded"
+                                                    style="font-size: 22px"
+                                                    >{{ form.icon || "inventory_2" }}</span
+                                                    >
+                                                  </div>
+                                                  <select
+                                                    id="prod-icono"
+                                                    [(ngModel)]="form.icon"
+                                                    [disabled]="viewMode()"
+                                                    class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                    @for (opt of iconOptions; track opt) {
+                                                      <option [value]="opt.value">
+                                                        {{ opt.label }}
+                                                      </option>
+                                                    }
+                                                  </select>
+                                                </div>
+                                              </div>
+                                              <div
+                                                class="grid gap-4"
+                                                [ngClass]="isRentalCategory ? 'grid-cols-1' : 'grid-cols-2'"
+                                                >
+                                                @if (!isRentalCategory) {
+                                                  <div class="flex flex-col gap-1.5">
+                                                    <label class="text-sm font-medium leading-none" for="prod-costo">
+                                                      Precio Costo <span class="text-destructive">*</span>
+                                                    </label>
+                                                    <input
+                                                      id="prod-costo"
+                                                      type="number" appDisableScroll
+                                                      min="0"
+                                                      placeholder="0"
+                                                      [(ngModel)]="form.costPrice"
+                                                      [disabled]="viewMode()"
+                                                      (blur)="touchField('costPrice')"
+                                                      (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.costPrice && !form.costPrice && !viewMode
+                  formTouched.costPrice && !form.costPrice && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
-                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <p
-                *ngIf="formTouched.costPrice && !form.costPrice && !viewMode"
-                class="text-xs text-destructive"
-              >
-                * Campo requerido
-              </p>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium leading-none" for="prod-venta">
-                Precio Venta <span class="text-destructive">*</span>
-              </label>
-              <input
-                id="prod-venta"
-                type="number" appDisableScroll
-                min="0"
-                placeholder="0"
-                [(ngModel)]="form.salePrice"
-                [disabled]="viewMode"
-                (blur)="touchField('salePrice')"
-                (focus)="$any($event.target).select()"
+                                                      class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                      />
+                                                      @if (formTouched.costPrice && !form.costPrice && !viewMode()) {
+                                                        <p
+                                                          class="text-xs text-destructive"
+                                                          >
+                                                          * Campo requerido
+                                                        </p>
+                                                      }
+                                                    </div>
+                                                  }
+                                                  <div class="flex flex-col gap-1.5">
+                                                    <label class="text-sm font-medium leading-none" for="prod-venta">
+                                                      Precio Venta <span class="text-destructive">*</span>
+                                                    </label>
+                                                    <input
+                                                      id="prod-venta"
+                                                      type="number" appDisableScroll
+                                                      min="0"
+                                                      placeholder="0"
+                                                      [(ngModel)]="form.salePrice"
+                                                      [disabled]="viewMode()"
+                                                      (blur)="touchField('salePrice')"
+                                                      (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.salePrice && !form.salePrice && !viewMode
+                  formTouched.salePrice && !form.salePrice && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
-                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <p
-                *ngIf="formTouched.salePrice && !form.salePrice && !viewMode"
-                class="text-xs text-destructive"
-              >
-                * Campo requerido
-              </p>
-            </div>
-          </div>
-
-          <div *ngIf="!isRentalCategory" class="grid grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium leading-none" for="prod-stock">
-                Stock Inicial <span class="text-destructive">*</span>
-              </label>
-              <input
-                id="prod-stock"
-                type="number" appDisableScroll
-                min="0"
-                placeholder="0"
-                [(ngModel)]="form.stock"
-                [disabled]="viewMode"
-                (blur)="touchField('stock')"
-                (focus)="$any($event.target).select()"
+                                                      class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                      />
+                                                      @if (formTouched.salePrice && !form.salePrice && !viewMode()) {
+                                                        <p
+                                                          class="text-xs text-destructive"
+                                                          >
+                                                          * Campo requerido
+                                                        </p>
+                                                      }
+                                                    </div>
+                                                  </div>
+                                                  @if (!isRentalCategory) {
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                      <div class="flex flex-col gap-1.5">
+                                                        <label class="text-sm font-medium leading-none" for="prod-stock">
+                                                          Stock Inicial <span class="text-destructive">*</span>
+                                                        </label>
+                                                        <input
+                                                          id="prod-stock"
+                                                          type="number" appDisableScroll
+                                                          min="0"
+                                                          placeholder="0"
+                                                          [(ngModel)]="form.stock"
+                                                          [disabled]="viewMode()"
+                                                          (blur)="touchField('stock')"
+                                                          (focus)="$any($event.target).select()"
                 [ngClass]="
-                  formTouched.stock && !form.stock && !viewMode
+                  formTouched.stock && !form.stock && !viewMode()
                     ? 'border-destructive focus-visible:ring-destructive'
                     : 'border-input'
                 "
-                class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <p
-                *ngIf="formTouched.stock && !form.stock && !viewMode"
-                class="text-xs text-destructive"
-              >
-                * Campo requerido
-              </p>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label
-                class="text-sm font-medium leading-none"
-                for="prod-min-stock"
-              >
-                Stock Mínimo
-              </label>
-              <input
-                id="prod-min-stock"
-                type="number" appDisableScroll
-                min="0"
-                placeholder="5"
-                [(ngModel)]="form.minStock"
-                [disabled]="viewMode"
-                (focus)="$any($event.target).select()"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <p class="text-xs text-muted-foreground">
-                Alerta cuando el stock llegue a este valor. Ingresá
-                <strong>0</strong> para productos sin control de stock (ej:
-                alquileres).
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="flex items-center justify-between rounded-lg border border-border p-3"
-          >
-            <label class="text-sm font-medium leading-none" for="prod-destacado"
-              >¿Es producto destacado?</label
-            >
-            <button
-              id="prod-destacado"
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.isFeatured"
-              [disabled]="viewMode"
-              (click)="toggleFeatured()"
-              [ngClass]="form.isFeatured ? 'bg-primary' : 'bg-input'"
-              class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span
-                [ngClass]="form.isFeatured ? 'translate-x-4' : 'translate-x-0'"
-                class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform"
-              ></span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button
-          type="button"
-          (click)="closeDialog()"
-          class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          {{ viewMode ? "Cerrar" : "Cancelar" }}
-        </button>
-        <button
-          *ngIf="!viewMode"
-          type="button"
-          (click)="saveProduct()"
-          [disabled]="isSubmitting"
-          class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <ng-container *ngIf="isSubmitting; else submitLabelTpl"
-            >Guardando...</ng-container
-          >
-          <ng-template #submitLabelTpl>{{ submitLabel }}</ng-template>
-        </button>
-      </div>
-    </div>
-  </div>
-</ng-container>
+                                                          class="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                          />
+                                                          @if (formTouched.stock && !form.stock && !viewMode()) {
+                                                            <p
+                                                              class="text-xs text-destructive"
+                                                              >
+                                                              * Campo requerido
+                                                            </p>
+                                                          }
+                                                        </div>
+                                                        <div class="flex flex-col gap-1.5">
+                                                          <label
+                                                            class="text-sm font-medium leading-none"
+                                                            for="prod-min-stock"
+                                                            >
+                                                            Stock Mínimo
+                                                          </label>
+                                                          <input
+                                                            id="prod-min-stock"
+                                                            type="number" appDisableScroll
+                                                            min="0"
+                                                            placeholder="5"
+                                                            [(ngModel)]="form.minStock"
+                                                            [disabled]="viewMode()"
+                                                            (focus)="$any($event.target).select()"
+                                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            />
+                                                            <p class="text-xs text-muted-foreground">
+                                                              Alerta cuando el stock llegue a este valor. Ingresá
+                                                              <strong>0</strong> para productos sin control de stock (ej:
+                                                              alquileres).
+                                                            </p>
+                                                          </div>
+                                                        </div>
+                                                      }
+                                                      <div
+                                                        class="flex items-center justify-between rounded-lg border border-border p-3"
+                                                        >
+                                                        <label class="text-sm font-medium leading-none" for="prod-destacado"
+                                                          >¿Es producto destacado?</label
+                                                          >
+                                                          <button
+                                                            id="prod-destacado"
+                                                            type="button"
+                                                            role="switch"
+                                                            [attr.aria-checked]="form.isFeatured"
+                                                            [disabled]="viewMode()"
+                                                            (click)="toggleFeatured()"
+                                                            [ngClass]="form.isFeatured ? 'bg-primary' : 'bg-input'"
+                                                            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                            <span
+                                                              [ngClass]="form.isFeatured ? 'translate-x-4' : 'translate-x-0'"
+                                                              class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform"
+                                                            ></span>
+                                                          </button>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                      <button
+                                                        type="button"
+                                                        (click)="closeDialog()"
+                                                        class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                                        >
+                                                        {{ viewMode() ? "Cerrar" : "Cancelar" }}
+                                                      </button>
+                                                      @if (!viewMode()) {
+                                                        <button
+                                                          type="button"
+                                                          (click)="saveProduct()"
+                                                          [disabled]="isSubmitting()"
+                                                          class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                                          >
+                                                          @if (isSubmitting()) {
+                                                            Guardando...
+                                                          } @else {
+                                                            {{ submitLabel() }}
+                                                          }
+                                                        </button>
+                                                      }
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              }

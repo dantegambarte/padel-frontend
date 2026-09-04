@@ -12,12 +12,18 @@ async function goToCash(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+function saleActionButton(page: Page) {
+  return page.getByRole('button', {
+    name: /Confirmar Venta|Cobrar|Caja Cerrada/i,
+  }).first();
+}
+
 /**
  * Agrega el primer producto del catálogo y completa el pago.
  *
  * Flujo desktop del POS (wizard 2 pasos):
  *   Paso 1 → ítems del carrito
- *   Paso 2 → inputs de pago + botón "Confirmar Venta"
+ *   Paso 2 → inputs de pago + botón de acción de venta
  *
  * El helper navega al Paso 2 antes de buscar el input #efectivo.
  * Usa { exact: true } para el tab "Pago" y no colisionar con "Ir al Pago · $xx".
@@ -28,7 +34,7 @@ async function addFirstProductAndPay(page: Page): Promise<void> {
   await productBtn.click();
 
   const pagoTab = page.getByRole('button', { name: 'Pago', exact: true });
-  if (await pagoTab.isVisible({ timeout: 2000 }).catch(() => false)) {
+  if (await pagoTab.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
     await pagoTab.click();
   }
 
@@ -72,7 +78,7 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
     await goToPOS(page);
     await addFirstProductAndPay(page);
 
-    const confirmBtn = page.getByRole('button', { name: /Confirmar Venta/i });
+    const confirmBtn = saleActionButton(page);
     await expect(confirmBtn).toBeEnabled({ timeout: 4000 });
     await confirmBtn.click();
 
@@ -98,7 +104,7 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
       .locator('input[id="fondoInicial"], input[placeholder*="fondo" i]')
       .first();
 
-    if (await fondoInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await fondoInput.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await fondoInput.fill('5000');
       const abrirBtn = page.getByRole('button', {
         name: /Abrir Jornada|Abrir Caja/i,
@@ -119,7 +125,7 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
     await goToPOS(page);
     await addFirstProductAndPay(page);
 
-    const confirmBtn = page.getByRole('button', { name: /Confirmar Venta/i });
+    const confirmBtn = saleActionButton(page);
     await expect(confirmBtn).toBeEnabled({ timeout: 4000 });
 
     const saleResponse = page.waitForResponse(
@@ -134,7 +140,9 @@ test.describe('Suite 1 · Flujo de Caja Estricto', () => {
       const status = saleRes.status();
       expect([201, 400, 409, 503]).toContain(status);
       if (status === 201) {
-        await expect(confirmBtn).toBeDisabled({ timeout: 6000 });
+        await expect(
+          page.getByRole('button', { name: /Ir al Pago/i }),
+        ).toBeDisabled({ timeout: 6000 });
       }
     }
   });
@@ -328,8 +336,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
       )
       .first();
     const bookingVisible = await booking
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
     if (!bookingVisible) {
       test.skip();
       return;
@@ -373,8 +380,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
       )
       .first();
     const bookingVisible = await booking
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
     if (!bookingVisible) {
       test.skip();
       return;
@@ -402,8 +408,7 @@ test.describe('Suite 3 · Reschedule de Turno por Drag & Drop', () => {
 
     const dialog = page.getByRole('dialog');
     const dialogVisible = await dialog
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
+      .waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
     if (dialogVisible) {
       const cancelBtn = dialog.getByRole('button', { name: /Cancelar|No/i });
       if (await cancelBtn.isVisible()) {

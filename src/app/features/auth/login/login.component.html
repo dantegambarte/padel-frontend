@@ -1,17 +1,17 @@
 <div
-  class="relative flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-muted to-background p-6"
->
+  class="relative flex h-[100dvh] w-full justify-center overflow-y-auto bg-gradient-to-br from-muted to-background p-6"
+  >
   <button
     type="button"
     (click)="themeService.toggle()"
     class="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-card-foreground shadow-sm transition-colors hover:bg-accent"
     [attr.aria-label]="
-      (themeService.isDark$ | async)
+      themeService.isDark()
         ? 'Cambiar a modo claro'
         : 'Cambiar a modo oscuro'
     "
-  >
-    <ng-container *ngIf="themeService.isDark$ | async; else sunIcon">
+    >
+    @if (themeService.isDark()) {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-4 w-4"
@@ -21,11 +21,10 @@
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-      >
+        >
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
-    </ng-container>
-    <ng-template #sunIcon>
+    } @else {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-4 w-4"
@@ -35,7 +34,7 @@
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-      >
+        >
         <circle cx="12" cy="12" r="5" />
         <line x1="12" y1="1" x2="12" y2="3" />
         <line x1="12" y1="21" x2="12" y2="23" />
@@ -46,12 +45,12 @@
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
       </svg>
-    </ng-template>
+    }
   </button>
-  <div class="w-full max-w-md">
+  <div class="w-full max-w-md m-auto">
     <div
       class="rounded-lg border border-border bg-card text-card-foreground shadow-lg"
-    >
+      >
       <div class="flex flex-col space-y-1.5 p-6">
         <div class="flex items-center justify-center mb-4">
           <div>
@@ -59,13 +58,13 @@
               src="assets/imagen.png"
               alt="La Caldera Logo"
               class="h-32 w-32 object-contain"
-            />
+              />
           </div>
         </div>
 
         <h3
           class="text-3xl text-center font-bold tracking-tight text-card-foreground"
-        >
+          >
           La Caldera Padel
         </h3>
         <p class="text-center text-base text-muted-foreground">
@@ -79,7 +78,7 @@
             <label
               for="username"
               class="text-sm font-medium leading-none text-card-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+              >
               Usuario
             </label>
             <input
@@ -89,106 +88,110 @@
               placeholder="Ingrese su usuario"
               autocomplete="username"
               class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
+              />
           </div>
 
           <div class="space-y-2">
             <label
               for="password"
               class="text-sm font-medium leading-none text-card-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+              >
               Contraseña
             </label>
             <div class="relative">
               <input
                 id="password"
-                [type]="showPassword ? 'text' : 'password'"
+                [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
                 placeholder="Ingrese su contraseña"
                 autocomplete="current-password"
                 class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
+                />
               <button
                 type="button"
                 (click)="togglePasswordVisibility()"
                 class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 focus:outline-none transition-colors"
-                [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-              >
+                [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                >
                 <!-- Ojo abierto: contraseña oculta -->
-                <svg
-                  *ngIf="!showPassword"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+                @if (!showPassword()) {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                }
                 <!-- Ojo tachado: contraseña visible -->
-                <svg
-                  *ngIf="showPassword"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
+                @if (showPassword()) {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                }
               </button>
             </div>
-            <p
-              *ngIf="
-                form.get('password')?.errors?.['minlength'] &&
-                form.get('password')?.touched
-              "
-              class="text-xs text-destructive mt-1"
-            >
-              * Mínimo 6 caracteres
-            </p>
+            @if (
+              form.get('password')?.errors?.['minlength'] &&
+              form.get('password')?.touched
+              ) {
+              <p
+                class="text-xs text-destructive mt-1"
+                >
+                * Mínimo 6 caracteres
+              </p>
+            }
           </div>
 
-          <div
-            *ngIf="errorMessage"
-            class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{{ errorMessage }}</span>
-          </div>
+          @if (errorMessage()) {
+            <div
+              class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm"
+              >
+              <svg
+                class="h-4 w-4 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
 
           <button
             type="submit"
-            [disabled]="form.invalid || isLoading"
+            [disabled]="form.invalid || isLoading()"
             class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-base font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-full px-8"
-          >
-            <ng-container *ngIf="isLoading; else elseLogin">
+            >
+            @if (isLoading()) {
               <svg
                 class="mr-2 h-4 w-4 animate-spin"
                 viewBox="0 0 24 24"
                 fill="none"
-              >
+                >
                 <circle
                   class="opacity-25"
                   cx="12"
@@ -196,16 +199,17 @@
                   r="10"
                   stroke="currentColor"
                   stroke-width="4"
-                />
+                  />
                 <path
                   class="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
+                  />
               </svg>
               Iniciando sesión...
-            </ng-container>
-            <ng-template #elseLogin> Iniciar Sesión </ng-template>
+            } @else {
+              Iniciar Sesión
+            }
           </button>
         </form>
       </div>

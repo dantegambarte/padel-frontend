@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
@@ -41,6 +42,20 @@ export class AuthService {
    * Emite `null` cuando no hay sesión activa.
    */
   readonly currentUser$ = this.currentUserSubject.asObservable();
+
+  /**
+   * Versión signal de `currentUser$`, para componentes con `ChangeDetectionStrategy.OnPush`
+   * que necesitan reaccionar a cambios de sesión originados fuera de su propio árbol
+   * (ej. logout disparado desde otro componente, refresh de token).
+   */
+  readonly currentUserSignal = toSignal(this.currentUser$, {
+    initialValue: this.currentUserSubject.value,
+  });
+
+  /** Versión signal de `isAdmin`, derivada de `currentUserSignal`. */
+  readonly isAdminSignal = computed(
+    () => this.currentUserSignal()?.role === 'admin',
+  );
 
   constructor(
     private http: HttpClient,
@@ -103,7 +118,7 @@ export class AuthService {
 
   /**
    * Solicita un nuevo access token usando el refresh token almacenado.
-   * Es llamado automáticamente por {@link JwtInterceptor} ante respuestas 401.
+   * Es llamado automáticamente por `jwtInterceptor` ante respuestas 401.
    * Dispara el logout cuando el refresh token expiró.
    */
   refresh(): Observable<AuthResponse> {

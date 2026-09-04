@@ -130,20 +130,20 @@ describe('PosComponent — Cuentas Abiertas', () => {
     draftService.getDraft.and.returnValue(null);
 
     await TestBed.configureTestingModule({
-      declarations: [PosComponent],
-      providers: [
+    imports: [PosComponent],
+    providers: [
         { provide: ProductsService, useValue: productsService },
         { provide: SalesService, useValue: salesService },
         { provide: CashService, useValue: cashService },
         { provide: ToastService, useValue: toastService },
         { provide: DraftService, useValue: draftService },
         {
-          provide: Router,
-          useValue: { navigate: jasmine.createSpy('navigate') },
+            provide: Router,
+            useValue: { navigate: jasmine.createSpy('navigate') },
         },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
 
     fixture = TestBed.createComponent(PosComponent);
     component = fixture.componentInstance;
@@ -169,12 +169,12 @@ describe('PosComponent — Cuentas Abiertas', () => {
 
     component.selectOpenSale(sale);
 
-    expect(component.cart.length).toBe(1);
-    expect(component.cart[0].stock).toBe(20); // stock del catálogo (buildProduct), no de la venta
-    expect(component.cart[0].salePrice).toBe(300); // Number(unitPrice), no string
-    expect(component.cart[0].quantity).toBe(2);
-    expect(component.activeSaleId).toBe('sale-1');
-    expect(component.activeSaleCustomerName).toBe('Mesa 3');
+    expect(component.cart().length).toBe(1);
+    expect(component.cart()[0].stock).toBe(20); // stock del catálogo (buildProduct), no de la venta
+    expect(component.cart()[0].salePrice).toBe(300); // Number(unitPrice), no string
+    expect(component.cart()[0].quantity).toBe(2);
+    expect(component.activeSaleId()).toBe('sale-1');
+    expect(component.activeSaleCustomerName()).toBe('Mesa 3');
   });
 
   it('selectOpenSale: si el producto ya no existe en el catálogo, no bloquea el carrito con stock 0', () => {
@@ -190,9 +190,9 @@ describe('PosComponent — Cuentas Abiertas', () => {
 
     component.selectOpenSale(sale);
 
-    expect(component.cart[0].name).toBe('Producto Descontinuado');
-    expect(component.cart[0].stock).toBe(Number.POSITIVE_INFINITY);
-    expect(component.isAtStockLimit(component.cart[0])).toBe(false);
+    expect(component.cart()[0].name).toBe('Producto Descontinuado');
+    expect(component.cart()[0].stock).toBe(Number.POSITIVE_INFINITY);
+    expect(component.isAtStockLimit(component.cart()[0])).toBe(false);
   });
 
   it('selectOpenSale: no dispara ningún request nuevo, usa los items ya incluidos en la venta', () => {
@@ -204,36 +204,36 @@ describe('PosComponent — Cuentas Abiertas', () => {
   // ─── Getters de estado ───────────────────────────────────────────────────────
 
   it('isEditingOpenAccount / leaveOpenLabel reflejan si hay una cuenta cargada', () => {
-    expect(component.isEditingOpenAccount).toBe(false);
-    expect(component.leaveOpenLabel).toBe('Dejar Abierta');
+    expect(component.isEditingOpenAccount()).toBe(false);
+    expect(component.leaveOpenLabel()).toBe('Dejar Abierta');
 
     component.selectOpenSale(buildOpenSale());
 
-    expect(component.isEditingOpenAccount).toBe(true);
-    expect(component.leaveOpenLabel).toBe('Actualizar Cuenta');
+    expect(component.isEditingOpenAccount()).toBe(true);
+    expect(component.leaveOpenLabel()).toBe('Actualizar Cuenta');
   });
 
   it('cancelOpenAccountEdit: vacía el carrito y sale del modo edición', () => {
     component.selectOpenSale(buildOpenSale());
-    expect(component.isEditingOpenAccount).toBe(true);
+    expect(component.isEditingOpenAccount()).toBe(true);
 
     component.cancelOpenAccountEdit();
 
-    expect(component.cart).toEqual([]);
-    expect(component.activeSaleId).toBeNull();
-    expect(component.activeSaleCustomerName).toBeNull();
-    expect(component.isEditingOpenAccount).toBe(false);
+    expect(component.cart()).toEqual([]);
+    expect(component.activeSaleId()).toBeNull();
+    expect(component.activeSaleCustomerName()).toBeNull();
+    expect(component.isEditingOpenAccount()).toBe(false);
   });
 
   // ─── isLeaveOpenDisabled ──────────────────────────────────────────────────────
 
   it('isLeaveOpenDisabled: true con carrito vacío', () => {
-    component.cart = [];
+    component.cart.set([]);
     expect(component.isLeaveOpenDisabled).toBe(true);
   });
 
   it('isLeaveOpenDisabled: false en venta directa con items (sin cuenta cargada)', () => {
-    component.cart = [
+    component.cart.set([
       {
         productId: 'p1',
         name: 'X',
@@ -243,7 +243,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
         category: '',
         quantity: 1,
       },
-    ];
+    ]);
     expect(component.isLeaveOpenDisabled).toBe(false);
   });
 
@@ -270,7 +270,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
       of({ id: 'new-sale', total: 300, createdAt: new Date().toISOString() }),
     );
 
-    component.cart = [
+    component.cart.set([
       {
         productId: 'prod-1',
         name: 'Agua',
@@ -280,7 +280,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
         category: 'Bebidas',
         quantity: 2,
       },
-    ];
+    ]);
 
     component.leaveOpenAccount();
     tick();
@@ -288,14 +288,14 @@ describe('PosComponent — Cuentas Abiertas', () => {
     expect(salesService.createOpen).toHaveBeenCalledWith('Mesa 5', [
       { productId: 'prod-1', quantity: 2 },
     ]);
-    expect(component.cart).toEqual([]);
+    expect(component.cart()).toEqual([]);
     expect(toastService.success).toHaveBeenCalled();
   }));
 
   it('leaveOpenAccount (venta directa): si se cancela el Swal, no crea nada', fakeAsync(() => {
     spyOn(Swal, 'fire').and.returnValue(SWAL_DISMISSED);
 
-    component.cart = [
+    component.cart.set([
       {
         productId: 'prod-1',
         name: 'Agua',
@@ -305,17 +305,17 @@ describe('PosComponent — Cuentas Abiertas', () => {
         category: '',
         quantity: 1,
       },
-    ];
+    ]);
     component.leaveOpenAccount();
     tick();
 
     expect(salesService.createOpen).not.toHaveBeenCalled();
-    expect(component.cart.length).toBe(1);
+    expect(component.cart().length).toBe(1);
   }));
 
   it('leaveOpenAccount: no hace nada con el carrito vacío (ni siquiera abre el Swal)', () => {
     const swalSpy = spyOn(Swal, 'fire');
-    component.cart = [];
+    component.cart.set([]);
     component.leaveOpenAccount();
     expect(swalSpy).not.toHaveBeenCalled();
   });
@@ -338,15 +338,18 @@ describe('PosComponent — Cuentas Abiertas', () => {
 
     // Simula agregar 1 unidad más del mismo producto y un producto nuevo
     component.updateQuantity('prod-1', 1); // 2 -> 3, delta = 1
-    component.cart.push({
-      productId: 'prod-2',
-      name: 'Barrita',
-      salePrice: 350,
-      stock: 10,
-      minStock: 2,
-      category: 'Snacks',
-      quantity: 1,
-    });
+    component.cart.update((list) => [
+      ...list,
+      {
+        productId: 'prod-2',
+        name: 'Barrita',
+        salePrice: 350,
+        stock: 10,
+        minStock: 2,
+        category: 'Snacks',
+        quantity: 1,
+      },
+    ]);
 
     component.leaveOpenAccount();
 
@@ -414,7 +417,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
     salesService.create.and.returnValue(
       of({ id: 'sale-x', total: 300, createdAt: new Date().toISOString() }),
     );
-    component.cart = [
+    component.cart.set([
       {
         productId: 'prod-1',
         name: 'Agua',
@@ -424,7 +427,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
         category: '',
         quantity: 1,
       },
-    ];
+    ]);
     component.montoEfectivo = '300';
 
     component.confirmSale();
@@ -463,15 +466,15 @@ describe('PosComponent — Cuentas Abiertas', () => {
 
     component.confirmSale();
 
-    expect(component.activeSaleId).toBeNull();
-    expect(component.isEditingOpenAccount).toBe(false);
+    expect(component.activeSaleId()).toBeNull();
+    expect(component.isEditingOpenAccount()).toBe(false);
     expect(salesService.findOpen).toHaveBeenCalled();
   });
 
   it('confirmSale: no cobra si la caja está cerrada, sin importar el origen de la venta', () => {
     const swalSpy = spyOn(Swal, 'fire').and.returnValue(SWAL_DISMISSED);
-    component.isCashRegisterOpen = false;
-    component.cart = [
+    component.isCashRegisterOpen.set(false);
+    component.cart.set([
       {
         productId: 'prod-1',
         name: 'Agua',
@@ -481,7 +484,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
         category: '',
         quantity: 1,
       },
-    ];
+    ]);
     component.montoEfectivo = '300';
 
     component.confirmSale();

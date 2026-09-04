@@ -1,29 +1,37 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
 import { Expense } from '../../../core/models/expense.model';
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ExpenseFormComponent } from '../expense-form/expense-form.component';
 
 @Component({
-  selector: 'app-expenses-list',
-  templateUrl: './expenses-list.component.html',
+    selector: 'app-expenses-list',
+    templateUrl: './expenses-list.component.html',
+    imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    ExpenseFormComponent
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpensesListComponent implements OnInit {
-  expenses: Expense[] = [];
-  loading = false;
-  error: string | null = null;
+  expenses = signal<Expense[]>([]);
+  loading = signal(false);
+  error = signal<string | null>(null);
 
   /** Controla visibilidad del modal de formulario. */
-  showForm = false;
+  showForm = signal(false);
   /** Egreso seleccionado para editar (null = modo creación). */
-  selectedExpense: Expense | null = null;
+  selectedExpense = signal<Expense | null>(null);
 
   /** Filtros de fecha (solo admin). */
   dateFrom = '';
   dateTo = '';
 
-  get isAdmin(): boolean {
-    return this.authService.isAdmin;
-  }
+  isAdmin = this.authService.isAdminSignal;
 
   constructor(
     private expensesService: ExpensesService,
@@ -31,7 +39,7 @@ export class ExpensesListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.isAdmin) {
+    if (this.isAdmin()) {
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -42,20 +50,20 @@ export class ExpensesListComponent implements OnInit {
   }
 
   loadExpenses(): void {
-    this.loading = true;
-    this.error = null;
-    const filters = this.isAdmin
+    this.loading.set(true);
+    this.error.set(null);
+    const filters = this.isAdmin()
       ? { from: this.dateFrom || undefined, to: this.dateTo || undefined }
       : undefined;
 
     this.expensesService.getAll(filters).subscribe({
       next: (data) => {
-        this.expenses = data;
-        this.loading = false;
+        this.expenses.set(data);
+        this.loading.set(false);
       },
       error: () => {
-        this.error = 'No se pudieron cargar los egresos. Intente de nuevo.';
-        this.loading = false;
+        this.error.set('No se pudieron cargar los egresos. Intente de nuevo.');
+        this.loading.set(false);
       },
     });
   }
@@ -65,18 +73,18 @@ export class ExpensesListComponent implements OnInit {
   }
 
   openCreateForm(): void {
-    this.selectedExpense = null;
-    this.showForm = true;
+    this.selectedExpense.set(null);
+    this.showForm.set(true);
   }
 
   openEditForm(expense: Expense): void {
-    this.selectedExpense = expense;
-    this.showForm = true;
+    this.selectedExpense.set(expense);
+    this.showForm.set(true);
   }
 
   closeForm(): void {
-    this.showForm = false;
-    this.selectedExpense = null;
+    this.showForm.set(false);
+    this.selectedExpense.set(null);
   }
 
   onSaved(): void {
@@ -104,9 +112,9 @@ export class ExpensesListComponent implements OnInit {
   }
 
   /** Suma total de todos los egresos listados. */
-  get totalAmount(): number {
-    return this.expenses.reduce((acc, e) => acc + Number(e.amount), 0);
-  }
+  totalAmount = computed(() =>
+    this.expenses().reduce((acc, e) => acc + Number(e.amount), 0),
+  );
 
   /** Clases Tailwind por categoría para los badges de la lista. */
   categoryClass(category: string): string {

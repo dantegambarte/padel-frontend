@@ -46,7 +46,7 @@ test.describe('Dashboard', () => {
 
   test('la barra de búsqueda es interactiva', async ({ page }) => {
     const searchbox = page.getByRole('searchbox', { name: 'Buscar...' });
-    if (await searchbox.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await searchbox.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await searchbox.fill('test');
       await expect(searchbox).toHaveValue('test');
     }

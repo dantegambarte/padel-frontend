@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -7,6 +7,10 @@ import { ProductsService } from '../../core/services/products.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { getCategoryColor } from '../../core/utils/category-colors';
+import { NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 interface ProductForm {
   name: string;
@@ -56,27 +60,35 @@ const ICON_COLORS: Record<string, { bg: string; text: string }> = {
 type DialogMode = 'create' | 'edit' | 'view';
 
 @Component({
-  selector: 'app-products',
-  templateUrl: './products.component.html',
+    selector: 'app-products',
+    templateUrl: './products.component.html',
+    imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass,
+    ModalScrollLockDirective,
+    DisableScrollDirective
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsComponent implements OnInit {
-  products: Product[] = [];
+  products = signal<Product[]>([]);
   /** Categorías cargadas desde el backend — no derivadas de los productos. */
-  categories: { id: string; name: string }[] = [];
+  categories = signal<{ id: string; name: string }[]>([]);
   searchQuery = '';
   filterCategory = '';
   filterStock: '' | 'low' | 'zero' = '';
-  isLoading = false;
-  isSubmitting = false;
-  deletingId: string | null = null;
+  isLoading = signal(false);
+  isSubmitting = signal(false);
+  deletingId = signal<string | null>(null);
   /** ID del producto que debe resaltarse al llegar desde el buscador. */
-  highlightedProductId: string | null = null;
+  highlightedProductId = signal<string | null>(null);
   /** IDs de productos cuyo toggle está siendo procesado (evita doble click). */
-  togglingFeaturedIds = new Set<string>();
+  togglingFeaturedIds = signal(new Set<string>());
 
-  isDialogOpen = false;
-  dialogMode: DialogMode = 'create';
-  editingProductId: string | null = null;
+  isDialogOpen = signal(false);
+  dialogMode = signal<DialogMode>('create');
+  editingProductId = signal<string | null>(null);
   form: ProductForm = this.emptyForm();
 
   newCategoryName = '';
@@ -106,7 +118,7 @@ export class ProductsComponent implements OnInit {
     if (this.isNewCategory) {
       return this.newCategoryName.trim().toLowerCase().includes('alquiler');
     }
-    const cat = this.categories.find((c) => c.id === this.form.category);
+    const cat = this.categories().find((c) => c.id === this.form.category);
     return (cat?.name ?? '').toLowerCase().includes('alquiler');
   }
 
@@ -127,7 +139,7 @@ export class ProductsComponent implements OnInit {
 
     const categoryName = this.isNewCategory
       ? this.newCategoryName.trim()
-      : (this.categories.find((c) => c.id === this.form.category)?.name ?? '');
+      : (this.categories().find((c) => c.id === this.form.category)?.name ?? '');
     if (categoryName) {
       this.form.icon = iconForCategory(categoryName);
     }
@@ -176,9 +188,9 @@ export class ProductsComponent implements OnInit {
       const el = document.getElementById(`product-${id}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        this.highlightedProductId = id;
+        this.highlightedProductId.set(id);
         setTimeout(() => {
-          this.highlightedProductId = null;
+          this.highlightedProductId.set(null);
         }, 3000);
       } else if (retries > 0) {
         setTimeout(() => attempt(retries - 1), 200);
@@ -190,7 +202,7 @@ export class ProductsComponent implements OnInit {
   /** Carga las categorías desde el backend independientemente de los productos. */
   private loadCategories(): void {
     this.productsService.getCategories().subscribe({
-      next: (cats) => (this.categories = cats),
+      next: (cats) => this.categories.set(cats),
       error: () => {
         this.toast.error('Aviso', 'No se pudieron cargar las categorías');
       },
@@ -198,29 +210,21 @@ export class ProductsComponent implements OnInit {
   }
 
   /** `true` cuando el usuario no es administrador y sólo puede ver los productos. */
-  get isReadOnly(): boolean {
-    return !this.authService.isAdmin;
-  }
+  isReadOnly = computed(() => !this.authService.isAdminSignal());
 
   /** `true` cuando el diálogo está en modo de sólo lectura. */
-  get viewMode(): boolean {
-    return this.dialogMode === 'view';
-  }
+  viewMode = computed(() => this.dialogMode() === 'view');
 
   /** Cantidad total de productos en el inventario. */
-  get totalProducts(): number {
-    return this.products.length;
-  }
+  totalProducts = computed(() => this.products().length);
 
   /** Valor total del inventario calculado como suma de (precio venta × stock). */
-  get totalInventoryValue(): number {
-    return this.products.reduce((sum, p) => sum + p.salePrice * p.stock, 0);
-  }
+  totalInventoryValue = computed(() =>
+    this.products().reduce((sum, p) => sum + p.salePrice * p.stock, 0),
+  );
 
   /** Cantidad de productos marcados como destacados. */
-  get featuredCount(): number {
-    return this.products.filter((p) => p.isFeatured).length;
-  }
+  featuredCount = computed(() => this.products().filter((p) => p.isFeatured).length);
 
   /**
    * `true` si el producto tiene control de stock (minStock > 0) y está agotado.
@@ -243,18 +247,18 @@ export class ProductsComponent implements OnInit {
   }
 
   /** Cantidad de productos activos con stock = 0 y minStock > 0. */
-  get outOfStockCount(): number {
-    return this.products.filter((p) => this.isOutOfStock(p)).length;
-  }
+  outOfStockCount = computed(
+    () => this.products().filter((p) => this.isOutOfStock(p)).length,
+  );
 
   /** Cantidad de productos activos con stock en umbral de alerta (sin agotados). */
-  get lowStockCount(): number {
-    return this.products.filter((p) => this.isLowStock(p)).length;
-  }
+  lowStockCount = computed(
+    () => this.products().filter((p) => this.isLowStock(p)).length,
+  );
 
   /** Devuelve los productos filtrados por búsqueda, categoría y estado de stock. */
   get filteredProducts(): Product[] {
-    let list = this.products;
+    let list = this.products();
 
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
@@ -289,35 +293,35 @@ export class ProductsComponent implements OnInit {
   }
 
   /** Título del diálogo según el modo activo. */
-  get dialogTitle(): string {
-    if (this.viewMode) return 'Detalles del Producto';
-    return this.editingProductId ? 'Editar Producto' : 'Agregar Producto';
-  }
+  dialogTitle = computed(() => {
+    if (this.viewMode()) return 'Detalles del Producto';
+    return this.editingProductId() ? 'Editar Producto' : 'Agregar Producto';
+  });
 
   /** Descripción del diálogo según el modo activo. */
-  get dialogDescription(): string {
-    if (this.viewMode) return 'Información del producto';
-    return this.editingProductId
+  dialogDescription = computed(() => {
+    if (this.viewMode()) return 'Información del producto';
+    return this.editingProductId()
       ? 'Modifique los datos del producto existente'
       : 'Complete la información del nuevo producto';
-  }
+  });
 
   /** Etiqueta del botón de submit según si se está creando o editando. */
-  get submitLabel(): string {
-    return this.editingProductId ? 'Guardar Cambios' : 'Agregar Producto';
-  }
+  submitLabel = computed(() =>
+    this.editingProductId() ? 'Guardar Cambios' : 'Agregar Producto',
+  );
 
   /**
    * Carga todos los productos desde el servidor y los asigna al estado local.
    */
   private loadProducts(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.productsService
       .findAll()
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (products) => {
-          this.products = products;
+          this.products.set(products);
         },
         error: () => {
           this.toast.error(
@@ -330,12 +334,12 @@ export class ProductsComponent implements OnInit {
 
   /** Abre el diálogo en modo creación con el formulario vacío. */
   openCreate(): void {
-    this.dialogMode = 'create';
-    this.editingProductId = null;
+    this.dialogMode.set('create');
+    this.editingProductId.set(null);
     this.newCategoryName = '';
     this.form = this.emptyForm();
     this.resetTouched();
-    this.isDialogOpen = true;
+    this.isDialogOpen.set(true);
   }
 
   /**
@@ -343,8 +347,8 @@ export class ProductsComponent implements OnInit {
    * @param product - Producto a editar.
    */
   openEdit(product: Product): void {
-    this.dialogMode = 'edit';
-    this.editingProductId = product.id;
+    this.dialogMode.set('edit');
+    this.editingProductId.set(product.id);
     this.newCategoryName = '';
     this.form = {
       name: product.name,
@@ -356,7 +360,7 @@ export class ProductsComponent implements OnInit {
       isFeatured: product.isFeatured,
       icon: product.icon || 'inventory_2',
     };
-    this.isDialogOpen = true;
+    this.isDialogOpen.set(true);
   }
 
   /**
@@ -364,8 +368,8 @@ export class ProductsComponent implements OnInit {
    * @param product - Producto a visualizar.
    */
   openView(product: Product): void {
-    this.dialogMode = 'view';
-    this.editingProductId = product.id;
+    this.dialogMode.set('view');
+    this.editingProductId.set(product.id);
     this.newCategoryName = '';
     this.form = {
       name: product.name,
@@ -377,12 +381,12 @@ export class ProductsComponent implements OnInit {
       isFeatured: product.isFeatured,
       icon: product.icon || 'inventory_2',
     };
-    this.isDialogOpen = true;
+    this.isDialogOpen.set(true);
   }
 
   /** Cierra el diálogo y limpia el nombre de nueva categoría. */
   closeDialog(): void {
-    this.isDialogOpen = false;
+    this.isDialogOpen.set(false);
     this.newCategoryName = '';
     this.resetTouched();
   }
@@ -390,7 +394,7 @@ export class ProductsComponent implements OnInit {
   /** Cierra el modal de producto al presionar Escape. */
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.isDialogOpen) this.closeDialog();
+    if (this.isDialogOpen()) this.closeDialog();
   }
 
   /**
@@ -432,21 +436,21 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     if (this.isNewCategory) {
       this.productsService
         .createCategory(this.newCategoryName.trim())
         .subscribe({
           next: (cat) => {
-            if (!this.categories.find((c) => c.id === cat.id)) {
-              this.categories = [...this.categories, cat];
+            if (!this.categories().find((c) => c.id === cat.id)) {
+              this.categories.update((cats) => [...cats, cat]);
             }
             const isRental = cat.name.toLowerCase().includes('alquiler');
             this.doSaveProduct(cat.id, isRental);
           },
           error: () => {
-            this.isSubmitting = false;
+            this.isSubmitting.set(false);
             this.toast.error('Error al crear categoría', 'Intente nuevamente');
           },
         });
@@ -472,29 +476,32 @@ export class ProductsComponent implements OnInit {
       icon: this.form.icon || 'inventory_2',
     };
 
-    const request$ = this.editingProductId
-      ? this.productsService.update(this.editingProductId, dto)
+    const editingProductId = this.editingProductId();
+    const request$ = editingProductId
+      ? this.productsService.update(editingProductId, dto)
       : this.productsService.create(dto);
 
-    request$.pipe(finalize(() => (this.isSubmitting = false))).subscribe({
+    request$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
       next: (saved) => {
-        if (this.editingProductId) {
-          this.products = this.products.map((p) =>
-            p.id === this.editingProductId ? saved : p,
+        if (editingProductId) {
+          this.products.update((list) =>
+            list.map((p) => (p.id === editingProductId ? saved : p)),
           );
           this.toast.success(
             'Producto actualizado',
             `${saved.name} se actualizó correctamente`,
           );
         } else {
-          this.products = [...this.products, saved];
+          this.products.update((list) => [...list, saved]);
           this.toast.success(
             'Producto agregado',
             `${saved.name} se agregó al inventario`,
           );
         }
-        this.products = [...this.products].sort((a, b) =>
-          a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
+        this.products.update((list) =>
+          [...list].sort((a, b) =>
+            a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
+          ),
         );
         this.closeDialog();
       },
@@ -516,13 +523,13 @@ export class ProductsComponent implements OnInit {
    * @param product - Producto a eliminar.
    */
   deleteProduct(product: Product): void {
-    this.deletingId = product.id;
+    this.deletingId.set(product.id);
     this.productsService
       .remove(product.id)
-      .pipe(finalize(() => (this.deletingId = null)))
+      .pipe(finalize(() => this.deletingId.set(null)))
       .subscribe({
         next: () => {
-          this.products = this.products.filter((p) => p.id !== product.id);
+          this.products.update((list) => list.filter((p) => p.id !== product.id));
           this.toast.success(
             'Producto eliminado',
             `${product.name} se eliminó del inventario`,
@@ -557,7 +564,7 @@ export class ProductsComponent implements OnInit {
 
   /** Alterna el estado de destacado en el formulario (sólo en modo edición/creación). */
   toggleFeatured(): void {
-    if (!this.viewMode) this.form.isFeatured = !this.form.isFeatured;
+    if (!this.viewMode()) this.form.isFeatured = !this.form.isFeatured;
   }
 
   /**
@@ -565,22 +572,37 @@ export class ProductsComponent implements OnInit {
    * Usa actualización optimista: cambia el estado local de inmediato y lo revierte si falla.
    */
   persistToggleFeatured(product: Product): void {
-    if (this.isReadOnly || this.togglingFeaturedIds.has(product.id)) return;
+    if (this.isReadOnly() || this.togglingFeaturedIds().has(product.id)) return;
 
     const newValue = !product.isFeatured;
-    product.isFeatured = newValue;
-    this.togglingFeaturedIds.add(product.id);
+    this.products.update((list) =>
+      list.map((p) => (p.id === product.id ? { ...p, isFeatured: newValue } : p)),
+    );
+    this.togglingFeaturedIds.update((ids) => new Set(ids).add(product.id));
 
     this.productsService
       .update(product.id, { isFeatured: newValue })
-      .pipe(finalize(() => this.togglingFeaturedIds.delete(product.id)))
+      .pipe(
+        finalize(() =>
+          this.togglingFeaturedIds.update((ids) => {
+            const next = new Set(ids);
+            next.delete(product.id);
+            return next;
+          }),
+        ),
+      )
       .subscribe({
         next: (saved) => {
-          const idx = this.products.findIndex((p) => p.id === saved.id);
-          if (idx !== -1) this.products[idx] = saved;
+          this.products.update((list) =>
+            list.map((p) => (p.id === saved.id ? saved : p)),
+          );
         },
         error: () => {
-          product.isFeatured = !newValue;
+          this.products.update((list) =>
+            list.map((p) =>
+              p.id === product.id ? { ...p, isFeatured: !newValue } : p,
+            ),
+          );
           this.toast.error(
             'Error al actualizar',
             'No se pudo cambiar el estado Destacado. Intente nuevamente.',

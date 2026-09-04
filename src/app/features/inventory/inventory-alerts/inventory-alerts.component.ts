@@ -1,17 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ProductsService } from '../../../core/services/products.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LowStockProduct } from '../../../core/models/product.model';
+import { NgClass } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-inventory-alerts',
-  templateUrl: './inventory-alerts.component.html',
+    selector: 'app-inventory-alerts',
+    templateUrl: './inventory-alerts.component.html',
+    imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    NgClass
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryAlertsComponent implements OnInit {
-  allAlerts: LowStockProduct[] = [];
-  isLoading = true;
+  allAlerts = signal<LowStockProduct[]>([]);
+  isLoading = signal(true);
 
   searchTerm = '';
   selectedCategory = '';
@@ -28,18 +36,18 @@ export class InventoryAlertsComponent implements OnInit {
 
   /** Carga las alertas de stock bajo desde el servidor. */
   private load(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.productsService.getLowStock().subscribe({
       next: (list) => {
-        this.allAlerts = list;
-        this.isLoading = false;
+        this.allAlerts.set(list);
+        this.isLoading.set(false);
       },
       error: () => {
         this.toast.error(
           'Error',
           'No se pudieron cargar las alertas de stock.',
         );
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }
@@ -48,7 +56,7 @@ export class InventoryAlertsComponent implements OnInit {
   get categories(): { id: string; name: string }[] {
     const seen = new Set<string>();
     const result: { id: string; name: string }[] = [];
-    for (const p of this.allAlerts) {
+    for (const p of this.allAlerts()) {
       if (p.category && !seen.has(p.category.id)) {
         seen.add(p.category.id);
         result.push(p.category);
@@ -60,7 +68,7 @@ export class InventoryAlertsComponent implements OnInit {
   /** Alertas filtradas por texto de búsqueda y categoría seleccionada. */
   get filteredAlerts(): LowStockProduct[] {
     const term = this.searchTerm.trim().toLowerCase();
-    return this.allAlerts.filter((p) => {
+    return this.allAlerts().filter((p) => {
       const matchesName = !term || p.name.toLowerCase().includes(term);
       const matchesCategory =
         !this.selectedCategory || p.category?.id === this.selectedCategory;

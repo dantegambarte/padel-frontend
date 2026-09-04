@@ -5,6 +5,20 @@ async function goToSettings(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+function settingsHeading(page: Page) {
+  return page.getByRole('heading', { name: /Configuración/i }).first();
+}
+
+/**
+ * El modal de canchas usa p-dialog de PrimeNG, que expone role="dialog" dos
+ * veces: en el host <p-dialog> y en el <div> interno que renderiza. Un
+ * getByRole('dialog') suelto matchea ambos y rompe por strict mode, así que
+ * acotamos al interno, que es el que tiene el contenido.
+ */
+function courtDialog(page: Page) {
+  return page.locator('p-dialog').getByRole('dialog');
+}
+
 test.describe('Módulo de Configuración', () => {
   test.beforeEach(async ({ page }) => {
     await goToSettings(page);
@@ -13,9 +27,7 @@ test.describe('Módulo de Configuración', () => {
   test('SE-01: carga la pantalla de configuración correctamente', async ({
     page,
   }) => {
-    await expect(
-      page.getByRole('heading', { name: 'Configuración', exact: true }),
-    ).toBeVisible({ timeout: 8000 });
+    await expect(settingsHeading(page)).toBeVisible({ timeout: 8000 });
   });
 
   test('SE-02: muestra los precios actuales de la cancha (estándar y profesor)', async ({
@@ -37,20 +49,20 @@ test.describe('Módulo de Configuración', () => {
     }
   });
 
-  test('SE-04: el botón Guardar Configuración dispara un PUT/PATCH a la API', async ({
+  test('SE-04: el botón Guardar Fondo dispara un PUT/PATCH a la API', async ({
     page,
   }) => {
-    const priceInput = page.locator('input[type="number"]').first();
-    if (await priceInput.isVisible()) {
-      const currentVal = await priceInput.inputValue();
-      await priceInput.fill(
+    const fondoInput = page.getByRole('spinbutton', { name: /Fondo por defecto/i });
+    if (await fondoInput.isVisible()) {
+      const currentVal = await fondoInput.inputValue();
+      await fondoInput.fill(
         currentVal ? String(Number(currentVal) + 1) : '3500',
       );
     }
     const saveBtn = page.getByRole('button', {
-      name: /Guardar Configuración/i,
+      name: /Guardar Fondo/i,
     });
-    if (await saveBtn.isVisible()) {
+    if (await saveBtn.isVisible() && await saveBtn.isEnabled()) {
       const responsePromise = page.waitForResponse(
         (res) =>
           res.url().includes('/config') &&
@@ -77,9 +89,9 @@ test.describe('Módulo de Configuración', () => {
     const newCourtBtn = page
       .getByRole('button', { name: /Nueva Cancha|Agregar Cancha/i })
       .first();
-    if (await newCourtBtn.isVisible({ timeout: 3000 })) {
+    if (await newCourtBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await newCourtBtn.click();
-      const dialog = page.getByRole('dialog');
+      const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });
     }
   });
@@ -88,13 +100,13 @@ test.describe('Módulo de Configuración', () => {
     const newCourtBtn = page
       .getByRole('button', { name: /Nueva Cancha|Agregar Cancha/i })
       .first();
-    if (!(await newCourtBtn.isVisible({ timeout: 3000 }))) {
+    if (!(await newCourtBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false))) {
       test.skip();
       return;
     }
 
     await newCourtBtn.click();
-    const dialog = page.getByRole('dialog');
+    const dialog = courtDialog(page);
     await expect(dialog).toBeVisible({ timeout: 3000 });
 
     const nameInput = dialog.getByRole('textbox').first();
@@ -121,9 +133,9 @@ test.describe('Módulo de Configuración', () => {
       .first()
       .or(page.locator('[data-testid="edit-court"]').first());
 
-    if (await editBtn.isVisible({ timeout: 3000 })) {
+    if (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await editBtn.click();
-      const dialog = page.getByRole('dialog');
+      const dialog = courtDialog(page);
       await expect(dialog).toBeVisible({ timeout: 3000 });
       await expect(dialog.getByRole('textbox').first()).not.toHaveValue('');
     }
@@ -143,20 +155,22 @@ test.describe('Módulo de Configuración', () => {
     page,
   }) => {
     const cancelBtn = page.getByRole('button', { name: /Cancelar/i });
-    const priceInput = page.locator('input[type="number"]').first();
+    const openingInput = page.getByLabel(/Horario de Apertura/i);
     const saveBtn = page.getByRole('button', {
-      name: /Guardar Configuración/i,
+      name: /Guardar Horarios|Guardar Configuración/i,
     });
 
-    if ((await priceInput.isVisible()) && (await cancelBtn.isVisible())) {
-      const original = await priceInput.inputValue();
-      await priceInput.fill(String(Number(original || '3000') + 100));
-      await priceInput.blur();
+    if ((await openingInput.isVisible()) && (await cancelBtn.isVisible())) {
+      const original = await openingInput.inputValue();
+      const changed = original === '09:00' ? '09:30' : '09:00';
+      await openingInput.fill(changed);
+      await openingInput.blur();
       await expect(saveBtn).toBeEnabled({ timeout: 3000 });
 
       await cancelBtn.click();
       await page.waitForLoadState('networkidle');
       await expect(saveBtn).toBeDisabled({ timeout: 8000 });
+      await expect(openingInput).toHaveValue(original);
     }
   });
 });

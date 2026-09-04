@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ChartData, ChartOptions } from 'chart.js';
@@ -9,19 +9,26 @@ import {
   DailyRevenue,
 } from '../../../core/services/reports.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DecimalPipe } from '@angular/common';
+import { NgChartsModule } from 'ng2-charts';
 
 @Component({
-  selector: 'app-dashboard-admin',
-  templateUrl: './dashboard-admin.component.html',
+    selector: 'app-dashboard-admin',
+    templateUrl: './dashboard-admin.component.html',
+    imports: [
+    NgChartsModule,
+    DecimalPipe
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardAdminComponent implements OnInit {
-  isLoading = true;
+  isLoading = signal(true);
 
-  kpis: TodayKpis | null = null;
+  kpis = signal<TodayKpis | null>(null);
 
   barChartType = 'bar' as const;
 
-  barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
+  barChartData = signal<ChartData<'bar'>>({ labels: [], datasets: [] });
 
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
@@ -60,15 +67,15 @@ export class DashboardAdminComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     forkJoin({
       kpis: this.reportsService.getTodayKpis(),
       chart: this.reportsService.getLast7DaysRevenue(),
     })
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: ({ kpis, chart }) => {
-          this.kpis = kpis;
+          this.kpis.set(kpis);
           this.buildChart(chart);
         },
         error: () => {
@@ -90,7 +97,7 @@ export class DashboardAdminComponent implements OnInit {
       return `${day}/${m}`;
     });
 
-    this.barChartData = {
+    this.barChartData.set({
       labels,
       datasets: [
         {
@@ -108,7 +115,7 @@ export class DashboardAdminComponent implements OnInit {
           borderRadius: { topLeft: 4, topRight: 4 },
         },
       ],
-    };
+    });
   }
 
   /** Formatea un número usando el locale argentino. */

@@ -1,21 +1,32 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-  Router,
-  NavigationStart,
-  NavigationEnd,
-  NavigationCancel,
-  NavigationError,
-} from '@angular/router';
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+} from '@angular/core';
+import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 
+import { ToastComponent } from './shared/toast/toast.component';
+import { CalculatorComponent } from './shared/calculator/calculator.component';
+import { SessionAlertComponent } from './shared/session-alert/session-alert.component';
+
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    imports: [
+    RouterOutlet,
+    ToastComponent,
+    CalculatorComponent,
+    SessionAlertComponent
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'padel-frontend';
-  isRouting = false;
+  readonly isRouting = signal(false);
 
   private sub = new Subscription();
 
@@ -25,13 +36,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart) {
-          this.isRouting = true;
+          this.isRouting.set(true);
         } else if (
           event instanceof NavigationEnd ||
           event instanceof NavigationCancel ||
           event instanceof NavigationError
         ) {
-          this.isRouting = false;
+          this.isRouting.set(false);
         }
       }),
     );

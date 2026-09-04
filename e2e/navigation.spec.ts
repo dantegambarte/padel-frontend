@@ -1,12 +1,40 @@
 import { test, expect, Page } from '@playwright/test';
 
-/** En mobile el sidebar está colapsado — abrirlo antes de clickear nav items. */
+/**
+ * En mobile el sidebar está colapsado (`-translate-x-full`) — hay que abrirlo
+ * antes de clickear nav items. A partir del breakpoint `xl` (1280px) el aside
+ * es fijo y el hamburguesa está oculto por CSS (`xl:hidden`).
+ *
+ * Decidimos por viewport y NO por "¿se ve el botón?": el shell se carga de
+ * forma lazy, así que justo después de que la URL cambia el hamburguesa puede
+ * todavía no existir en el DOM. La versión anterior sondeaba con
+ * `isVisible({ timeout: 500 })` y un `.catch(() => false)`, con lo cual un
+ * "todavía no cargó" se volvía indistinguible de un "no hace falta abrirlo":
+ * el sidebar quedaba cerrado y los clicks posteriores fallaban con el nav item
+ * fuera del viewport.
+ */
+const XL_BREAKPOINT = 1280;
+
 async function openSidebarIfNeeded(page: Page) {
-  const hamburger = page.getByRole('button', { name: 'Open menu' });
-  if (await hamburger.isVisible({ timeout: 500 }).catch(() => false)) {
-    await hamburger.click();
-    await page.waitForTimeout(300);
-  }
+  const width = page.viewportSize()?.width ?? 0;
+  if (width >= XL_BREAKPOINT) return;
+
+  const hamburger = page.getByRole('button', { name: /Abrir menú|Open menu/i });
+  await hamburger.waitFor({ state: 'visible', timeout: 15000 });
+  await hamburger.click();
+
+  // Esperar el estado real, no un timeout arbitrario.
+  await expect(page.locator('aside').first()).toHaveClass(/translate-x-0/);
+}
+
+async function clickNavItem(page: Page, name: string) {
+  const item = page.getByRole('navigation').getByRole('button', { name });
+  await item.scrollIntoViewIfNeeded();
+  await item.click();
+}
+
+async function expectMainHeading(page: Page, name: RegExp) {
+  await expect(page.locator('main').getByRole('heading', { name }).first()).toBeVisible();
 }
 
 test.describe('Navegación', () => {
@@ -17,88 +45,51 @@ test.describe('Navegación', () => {
   });
 
   test('navega a Agenda de Turnos', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Agenda de Turnos' })
-      .click();
+    await clickNavItem(page, 'Agenda de Turnos');
     await expect(page).toHaveURL('/app/schedule');
   });
 
   test('navega a Cierre de Caja', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Cierre de Caja' })
-      .click();
+    await clickNavItem(page, 'Cierre de Caja');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(
-      page.getByRole('heading', { name: 'Cierre de Caja' }),
-    ).toBeVisible();
+    await expectMainHeading(page, /Arqueo de Turno|Efectivo Esperado|Abrir Turno|Caja Cerrada/i);
   });
 
   test('navega a Nueva Venta', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Nueva Venta' })
-      .click();
+    await clickNavItem(page, 'Nueva Venta');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(
-      page.getByRole('heading', { name: 'Nueva Venta' }),
-    ).toBeVisible();
+    await expectMainHeading(page, /Catálogo de Productos|Carrito|Nueva Venta/i);
   });
 
   test('navega a Productos', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Productos' })
-      .click();
+    await clickNavItem(page, 'Productos');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(
-      page.getByRole('heading', { name: 'Productos', exact: true }).first(),
-    ).toBeVisible();
+    await expectMainHeading(page, /Productos/i);
   });
 
   test('navega a Reportes', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Reportes' })
-      .click();
+    await clickNavItem(page, 'Reportes');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(page.getByRole('heading', { name: 'Reportes' })).toBeVisible();
+    await expectMainHeading(page, /Balance Financiero|Flujo de Caja|Reportes/i);
   });
 
   test('navega a Usuarios', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Usuarios' })
-      .click();
+    await clickNavItem(page, 'Usuarios');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(
-      page.getByRole('heading', { name: 'Usuarios', exact: true }),
-    ).toBeVisible();
+    await expectMainHeading(page, /Usuarios/i);
   });
 
   test('navega a Configuración', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Configuración' })
-      .click();
+    await clickNavItem(page, 'Configuración');
     await page.waitForURL('**/app/**', { timeout: 5000 });
-    await expect(
-      page.getByRole('heading', { name: 'Configuración', exact: true }),
-    ).toBeVisible();
+    await expectMainHeading(page, /Configuración/i);
   });
 
   test('navega de vuelta al Inicio desde otra sección', async ({ page }) => {
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Agenda de Turnos' })
-      .click();
+    await clickNavItem(page, 'Agenda de Turnos');
     await expect(page).toHaveURL('/app/schedule');
     await openSidebarIfNeeded(page);
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Inicio' })
-      .click();
+    await clickNavItem(page, 'Inicio');
     await expect(page).toHaveURL('/app/dashboard');
   });
 });

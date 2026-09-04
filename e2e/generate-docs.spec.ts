@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { test } from '@playwright/test';
+import { test, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -33,6 +33,14 @@ function ensureDir() {
 
 function screenshotPath(name: string): string {
   return path.join(SCREENSHOTS_DIR, name);
+}
+
+async function closeBookingModalIfVisible(page: Page) {
+  const modal = page.getByTestId('booking-modal');
+  if (await modal.isVisible().catch(() => false)) {
+    await modal.getByRole('button', { name: 'Cerrar' }).click();
+    await page.waitForTimeout(400);
+  }
 }
 
 test('Generar Documentación de Usuario', async ({ page }) => {
@@ -102,7 +110,9 @@ test('Generar Documentación de Usuario', async ({ page }) => {
     fullPage: true,
   });
 
-  const primerSlot = page.getByRole('button', { name: 'Disponible' }).first();
+  const primerSlot = page
+    .getByRole('button', { name: /Disponible \d{2}:\d{2}/ })
+    .first();
   const haySlot = await primerSlot.isVisible().catch(() => false);
   if (haySlot) {
     await primerSlot.click();
@@ -112,13 +122,7 @@ test('Generar Documentación de Usuario', async ({ page }) => {
       fullPage: false,
     });
 
-    const closeBtn = page
-      .getByRole('button', { name: /Cancelar|Cerrar|×/i })
-      .first();
-    if (await closeBtn.isVisible().catch(() => false)) {
-      await closeBtn.click();
-      await page.waitForTimeout(400);
-    }
+    await closeBookingModalIfVisible(page);
   }
 
   await page.goto('/app/pos');

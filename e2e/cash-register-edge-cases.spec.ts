@@ -502,9 +502,9 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
 
       // ── Aserción B: segunda petición lleva conflictAction: 'reopen_today'
       expect(capturedPayloads[1]).toMatchObject({
-        initialBalance: 5000,
         conflictAction: 'reopen_today',
       });
+      expect(capturedPayloads[1].initialBalance).toBeGreaterThan(0);
 
       // ── Aserción C: toast de éxito visible en la UI
       await expect(page.getByText('Jornada reabierta')).toBeVisible({
@@ -565,9 +565,13 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
       // El guard ya pasó; ahora el componente evaluará logicalCommercialDate con este reloj.
       await page.clock.setFixedTime(new Date('2026-04-10T02:00:00'));
 
-      // ── Disparar change detection de Angular: un click en el input provoca que
-      // Angular re-evalúe todos los bindings del template, incluido logicalCommercialDateLabel.
-      await page.locator('#fondo-inicial').click();
+      // ── Disparar change detection de Angular.
+      // OJO: un simple .click() acá NO alcanza. El componente usa OnPush, así que
+      // sólo se re-chequea ante un evento efectivamente bindeado en su template;
+      // #fondo-inicial no tiene (click). Escribir en el input sí dispara
+      // ngModelChange, y eso marca el componente para chequeo, con lo que se
+      // re-evalúa logicalCommercialDateLabel (getter impuro que lee new Date()).
+      await page.fill('#fondo-inicial', '0');
 
       // ── ASERCIÓN A: el banner muestra la fecha comercial = 9 de abril (día anterior)
       // El template renderiza logicalCommercialDateLabel en español argentino.

@@ -1,7 +1,7 @@
 <div class="space-y-6 p-4 sm:p-6">
   <div
     class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-  >
+    >
     <div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">
         Stock Bajo
@@ -13,287 +13,297 @@
     <button
       type="button"
       (click)="refresh()"
-      [disabled]="isLoading"
+      [disabled]="isLoading()"
       class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-    >
+      >
       <svg
         class="h-4 w-4"
-        [class.animate-spin]="isLoading"
+        [class.animate-spin]="isLoading()"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-      >
+        >
         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
       </svg>
       Actualizar
     </button>
   </div>
 
-  <div
-    *ngIf="!isLoading && allAlerts.length > 0"
-    class="flex flex-col gap-3 sm:flex-row sm:items-center"
-  >
-    <div class="relative flex-1">
+  @if (!isLoading() && allAlerts().length > 0) {
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center"
+      >
+      <div class="relative flex-1">
+        <svg
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="search"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar producto..."
+          class="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          />
+      </div>
+      <select
+        [(ngModel)]="selectedCategory"
+        class="rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-8 text-sm text-gray-700 shadow-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:w-52"
+        >
+        <option value="">Todas las categorías</option>
+        @for (cat of categories; track cat) {
+          <option [value]="cat.id">
+            {{ cat.name }}
+          </option>
+        }
+      </select>
+      @if (hasActiveFilters) {
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+          >
+          <svg
+            class="h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+          Limpiar
+        </button>
+      }
+    </div>
+  }
+
+  @if (!isLoading() && allAlerts().length > 0 && filteredAlerts.length === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 py-12 text-center dark:border-slate-700 dark:bg-slate-800/50"
+      >
       <svg
-        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500"
+        class="mb-3 h-10 w-10 text-gray-300 dark:text-slate-600"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
-      >
+        >
         <circle cx="11" cy="11" r="8" />
         <path d="m21 21-4.3-4.3" />
       </svg>
-      <input
-        type="search"
-        [(ngModel)]="searchTerm"
-        placeholder="Buscar producto..."
-        class="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-      />
-    </div>
-
-    <select
-      [(ngModel)]="selectedCategory"
-      class="rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-8 text-sm text-gray-700 shadow-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:w-52"
-    >
-      <option value="">Todas las categorías</option>
-      <option *ngFor="let cat of categories" [value]="cat.id">
-        {{ cat.name }}
-      </option>
-    </select>
-
-    <button
-      *ngIf="hasActiveFilters"
-      type="button"
-      (click)="clearFilters()"
-      class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-    >
-      <svg
-        class="h-3.5 w-3.5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M18 6 6 18M6 6l12 12" />
-      </svg>
-      Limpiar
-    </button>
-  </div>
-
-  <div
-    *ngIf="!isLoading && allAlerts.length > 0 && filteredAlerts.length === 0"
-    class="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 py-12 text-center dark:border-slate-700 dark:bg-slate-800/50"
-  >
-    <svg
-      class="mb-3 h-10 w-10 text-gray-300 dark:text-slate-600"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-    <p class="text-sm font-medium text-gray-500 dark:text-slate-400">
-      Sin resultados para
-      <span *ngIf="searchTerm.trim()" class="font-semibold text-gray-700 dark:text-slate-200">"{{ searchTerm.trim() }}"</span>
-      <span *ngIf="selectedCategory && searchTerm.trim()"> en esa categoría</span>
-      <span *ngIf="selectedCategory && !searchTerm.trim()">esa categoría</span>.
-    </p>
-    <button
-      type="button"
-      (click)="clearFilters()"
-      class="mt-3 text-xs font-medium text-primary hover:underline"
-    >
-      Limpiar filtros
-    </button>
-  </div>
-
-  <ng-container *ngIf="isLoading">
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div
-        *ngFor="let _ of [1, 2, 3, 4, 5, 6]"
-        class="h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
-      ></div>
-    </div>
-  </ng-container>
-
-  <div
-    *ngIf="!isLoading && allAlerts.length === 0"
-    class="flex flex-col items-center justify-center rounded-xl border border-green-200 bg-green-50 py-16 text-center dark:border-green-900/40 dark:bg-green-950/20"
-  >
-    <svg
-      class="mb-4 h-14 w-14 text-green-400 dark:text-green-600"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <path d="m9 11 3 3L22 4" />
-    </svg>
-    <p class="text-lg font-semibold text-green-700 dark:text-green-400">
-      ¡Todo el stock está OK!
-    </p>
-    <p class="mt-1 text-sm text-green-600 dark:text-green-500">
-      No hay productos que requieran reposición en este momento.
-    </p>
-  </div>
-
-  <ng-container *ngIf="!isLoading && allAlerts.length > 0">
-    <section *ngIf="outOfStock.length > 0" class="space-y-3">
-      <div class="flex items-center gap-2">
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
-        >
-          <svg
-            class="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="m4.9 4.9 14.2 14.2" />
-          </svg>
-          Agotados — {{ outOfStock.length }}
-        </span>
-        <span class="text-xs text-gray-400 dark:text-slate-500"
-          >Sin unidades disponibles. Reposición urgente.</span
-        >
-      </div>
-
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <p class="text-sm font-medium text-gray-500 dark:text-slate-400">
+        Sin resultados para
+        @if (searchTerm.trim()) {
+          <span class="font-semibold text-gray-700 dark:text-slate-200">"{{ searchTerm.trim() }}"</span>
+        }
+        @if (selectedCategory && searchTerm.trim()) {
+          <span> en esa categoría</span>
+        }
+        @if (selectedCategory && !searchTerm.trim()) {
+          <span>esa categoría</span>
+          }.
+        </p>
         <button
-          *ngFor="let p of outOfStock"
           type="button"
-          (click)="goToProduct(p)"
-          class="group flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition-all hover:border-red-400 hover:shadow-md dark:border-red-900/50 dark:bg-red-950/20 dark:hover:border-red-700"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <p
-              class="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors"
-            >
-              {{ p.name }}
-            </p>
-            <span
-              class="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/40 dark:text-red-400"
-            >
-              Agotado
-            </span>
-          </div>
-
-          <div class="space-y-1">
-            <div
-              class="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900/40"
-            >
-              <div class="h-full w-0 rounded-full bg-red-500"></div>
-            </div>
-            <div
-              class="flex justify-between text-xs text-red-600 dark:text-red-400"
-            >
-              <span>0 unidades</span>
-              <span>Mín: {{ p.minStock }}</span>
-            </div>
-          </div>
-
-          <p
-            class="text-xs text-gray-400 dark:text-slate-500 group-hover:text-red-500 transition-colors"
+          (click)="clearFilters()"
+          class="mt-3 text-xs font-medium text-primary hover:underline"
           >
-            Clic para ir al producto →
-          </p>
+          Limpiar filtros
         </button>
       </div>
-    </section>
+    }
 
-    <section *ngIf="lowStock.length > 0" class="space-y-3">
-      <div class="flex items-center gap-2">
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-        >
-          <svg
-            class="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-            />
-            <path d="M12 9v4" />
-            <path d="M12 17h.01" />
-          </svg>
-          Stock bajo — {{ lowStock.length }}
-        </span>
-        <span class="text-xs text-gray-400 dark:text-slate-500"
-          >En umbral de alerta. Planificá la reposición.</span
-        >
+    @if (isLoading()) {
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+          <div
+            class="h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-slate-800"
+          ></div>
+        }
       </div>
+    }
 
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <button
-          *ngFor="let p of lowStock"
-          type="button"
-          (click)="goToProduct(p)"
-          class="group flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-900/50 dark:bg-amber-950/20 dark:hover:border-amber-700"
+    @if (!isLoading() && allAlerts().length === 0) {
+      <div
+        class="flex flex-col items-center justify-center rounded-xl border border-green-200 bg-green-50 py-16 text-center dark:border-green-900/40 dark:bg-green-950/20"
         >
-          <div class="flex items-start justify-between gap-2">
-            <p
-              class="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors"
-            >
-              {{ p.name }}
-            </p>
-            <span
-              class="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-            >
-              {{ p.stock }} ud{{ p.stock !== 1 ? "s" : "" }}.
-            </span>
-          </div>
+        <svg
+          class="mb-4 h-14 w-14 text-green-400 dark:text-green-600"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          >
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <path d="m9 11 3 3L22 4" />
+        </svg>
+        <p class="text-lg font-semibold text-green-700 dark:text-green-400">
+          ¡Todo el stock está OK!
+        </p>
+        <p class="mt-1 text-sm text-green-600 dark:text-green-500">
+          No hay productos que requieran reposición en este momento.
+        </p>
+      </div>
+    }
 
-          <div class="space-y-1">
-            <div
-              class="h-2 w-full overflow-hidden rounded-full bg-amber-200 dark:bg-amber-900/40"
-            >
-              <div
-                class="h-full rounded-full transition-all"
+    @if (!isLoading() && allAlerts().length > 0) {
+      @if (outOfStock.length > 0) {
+        <section class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              >
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m4.9 4.9 14.2 14.2" />
+              </svg>
+              Agotados — {{ outOfStock.length }}
+            </span>
+            <span class="text-xs text-gray-400 dark:text-slate-500"
+              >Sin unidades disponibles. Reposición urgente.</span
+              >
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              @for (p of outOfStock; track p) {
+                <button
+                  type="button"
+                  (click)="goToProduct(p)"
+                  class="group flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition-all hover:border-red-400 hover:shadow-md dark:border-red-900/50 dark:bg-red-950/20 dark:hover:border-red-700"
+                  >
+                  <div class="flex items-start justify-between gap-2">
+                    <p
+                      class="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors"
+                      >
+                      {{ p.name }}
+                    </p>
+                    <span
+                      class="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                      >
+                      Agotado
+                    </span>
+                  </div>
+                  <div class="space-y-1">
+                    <div
+                      class="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900/40"
+                      >
+                      <div class="h-full w-0 rounded-full bg-red-500"></div>
+                    </div>
+                    <div
+                      class="flex justify-between text-xs text-red-600 dark:text-red-400"
+                      >
+                      <span>0 unidades</span>
+                      <span>Mín: {{ p.minStock }}</span>
+                    </div>
+                  </div>
+                  <p
+                    class="text-xs text-gray-400 dark:text-slate-500 group-hover:text-red-500 transition-colors"
+                    >
+                    Clic para ir al producto →
+                  </p>
+                </button>
+              }
+            </div>
+          </section>
+        }
+        @if (lowStock.length > 0) {
+          <section class="space-y-3">
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                >
+                <svg
+                  class="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                    />
+                  <path d="M12 9v4" />
+                  <path d="M12 17h.01" />
+                </svg>
+                Stock bajo — {{ lowStock.length }}
+              </span>
+              <span class="text-xs text-gray-400 dark:text-slate-500"
+                >En umbral de alerta. Planificá la reposición.</span
+                >
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                @for (p of lowStock; track p) {
+                  <button
+                    type="button"
+                    (click)="goToProduct(p)"
+                    class="group flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-900/50 dark:bg-amber-950/20 dark:hover:border-amber-700"
+                    >
+                    <div class="flex items-start justify-between gap-2">
+                      <p
+                        class="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors"
+                        >
+                        {{ p.name }}
+                      </p>
+                      <span
+                        class="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                        >
+                        {{ p.stock }} ud{{ p.stock !== 1 ? "s" : "" }}.
+                      </span>
+                    </div>
+                    <div class="space-y-1">
+                      <div
+                        class="h-2 w-full overflow-hidden rounded-full bg-amber-200 dark:bg-amber-900/40"
+                        >
+                        <div
+                          class="h-full rounded-full transition-all"
                 [ngClass]="
                   stockPercent(p) <= 30 ? 'bg-red-500' : 'bg-amber-500'
                 "
-                [style.width.%]="stockPercent(p)"
-              ></div>
-            </div>
-            <div
-              class="flex justify-between text-xs text-amber-700 dark:text-amber-400"
-            >
-              <span>{{ p.stock }} / {{ p.minStock }} unidades</span>
-              <span>{{ stockPercent(p) }}%</span>
-            </div>
-          </div>
-
-          <p
-            class="text-xs text-gray-400 dark:text-slate-500 group-hover:text-amber-500 transition-colors"
-          >
-            Clic para ir al producto →
-          </p>
-        </button>
+                          [style.width.%]="stockPercent(p)"
+                        ></div>
+                      </div>
+                      <div
+                        class="flex justify-between text-xs text-amber-700 dark:text-amber-400"
+                        >
+                        <span>{{ p.stock }} / {{ p.minStock }} unidades</span>
+                        <span>{{ stockPercent(p) }}%</span>
+                      </div>
+                    </div>
+                    <p
+                      class="text-xs text-gray-400 dark:text-slate-500 group-hover:text-amber-500 transition-colors"
+                      >
+                      Clic para ir al producto →
+                    </p>
+                  </button>
+                }
+              </div>
+            </section>
+          }
+        }
       </div>
-    </section>
-  </ng-container>
-</div>

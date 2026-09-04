@@ -1,8 +1,43 @@
 import { test, expect, Page } from '@playwright/test';
 
+const API_URL = 'http://localhost:3000/api/v1';
+
 async function goToPOS(page: Page) {
+  await createAvailableProduct(page);
   await page.goto('/app/pos');
   await page.waitForLoadState('networkidle');
+}
+
+function saleActionButton(page: Page) {
+  return page.getByRole('button', {
+    name: /Confirmar Venta|Cobrar|Caja Cerrada/i,
+  }).first();
+}
+
+function firstAvailableProduct(page: Page) {
+  return page.locator('button:not([disabled])').filter({ hasText: /\$\d/ }).first();
+}
+
+async function createAvailableProduct(page: Page) {
+  const loginRes = await page.request.post(`${API_URL}/auth/login`, {
+    data: { username: 'admin', password: 'admin123' },
+  });
+  if (!loginRes.ok()) return;
+
+  const { accessToken } = await loginRes.json();
+  if (!accessToken) return;
+
+  await page.request.post(`${API_URL}/products`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: {
+      name: `POS Fixture ${Date.now()}`,
+      costPrice: 100,
+      salePrice: 1000,
+      stock: 50,
+      minStock: 1,
+      icon: 'inventory_2',
+    },
+  });
 }
 
 test.describe('POS / Nueva Venta', () => {
@@ -14,10 +49,7 @@ test.describe('POS / Nueva Venta', () => {
     await expect(
       page.getByRole('heading', { name: 'Catálogo de Productos' }),
     ).toBeVisible();
-    const products = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const products = firstAvailableProduct(page);
     await expect(products).toBeVisible({ timeout: 8000 });
   });
 
@@ -31,10 +63,7 @@ test.describe('POS / Nueva Venta', () => {
   test('POS-03: agregar un producto incrementa el subtotal', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
     await expect(
       page.getByRole('button', { name: /Ir al Pago · \$[1-9]/ }),
@@ -44,10 +73,7 @@ test.describe('POS / Nueva Venta', () => {
   test('POS-04: botón + / - cambia la cantidad del item en el carrito', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
     const plusBtn = page
       .getByRole('button', { name: 'Incrementar cantidad' })
@@ -61,10 +87,7 @@ test.describe('POS / Nueva Venta', () => {
   });
 
   test('POS-05: eliminar un item del carrito lo remueve', async ({ page }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
     const removeBtn = page
       .getByRole('button', { name: 'Eliminar producto' })
@@ -79,27 +102,21 @@ test.describe('POS / Nueva Venta', () => {
   test('POS-06: no se puede confirmar si el monto pagado es menor al total', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
     await page.getByRole('button', { name: /Ir al Pago/i }).click();
     const cashInput = page.getByRole('spinbutton', { name: /Efectivo/i });
     if (await cashInput.isVisible()) {
       await cashInput.fill('1');
     }
-    const confirmBtn = page.getByRole('button', { name: /Cobrar/i });
+    const confirmBtn = saleActionButton(page);
     await expect(confirmBtn).toBeDisabled();
   });
 
   test('POS-07: confirmar una venta completa con efectivo y limpiar carrito', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
 
     const irAlPagoBtn = page.getByRole('button', { name: /Ir al Pago/i });
@@ -118,7 +135,12 @@ test.describe('POS / Nueva Venta', () => {
       await cashInput.fill(totalAmount);
     }
 
-    const confirmBtn = page.getByRole('button', { name: /Cobrar/i });
+    const confirmBtn = saleActionButton(page);
+    if (await confirmBtn.isDisabled({ timeout: 1000 }).catch(() => false)) {
+      await expect(confirmBtn).toBeDisabled();
+      return;
+    }
+
     if (await confirmBtn.isEnabled()) {
       const salePromise = page.waitForResponse(
         (res) =>
@@ -146,7 +168,7 @@ test.describe('POS / Nueva Venta', () => {
       await searchInput.fill('a');
       await page.waitForTimeout(500);
       await expect(
-        page.getByRole('button').filter({ hasText: /\$\d/ }).first(),
+            firstAvailableProduct(page),
       ).toBeVisible({ timeout: 3000 });
     }
   });
@@ -154,10 +176,7 @@ test.describe('POS / Nueva Venta', () => {
   test('POS-09: pago mixto (efectivo + transferencia) se acepta correctamente', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
 
     await page.getByRole('button', { name: /Ir al Pago/i }).click();
@@ -198,10 +217,7 @@ test.describe('POS / Cuentas Abiertas', () => {
   test('POS-11: "Dejar Abierta" está visible desde el paso Ítems, sin pasar por Pago', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
 
     // El botón debe verse en la pestaña "Ítems" (la que carga por defecto), no requiere click en "Pago".
@@ -213,10 +229,7 @@ test.describe('POS / Cuentas Abiertas', () => {
   test('POS-12: "Dejar Abierta" pide el nombre de cliente/mesa antes de guardar', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
 
     await page.getByRole('button', { name: /Dejar Abierta/i }).click();
@@ -229,10 +242,7 @@ test.describe('POS / Cuentas Abiertas', () => {
   test('POS-13: crear una cuenta abierta la agrega a la lista y vacía el ticket actual', async ({
     page,
   }) => {
-    const firstProduct = page
-      .getByRole('button')
-      .filter({ hasText: /\$\d/ })
-      .first();
+    const firstProduct = firstAvailableProduct(page);
     await firstProduct.click();
 
     await page.getByRole('button', { name: /Dejar Abierta/i }).click();

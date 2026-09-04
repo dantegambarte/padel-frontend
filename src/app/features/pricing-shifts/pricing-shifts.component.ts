@@ -1,12 +1,22 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 import { PricingShiftsService } from '../../core/services/pricing-shifts.service';
 import { PricingShift } from '../../core/models/pricing-shift.model';
+import { NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 
 @Component({
-  selector: 'app-pricing-shifts',
-  templateUrl: './pricing-shifts.component.html',
+    selector: 'app-pricing-shifts',
+    templateUrl: './pricing-shifts.component.html',
+    imports: [
+    NgClass,
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    DisableScrollDirective
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PricingShiftsComponent implements OnInit {
   readonly DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -36,19 +46,19 @@ export class PricingShiftsComponent implements OnInit {
     this.form.get(field)?.markAsTouched();
   }
 
-  shifts: PricingShift[] = [];
-  isLoading = false;
-  serverError: string | null = null;
+  shifts = signal<PricingShift[]>([]);
+  isLoading = signal(false);
+  serverError = signal<string | null>(null);
 
-  showModal = false;
-  submitting = false;
-  modalError: string | null = null;
-  editingId: string | null = null;
+  showModal = signal(false);
+  submitting = signal(false);
+  modalError = signal<string | null>(null);
+  editingId = signal<string | null>(null);
 
   form!: FormGroup;
 
-  deletingId: string | null = null;
-  deleteConfirmId: string | null = null;
+  deletingId = signal<string | null>(null);
+  deleteConfirmId = signal<string | null>(null);
 
   constructor(
     private service: PricingShiftsService,
@@ -90,63 +100,60 @@ export class PricingShiftsComponent implements OnInit {
       ],
       isActive: [shift?.isActive ?? true],
     });
-    this.selectedDays = shift ? [...shift.daysOfWeek] : [];
+    this.selectedDays.set(shift ? [...shift.daysOfWeek] : []);
   }
 
-  selectedDays: number[] = [];
+  selectedDays = signal<number[]>([]);
 
   /** Agrega o quita un día de la selección de días de la semana. */
   toggleDay(day: number): void {
-    const idx = this.selectedDays.indexOf(day);
-    if (idx >= 0) {
-      this.selectedDays.splice(idx, 1);
-    } else {
-      this.selectedDays.push(day);
-    }
+    this.selectedDays.update((days) =>
+      days.includes(day) ? days.filter((d) => d !== day) : [...days, day],
+    );
   }
 
   /** Devuelve true si el día dado está en la selección actual. */
   isDaySelected(day: number): boolean {
-    return this.selectedDays.includes(day);
+    return this.selectedDays().includes(day);
   }
 
   /** Carga todas las franjas horarias desde el servidor. */
   private loadShifts(): void {
-    this.isLoading = true;
-    this.serverError = null;
+    this.isLoading.set(true);
+    this.serverError.set(null);
     this.service.getAll().subscribe({
       next: (data) => {
-        this.shifts = data;
-        this.isLoading = false;
+        this.shifts.set(data);
+        this.isLoading.set(false);
       },
       error: () => {
-        this.serverError = 'No se pudieron cargar las franjas horarias.';
-        this.isLoading = false;
+        this.serverError.set('No se pudieron cargar las franjas horarias.');
+        this.isLoading.set(false);
       },
     });
   }
 
   /** Abre el modal de creación con el formulario vacío. */
   openCreate(): void {
-    this.editingId = null;
-    this.modalError = null;
+    this.editingId.set(null);
+    this.modalError.set(null);
     this.buildForm();
-    this.showModal = true;
+    this.showModal.set(true);
   }
 
   /** Abre el modal de edición pre-poblado con los datos de la franja seleccionada. */
   openEdit(shift: PricingShift): void {
-    this.editingId = shift.id;
-    this.modalError = null;
+    this.editingId.set(shift.id);
+    this.modalError.set(null);
     this.buildForm(shift);
-    this.showModal = true;
+    this.showModal.set(true);
   }
 
   /** Cierra el modal y resetea el estado de edición y error. */
   closeModal(): void {
-    this.showModal = false;
-    this.editingId = null;
-    this.modalError = null;
+    this.showModal.set(false);
+    this.editingId.set(null);
+    this.modalError.set(null);
   }
 
   /** Valida el formulario y envía el payload de creación o actualización. */
@@ -155,18 +162,18 @@ export class PricingShiftsComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    if (this.selectedDays.length === 0) {
-      this.modalError = 'Seleccioná al menos un día de la semana.';
+    if (this.selectedDays().length === 0) {
+      this.modalError.set('Seleccioná al menos un día de la semana.');
       return;
     }
 
-    this.submitting = true;
-    this.modalError = null;
+    this.submitting.set(true);
+    this.modalError.set(null);
 
     const value = this.form.getRawValue();
     const payload = {
       ...value,
-      daysOfWeek: [...this.selectedDays].sort((a, b) => a - b),
+      daysOfWeek: [...this.selectedDays()].sort((a, b) => a - b),
       price30min: Number(value.price30min ?? 0),
       price60min: Number(value.price60min),
       price90min: Number(value.price90min ?? 0),
@@ -174,20 +181,22 @@ export class PricingShiftsComponent implements OnInit {
       teacherPricePerHour: Number(value.teacherPricePerHour ?? 0),
     };
 
-    const request$ = this.editingId
-      ? this.service.update(this.editingId, payload)
+    const editingId = this.editingId();
+    const request$ = editingId
+      ? this.service.update(editingId, payload)
       : this.service.create(payload);
 
     request$.subscribe({
       next: () => {
-        this.submitting = false;
+        this.submitting.set(false);
         this.closeModal();
         this.loadShifts();
       },
       error: (err) => {
-        this.submitting = false;
-        this.modalError =
-          err?.error?.message ?? 'Ocurrió un error. Intentá de nuevo.';
+        this.submitting.set(false);
+        this.modalError.set(
+          err?.error?.message ?? 'Ocurrió un error. Intentá de nuevo.',
+        );
       },
     });
   }
@@ -202,33 +211,34 @@ export class PricingShiftsComponent implements OnInit {
 
   /** Muestra el botón de confirmación de borrado para la franja indicada. */
   requestDelete(id: string): void {
-    this.deleteConfirmId = id;
+    this.deleteConfirmId.set(id);
   }
 
   /** Cancela la confirmación de borrado pendiente. */
   cancelDelete(): void {
-    this.deleteConfirmId = null;
+    this.deleteConfirmId.set(null);
   }
 
   /** Ejecuta el borrado definitivo de la franja previamente marcada. */
   confirmDelete(): void {
-    if (!this.deleteConfirmId) return;
-    this.deletingId = this.deleteConfirmId;
-    this.deleteConfirmId = null;
-    this.service.delete(this.deletingId).subscribe({
+    const deleteConfirmId = this.deleteConfirmId();
+    if (!deleteConfirmId) return;
+    this.deletingId.set(deleteConfirmId);
+    this.deleteConfirmId.set(null);
+    this.service.delete(deleteConfirmId).subscribe({
       next: () => {
-        this.deletingId = null;
+        this.deletingId.set(null);
         this.loadShifts();
       },
       error: () => {
-        this.deletingId = null;
+        this.deletingId.set(null);
       },
     });
   }
 
   /** True cuando el formulario es válido y hay al menos un día seleccionado. */
   get isFormReady(): boolean {
-    return this.form.valid && this.selectedDays.length > 0;
+    return this.form.valid && this.selectedDays().length > 0;
   }
 
   /** True si el campo tocado tiene el error indicado. */

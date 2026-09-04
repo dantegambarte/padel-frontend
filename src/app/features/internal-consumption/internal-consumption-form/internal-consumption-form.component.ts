@@ -1,11 +1,5 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, output, signal } from '@angular/core';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
 import { RowState } from 'src/app/core/models/internal-consumption.model';
@@ -18,34 +12,46 @@ import { ProductsService } from '../../../core/services/products.service';
 import { TeachersService } from '../../../core/services/teachers.service';
 import { UsersService } from '../../../core/services/users.service';
 
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { DisableScrollDirective } from '../../../shared/directives/disable-scroll.directive';
+
 @Component({
-  selector: 'app-internal-consumption-form',
-  templateUrl: './internal-consumption-form.component.html',
+    selector: 'app-internal-consumption-form',
+    templateUrl: './internal-consumption-form.component.html',
+    imports: [
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    DisableScrollDirective
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalConsumptionFormComponent implements OnInit {
-  @Output() saved = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
 
   form!: FormGroup;
-  submitting = false;
-  serverError: string | null = null;
-  loadingData = true;
+  submitting = signal(false);
+  serverError = signal<string | null>(null);
+  loadingData = signal(true);
 
-  products: Product[] = [];
-  teachers: Teacher[] = [];
-  users: User[] = [];
+  products = signal<Product[]>([]);
+  teachers = signal<Teacher[]>([]);
+  users = signal<User[]>([]);
 
+  /** Mutado in-place por fila (search/filtered/showDropdown); queda fuera de la
+   * conversión a signals — la CD por zona ya lo maneja bien y la estructura
+   * anidada no vale el riesgo de reescribirla a semántica inmutable. */
   rowStates: RowState[] = [];
 
-  consumerSearch = '';
-  filteredTeachers: Teacher[] = [];
-  filteredUsers: User[] = [];
-  showConsumerDropdown = false;
-  selectedConsumerName = '';
+  consumerSearch = signal('');
+  filteredTeachers = signal<Teacher[]>([]);
+  filteredUsers = signal<User[]>([]);
+  showConsumerDropdown = signal(false);
+  selectedConsumerName = signal('');
 
-  showWhatsAppPrompt = false;
-  whatsAppUrl = '';
-  savedTeacherName = '';
+  showWhatsAppPrompt = signal(false);
+  whatsAppUrl = signal('');
+  savedTeacherName = signal('');
 
   /**
    * Getters para facilitar la lógica de la plantilla y mantener el código organizado.
@@ -85,7 +91,7 @@ export class InternalConsumptionFormComponent implements OnInit {
     const hasProduct = this.itemsArray.controls.some(
       (ctrl) => !!ctrl.get('productId')?.value,
     );
-    return consumerSelected && hasProduct && !this.submitting;
+    return consumerSelected && hasProduct && !this.submitting();
   }
 
   constructor(
@@ -95,6 +101,7 @@ export class InternalConsumptionFormComponent implements OnInit {
     private productsService: ProductsService,
     private teachersService: TeachersService,
     private usersService: UsersService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -121,30 +128,34 @@ export class InternalConsumptionFormComponent implements OnInit {
       users: usersCall,
     }).subscribe({
       next: ({ products, teachers, users }) => {
-        this.products = products.filter((p) => p.isActive && p.stock > 0);
-        this.teachers = teachers;
-        this.users = isEmployee
-          ? (this.authService.currentUser ? [this.authService.currentUser] : [])
-          : users.filter((u) => u.isActive);
-        this.filteredTeachers = this.teachers;
-        this.filteredUsers = this.users;
-        this.loadingData = false;
+        this.products.set(products.filter((p) => p.isActive && p.stock > 0));
+        this.teachers.set(teachers);
+        this.users.set(
+          isEmployee
+            ? this.authService.currentUser
+              ? [this.authService.currentUser]
+              : []
+            : users.filter((u) => u.isActive),
+        );
+        this.filteredTeachers.set(this.teachers());
+        this.filteredUsers.set(this.users());
+        this.loadingData.set(false);
         this.addRow();
         this.tryAutofillEmployee();
       },
       error: () => {
-        this.serverError = 'No se pudieron cargar los datos. Intente de nuevo.';
-        this.loadingData = false;
+        this.serverError.set('No se pudieron cargar los datos. Intente de nuevo.');
+        this.loadingData.set(false);
       },
     });
 
     this.form.get('consumerType')!.valueChanges.subscribe(() => {
       this.form.patchValue({ userId: null, teacherId: null });
-      this.consumerSearch = '';
-      this.selectedConsumerName = '';
-      this.showConsumerDropdown = false;
-      this.filteredTeachers = this.teachers;
-      this.filteredUsers = this.users;
+      this.consumerSearch.set('');
+      this.selectedConsumerName.set('');
+      this.showConsumerDropdown.set(false);
+      this.filteredTeachers.set(this.teachers());
+      this.filteredUsers.set(this.users());
       this.tryAutofillEmployee();
     });
   }
@@ -153,13 +164,13 @@ export class InternalConsumptionFormComponent implements OnInit {
    * Método para intentar autocompletar el consumidor si el usuario logueado es un empleado y el tipo de consumidor seleccionado es "staff". Busca una coincidencia entre el ID del usuario logueado y la lista de usuarios activos, y si encuentra una coincidencia, selecciona automáticamente ese usuario como consumidor. Esto mejora la experiencia del usuario al reducir la cantidad de pasos necesarios para registrar un consumo interno para ellos mismos.
    */
   get isEmployeeRole(): boolean {
-    return this.authService.currentUser?.role === 'employee';
+    return this.authService.currentUserSignal()?.role === 'employee';
   }
 
   private tryAutofillEmployee(): void {
     const loggedUser = this.authService.currentUser;
     if (loggedUser?.role === 'employee' && this.consumerType === 'staff') {
-      const match = this.users.find((u) => u.id === loggedUser.id);
+      const match = this.users().find((u) => u.id === loggedUser.id);
       if (match) {
         this.selectUser(match);
         this.form.get('userId')?.disable();
@@ -188,7 +199,7 @@ export class InternalConsumptionFormComponent implements OnInit {
     this.rowStates.push({
       search: '',
       selectedName: '',
-      filtered: this.products,
+      filtered: this.products(),
       showDropdown: false,
     });
   }
@@ -212,7 +223,7 @@ export class InternalConsumptionFormComponent implements OnInit {
   onRowProductSearch(index: number, value: string): void {
     const state = this.rowStates[index];
     state.search = value;
-    state.filtered = this.products.filter((p) =>
+    state.filtered = this.products().filter((p) =>
       p.name.toLowerCase().includes(value.toLowerCase()),
     );
     state.showDropdown = true;
@@ -244,7 +255,7 @@ export class InternalConsumptionFormComponent implements OnInit {
     const state = this.rowStates[index];
     state.selectedName = '';
     state.search = '';
-    state.filtered = this.products;
+    state.filtered = this.products();
   }
 
   /**
@@ -252,21 +263,21 @@ export class InternalConsumptionFormComponent implements OnInit {
    * @param value
    */
   onConsumerSearch(value: string): void {
-    this.consumerSearch = value;
+    this.consumerSearch.set(value);
     const lower = value.toLowerCase();
     if (this.isTeacher) {
-      this.filteredTeachers = this.teachers.filter((t) =>
-        t.fullName.toLowerCase().includes(lower),
+      this.filteredTeachers.set(
+        this.teachers().filter((t) => t.fullName.toLowerCase().includes(lower)),
       );
     } else {
-      this.filteredUsers = this.users.filter((u) =>
-        u.fullName.toLowerCase().includes(lower),
+      this.filteredUsers.set(
+        this.users().filter((u) => u.fullName.toLowerCase().includes(lower)),
       );
     }
-    this.showConsumerDropdown = true;
+    this.showConsumerDropdown.set(true);
     if (!value) {
       this.form.patchValue({ teacherId: null, userId: null });
-      this.selectedConsumerName = '';
+      this.selectedConsumerName.set('');
     }
   }
 
@@ -276,9 +287,9 @@ export class InternalConsumptionFormComponent implements OnInit {
    */
   selectTeacher(teacher: Teacher): void {
     this.form.patchValue({ teacherId: teacher.id, userId: null });
-    this.selectedConsumerName = teacher.fullName;
-    this.consumerSearch = teacher.fullName;
-    this.showConsumerDropdown = false;
+    this.selectedConsumerName.set(teacher.fullName);
+    this.consumerSearch.set(teacher.fullName);
+    this.showConsumerDropdown.set(false);
   }
 
   /**
@@ -287,9 +298,9 @@ export class InternalConsumptionFormComponent implements OnInit {
    */
   selectUser(user: User): void {
     this.form.patchValue({ userId: user.id, teacherId: null });
-    this.selectedConsumerName = user.fullName;
-    this.consumerSearch = user.fullName;
-    this.showConsumerDropdown = false;
+    this.selectedConsumerName.set(user.fullName);
+    this.consumerSearch.set(user.fullName);
+    this.showConsumerDropdown.set(false);
   }
 
   /**
@@ -297,10 +308,10 @@ export class InternalConsumptionFormComponent implements OnInit {
    */
   clearConsumer(): void {
     this.form.patchValue({ teacherId: null, userId: null });
-    this.consumerSearch = '';
-    this.selectedConsumerName = '';
-    this.filteredTeachers = this.teachers;
-    this.filteredUsers = this.users;
+    this.consumerSearch.set('');
+    this.selectedConsumerName.set('');
+    this.filteredTeachers.set(this.teachers());
+    this.filteredUsers.set(this.users());
   }
 
   /**
@@ -311,21 +322,21 @@ export class InternalConsumptionFormComponent implements OnInit {
       this.form.getRawValue();
 
     if (consumerType === 'teacher' && !teacherId) {
-      this.serverError = 'Seleccioná un profesor.';
+      this.serverError.set('Seleccioná un profesor.');
       return;
     }
     if (consumerType === 'staff' && !userId) {
-      this.serverError = 'Seleccioná un empleado.';
+      this.serverError.set('Seleccioná un empleado.');
       return;
     }
     if (this.itemsArray.invalid) {
       this.itemsArray.markAllAsTouched();
-      this.serverError = 'Completá todos los productos y cantidades.';
+      this.serverError.set('Completá todos los productos y cantidades.');
       return;
     }
 
-    this.submitting = true;
-    this.serverError = null;
+    this.submitting.set(true);
+    this.serverError.set(null);
 
     const requests = this.itemsArray.controls.map((ctrl) => {
       const { productId, quantity } = ctrl.getRawValue();
@@ -342,31 +353,36 @@ export class InternalConsumptionFormComponent implements OnInit {
 
     forkJoin(requests).subscribe({
       next: () => {
-        this.submitting = false;
+        this.submitting.set(false);
         this.productsService.clearCache();
         this.productsService.findAll().subscribe((products) => {
-          this.products = products.filter((p) => p.isActive && p.stock > 0);
-          this.rowStates.forEach((s) => (s.filtered = this.products));
+          this.products.set(products.filter((p) => p.isActive && p.stock > 0));
+          this.rowStates.forEach((s) => (s.filtered = this.products()));
+          // rowStates es un array plano mutado in-place (ver comentario en su
+          // declaración); bajo OnPush esta mutación async no dispara CD sola.
+          this.cdr.markForCheck();
         });
 
         if (consumerType === 'teacher' && teacherId) {
-          const teacher = this.teachers.find((t) => t.id === teacherId);
+          const teacher = this.teachers().find((t) => t.id === teacherId);
           if (teacher?.phoneNumber) {
             const items = this.itemsArray.controls.map((ctrl) => {
               const { productId, quantity } = ctrl.getRawValue();
-              const product = this.products.find((p) => p.id === productId);
+              const product = this.products().find((p) => p.id === productId);
               const subtotal = (product?.salePrice ?? 0) * quantity;
               return { name: product?.name ?? productId, quantity, subtotal };
             });
             const total = items.reduce((sum, i) => sum + i.subtotal, 0);
-            this.whatsAppUrl = this.service.buildItemizedWhatsAppUrl(
-              teacher.phoneNumber,
-              teacher.fullName,
-              items,
-              total,
+            this.whatsAppUrl.set(
+              this.service.buildItemizedWhatsAppUrl(
+                teacher.phoneNumber,
+                teacher.fullName,
+                items,
+                total,
+              ),
             );
-            this.savedTeacherName = teacher.fullName;
-            this.showWhatsAppPrompt = true;
+            this.savedTeacherName.set(teacher.fullName);
+            this.showWhatsAppPrompt.set(true);
             return;
           }
         }
@@ -374,9 +390,10 @@ export class InternalConsumptionFormComponent implements OnInit {
         this.saved.emit();
       },
       error: (err) => {
-        this.submitting = false;
-        this.serverError =
-          err?.error?.message ?? 'Ocurrió un error. Intente de nuevo.';
+        this.submitting.set(false);
+        this.serverError.set(
+          err?.error?.message ?? 'Ocurrió un error. Intente de nuevo.',
+        );
       },
     });
   }
@@ -387,9 +404,9 @@ export class InternalConsumptionFormComponent implements OnInit {
    */
   confirmWhatsApp(send: boolean): void {
     if (send) {
-      window.open(this.whatsAppUrl, '_blank', 'noopener,noreferrer');
+      window.open(this.whatsAppUrl(), '_blank', 'noopener,noreferrer');
     }
-    this.showWhatsAppPrompt = false;
+    this.showWhatsAppPrompt.set(false);
     this.saved.emit();
   }
 
@@ -405,7 +422,7 @@ export class InternalConsumptionFormComponent implements OnInit {
    */
   closeDropdowns(): void {
     this.rowStates.forEach((s) => (s.showDropdown = false));
-    this.showConsumerDropdown = false;
+    this.showConsumerDropdown.set(false);
   }
 
   /**

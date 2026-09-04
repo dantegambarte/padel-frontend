@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { NgClass } from '@angular/common';
 
 export type StatCardIcon =
   | 'dollar-sign'
@@ -15,14 +16,18 @@ export interface StatCardTrend {
 }
 
 @Component({
-  selector: 'app-stat-card',
-  templateUrl: './stat-card.component.html',
+    selector: 'app-stat-card',
+    templateUrl: './stat-card.component.html',
+    imports: [
+    NgClass
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatCardComponent {
-  @Input() title = '';
-  @Input() value = '';
-  @Input() icon: StatCardIcon = 'dollar-sign';
-  @Input() trend?: StatCardTrend;
+  readonly title = input('');
+  readonly value = input('');
+  readonly icon = input<StatCardIcon>('dollar-sign');
+  readonly trend = input<StatCardTrend>();
   /** Clases extra para el borde/fondo del card (ej. 'border-destructive/50'). */
-  @Input() extraClass = '';
+  readonly extraClass = input('');
 }

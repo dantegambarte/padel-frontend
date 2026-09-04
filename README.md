@@ -1,30 +1,34 @@
 # La Caldera — Sistema de Gestión de Canchas de Padel
 
-Frontend desarrollado en **Angular 15** con **TailwindCSS** para la gestión integral de un club de padel: reservas de canchas, punto de venta, cierre de caja, inventario, reportes, egresos y administración de usuarios.
+Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para la gestión integral de un club de padel: reservas de canchas, punto de venta, cierre de caja, inventario, reportes, egresos y administración de usuarios. Es una **PWA instalable** con service worker.
 
 ---
 
 ## Stack tecnológico
 
-| Capa             | Tecnología                    |
-| ---------------- | ----------------------------- |
-| Framework        | Angular 15.2                  |
-| Estilos          | TailwindCSS 3.4 + SCSS        |
-| Gráficos         | Chart.js 4.5 + ng2-charts 4.1 |
-| Alertas/Modales  | SweetAlert2 11                |
-| Exportación      | XLSX 0.18                     |
-| Testing unitario | Karma + Jasmine               |
-| Testing E2E      | Playwright 1.58               |
-| Lenguaje         | TypeScript 4.9 (strict mode)  |
-| Target JS        | ES2022                        |
+| Capa              | Tecnología                      |
+| ----------------- | ------------------------------- |
+| Framework         | Angular 21.2.22                 |
+| Componentes UI    | PrimeNG 21.1 (modo unstyled)    |
+| Estilos           | TailwindCSS 3.4 + SCSS          |
+| Gráficos          | Chart.js 4.5 + ng2-charts 4.1   |
+| Alertas/Modales   | SweetAlert2 11                  |
+| Exportación       | SheetJS (xlsx) 0.20.3           |
+| PWA               | @angular/service-worker 21.2    |
+| Detección cambios | zone.js 0.15 + OnPush + signals |
+| Testing unitario  | Karma + Jasmine                 |
+| Testing E2E       | Playwright 1.62                 |
+| Gestor de paquetes| pnpm 11                         |
+| Lenguaje          | TypeScript 5.9 (strict mode)    |
+| Target JS         | ES2022                          |
 
 ---
 
 ## Requisitos previos
 
-- Node.js 18+
-- npm 9+
-- Angular CLI 15: `npm install -g @angular/cli@15`
+- Node.js 20.19+ / 22.12+ / 24+ (requisito de Angular 21)
+- pnpm 11+ (`corepack enable pnpm`)
+- Angular CLI 21: `npm install -g @angular/cli@21`
 - Backend corriendo (ver sección de entorno)
 
 ---
@@ -33,10 +37,10 @@ Frontend desarrollado en **Angular 15** con **TailwindCSS** para la gestión int
 
 ```bash
 # 1. Instalar dependencias
-npm install
+pnpm install
 
 # 2. Iniciar servidor de desarrollo
-npm start
+pnpm start
 # → http://localhost:4200
 ```
 
@@ -51,13 +55,13 @@ npm start
 
 | Comando                   | Descripción                                   |
 | ------------------------- | --------------------------------------------- |
-| `npm start`               | Servidor de desarrollo en `localhost:4200`    |
-| `npm run build`           | Build de producción en `dist/padel-frontend/` |
-| `npm run watch`           | Build en modo watch (desarrollo)              |
-| `npm test`                | Tests unitarios con Karma + Jasmine           |
-| `npm run test:e2e`        | Tests E2E headless con Playwright             |
-| `npm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
-| `npm run test:e2e:report` | Ver reporte HTML del último run               |
+| `pnpm start`               | Servidor de desarrollo en `localhost:4200`    |
+| `pnpm run build`           | Build de producción en `dist/padel-frontend/browser/` |
+| `pnpm run watch`           | Build en modo watch (desarrollo)              |
+| `pnpm test`                | Tests unitarios con Karma + Jasmine           |
+| `pnpm run test:e2e`        | Tests E2E headless con Playwright             |
+| `pnpm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
+| `pnpm run test:e2e:report` | Ver reporte HTML del último run               |
 
 ---
 
@@ -184,16 +188,16 @@ src/
 ```
 /                        → redirect a /auth/login
 /auth/login              → Pantalla de inicio de sesión
-/app/                    → Shell protegido (requiere AuthGuard)
+/app/                    → Shell protegido (requiere authGuard)
   ├── dashboard          → Panel de control con métricas
   ├── schedule           → Agenda de reservas de canchas
   ├── fixed-bookings     → Turnos fijos / abonos
   ├── cash-register      → Apertura y cierre de turno de caja
   ├── pos                → Nueva venta (Punto de Venta)
   ├── products           → Gestión de productos e inventario
-  ├── expenses           → Egresos del turno (solo admin — AdminGuard)
-  ├── pricing-shifts     → Franjas horarias de precios (solo admin — AdminGuard)
-  ├── inventory          → Alertas de stock bajo (solo admin — AdminGuard)
+  ├── expenses           → Egresos del turno (solo admin — adminGuard)
+  ├── pricing-shifts     → Franjas horarias de precios (solo admin — adminGuard)
+  ├── inventory          → Alertas de stock bajo (solo admin — adminGuard)
   ├── reports            → Reportes de ventas
   ├── teachers           → Gestión de profesores
   ├── users              → Gestión de usuarios
@@ -202,7 +206,7 @@ src/
 **                       → redirect a /auth/login
 ```
 
-Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `AuthGuard`. El `JwtInterceptor` adjunta automáticamente el token Bearer a cada petición HTTP e intercepta errores 401 para refrescar el token o forzar logout.
+Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `authGuard`. El `jwtInterceptor` adjunta automáticamente el token Bearer a cada petición HTTP e intercepta errores 401 para refrescar el token o forzar logout.
 
 ---
 
@@ -213,7 +217,7 @@ Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `AuthGu
 | `admin`    | Acceso completo a todos los módulos, incluidos egresos y franjas de precios |
 | `employee` | Dashboard simplificado, POS, agenda, caja y turnos fijos                    |
 
-Las rutas exclusivas de admin están protegidas en dos capas: **`AdminGuard`** (ruta) y visibilidad en el sidebar (solo se muestra el ítem si el rol es `admin`).
+Las rutas exclusivas de admin están protegidas en dos capas: **`adminGuard`** (ruta) y visibilidad en el sidebar (solo se muestra el ítem si el rol es `admin`).
 
 ---
 
@@ -353,7 +357,40 @@ Utilidad para preservar formularios ante recargas o pérdidas de conexión.
 
 ---
 
+## PWA (Progressive Web App)
+
+La aplicación es instalable y funciona offline para el shell estático.
+
+- `@angular/service-worker` registrado en `main.ts` con `provideServiceWorker('ngsw-worker.js')`, habilitado solo fuera de dev (`enabled: !isDevMode()`) y con estrategia `registerWhenStable:30000`
+- `ngsw-config.json` define dos `assetGroups`: **app** (`index.html`, CSS y JS en `prefetch`) y **assets** (imágenes y fuentes en `lazy` + `updateMode: prefetch`)
+- **No hay `dataGroups`**: las llamadas a la API quedan deliberadamente en modo network-only para no servir datos de caja o reservas desactualizados
+- `public/manifest.webmanifest` con branding real (`La Caldera Padel`, `theme_color #008b45`, `display: standalone`) e íconos maskable en `public/icons/`
+
+---
+
+## PrimeNG (modo unstyled)
+
+PrimeNG se configura en `main.ts` con `providePrimeNG({ theme: 'none' })`.
+
+- `theme: 'none'` significa **sin CSS de tema propio**: los componentes heredan exclusivamente las variables (`--accent`, `--background`, etc.) definidas en `styles.scss`, por lo que conviven con Tailwind sin pelear especificidad ni romper el modo oscuro
+- Adopción progresiva: el primer componente migrado es el modal de "Nueva/Editar Cancha" en `settings.component` (`p-dialog`), elegido como piloto por ser admin-only y de bajo tráfico
+- El resto de los modales sigue con la implementación propia hasta que el patrón se valide
+
+---
+
 ## Caché y rendimiento
+
+### Detección de cambios
+
+- **OnPush** aplicado a los 31 componentes de la aplicación (`ChangeDetectionStrategy.OnPush`)
+- Estado expuesto como **signals** (`signal()` / `computed()`) en 36 archivos, incluido el estado de sesión de `AuthService`
+- `provideZoneChangeDetection({ eventCoalescing: true })` en el bootstrap
+
+### Sintaxis de templates
+
+Los templates usan **control flow nativo** de Angular (`@if` / `@for` / `@switch`). Las directivas estructurales `*ngIf` / `*ngFor` / `*ngSwitch` fueron migradas por completo — no quedan usos en `src/app`. Todo template nuevo debe usar la sintaxis nativa.
+
+### Caché HTTP
 
 Los servicios de mayor demanda implementan una caché con TTL para evitar peticiones redundantes:
 
@@ -373,9 +410,9 @@ Las cachés se invalidan automáticamente al logout y al realizar mutaciones (PO
 
 | Guard                 | Uso                                                                     |
 | --------------------- | ----------------------------------------------------------------------- |
-| `AuthGuard`           | Protege todas las rutas dentro de `/app`                                |
-| `AdminGuard`          | Restringe acceso a `expenses`, `pricing-shifts` e `inventory` a rol `admin` |
-| `UnsavedChangesGuard` | Alerta antes de navegar si hay cambios sin guardar (settings, teachers) |
+| `authGuard`           | Protege todas las rutas dentro de `/app` (`CanActivateFn` funcional)     |
+| `adminGuard`          | Restringe acceso a `expenses`, `pricing-shifts` e `inventory` a rol `admin` (`CanActivateFn` funcional) |
+| `unsavedChangesGuard` | Alerta antes de navegar si hay cambios sin guardar (settings, teachers) (`CanDeactivateFn` funcional) |
 
 ---
 
@@ -385,25 +422,33 @@ Los tests cubren los flujos principales de la aplicación.
 
 ### Requisitos previos
 
-```bash
-# Terminal 1 — Backend
-npm start   # en el proyecto backend
+**No levantes nada a mano.** Playwright arranca el backend y el frontend él mismo
+(ver `webServer` en `playwright.config.ts`), corriendo antes las migraciones y el
+seed. Solo necesitás PostgreSQL disponible.
 
-# Terminal 2 — Frontend
-npm start   # en este proyecto
+Los puertos **3000 y 4200 tienen que estar libres**: la config usa
+`reuseExistingServer: false`, así que si hay un server levantado la suite falla al
+arrancar en vez de reutilizarlo. Es deliberado — el backend debe correr con
+`NODE_ENV=test` (sin eso el login incrementa `sessionVersion` e invalida la sesión
+compartida, y toda la suite cae con `SESSION_OVERRIDDEN`), y un server arrancado a
+mano no cumple esa condición.
+
+```bash
+# Si los puertos están ocupados, liberalos antes de correr la suite
+netstat -ano | findstr "LISTENING" | findstr ":3000 :4200"
 ```
 
 ### Comandos
 
 ```bash
 # Headless (CI/CD)
-npm run test:e2e
+pnpm run test:e2e
 
 # Modo UI interactivo (debug)
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Ver reporte HTML
-npm run test:e2e:report
+pnpm run test:e2e:report
 ```
 
 ### Cobertura de tests
@@ -431,20 +476,43 @@ npm run test:e2e:report
 ## Build de producción
 
 ```bash
-npm run build
-# Output: dist/padel-frontend/
+pnpm run build
+# Output: dist/padel-frontend/browser/   ← ojo, la subcarpeta browser/
 ```
 
+> ⚠️ **El contenido a publicar está en `dist/padel-frontend/browser/`, no en `dist/padel-frontend/`.**
+> El proyecto usa el builder `@angular-devkit/build-angular:application`, que separa la
+> salida en subcarpetas (`browser/` para el bundle del navegador). Junto a ella quedan
+> `3rdpartylicenses.txt` y `prerendered-routes.json`, que **no** hay que subir al servidor.
+>
+> Si venís de una versión anterior del proyecto (builder `browser`, output plano),
+> **actualizá tu comando de deploy**: copiar `dist/padel-frontend/*` ahora sube la
+> carpeta `browser` en vez de su contenido, y nginx termina sirviendo un directorio
+> sin `index.html`.
+
 Configurar el servidor web para redirigir todas las rutas al `index.html` (SPA routing).
+
+**Deploy manual al VPS** (no hay CI):
+
+```bash
+pnpm run build
+scp -r dist/padel-frontend/browser/* usuario@vps:<RUTA_NGINX>/
+```
 
 **Ejemplo nginx:**
 
 ```nginx
 location / {
-  root /var/www/padel-frontend;
+  root <RUTA_NGINX>;
   try_files $uri $uri/ /index.html;
 }
 ```
+
+> **`<RUTA_NGINX>` está sin verificar.** Los archivos versionados dicen
+> `/var/www/padelsys` (ver `back/padel-backend/nginx/padelsys.conf` y
+> `scripts/setup-vps.sh`), pero no se pudo confirmar contra el VPS real.
+> Antes del próximo deploy, verificalo en el servidor con
+> `nginx -T | grep -B5 root` y alineá el `.conf` versionado con la realidad.
 
 ### Límites de bundle
 

@@ -14,27 +14,31 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^15.2.0",
-    "@angular/cdk": "^15.2.9",
-    "@angular/common": "^15.2.0",
-    "@angular/compiler": "^15.2.0",
-    "@angular/core": "^15.2.0",
-    "@angular/forms": "^15.2.0",
-    "@angular/platform-browser": "^15.2.0",
-    "@angular/platform-browser-dynamic": "^15.2.0",
-    "@angular/router": "^15.2.0",
+    "@angular/animations": "^21.2.22",
+    "@angular/cdk": "^21.2.14",
+    "@angular/common": "^21.2.22",
+    "@angular/compiler": "^21.2.22",
+    "@angular/core": "^21.2.22",
+    "@angular/forms": "^21.2.22",
+    "@angular/platform-browser": "^21.2.22",
+    "@angular/platform-browser-dynamic": "^21.2.22",
+    "@angular/router": "^21.2.22",
+    "@angular/service-worker": "^21.2.22",
     "chart.js": "^4.5.1",
     "ng2-charts": "^4.1.1",
+    "primeicons": "^7.0.0",
+    "primeng": "^21.1.9",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.23",
     "tslib": "^2.3.0",
-    "xlsx": "^0.18.5",
-    "zone.js": "~0.12.0"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zone.js": "~0.15.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^15.2.11",
-    "@angular/cli": "~15.2.11",
-    "@angular/compiler-cli": "^15.2.0",
+    "@angular-devkit/build-angular": "^21.2.23",
+    "@angular/cli": "~21.2.23",
+    "@angular/compiler-cli": "^21.2.22",
+    "@babel/runtime": "^8.0.0",
     "@playwright/test": "^1.58.2",
     "@types/jasmine": "~4.3.0",
     "autoprefixer": "^10.4.27",
@@ -47,6 +51,6 @@
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "~4.9.4"
+    "typescript": "~5.9.3"
   }
 }

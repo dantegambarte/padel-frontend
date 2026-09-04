@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, signal } from '@angular/core';
 import Swal from 'sweetalert2';
 
 import {
@@ -8,45 +8,52 @@ import {
 } from '../../../core/models/internal-consumption.model';
 import { Teacher } from '../../../core/models/teacher.model';
 import { InternalConsumptionService } from '../../../core/services/internal-consumption.service';
+import { ModalScrollLockDirective } from '../../../shared/modal-scroll-lock.directive';
+import { DecimalPipe } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-settle-debt-modal',
-  templateUrl: './settle-debt-modal.component.html',
+    selector: 'app-settle-debt-modal',
+    templateUrl: './settle-debt-modal.component.html',
+    imports: [
+    ModalScrollLockDirective,
+    ReactiveFormsModule,
+    FormsModule,
+    DecimalPipe
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettleDebtModalComponent implements OnInit {
-  @Input() teacher!: Teacher;
-  @Input() summary!: TeacherDebtSummary;
+  readonly teacher = input.required<Teacher>();
+  readonly summary = input.required<TeacherDebtSummary>();
 
-  @Output() settled = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly settled = output<void>();
+  readonly cancelled = output<void>();
 
-  consumptions: InternalConsumption[] = [];
-  loading = true;
-  settling = false;
+  consumptions = signal<InternalConsumption[]>([]);
+  loading = signal(true);
+  settling = signal(false);
   paymentMethod: PaymentMethod = 'cash';
 
-  get total(): number {
-    return this.consumptions.reduce(
-      (sum, c) => sum + c.unitCostPrice * c.quantity,
-      0,
-    );
-  }
+  total = computed(() =>
+    this.consumptions().reduce((sum, c) => sum + c.unitCostPrice * c.quantity, 0),
+  );
 
   constructor(private service: InternalConsumptionService) {}
 
   ngOnInit(): void {
     this.service
       .getAll({
-        teacherId: this.teacher.id,
+        teacherId: this.teacher().id,
         status: 'pending_payment',
       })
       .subscribe({
         next: (data) => {
-          this.consumptions = data;
-          this.loading = false;
+          this.consumptions.set(data);
+          this.loading.set(false);
         },
         error: () => {
-          this.loading = false;
+          this.loading.set(false);
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -60,20 +67,20 @@ export class SettleDebtModalComponent implements OnInit {
    * Inicia el proceso de liquidación de la deuda del docente, enviando una solicitud al servicio para marcar los consumos como pagados y registrar el método de pago. Maneja el estado de carga y posibles errores durante la operación, emitiendo eventos para notificar al componente padre sobre el resultado de la acción.
    */
   onSettle(): void {
-    this.settling = true;
+    this.settling.set(true);
 
     this.service
       .settleTeacherDebt({
-        teacherId: this.teacher.id,
+        teacherId: this.teacher().id,
         paymentMethod: this.paymentMethod,
       })
       .subscribe({
         next: () => {
-          this.settling = false;
+          this.settling.set(false);
           this.settled.emit();
         },
         error: (err) => {
-          this.settling = false;
+          this.settling.set(false);
           const errorCode = err?.error?.errorCode;
           if (errorCode === 'CAJA_CERRADA') {
             Swal.fire({
@@ -98,11 +105,11 @@ export class SettleDebtModalComponent implements OnInit {
    * @returns
    */
   sendDebtReminder(): void {
-    if (!this.teacher.phoneNumber) return;
+    if (!this.teacher().phoneNumber) return;
     const url = this.service.buildDebtReminderWhatsAppUrl(
-      this.teacher.phoneNumber,
-      this.teacher.fullName,
-      this.total,
+      this.teacher().phoneNumber!,
+      this.teacher().fullName,
+      this.total(),
     );
     window.open(url, '_blank', 'noopener,noreferrer');
   }

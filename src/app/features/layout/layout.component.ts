@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
+import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { Subscription, filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -7,6 +7,10 @@ import { CashService } from '../../core/services/cash.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { RemindersApiService } from '../../core/services/reminders-api.service';
 import { User } from '../../core/models/user.model';
+import { NgClass } from '@angular/common';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { ToolbarComponent } from './toolbar/toolbar.component';
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Inicio',
@@ -22,15 +26,24 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 @Component({
-  selector: 'app-layout',
-  templateUrl: './layout.component.html',
+    selector: 'app-layout',
+    templateUrl: './layout.component.html',
+    imports: [
+    ModalScrollLockDirective,
+    SidebarComponent,
+    ToolbarComponent,
+    NgClass,
+    RouterOutlet
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit, OnDestroy {
-  currentUser: User | null = null;
-  currentPageTitle = 'Dashboard';
-  isSidebarOpen = false;
+  currentUser = signal<User | null>(null);
+  currentPageTitle = signal('Dashboard');
+  isSidebarOpen = signal(false);
+  private currentUrl = signal('');
 
-  unclosedSessionDate: string | null = null;
+  unclosedSessionDate = signal<string | null>(null);
 
   private sub = new Subscription();
 
@@ -50,14 +63,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub.add(
       this.authService.currentUser$.subscribe((user) => {
-        this.currentUser = user;
+        this.currentUser.set(user);
         if (user?.role === 'admin') {
           this.loadFixedBookingReminders();
         }
       }),
     );
 
-    this.currentPageTitle = this.resolveTitleFromUrl(this.router.url);
+    this.currentUrl.set(this.router.url);
+    this.currentPageTitle.set(this.resolveTitleFromUrl(this.router.url));
 
     this.sub.add(
       this.router.events
@@ -66,7 +80,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
           map((e) => e.urlAfterRedirects),
         )
         .subscribe((url) => {
-          this.currentPageTitle = this.resolveTitleFromUrl(url);
+          this.currentUrl.set(url);
+          this.currentPageTitle.set(this.resolveTitleFromUrl(url));
         }),
     );
 
@@ -86,7 +101,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   /** Navega a Cierre de Caja y cierra el modal de advertencia. */
   goToCashRegister(): void {
-    this.unclosedSessionDate = null;
+    this.unclosedSessionDate.set(null);
     this.router.navigate(['/app/cash-register']);
   }
 
@@ -175,7 +190,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             data.sessionDate &&
             data.sessionDate < todayStr
           ) {
-            this.unclosedSessionDate = data.sessionDate;
+            this.unclosedSessionDate.set(data.sessionDate);
           }
         },
         error: () => {},
@@ -188,13 +203,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   /** `true` cuando la ruta activa es la agenda de turnos. */
-  get isSchedulePage(): boolean {
-    return this.router.url.includes('/schedule');
-  }
+  isSchedulePage = computed(() => this.currentUrl().includes('/schedule'));
 
   /** Alterna la visibilidad del sidebar en mobile. */
   toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
+    this.isSidebarOpen.update((v) => !v);
   }
 
   /**

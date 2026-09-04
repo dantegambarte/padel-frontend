@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { CanDeactivate } from '@angular/router';
+import { CanDeactivateFn } from '@angular/router';
+
 import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -13,41 +13,38 @@ export interface CanComponentDeactivate {
   canDeactivate(): boolean | Observable<boolean> | Promise<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
-export class UnsavedChangesGuard implements CanDeactivate<CanComponentDeactivate> {
-  canDeactivate(
-    component: CanComponentDeactivate,
-  ): boolean | Observable<boolean> | Promise<boolean> {
-    const result = component.canDeactivate();
+function showConfirmation(): Promise<boolean> {
+  return Swal.fire({
+    title: 'Cambios sin guardar',
+    text: 'Tienes cambios sin guardar. ¿Estás seguro de que deseas salir y perder los cambios?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Sí, salir y perder cambios',
+    cancelButtonText: 'No, quedarme',
+    reverseButtons: true,
+  }).then((result) => result.isConfirmed);
+}
 
-    if (result === true) return true;
+export const unsavedChangesGuard: CanDeactivateFn<CanComponentDeactivate> = (
+  component,
+) => {
+  const result = component.canDeactivate();
 
-    if (result === false) return this.showConfirmation();
+  if (result === true) return true;
 
-    if (result instanceof Observable) {
-      return result.pipe(
-        switchMap((canLeave) =>
-          canLeave ? of(true) : from(this.showConfirmation()),
-        ),
-      );
-    }
+  if (result === false) return showConfirmation();
 
-    return (result as Promise<boolean>).then((canLeave) =>
-      canLeave ? true : this.showConfirmation(),
+  if (result instanceof Observable) {
+    return result.pipe(
+      switchMap((canLeave) =>
+        canLeave ? of(true) : from(showConfirmation()),
+      ),
     );
   }
 
-  private showConfirmation(): Promise<boolean> {
-    return Swal.fire({
-      title: 'Cambios sin guardar',
-      text: 'Tienes cambios sin guardar. ¿Estás seguro de que deseas salir y perder los cambios?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Sí, salir y perder cambios',
-      cancelButtonText: 'No, quedarme',
-      reverseButtons: true,
-    }).then((result) => result.isConfirmed);
-  }
-}
+  return (result as Promise<boolean>).then((canLeave) =>
+    canLeave ? true : showConfirmation(),
+  );
+};

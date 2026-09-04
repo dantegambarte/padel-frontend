@@ -1,8 +1,41 @@
 import { test, expect, Page } from '@playwright/test';
 
 async function goToProducts(page: Page) {
-  await page.goto('/app/products');
-  await page.waitForLoadState('networkidle');
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const productsResponse = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/v1/products') &&
+        res.request().method() === 'GET' &&
+        res.status() === 200,
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.goto('/app/products');
+    const response = await productsResponse;
+    if (response) {
+      const products = await response.json();
+      expect(Array.isArray(products), '/api/v1/products should return an array').toBe(
+        true,
+      );
+      expect(products.length, '/api/v1/products should return seeded products').toBeGreaterThan(0);
+    }
+    await expect(productsHeading(page)).toBeVisible();
+    await expect(page.locator('main .animate-pulse')).toHaveCount(0, {
+      timeout: 10000,
+    });
+
+    const hasProducts = await page.getByText(/No se encontraron productos/i).isHidden().catch(() => true);
+    const hasLoadError = await page.getByText(/Error al cargar productos/i).isVisible().catch(() => false);
+    if (hasProducts && !hasLoadError) {
+      return;
+    }
+  }
+
+  await expect(page.getByText(/Error al cargar productos/i)).not.toBeVisible();
+  await expect(page.getByText(/No se encontraron productos/i)).not.toBeVisible();
+}
+
+function productsHeading(page: Page) {
+  return page.getByRole('heading', { name: /Productos/i }).first();
 }
 
 test.describe('Módulo de Productos', () => {
@@ -11,9 +44,7 @@ test.describe('Módulo de Productos', () => {
   });
 
   test('PR-01: carga la lista de productos', async ({ page }) => {
-    await expect(
-      page.getByRole('heading', { name: 'Productos', exact: true }).first(),
-    ).toBeVisible();
+    await expect(productsHeading(page)).toBeVisible();
     const items = page.locator(
       'table tbody tr, [data-testid="product-row"], .product-item',
     );
@@ -28,22 +59,16 @@ test.describe('Módulo de Productos', () => {
     if (await searchInput.isVisible()) {
       await searchInput.fill('agua');
       await page.waitForTimeout(600);
-      await expect(
-        page.getByRole('heading', { name: 'Productos', exact: true }).first(),
-      ).toBeVisible();
+      await expect(productsHeading(page)).toBeVisible();
     }
   });
 
   test('PR-03: el filtro de stock bajo funciona', async ({ page }) => {
-    const lowStockBtn = page
-      .getByRole('button', { name: /stock bajo|low stock/i })
-      .or(page.getByRole('checkbox', { name: /stock bajo/i }));
-    if (await lowStockBtn.isVisible()) {
-      await lowStockBtn.click();
+    const stockFilter = page.locator('main select').nth(1);
+    if (await stockFilter.isVisible()) {
+      await stockFilter.selectOption('low');
       await page.waitForTimeout(500);
-      await expect(
-        page.getByRole('heading', { name: 'Productos', exact: true }).first(),
-      ).toBeVisible();
+      await expect(productsHeading(page)).toBeVisible();
     }
   });
 
@@ -130,7 +155,7 @@ test.describe('Módulo de Productos', () => {
       .first()
       .or(page.locator('[data-testid="edit-product"]').first());
 
-    if (await editBtn.isVisible({ timeout: 3000 })) {
+    if (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) {
       await editBtn.click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 3000 });
@@ -143,15 +168,11 @@ test.describe('Módulo de Productos', () => {
   test('PR-08: los botones de acción (editar/eliminar) están presentes en la tabla', async ({
     page,
   }) => {
-    const editBtn = page
-      .getByRole('button', { name: /Editar producto/i })
-      .first();
-    const deleteBtn = page
-      .getByRole('button', { name: /Eliminar producto/i })
-      .first();
+    const editBtn = page.locator('button[title="Editar producto"]').first();
+    const deleteBtn = page.locator('button[title="Eliminar producto"]').first();
     const hasActions =
-      (await editBtn.isVisible({ timeout: 3000 }).catch(() => false)) ||
-      (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false));
+      (await editBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false)) ||
+      (await deleteBtn.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false));
     expect(hasActions).toBeTruthy();
   });
 
@@ -168,14 +189,14 @@ test.describe('Módulo de Productos', () => {
       .locator('select')
       .first()
       .or(page.getByRole('combobox').first());
-    if (await categoryFilter.isVisible({ timeout: 2000 })) {
+    if (await categoryFilter.waitFor({ state: 'visible', timeout: 2000 }).then(() => true).catch(() => false)) {
       const options = await categoryFilter.locator('option').count();
       if (options > 1) {
         await categoryFilter.selectOption({ index: 1 });
         await page.waitForTimeout(500);
         await expect(
-          page.getByRole('heading', { name: 'Productos', exact: true }).first(),
-        ).toBeVisible();
+        productsHeading(page),
+      ).toBeVisible();
       }
     }
   });

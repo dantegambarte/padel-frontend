@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -85,28 +85,36 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [CashRegisterComponent],
-      providers: [
+    imports: [CashRegisterComponent],
+    providers: [
         { provide: CashService, useValue: cashService },
-        { provide: AuthService, useValue: { isAdmin: true, currentUser: { fullName: 'Cajero Test' } } },
+        {
+            provide: AuthService,
+            useValue: {
+                isAdmin: true,
+                isAdminSignal: signal(true),
+                currentUser: { fullName: 'Cajero Test' },
+                currentUserSignal: signal({ fullName: 'Cajero Test' }),
+            },
+        },
         { provide: ToastService, useValue: toastService },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         {
-          provide: DraftService,
-          useValue: {
-            hasDraft: jasmine.createSpy('hasDraft').and.returnValue(false),
-            getDraft: jasmine.createSpy('getDraft').and.returnValue(null),
-            saveDraft: jasmine.createSpy('saveDraft'),
-            clearDraft: jasmine.createSpy('clearDraft'),
-          },
+            provide: DraftService,
+            useValue: {
+                hasDraft: jasmine.createSpy('hasDraft').and.returnValue(false),
+                getDraft: jasmine.createSpy('getDraft').and.returnValue(null),
+                saveDraft: jasmine.createSpy('saveDraft'),
+                clearDraft: jasmine.createSpy('clearDraft'),
+            },
         },
         {
-          provide: ConfigService,
-          useValue: { getAll: jasmine.createSpy('getAll').and.returnValue(of([])) },
+            provide: ConfigService,
+            useValue: { getAll: jasmine.createSpy('getAll').and.returnValue(of([])) },
         },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+}).compileComponents();
 
     fixture = TestBed.createComponent(CashRegisterComponent);
     component = fixture.componentInstance;
@@ -192,7 +200,7 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
 
     spyOn(Swal, 'fire').and.callFake((..._args: any[]) => {
       // Capturamos el estado de isOpening en el instante exacto en que el modal se abre
-      isOpeningCapturado = component.isOpening;
+      isOpeningCapturado = component.isOpening();
       return SWAL_DISMISSED;
     });
 

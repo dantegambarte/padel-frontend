@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ToastService, ToastMessage } from '../../core/services/toast.service';
+import { NgClass } from '@angular/common';
 
 /**
  * Animación de entrada/salida estilo Sileo/iOS:
@@ -26,27 +27,17 @@ export const toastAnimation = trigger('toastState', [
 ]);
 
 @Component({
-  selector: 'app-toast',
-  templateUrl: './toast.component.html',
-  animations: [toastAnimation],
+    selector: 'app-toast',
+    templateUrl: './toast.component.html',
+    animations: [toastAnimation],
+    imports: [
+    NgClass
+],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ToastComponent implements OnInit, OnDestroy {
-  toasts: ToastMessage[] = [];
-  private sub = new Subscription();
-
-  constructor(private toastService: ToastService) {}
-
-  ngOnInit(): void {
-    this.sub.add(
-      this.toastService.toasts$.subscribe((toasts) => {
-        this.toasts = toasts;
-      }),
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.sub.unsubscribe();
-  }
+export class ToastComponent {
+  private toastService = inject(ToastService);
+  toasts = toSignal(this.toastService.toasts$, { initialValue: [] as ToastMessage[] });
 
   /** Descarta el toast con el id indicado. */
   dismiss(id: number): void {
