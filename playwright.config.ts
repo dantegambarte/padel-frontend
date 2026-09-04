@@ -18,7 +18,7 @@ export default defineConfig({
       // nest-cli.json tiene deleteOutDir, así que cualquier cambio en src/
       // durante la corrida borra dist/ y reinicia el backend a mitad de suite,
       // provocando fallos en cascada por "no se pudo conectar con el servidor".
-      command: `set NODE_ENV=test&& npm --prefix ${backendProject} run migration:run && npm --prefix ${backendProject} run seed && npm --prefix ${backendProject} run start`,
+      command: `set NODE_ENV=test&& pnpm -C ${backendProject} run migration:run && pnpm -C ${backendProject} run seed && pnpm -C ${backendProject} run start`,
       url: `${backendUrl}/api/docs`,
       // Nunca reutilizar un backend ya levantado, ni siquiera en local.
       // La suite depende de que el backend corra con NODE_ENV=test: solo así
@@ -34,7 +34,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: 'npm start',
+      command: 'pnpm start',
       url: frontendUrl,
       // Mismo criterio que el backend: arrancar siempre nuestro propio server
       // en vez de heredar uno con estado o build desconocidos.

@@ -18,6 +18,7 @@ Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para l
 | Detección cambios | zone.js 0.15 + OnPush + signals |
 | Testing unitario  | Karma + Jasmine                 |
 | Testing E2E       | Playwright 1.62                 |
+| Gestor de paquetes| pnpm 11                         |
 | Lenguaje          | TypeScript 5.9 (strict mode)    |
 | Target JS         | ES2022                          |
 
@@ -26,7 +27,7 @@ Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para l
 ## Requisitos previos
 
 - Node.js 20.19+ / 22.12+ / 24+ (requisito de Angular 21)
-- npm 10+
+- pnpm 11+ (`corepack enable pnpm`)
 - Angular CLI 21: `npm install -g @angular/cli@21`
 - Backend corriendo (ver sección de entorno)
 
@@ -36,10 +37,10 @@ Frontend desarrollado en **Angular 21** con **TailwindCSS** y **PrimeNG** para l
 
 ```bash
 # 1. Instalar dependencias
-npm install
+pnpm install
 
 # 2. Iniciar servidor de desarrollo
-npm start
+pnpm start
 # → http://localhost:4200
 ```
 
@@ -54,13 +55,13 @@ npm start
 
 | Comando                   | Descripción                                   |
 | ------------------------- | --------------------------------------------- |
-| `npm start`               | Servidor de desarrollo en `localhost:4200`    |
-| `npm run build`           | Build de producción en `dist/padel-frontend/browser/` |
-| `npm run watch`           | Build en modo watch (desarrollo)              |
-| `npm test`                | Tests unitarios con Karma + Jasmine           |
-| `npm run test:e2e`        | Tests E2E headless con Playwright             |
-| `npm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
-| `npm run test:e2e:report` | Ver reporte HTML del último run               |
+| `pnpm start`               | Servidor de desarrollo en `localhost:4200`    |
+| `pnpm run build`           | Build de producción en `dist/padel-frontend/browser/` |
+| `pnpm run watch`           | Build en modo watch (desarrollo)              |
+| `pnpm test`                | Tests unitarios con Karma + Jasmine           |
+| `pnpm run test:e2e`        | Tests E2E headless con Playwright             |
+| `pnpm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
+| `pnpm run test:e2e:report` | Ver reporte HTML del último run               |
 
 ---
 
@@ -441,13 +442,13 @@ netstat -ano | findstr "LISTENING" | findstr ":3000 :4200"
 
 ```bash
 # Headless (CI/CD)
-npm run test:e2e
+pnpm run test:e2e
 
 # Modo UI interactivo (debug)
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Ver reporte HTML
-npm run test:e2e:report
+pnpm run test:e2e:report
 ```
 
 ### Cobertura de tests
@@ -475,7 +476,7 @@ npm run test:e2e:report
 ## Build de producción
 
 ```bash
-npm run build
+pnpm run build
 # Output: dist/padel-frontend/browser/   ← ojo, la subcarpeta browser/
 ```
 
@@ -494,7 +495,7 @@ Configurar el servidor web para redirigir todas las rutas al `index.html` (SPA r
 **Deploy manual al VPS** (no hay CI):
 
 ```bash
-npm run build
+pnpm run build
 scp -r dist/padel-frontend/browser/* usuario@vps:<RUTA_NGINX>/
 ```
 
