@@ -25,7 +25,7 @@ export default defineConfig({
       // el login no incrementa sessionVersion (si lo incrementa, cada spec que
       // hace su propio login invalida la sesión compartida del storageState y
       // el resto falla en cascada con SESSION_OVERRIDDEN) y el throttle de
-      // login sube de 5 a 1000. Un backend arrancado a mano con `npm run
+      // login sube de 5 a 1000. Un backend arrancado a mano con `pnpm run
       // start:dev` no cumple ninguna de las dos condiciones, y al reutilizarlo
       // la suite fallaba masivamente aparentando una regresión de la app.
       // Con `false`, si el puerto está ocupado Playwright falla al arrancar:
