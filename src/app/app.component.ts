@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { ToastComponent } from './shared/toast/toast.component';
 import { CalculatorComponent } from './shared/calculator/calculator.component';
 import { SessionAlertComponent } from './shared/session-alert/session-alert.component';
+import { AppUpdateService } from './core/services/app-update.service';
 
 @Component({
     selector: 'app-root',
@@ -30,9 +31,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private sub = new Subscription();
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private appUpdate: AppUpdateService,
+  ) {}
 
   ngOnInit(): void {
+    this.appUpdate.init();
     this.sub.add(
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart) {
