@@ -17,6 +17,11 @@ function closeCashButton(page: Page) {
   }).first();
 }
 
+/** Shift-close button only: unlike the day close (Z), it requires the counted cash. */
+function closeShiftButton(page: Page) {
+  return page.getByRole('button', { name: /Cerrar mi Turno/i });
+}
+
 /**
  * Navega a la pestaña "Cierre de Turno". Devuelve `false` cuando la caja no se
  * puede cerrar (típicamente porque hay turnos pendientes y la app muestra el
@@ -111,7 +116,7 @@ test.describe('Cierre de Caja', () => {
   }) => {
     const canClose = await goToCierreTurno(page);
     if (!canClose) return;
-    const closeBtn = closeCashButton(page);
+    const closeBtn = closeShiftButton(page);
     if (await closeBtn.isVisible()) {
       await expect(closeBtn).toBeDisabled();
       await fillCashCount(page);

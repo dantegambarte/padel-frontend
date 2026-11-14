@@ -18,6 +18,29 @@ async function loginAsEmployee(page: Page): Promise<void> {
   await page.waitForURL(/\/app\//, { timeout: 10_000 });
 }
 
+const API_URL = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
+const TOKEN_KEY = 'padelsys_access_token';
+
+/**
+ * The employee list only shows expenses of the open cash session, and earlier
+ * specs (cash-register) may have closed it. Opens one through the API with the
+ * logged-in user's token when none is open, so the test does not depend on
+ * spec order.
+ */
+async function ensureOpenCashSession(page: Page): Promise<void> {
+  const token = await page.evaluate((key) => localStorage.getItem(key), TOKEN_KEY);
+  if (!token) throw new Error('No session token in localStorage');
+  const headers = { Authorization: `Bearer ${token}` };
+  const current = await page.request.get(`${API_URL}/cash/current`, { headers });
+  expect(current.ok()).toBeTruthy();
+  if ((await current.json()).isOpen) return;
+  const opened = await page.request.post(`${API_URL}/cash/sessions`, {
+    headers,
+    data: { initialBalance: 0 },
+  });
+  expect(opened.status(), await opened.text()).toBe(201);
+}
+
 /** Navega a Egresos y espera carga completa. */
 async function goToExpenses(page: Page): Promise<void> {
   await page.goto('/app/expenses');
@@ -72,6 +95,8 @@ test.describe('Egresos — Rol Empleado', () => {
   test('EG-E-03: happy path — el empleado registra un egreso de Insumos exitosamente', async ({
     page,
   }) => {
+    await ensureOpenCashSession(page);
+    await goToExpenses(page);
     await fillExpenseForm(page, {
       amount: '500',
       description: 'Compra de pelotas E2E',

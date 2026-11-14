@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -211,4 +211,27 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
 
     expect(isOpeningCapturado).toBe(false);
   }));
+
+  // ─── Fondo inicial sugerido desde la configuración ─────────────────────────
+  describe('fondo inicial pre-cargado desde fondo_caja_base', () => {
+    let config$: Subject<{ key: string; value: string }[]>;
+
+    beforeEach(() => {
+      config$ = new Subject();
+      (TestBed.inject(ConfigService).getAll as jasmine.Spy).and.returnValue(config$);
+      component.fondoInicial = '';
+      (component as any).loadCurrentSession();
+    });
+
+    it('usa fondo_caja_base cuando el usuario todavía no escribió nada', () => {
+      config$.next([{ key: 'fondo_caja_base', value: '25000' }]);
+      expect(component.fondoInicial).toBe('25000');
+    });
+
+    it('no pisa el fondo que el usuario escribió mientras la configuración llegaba', () => {
+      component.fondoInicial = '0';
+      config$.next([{ key: 'fondo_caja_base', value: '25000' }]);
+      expect(component.fondoInicial).toBe('0');
+    });
+  });
 });
