@@ -426,7 +426,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                     const entry = entries.find(
                       (e) => e.key === 'fondo_caja_base',
                     );
-                    if (entry && parseFloat(entry.value) > 0) {
+                    // Re-check: the user may have typed while the config was loading.
+                    if (entry && parseFloat(entry.value) > 0 && this.fondoInicial === '') {
                       this.fondoInicial = entry.value;
                       this.fondoInicialSugerido.set(false);
                     }
