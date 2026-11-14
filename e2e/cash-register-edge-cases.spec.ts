@@ -537,6 +537,10 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
 
       await blockUnmockedCashRequests(page);
       await mockAuxEndpoints(page);
+      // Without a suggestion the component pre-fills the fund from the real
+      // fondo_caja_base config, which other specs change; that late value used
+      // to overwrite the typed 0 on slower engines (WebKit).
+      await page.route('**/api/v1/config', (route) => route.fulfill(json([])));
 
       // Secuencia /current:
       //  1ra llamada (layout + component, misma cache) → sin sesión → pantalla Apertura
