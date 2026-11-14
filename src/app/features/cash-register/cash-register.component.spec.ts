@@ -212,8 +212,8 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
     expect(isOpeningCapturado).toBe(false);
   }));
 
-  // ─── Fondo inicial sugerido desde la configuración ─────────────────────────
-  describe('fondo inicial pre-cargado desde fondo_caja_base', () => {
+  // ─── Initial fund pre-filled from configuration ─────────────────────────────
+  describe('initial fund pre-filled from fondo_caja_base', () => {
     let config$: Subject<{ key: string; value: string }[]>;
 
     beforeEach(() => {
@@ -223,12 +223,12 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
       (component as any).loadCurrentSession();
     });
 
-    it('usa fondo_caja_base cuando el usuario todavía no escribió nada', () => {
+    it('uses fondo_caja_base when the user has not typed anything yet', () => {
       config$.next([{ key: 'fondo_caja_base', value: '25000' }]);
       expect(component.fondoInicial).toBe('25000');
     });
 
-    it('no pisa el fondo que el usuario escribió mientras la configuración llegaba', () => {
+    it('keeps the fund the user typed while the configuration was loading', () => {
       component.fondoInicial = '0';
       config$.next([{ key: 'fondo_caja_base', value: '25000' }]);
       expect(component.fondoInicial).toBe('0');
