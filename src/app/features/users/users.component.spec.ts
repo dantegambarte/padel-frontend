@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA } from '@angular/core';
+import { of, Subject, throwError } from 'rxjs';
 import { UsersComponent } from './users.component';
 import { UsersService } from '../../core/services/users.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -50,8 +50,8 @@ describe('UsersComponent', () => {
   it('loads users on init', () => {
     const fixture = TestBed.createComponent(UsersComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.users).toEqual([mockUser]);
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.users()).toEqual([mockUser]);
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   it('canToggle() is false for the currently logged-in user', () => {
@@ -66,7 +66,7 @@ describe('UsersComponent', () => {
     fixture.detectChanges();
     fixture.componentInstance.openDialog();
     fixture.componentInstance.submitForm();
-    expect(fixture.componentInstance.formError).toContain('obligatorios');
+    expect(fixture.componentInstance.formError()).toContain('obligatorios');
   });
 
   it('submitForm() requires matching passwords', () => {
@@ -82,7 +82,7 @@ describe('UsersComponent', () => {
       role: 'employee',
     };
     component.submitForm();
-    expect(component.formError).toContain('no coinciden');
+    expect(component.formError()).toContain('no coinciden');
   });
 
   it('submitForm() creates the user on valid input', () => {
@@ -102,7 +102,7 @@ describe('UsersComponent', () => {
     component.submitForm();
 
     expect(usersServiceSpy.create).toHaveBeenCalled();
-    expect(component.isDialogOpen).toBe(false);
+    expect(component.isDialogOpen()).toBe(false);
     expect(toastServiceSpy.success).toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe('UsersComponent', () => {
     fixture.componentInstance.toggleStatus(mockUser);
 
     expect(usersServiceSpy.toggleStatus).toHaveBeenCalledWith('u1', true);
-    expect(fixture.componentInstance.users[0].isActive).toBe(false);
+    expect(fixture.componentInstance.users()[0].isActive).toBe(false);
   });
 
   it('deleteUser() does nothing without confirmation', () => {
@@ -133,7 +133,7 @@ describe('UsersComponent', () => {
 
     fixture.componentInstance.deleteUser(mockUser);
 
-    expect(fixture.componentInstance.users.length).toBe(0);
+    expect(fixture.componentInstance.users().length).toBe(0);
   });
 
   it('submitReset() requires a password of at least 6 characters', () => {
@@ -142,7 +142,7 @@ describe('UsersComponent', () => {
     fixture.componentInstance.openResetModal(mockUser);
     fixture.componentInstance.resetPassword = '123';
     fixture.componentInstance.submitReset();
-    expect(fixture.componentInstance.resetPasswordError).toContain('al menos 6');
+    expect(fixture.componentInstance.resetPasswordError()).toContain('al menos 6');
   });
 
   it('submitReset() calls the service and closes the modal on success', () => {
@@ -155,7 +155,7 @@ describe('UsersComponent', () => {
     fixture.componentInstance.submitReset();
 
     expect(usersServiceSpy.resetPassword).toHaveBeenCalledWith('u1', 'newpass1');
-    expect(fixture.componentInstance.isResetOpen).toBe(false);
+    expect(fixture.componentInstance.isResetOpen()).toBe(false);
   });
 
   it('onEscape() closes whichever modal is open', () => {
@@ -163,6 +163,28 @@ describe('UsersComponent', () => {
     fixture.detectChanges();
     fixture.componentInstance.openDialog();
     fixture.componentInstance.onEscape();
-    expect(fixture.componentInstance.isDialogOpen).toBe(false);
+    expect(fixture.componentInstance.isDialogOpen()).toBe(false);
+  });
+
+  it('renders the user list when data arrives after the first render inside an OnPush parent', () => {
+    @Component({
+      selector: 'app-onpush-host',
+      imports: [UsersComponent],
+      template: '<app-users />',
+      changeDetection: ChangeDetectionStrategy.OnPush,
+    })
+    class OnPushHostComponent {}
+
+    const users$ = new Subject<User[]>();
+    usersServiceSpy.findAll.and.returnValue(users$);
+    const fixture = TestBed.createComponent(OnPushHostComponent);
+    fixture.detectChanges();
+
+    users$.next([mockUser]);
+    users$.complete();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Empleado Uno');
   });
 });
