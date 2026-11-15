@@ -326,6 +326,8 @@ describe('ReportsComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const comp = fixture.componentInstance as any;
+    expect(comp.tabs.length).toBeGreaterThan(0);
+    expect(comp.presets.length).toBeGreaterThan(0);
     expect(el.querySelectorAll('button[data-tab-index]').length).toBe(comp.tabs.length);
     const text = el.textContent ?? '';
     for (const p of comp.presets) {
