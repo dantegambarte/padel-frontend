@@ -11,7 +11,7 @@ import { CashService, OpenCashDto } from '../../core/services/cash.service';
 import { ConfigService } from '../../core/services/config.service';
 import { DraftService } from '../../core/services/draft.service';
 import { ToastService } from '../../core/services/toast.service';
-import { CashRegisterComponent } from './cash-register.component';
+import { CashRegisterComponent, GroupedMovimiento } from './cash-register.component';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
@@ -262,6 +262,48 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
       component.fondoInicial = '0';
       config$.next([{ key: 'fondo_caja_base', value: '25000' }]);
       expect(component.fondoInicial).toBe('0');
+    });
+  });
+
+  // ─── Receipt escapes user-entered names (stored XSS) ────────────────────────
+  describe('printTicket', () => {
+    const payload = '<img src=x onerror="window.__xss=1">';
+
+    afterEach(() => document.getElementById('__ticket-comprobante__')?.remove());
+
+    function group(overrides: Partial<GroupedMovimiento>): GroupedMovimiento {
+      return {
+        type: 'SALE', referenceId: 's1', concepto: 'Venta', customerName: null,
+        bookingCourtName: null, bookingHour: null, bookingClientName: null,
+        bookingPriceAmount: null, saleTotal: 1000,
+        items: [{ productName: payload, quantity: 1, unitPrice: 1000, total: 1000 } as any],
+        itemsTotal: 1000, totalMonto: 1000, totalCash: 1000, totalTransfer: 0,
+        transactions: [], hasMultiplePayments: false, firstHora: '10:00', userName: payload,
+        hasCash: true, hasTransfer: false, hasCourt: false, hasCantina: true,
+        expenseCategory: null, latestCreatedAt: new Date().toISOString(),
+        ...overrides,
+      };
+    }
+
+    function printAndGetTicket(g: GroupedMovimiento): HTMLElement {
+      spyOn(window, 'print');
+      component.printTicket(g);
+      return document.getElementById('__ticket-comprobante__')!;
+    }
+
+    it('renders HTML in sale names as text instead of markup', () => {
+      const ticket = printAndGetTicket(group({ customerName: payload }));
+      expect(ticket.querySelector('img')).toBeNull();
+      expect(ticket.textContent).toContain(payload);
+    });
+
+    it('renders HTML in booking court and client names as text', () => {
+      const ticket = printAndGetTicket(
+        group({ type: 'BOOKING', bookingCourtName: payload, bookingClientName: payload, bookingHour: '20:00' }),
+      );
+      expect(ticket.querySelector('img')).toBeNull();
+      expect(ticket.textContent).toContain(`Cancha: ${payload}`);
+      expect(ticket.textContent).toContain(`Cliente: ${payload}`);
     });
   });
 });
