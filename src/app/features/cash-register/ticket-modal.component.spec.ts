@@ -92,6 +92,12 @@ describe('TicketModalComponent', () => {
     TestBed.flushEffects();
     expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
 
+    // Re-setting the same saleId is not a change.
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
+
     fixture.componentRef.setInput('saleId', 's2');
     fixture.detectChanges();
     TestBed.flushEffects();
@@ -104,7 +110,8 @@ describe('TicketModalComponent', () => {
     fixture.componentRef.setInput('saleId', 's1');
     fixture.detectChanges();
     TestBed.flushEffects();
-    expect(fixture.componentInstance.loadError()).not.toBe('');
+    expect(fixture.componentInstance.loadError()).toBe('No se pudo cargar el detalle de la venta.');
+    expect(fixture.componentInstance.isLoading()).toBe(false);
 
     fixture.componentRef.setInput('saleId', null);
     fixture.detectChanges();
@@ -112,6 +119,7 @@ describe('TicketModalComponent', () => {
 
     expect(fixture.componentInstance.sale()).toBeNull();
     expect(fixture.componentInstance.loadError()).toBe('');
+    expect(fixture.componentInstance.isLoading()).toBe(false);
     expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
   });
 
