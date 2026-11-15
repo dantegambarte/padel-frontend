@@ -173,4 +173,30 @@ test.describe('Módulo de Configuración', () => {
       await expect(openingInput).toHaveValue(original);
     }
   });
+
+  test('SE-11: el modal de cancha se cierra con Cancelar, con Escape y con clic afuera', async ({
+    page,
+  }) => {
+    const newCourtBtn = page.getByRole('button', { name: /Nueva Cancha/i }).first();
+    const dialog = courtDialog(page);
+
+    await newCourtBtn.click();
+    await expect(dialog).toBeVisible();
+    // PrimeNG only honors dismissableMask with closable=true, so the built-in
+    // close button is hidden through pt instead of turning closable off.
+    await expect(dialog.locator('.p-dialog-close-button')).toBeHidden();
+    await dialog.getByRole('button', { name: /^Cancelar$/ }).click();
+    await expect(dialog).toBeHidden();
+
+    await newCourtBtn.click();
+    await expect(dialog).toBeVisible();
+    // The component closes it on Escape itself (closeOnEscape is off).
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+
+    await newCourtBtn.click();
+    await expect(dialog).toBeVisible();
+    await page.locator('.modal-backdrop').click({ position: { x: 5, y: 5 } });
+    await expect(dialog).toBeHidden();
+  });
 });

@@ -444,6 +444,7 @@
                               </div>
                             </div>
                           }
+                          <!-- closable=true es necesario: PrimeNG solo respeta dismissableMask con closable activo. La X se oculta vía pt. -->
                           <p-dialog
                             [visible]="isCourtModalOpen()"
                             (visibleChange)="onCourtModalVisibleChange($event)"

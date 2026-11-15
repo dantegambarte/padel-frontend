@@ -209,7 +209,7 @@ export class SettingsComponent implements OnInit, OnDestroy, CanComponentDeactiv
       });
   }
 
-  /** Descarta los cambios pendientes recargando la configuración desde el servidor. */
+  /** Descarta los cambios pendientes restaurando los últimos valores guardados y recarga la configuración del servidor. */
   cancel(): void {
     this.horarioApertura = this.savedHorarioApertura;
     this.horarioCierre = this.savedHorarioCierre;

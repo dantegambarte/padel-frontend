@@ -5,6 +5,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -34,12 +35,15 @@ export class TicketModalComponent {
      * (los signal inputs no disparan ese hook). */
     effect(() => {
       const id = this.saleId();
-      if (id) {
-        this.fetchSale(id);
-      } else {
-        this.sale.set(null);
-        this.loadError.set('');
-      }
+      // La única dependencia es saleId: lo que lee o escribe la carga no debe re-disparar el effect.
+      untracked(() => {
+        if (id) {
+          this.fetchSale(id);
+        } else {
+          this.sale.set(null);
+          this.loadError.set('');
+        }
+      });
     });
   }
 
