@@ -24,7 +24,7 @@
  *   09 · Egresos (modal Nuevo Egreso)
  *
  * Ejecución:
- *   npx playwright test e2e/generate-employee-docs.spec.ts --project="Desktop Full HD"
+ *   E2E_DOCS=1 npx playwright test e2e/generate-employee-docs.spec.ts --project=docs
  * ─────────────────────────────────────────────────────────────────────────────
  */
 

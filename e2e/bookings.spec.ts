@@ -157,8 +157,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
       .split('T')[0];
     await datePicker.fill(yesterday);
     await datePicker.dispatchEvent('change');
-    const res = await responsePromise.catch(() => null);
-    if (res) expect([200, 304, 429]).toContain(res.status());
+    const res = await responsePromise;
+    expect([200, 304]).toContain(res.status());
   });
 
   test('AG-07: el botón de refrescar vuelve a cargar las reservas', async ({
@@ -174,8 +174,8 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
       { timeout: 8000 },
     );
     await refreshBtn.click();
-    const res = await responsePromise.catch(() => null);
-    if (res) expect([200, 304, 429]).toContain(res.status());
+    const res = await responsePromise;
+    expect([200, 304]).toContain(res.status());
   });
 
   test('AG-08: las duraciones disponibles (30/60/90/120 min) aparecen en el modal', async ({

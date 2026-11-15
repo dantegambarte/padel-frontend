@@ -40,9 +40,10 @@ async function waitForScheduleGrid(page: Page) {
     await page.waitForLoadState('networkidle');
   }
 
-  if (await page.getByText(/No se pudo conectar con el servidor/i).isVisible().catch(() => false)) {
-    test.skip(true, 'La agenda no cargó por error transitorio del backend');
-  }
+  await expect(
+    page.getByText(/No se pudo conectar con el servidor/i),
+    'Schedule failed to load: backend unreachable',
+  ).toHaveCount(0);
   await expect(grid).toBeVisible();
 }
 

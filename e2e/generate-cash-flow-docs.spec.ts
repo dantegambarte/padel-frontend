@@ -16,7 +16,7 @@
  * 10 · Caja — modal de apertura de nuevo turno
  *
  * Ejecución:
- * npx playwright test e2e/generate-cash-flow-docs.spec.ts --project="Desktop Full HD"
+ * E2E_DOCS=1 npx playwright test e2e/generate-cash-flow-docs.spec.ts --project=docs
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -69,10 +69,9 @@ async function fillNumeric(
 ) {
   await dismissSweetAlertIfVisible(page);
   const input = page.locator(`#${id}`);
-  if (await input.isVisible().catch(() => false)) {
-    await input.click({ clickCount: 3 });
-    await input.fill(value);
-  }
+  await expect(input).toBeVisible();
+  await input.click({ clickCount: 3 });
+  await input.fill(value);
 }
 
 /**
@@ -230,15 +229,15 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     true,
   );
 
-  if (await continuarBtn.isVisible().catch(() => false)) {
+  {
+    await expect(continuarBtn).toBeEnabled();
     await continuarBtn.click();
     await page.waitForTimeout(800);
 
     const efectivoInput = page.locator('#efectivo');
-    if (await efectivoInput.isVisible().catch(() => false)) {
-      await efectivoInput.click({ clickCount: 3 });
-      await efectivoInput.fill('5000');
-    }
+    await expect(efectivoInput).toBeVisible();
+    await efectivoInput.click({ clickCount: 3 });
+    await efectivoInput.fill('5000');
     await page.waitForTimeout(600);
 
     const confirmarBtn = page
@@ -251,18 +250,18 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
       true,
     );
 
-    if (await confirmarBtn.isVisible().catch(() => false)) {
+    {
+      await expect(confirmarBtn).toBeEnabled();
       const [ventaResp] = await Promise.all([
-        page
-          .waitForResponse(
-            (resp) =>
-              (resp.url().includes('/sales') || resp.url().includes('/pos')) &&
-              resp.request().method() === 'POST',
-            { timeout: 15_000 },
-          )
-          .catch(() => null),
+        page.waitForResponse(
+          (resp) =>
+            (resp.url().includes('/sales') || resp.url().includes('/pos')) &&
+            resp.request().method() === 'POST',
+          { timeout: 15_000 },
+        ),
         confirmarBtn.click(),
       ]);
+      expect(ventaResp.status(), await ventaResp.text()).toBe(201);
 
       await page.waitForTimeout(1500);
       await page.screenshot({
@@ -289,10 +288,15 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   const cierreTurnoBtn = page
     .getByRole('button', { name: /Cierre de Turno/i })
     .first();
-  if (await cierreTurnoBtn.isVisible().catch(() => false)) {
-    await cierreTurnoBtn.click();
-    await page.waitForTimeout(800);
+  await expect(cierreTurnoBtn).toBeVisible();
+  await cierreTurnoBtn.click();
+  const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
+  const arqueoInput = page.locator('#efectivo-real');
+  await expect(arqueoInput.or(pendingDialog)).toBeVisible({ timeout: 10_000 });
+  if (await pendingDialog.isVisible()) {
+    await pendingDialog.getByRole('button', { name: /Traspasar y cerrar turno/i }).click();
   }
+  await expect(arqueoInput).toBeVisible();
 
   await fillNumeric(page, 'efectivo-real', '15000');
   await screenshotWithHighlight(
@@ -303,10 +307,8 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
   );
 
   const cerrarMiTurnoBtn = page.getByRole('button', { name: /Cerrar mi Turno/i });
-  if (await cerrarMiTurnoBtn.isVisible().catch(() => false)) {
-    await cerrarMiTurnoBtn.click();
-    await page.waitForTimeout(800);
-  }
+  await expect(cerrarMiTurnoBtn).toBeEnabled();
+  await cerrarMiTurnoBtn.click();
 
   const btnConfirmarNormal = page.getByRole('button', {
     name: /Confirmar cierre de turno/i,
@@ -317,10 +319,9 @@ test('Documentar ciclo completo de Cierre de Caja', async ({ page }) => {
     ss('08c-confirmacion-comun.png'),
     false,
   );
-  if (await btnConfirmarNormal.isVisible().catch(() => false)) {
-    await btnConfirmarNormal.click();
-    await page.waitForTimeout(1500);
-  }
+  await expect(btnConfirmarNormal).toBeVisible();
+  await btnConfirmarNormal.click();
+  await expect(btnConfirmarNormal).toBeHidden({ timeout: 10_000 });
 
   const nuevoTurnoBtn = page
     .getByRole('button', { name: /Abrir Nuevo Turno|Iniciar Nueva Jornada/i })
