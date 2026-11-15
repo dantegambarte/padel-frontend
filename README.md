@@ -44,6 +44,15 @@ pnpm start
 # → http://localhost:4200
 ```
 
+> **Dependencia fuera del registro npm:** `xlsx` se instala desde el tarball
+> oficial de SheetJS (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`),
+> porque SheetJS dejó de publicar en npm en la versión 0.18.5, que tiene
+> vulnerabilidades conocidas. La integridad queda fijada en `pnpm-lock.yaml`,
+> pero toda instalación limpia (local o CI) necesita acceso a
+> `cdn.sheetjs.com`, y `npm audit`/Dependabot no siguen esta dependencia:
+> revisá los avisos en <https://git.sheetjs.com/sheetjs/sheetjs> al actualizarla.
+> El test e2e `RE-11` descarga el Excel de reportes y verifica que se abre.
+
 **Credenciales de demo:**
 
 - Admin: `admin` / `admin123`

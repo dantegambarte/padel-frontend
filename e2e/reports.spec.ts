@@ -1,4 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import * as XLSX from 'xlsx';
 
 async function goToReports(page: Page) {
   await page.goto('/app/reports');
@@ -111,4 +113,23 @@ test.describe('Módulo de Reportes', () => {
       }
     }
   });
+});
+
+// xlsx comes from the SheetJS CDN tarball, outside the npm registry: this pins
+// that the installed version still writes a workbook the parser can open.
+test('RE-11: exportar Excel descarga un libro válido con el reporte de transacciones', async ({
+  page,
+}) => {
+  await goToReports(page);
+  await page.getByRole('button', { name: 'Movimientos y Export.' }).click();
+  const excelBtn = page.getByRole('button', { name: /^\s*Excel\s*$/ }).first();
+  await expect(excelBtn).toBeEnabled({ timeout: 10_000 });
+
+  const [download] = await Promise.all([page.waitForEvent('download'), excelBtn.click()]);
+  expect(download.suggestedFilename()).toMatch(/^Transacciones_\d{8}_al_\d{8}.*\.xlsx$/);
+
+  const workbook = XLSX.read(readFileSync(await download.path()), { type: 'buffer' });
+  expect(workbook.SheetNames).toEqual(['Reporte Financiero']);
+  const title = workbook.Sheets['Reporte Financiero']['A1']?.v;
+  expect(String(title)).toMatch(/^Reporte de Transacciones \| Periodo: /);
 });
