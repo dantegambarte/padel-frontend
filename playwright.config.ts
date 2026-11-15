@@ -54,6 +54,22 @@ export default defineConfig({
       name: 'setup',
       testMatch: /global-setup\.ts/,
     },
+    // Documentation generators open and close the shared cash session, so
+    // they cannot run next to the regular specs. Opt in and run them alone:
+    //   E2E_DOCS=1 npx playwright test --project=docs
+    ...(process.env['E2E_DOCS']
+      ? [
+          {
+            name: 'docs',
+            testMatch: /generate-.*\.spec\.ts/,
+            use: {
+              ...devices['Desktop Chrome'],
+              viewport: { width: 1920, height: 1080 },
+              storageState: 'e2e/auth-state.json',
+            },
+          },
+        ]
+      : []),
     {
       name: 'Desktop Full HD',
       use: {
@@ -61,7 +77,7 @@ export default defineConfig({
         viewport: { width: 1920, height: 1080 },
         storageState: 'e2e/auth-state.json',
       },
-      testIgnore: ['**/schedule.mobile.spec.ts'],
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/generate-*.spec.ts'],
     },
     {
       name: 'Notebook',

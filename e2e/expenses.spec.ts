@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { ensureOpenCashSession } from './helpers/cash-session';
 
 /**
  * Hace login como empleado desde la pantalla de login.
@@ -16,29 +17,6 @@ async function loginAsEmployee(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click();
   await loginDone.catch(() => {});
   await page.waitForURL(/\/app\//, { timeout: 10_000 });
-}
-
-const API_URL = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
-const TOKEN_KEY = 'padelsys_access_token';
-
-/**
- * The employee list only shows expenses of the open cash session, and earlier
- * specs (cash-register) may have closed it. Opens one through the API with the
- * logged-in user's token when none is open, so the test does not depend on
- * spec order.
- */
-async function ensureOpenCashSession(page: Page): Promise<void> {
-  const token = await page.evaluate((key) => localStorage.getItem(key), TOKEN_KEY);
-  if (!token) throw new Error('No session token in localStorage');
-  const headers = { Authorization: `Bearer ${token}` };
-  const current = await page.request.get(`${API_URL}/cash/current`, { headers });
-  expect(current.ok()).toBeTruthy();
-  if ((await current.json()).isOpen) return;
-  const opened = await page.request.post(`${API_URL}/cash/sessions`, {
-    headers,
-    data: { initialBalance: 0 },
-  });
-  expect(opened.status(), await opened.text()).toBe(201);
 }
 
 /** Navega a Egresos y espera carga completa. */

@@ -1,9 +1,11 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
+import { ensureOpenCashSession } from './helpers/cash-session';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
+const ADMIN_USER = process.env['E2E_ADMIN_USER'] ?? 'admin';
+const ADMIN_PASS = process.env['E2E_ADMIN_PASS'] ?? 'admin123';
 
 async function goToPOS(page: Page) {
-  await createAvailableProduct(page);
   await page.goto('/app/pos');
   await page.waitForLoadState('networkidle');
 }
@@ -18,17 +20,22 @@ function firstAvailableProduct(page: Page) {
   return page.locator('button:not([disabled])').filter({ hasText: /\$\d/ }).first();
 }
 
-async function createAvailableProduct(page: Page) {
-  const loginRes = await page.request.post(`${API_URL}/auth/login`, {
-    data: { username: 'admin', password: 'admin123' },
+async function adminHeaders(request: APIRequestContext) {
+  const login = await request.post(`${API_URL}/auth/login`, {
+    data: { username: ADMIN_USER, password: ADMIN_PASS },
   });
-  if (!loginRes.ok()) return;
+  expect(login.ok(), await login.text()).toBeTruthy();
+  const { accessToken } = await login.json();
+  return { Authorization: `Bearer ${accessToken}` };
+}
 
-  const { accessToken } = await loginRes.json();
-  if (!accessToken) return;
+// One in-stock product per worker so the catalog is never empty; deactivated
+// (the API only does a soft delete) once the suite ends.
+let fixtureProductId: string | undefined;
 
-  await page.request.post(`${API_URL}/products`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+test.beforeAll(async ({ request }) => {
+  const created = await request.post(`${API_URL}/products`, {
+    headers: await adminHeaders(request),
     data: {
       name: `POS Fixture ${Date.now()}`,
       costPrice: 100,
@@ -38,7 +45,17 @@ async function createAvailableProduct(page: Page) {
       icon: 'inventory_2',
     },
   });
-}
+  expect(created.status(), await created.text()).toBe(201);
+  fixtureProductId = (await created.json()).id;
+});
+
+test.afterAll(async ({ request }) => {
+  if (!fixtureProductId) return;
+  const removed = await request.delete(`${API_URL}/products/${fixtureProductId}`, {
+    headers: await adminHeaders(request),
+  });
+  expect(removed.status(), await removed.text()).toBe(204);
+});
 
 test.describe('POS / Nueva Venta', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,50 +133,31 @@ test.describe('POS / Nueva Venta', () => {
   test('POS-07: confirmar una venta completa con efectivo y limpiar carrito', async ({
     page,
   }) => {
-    const firstProduct = firstAvailableProduct(page);
-    await firstProduct.click();
+    await ensureOpenCashSession(page);
+    await goToPOS(page);
+    await firstAvailableProduct(page).click();
+    await page.getByRole('button', { name: /Ir al Pago/i }).click();
 
-    const irAlPagoBtn = page.getByRole('button', { name: /Ir al Pago/i });
-    await irAlPagoBtn.click();
-
-    const totalText = await page
-      .locator('text=/TOTAL:/')
-      .locator('..')
-      .textContent()
-      .catch(() => '');
+    const totalText = await page.locator('text=/TOTAL:/').locator('..').textContent();
     const match = totalText?.match(/[\d.,]+/);
-    const totalAmount = match ? match[0].replace(',', '') : '9999';
+    expect(match, `Total not found in "${totalText}"`).toBeTruthy();
+    // es-AR format: "." thousands, "," decimals.
+    const totalAmount = match![0].replace(/\./g, '').replace(',', '.');
 
-    const cashInput = page.getByRole('spinbutton', { name: /Efectivo/i });
-    if (await cashInput.isVisible()) {
-      await cashInput.fill(totalAmount);
-    }
+    await page.getByRole('spinbutton', { name: /Efectivo/i }).fill(totalAmount);
 
     const confirmBtn = saleActionButton(page);
-    if (await confirmBtn.isDisabled({ timeout: 1000 }).catch(() => false)) {
-      await expect(confirmBtn).toBeDisabled();
-      return;
-    }
-
-    if (await confirmBtn.isEnabled()) {
-      const salePromise = page.waitForResponse(
-        (res) =>
-          res.url().includes('/sales') && res.request().method() === 'POST',
-        { timeout: 10000 },
-      );
-      await confirmBtn.click();
-      const res = await salePromise.catch(() => null);
-
-      if (res) {
-        const status = res.status();
-        expect([201, 400, 503]).toContain(status);
-        if (status === 201) {
-          await expect(
-            page.getByRole('button', { name: /Ir al Pago/i }),
-          ).toBeDisabled({ timeout: 5000 });
-        }
-      }
-    }
+    await expect(confirmBtn).toBeEnabled();
+    const salePromise = page.waitForResponse(
+      (res) => res.url().includes('/sales') && res.request().method() === 'POST',
+      { timeout: 10000 },
+    );
+    await confirmBtn.click();
+    const res = await salePromise;
+    expect(res.status(), await res.text()).toBe(201);
+    await expect(page.getByRole('button', { name: /Ir al Pago/i })).toBeDisabled({
+      timeout: 5000,
+    });
   });
 
   test('POS-08: la búsqueda/filtro de productos funciona', async ({ page }) => {

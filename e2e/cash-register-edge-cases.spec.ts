@@ -504,7 +504,8 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
       expect(capturedPayloads[1]).toMatchObject({
         conflictAction: 'reopen_today',
       });
-      expect(capturedPayloads[1].initialBalance).toBeGreaterThan(0);
+      // The fund typed in #fondo-inicial carries over to the reopened day.
+      expect(capturedPayloads[1].initialBalance).toBe(5000);
 
       // ── Aserción C: toast de éxito visible en la UI
       await expect(page.getByText('Jornada reabierta')).toBeVisible({
