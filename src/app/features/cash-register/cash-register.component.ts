@@ -30,6 +30,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
 import { TicketModalComponent } from './ticket-modal.component';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+import { escapeHtml as esc } from '../../core/utils/escape-html';
 
 /**
  * Vista agrupada de movimientos del turno:
@@ -915,8 +916,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         .map(
           (it) => `
           <tr>
-            <td style="padding:5px 6px;font-size:13px;">${it.productName}</td>
-            <td style="padding:5px 6px;text-align:center;font-size:13px;">${it.quantity}</td>
+            <td style="padding:5px 6px;font-size:13px;">${esc(it.productName)}</td>
+            <td style="padding:5px 6px;text-align:center;font-size:13px;">${esc(it.quantity)}</td>
             <td style="padding:5px 6px;text-align:right;font-size:13px;">${cur(it.unitPrice)}</td>
             <td style="padding:5px 6px;text-align:right;font-size:13px;font-weight:600;">${cur(it.total)}</td>
           </tr>`,
@@ -952,9 +953,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         <div style="margin-bottom:14px;padding:10px 12px;background:#eef2ff;border-radius:8px;border:1px solid #c7d2fe;">
           <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#4f46e5;margin-bottom:7px;">Detalle de Cancha</p>
           <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;">
-            <span style="color:#6b7280;">Cancha</span><span style="font-weight:600;">${court}</span>
-            <span style="color:#6b7280;">Horario</span><span style="font-weight:600;">${hour}</span>
-            <span style="color:#6b7280;">Cliente</span><span style="font-weight:600;">${client}</span>
+            <span style="color:#6b7280;">Cancha</span><span style="font-weight:600;">${esc(court)}</span>
+            <span style="color:#6b7280;">Horario</span><span style="font-weight:600;">${esc(hour)}</span>
+            <span style="color:#6b7280;">Cliente</span><span style="font-weight:600;">${esc(client)}</span>
             <span style="color:#6b7280;">Precio cancha</span><span style="font-weight:600;">${cur(canchaPrice)}</span>
             ${group.itemsTotal > 0 ? `<span style="color:#6b7280;">Extras</span><span style="font-weight:600;">${cur(group.itemsTotal)}</span>` : ''}
           </div>
@@ -997,7 +998,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                         padding:7px 10px;margin-bottom:5px;background:#f9fafb;
                         border-radius:6px;border:1px solid #e5e7eb;">
               <div>
-                <span style="font-size:13px;color:#374151;font-weight:500;">${tx.hora}hs — ${label}</span>
+                <span style="font-size:13px;color:#374151;font-weight:500;">${esc(tx.hora)}hs — ${label}</span>
                 <span style="font-size:11px;color:#9ca3af;margin-left:6px;">(${method})</span>
               </div>
               <span style="font-weight:700;font-size:14px;">${cur(tx.monto)}</span>
@@ -1047,11 +1048,11 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;">Resumen de Venta</p>
           <div style="padding:10px 12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;font-size:13px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="color:#6b7280;">Empleado</span><span style="font-weight:600;">${group.userName}</span>
+              <span style="color:#6b7280;">Empleado</span><span style="font-weight:600;">${esc(group.userName)}</span>
             </div>
-            ${group.customerName ? `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#6b7280;">Cliente</span><span style="font-weight:600;">${group.customerName}</span></div>` : ''}
+            ${group.customerName ? `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#6b7280;">Cliente</span><span style="font-weight:600;">${esc(group.customerName)}</span></div>` : ''}
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="color:#6b7280;">Hora</span><span style="font-weight:600;">${group.firstHora}hs</span>
+              <span style="color:#6b7280;">Hora</span><span style="font-weight:600;">${esc(group.firstHora)}hs</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
               <span style="color:#6b7280;">Método</span><span style="font-weight:600;">${method}</span>
@@ -1097,7 +1098,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       const rows = group.items
         .map(
           (it) =>
-            `<tr><td>${it.productName}</td><td style="text-align:center;">${it.quantity}</td>` +
+            `<tr><td>${esc(it.productName)}</td><td style="text-align:center;">${esc(it.quantity)}</td>` +
             `<td style="text-align:right;">${cur(it.unitPrice)}</td><td style="text-align:right;">${cur(it.total)}</td></tr>`,
         )
         .join('');
@@ -1147,7 +1148,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
                 : i === group.transactions.length - 1
                   ? 'Pago Final'
                   : 'Pago Parcial';
-          return `<p>${tx.hora}hs &mdash; ${label} (${method}): <strong>${cur(tx.monto)}</strong></p>`;
+          return `<p>${esc(tx.hora)}hs &mdash; ${label} (${method}): <strong>${cur(tx.monto)}</strong></p>`;
         })
         .join('');
       const totalReserva = canchaPrice + group.itemsTotal;
@@ -1155,9 +1156,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         group.totalMonto > totalReserva ? group.totalMonto - totalReserva : 0;
       bodyHtml = `
         <h3>Turno de Cancha</h3>
-        <p><b>Cancha:</b> ${court}</p>
-        <p><b>Horario:</b> ${hour}</p>
-        <p><b>Cliente:</b> ${client}</p>
+        <p><b>Cancha:</b> ${esc(court)}</p>
+        <p><b>Horario:</b> ${esc(hour)}</p>
+        <p><b>Cliente:</b> ${esc(client)}</p>
         <p><b>Precio cancha:</b> ${cur(canchaPrice)}</p>
         ${itemsHtml}
         <h3>Cobros</h3>
@@ -1178,9 +1179,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         group.totalMonto > saleBase ? group.totalMonto - saleBase : 0;
       bodyHtml = `
         <h3>Venta de Productos</h3>
-        <p><b>Empleado:</b> ${group.userName}</p>
-        ${group.customerName ? `<p><b>Cliente:</b> ${group.customerName}</p>` : ''}
-        <p><b>Hora:</b> ${group.firstHora}hs</p>
+        <p><b>Empleado:</b> ${esc(group.userName)}</p>
+        ${group.customerName ? `<p><b>Cliente:</b> ${esc(group.customerName)}</p>` : ''}
+        <p><b>Hora:</b> ${esc(group.firstHora)}hs</p>
         ${itemsHtml}
         <p><b>Método de pago:</b> ${method}</p>
         <p class="cambio">Vuelto: ${cur(cambioSale)}</p>
