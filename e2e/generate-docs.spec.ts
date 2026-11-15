@@ -11,7 +11,7 @@
  *   test-results/      → video .webm del recorrido completo (video: 'on')
  *
  * Ejecución:
- *   npx playwright test e2e/generate-docs.spec.ts --project="Desktop Full HD"
+ *   E2E_DOCS=1 npx playwright test e2e/generate-docs.spec.ts --project=docs
  * ─────────────────────────────────────────────────────────────────────────────
  */
 

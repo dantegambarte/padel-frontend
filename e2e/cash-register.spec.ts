@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { ensureOpenCashSession } from './helpers/cash-session';
 
 async function goToCaja(page: Page) {
   await page.goto('/app/cash-register');
@@ -11,61 +12,42 @@ function cashScreenHeading(page: Page) {
   }).first();
 }
 
-function closeCashButton(page: Page) {
-  return page.getByRole('button', {
-    name: /Cerrar Jornada|Cerrar Caja Z|Cerrar mi Turno/i,
-  }).first();
-}
-
 /** Shift-close button only: unlike the day close (Z), it requires the counted cash. */
 function closeShiftButton(page: Page) {
   return page.getByRole('button', { name: /Cerrar mi Turno/i });
 }
 
 /**
- * Navega a la pestaña "Cierre de Turno". Devuelve `false` cuando la caja no se
- * puede cerrar (típicamente porque hay turnos pendientes y la app muestra el
- * diálogo "Hay pendientes").
+ * Opens the "Cierre de Turno" tab and fails unless the shift count screen
+ * ("Arqueo de Turno") appears. When the shift has pending items the app shows
+ * the "Hay pendientes en el turno" dialog first; accept carrying them over.
  *
- * OJO con `locator.isVisible()`: es un chequeo INSTANTÁNEO, no reintenta, y el
- * `{ timeout }` que se le pase se ignora. Usarlo justo después del click era una
- * carrera contra el render que en Mobile se perdía siempre: devolvía `false` y
- * el helper concluía "no se puede cerrar" aunque la pantalla de arqueo estuviera
- * por aparecer. Acá esperamos de verdad con `waitFor`.
- *
- * El heading "Arqueo de Turno" además NO está dentro de `<main>`, así que no se
- * acota la búsqueda a ese contenedor.
+ * Note: `locator.isVisible()` is an instant check that does not retry, so
+ * every wait here uses web-first assertions or `waitFor`.
  */
 async function goToCierreTurno(page: Page) {
   const cierreTab = page.getByRole('button', { name: /Cierre de Turno/i });
-  if (!(await cierreTab.isVisible())) return true;
-
+  await expect(cierreTab).toBeVisible();
   await cierreTab.click({ force: true });
 
-  const cierreHeading = page
-    .getByRole('heading', { name: /Arqueo de Turno/i })
-    .first();
-
-  const llegoAlArqueo = await cierreHeading
-    .waitFor({ state: 'visible', timeout: 10000 })
-    .then(() => true)
-    .catch(() => false);
-
-  return llegoAlArqueo;
+  const arqueoHeading = page.getByRole('heading', { name: /Arqueo de Turno/i }).first();
+  const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
+  await expect(arqueoHeading.or(pendingDialog)).toBeVisible({ timeout: 10_000 });
+  if (await pendingDialog.isVisible()) {
+    await pendingDialog.getByRole('button', { name: /Traspasar y cerrar turno/i }).click();
+  }
+  await expect(arqueoHeading).toBeVisible({ timeout: 10_000 });
 }
 
 async function fillCashCount(page: Page, amount = '1000') {
-  const canClose = await goToCierreTurno(page);
-  if (!canClose) return false;
-  const cashInput = page.locator('#efectivo-real');
-  if (await cashInput.isVisible()) {
-    await cashInput.fill(amount);
-  }
-  return true;
+  await goToCierreTurno(page);
+  await page.locator('#efectivo-real').fill(amount);
 }
 
 test.describe('Cierre de Caja', () => {
   test.beforeEach(async ({ page }) => {
+    await goToCaja(page);
+    await ensureOpenCashSession(page);
     await goToCaja(page);
   });
 
@@ -94,81 +76,42 @@ test.describe('Cierre de Caja', () => {
   test('CA-04: el botón de cerrar caja abre un diálogo de confirmación', async ({
     page,
   }) => {
-    const canClose = await fillCashCount(page);
-    if (!canClose) {
-      await expect(page.getByRole('dialog', { name: /Hay pendientes/i })).toBeVisible();
-      return;
-    }
-    const closeBtn = closeCashButton(page);
-    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
-      await closeBtn.click();
-      await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
-    } else {
-      const isClosed =
-        (await page.getByText(/cerrada|Caja cerrada/i).count()) > 0 ||
-        (await closeBtn.isDisabled({ timeout: 500 }).catch(() => false));
-      expect(isClosed).toBeTruthy();
-    }
+    await fillCashCount(page);
+    await closeShiftButton(page).click();
+    await expect(
+      page.getByRole('dialog', { name: /Confirmar Cierre de Turno/i }),
+    ).toBeVisible({ timeout: 3000 });
   });
 
   test('CA-05: el formulario de cierre requiere monto en efectivo contado', async ({
     page,
   }) => {
-    const canClose = await goToCierreTurno(page);
-    if (!canClose) return;
+    await goToCierreTurno(page);
     const closeBtn = closeShiftButton(page);
-    if (await closeBtn.isVisible()) {
-      await expect(closeBtn).toBeDisabled();
-      await fillCashCount(page);
-      await expect(closeBtn).toBeEnabled({ timeout: 1000 });
-    }
+    await expect(closeBtn).toBeDisabled();
+    await page.locator('#efectivo-real').fill('1000');
+    await expect(closeBtn).toBeEnabled({ timeout: 1000 });
   });
 
   test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({
     page,
   }) => {
-    const canClose = await fillCashCount(page, '5000');
-    if (!canClose) return;
-    const closeBtn = closeCashButton(page);
-    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
-      await closeBtn.click();
-      const dialog = page.getByRole('dialog');
-      await expect(dialog).toBeVisible({ timeout: 3000 });
-
-      const montoInput = dialog
-        .locator('input[type="number"], input[type="text"]')
-        .first();
-      if (await montoInput.isVisible()) {
-        await montoInput.fill('5000');
-        await expect(dialog.getByText(/diferencia|Diferencia|\$/i)).toBeVisible(
-          { timeout: 2000 },
-        );
-      }
-    }
+    await fillCashCount(page, '5000');
+    // The dialog repeats these labels; before opening it only the form shows them.
+    await expect(page.getByText('Efectivo contado:').first()).toBeVisible();
+    await expect(page.getByText('Descuadre:').first()).toBeVisible();
   });
 
   test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({
     page,
   }) => {
-    const canClose = await fillCashCount(page);
-    if (!canClose) {
-      const pendingDialog = page.getByRole('dialog', { name: /Hay pendientes/i });
-      await pendingDialog.getByRole('button', { name: /Cancelar/i }).click();
-      await expect(pendingDialog).not.toBeVisible({ timeout: 2000 });
-      return;
-    }
-    const closeBtn = closeCashButton(page);
-    if ((await closeBtn.isVisible()) && (await closeBtn.isEnabled())) {
-      await closeBtn.click();
-      const dialog = page.getByRole('dialog');
-      await expect(dialog).toBeVisible({ timeout: 3000 });
-
-      const cancelBtn = dialog.getByRole('button', { name: /Cancelar/i });
-      if (await cancelBtn.isVisible()) {
-        await cancelBtn.click();
-        await expect(dialog).not.toBeVisible({ timeout: 2000 });
-      }
-    }
+    await fillCashCount(page);
+    await closeShiftButton(page).click();
+    const dialog = page.getByRole('dialog', { name: /Confirmar Cierre de Turno/i });
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+    await dialog.getByRole('button', { name: /^Cancelar$/i }).click();
+    await expect(dialog).not.toBeVisible({ timeout: 2000 });
+    await expect(closeShiftButton(page)).toBeEnabled();
   });
 
   test('CA-08: muestra desglose por método de pago (efectivo vs transferencia)', async ({
