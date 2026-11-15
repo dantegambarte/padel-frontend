@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { ensureOpenCashSession } from './helpers/cash-session';
+import { ensureOpenCashSession, getCurrentCashSession } from './helpers/cash-session';
 
 async function goToCaja(page: Page) {
   await page.goto('/app/cash-register');
@@ -96,10 +96,12 @@ test.describe('Cierre de Caja', () => {
   test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({
     page,
   }) => {
-    await fillCashCount(page, '5000');
-    // The dialog repeats these labels; before opening it only the form shows them.
-    await expect(page.getByText('Efectivo contado:').first()).toBeVisible();
-    await expect(page.getByText('Descuadre:').first()).toBeVisible();
+    const expected = Math.max(0, Number((await getCurrentCashSession(page))['cashExpected']));
+    await fillCashCount(page, String(expected + 5000));
+    // Counting 5000 more than expected shows a +5000 discrepancy. The confirm
+    // dialog repeats these labels; before opening it only the form shows them.
+    const discrepancy = page.getByText('Descuadre:').first().locator('..');
+    await expect(discrepancy).toContainText(`+$${(5000).toLocaleString('es-AR')}`);
   });
 
   test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({
