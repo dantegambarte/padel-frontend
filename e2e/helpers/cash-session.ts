@@ -11,8 +11,9 @@ const MAX_STALE_DAYS = 20;
  * that against anything but a local backend unless explicitly allowed.
  */
 function assertSafeBackend(): void {
+  // URL keeps the brackets of an IPv6 hostname ("[::1]").
   const host = new URL(BACKEND_URL).hostname;
-  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
   if (!isLocal && process.env['E2E_ALLOW_REMOTE_CASH_CHANGES'] !== '1') {
     throw new Error(
       `Refusing to change cash sessions on ${BACKEND_URL}. ` +
@@ -59,8 +60,12 @@ export async function ensureOpenCashSession(page: Page): Promise<void> {
   // Close them the way the app asks the user to (one day per call), then retry.
   for (let day = 0; day < MAX_STALE_DAYS && (await blockedByStaleDay(opened)); day++) {
     const closed = await page.request.post(`${API_URL}/cash/daily-closures`, { headers });
-    // Another worker may have closed the same day first.
-    expect(closed.ok() || closed.status() === 409, await closed.text()).toBeTruthy();
+    // Another worker may have opened a session meanwhile, which blocks the
+    // close; the retried open then finds it. Any other failure is real.
+    const closedBody = await closed.text();
+    const blockedByOpenSession =
+      closed.status() === 409 && closedBody.includes('turno de caja abierto');
+    expect(closed.ok() || blockedByOpenSession, closedBody).toBeTruthy();
     opened = await open();
   }
 

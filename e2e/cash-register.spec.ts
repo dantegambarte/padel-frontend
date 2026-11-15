@@ -1,5 +1,14 @@
 import { test, expect, Page } from '@playwright/test';
-import { ensureOpenCashSession, getCurrentCashSession } from './helpers/cash-session';
+import { ensureOpenCashSession } from './helpers/cash-session';
+
+/** Parses an es-AR amount as rendered by the app ("$1.234,5", "+$5.000", "$-300"). */
+function parseArs(text: string): number {
+  const value = Number(text.replace(/[^\d,-]/g, '').replace(',', '.'));
+  if (!Number.isFinite(value) || !/\d/.test(text)) {
+    throw new Error(`Not an amount: "${text}"`);
+  }
+  return value;
+}
 
 async function goToCaja(page: Page) {
   await page.goto('/app/cash-register');
@@ -96,12 +105,21 @@ test.describe('Cierre de Caja', () => {
   test('CA-06: muestra la diferencia entre efectivo esperado y contado', async ({
     page,
   }) => {
-    const expected = Math.max(0, Number((await getCurrentCashSession(page))['cashExpected']));
-    await fillCashCount(page, String(expected + 5000));
-    // Counting 5000 more than expected shows a +5000 discrepancy. The confirm
+    const counted = 123_456;
+    await fillCashCount(page, String(counted));
+    // Read the expected cash from the same screen that computes the
+    // discrepancy, not from the API: another worker may record a cash movement
+    // in between. Polling both values together tolerates a refresh. The confirm
     // dialog repeats these labels; before opening it only the form shows them.
-    const discrepancy = page.getByText('Descuadre:').first().locator('..');
-    await expect(discrepancy).toContainText(`+$${(5000).toLocaleString('es-AR')}`);
+    const valueNextTo = (label: string) =>
+      page.getByText(label).first().locator('..').locator('span').last();
+    await expect
+      .poll(async () => {
+        const expected = parseArs(await valueNextTo('= Recaudación neta (efectivo):').innerText());
+        const discrepancy = parseArs(await valueNextTo('Descuadre:').innerText());
+        return discrepancy === counted - expected;
+      })
+      .toBe(true);
   });
 
   test('CA-07: el botón Cancelar del diálogo cierra el modal sin hacer cambios', async ({
