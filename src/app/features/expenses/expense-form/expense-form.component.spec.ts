@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -51,7 +51,6 @@ describe('ExpenseFormComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: Router, useValue: routerSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -184,5 +183,35 @@ describe('ExpenseFormComponent', () => {
     const emitSpy = spyOn(fixture.componentInstance.cancelled, 'emit');
     fixture.componentInstance.onCancel();
     expect(emitSpy).toHaveBeenCalled();
+  });
+
+  it('renders the draft banner only when a draft exists', () => {
+    setup(false);
+    const fixture = TestBed.createComponent(ExpenseFormComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Tenés un egreso sin guardar');
+
+    fixture.componentInstance.draftRestored.set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tenés un egreso sin guardar');
+  });
+
+  it('renders one category option per category and the server error after a failed submit', () => {
+    setup(false);
+    expensesServiceSpy.create.and.returnValue(
+      throwError(() => ({ error: { message: 'Error genérico' } })),
+    );
+    const fixture = TestBed.createComponent(ExpenseFormComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const optionTexts = Array.from(el.querySelectorAll('option')).map((o) => o.textContent?.trim());
+    for (const cat of fixture.componentInstance.categories) {
+      expect(optionTexts).toContain(cat);
+    }
+
+    fixture.componentInstance.form.patchValue({ amount: 5000, description: 'Pelotas' });
+    fixture.componentInstance.onSubmit();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Error genérico');
   });
 });

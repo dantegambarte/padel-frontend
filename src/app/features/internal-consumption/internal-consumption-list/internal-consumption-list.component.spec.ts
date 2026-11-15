@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEsAR from '@angular/common/locales/es-AR';
 import { of, throwError } from 'rxjs';
@@ -49,9 +48,7 @@ describe('InternalConsumptionListComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: InternalConsumptionService, useValue: serviceSpy },
         { provide: TeachersService, useValue: teachersServiceSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
   });
 
   it('loads consumptions, debt summary and teachers in parallel, enriching the summary', () => {
@@ -63,6 +60,15 @@ describe('InternalConsumptionListComponent', () => {
     expect(component.teachers()).toEqual([teacher]);
     expect(component.debtSummary()[0].teacherName).toBe('Juan');
     expect(component.debtSummary()[0].phoneNumber).toBe('+5491100000000');
+  });
+
+  it('renders a debt card per summary and the empty-state message when there are no consumptions', () => {
+    const fixture = TestBed.createComponent(InternalConsumptionListComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Deuda pendiente');
+    expect(el.textContent).toContain('Juan');
+    expect(el.textContent).toContain('No hay consumos registrados para los filtros seleccionados.');
   });
 
   it('sets an error message when the parallel load fails', () => {

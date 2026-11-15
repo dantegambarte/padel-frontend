@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { ExpensesListComponent } from './expenses-list.component';
 import { ExpensesService } from '../../../core/services/expenses.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Expense } from '../../../core/models/expense.model';
+
+@Component({ selector: 'app-expense-form', template: '<div class="expense-form-stub"></div>' })
+class ExpenseFormStubComponent {
+  readonly expense = input<Expense | null>(null);
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
+}
 
 describe('ExpensesListComponent', () => {
   let expensesServiceSpy: jasmine.SpyObj<ExpensesService>;
@@ -32,13 +41,15 @@ describe('ExpensesListComponent', () => {
     });
     expensesServiceSpy.getAll.and.returnValue(of([mockExpense]));
 
+    TestBed.overrideComponent(ExpensesListComponent, {
+      set: { imports: [ReactiveFormsModule, FormsModule, NgClass, ExpenseFormStubComponent] },
+    });
     TestBed.configureTestingModule({
     imports: [ExpensesListComponent],
     providers: [
         { provide: ExpensesService, useValue: expensesServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -137,5 +148,33 @@ describe('ExpensesListComponent', () => {
     expect(fixture.componentInstance.creatorName({ ...mockExpense, createdByUser: null })).toBe(
       'Sistema',
     );
+  });
+
+  it('renders a table row per expense and the empty state when there are none', () => {
+    setup(false);
+    expensesServiceSpy.getAll.and.returnValue(of([mockExpense, { ...mockExpense, id: 'e2', description: 'Red' }]));
+    const fixture = TestBed.createComponent(ExpensesListComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('tbody tr').length).toBe(2);
+    expect(el.textContent).toContain('Pelotas');
+    expect(el.textContent).not.toContain('No hay egresos registrados');
+
+    fixture.componentInstance.expenses.set([]);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('tbody tr').length).toBe(0);
+    expect(el.textContent).toContain('No hay egresos registrados');
+  });
+
+  it('renders the expense form only while showForm is true', () => {
+    setup(false);
+    const fixture = TestBed.createComponent(ExpensesListComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('app-expense-form')).toBeNull();
+
+    fixture.componentInstance.openCreateForm();
+    fixture.detectChanges();
+    expect(el.querySelector('app-expense-form')).not.toBeNull();
   });
 });

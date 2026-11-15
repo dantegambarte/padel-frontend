@@ -1,4 +1,3 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import {
   ComponentFixture,
   fakeAsync,
@@ -141,9 +140,7 @@ describe('PosComponent — Cuentas Abiertas', () => {
             provide: Router,
             useValue: { navigate: jasmine.createSpy('navigate') },
         },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
 
     fixture = TestBed.createComponent(PosComponent);
     component = fixture.componentInstance;
@@ -226,6 +223,26 @@ describe('PosComponent — Cuentas Abiertas', () => {
   });
 
   // ─── isLeaveOpenDisabled ──────────────────────────────────────────────────────
+
+  it('renders the empty-cart message, and a cart row once a product is added', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('No hay productos en el carrito');
+
+    component.cart.set([
+      {
+        productId: 'p1',
+        name: 'Agua Mineral 500ml',
+        salePrice: 100,
+        stock: 5,
+        minStock: 1,
+        category: '',
+        quantity: 1,
+      },
+    ]);
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('No hay productos en el carrito');
+    expect(el.textContent).toContain('Agua Mineral 500ml');
+  });
 
   it('isLeaveOpenDisabled: true con carrito vacío', () => {
     component.cart.set([]);

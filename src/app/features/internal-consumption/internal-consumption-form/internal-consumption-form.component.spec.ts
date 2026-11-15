@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { ChangeDetectorRef, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { InternalConsumptionFormComponent } from './internal-consumption-form.component';
@@ -71,9 +71,7 @@ describe('InternalConsumptionFormComponent', () => {
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: TeachersService, useValue: teachersServiceSpy },
         { provide: UsersService, useValue: usersServiceSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-});
+    ],});
   }
 
   it('defaults consumerType to "staff" for employees and "teacher" for admins', () => {
@@ -81,6 +79,21 @@ describe('InternalConsumptionFormComponent', () => {
     const fixture = TestBed.createComponent(InternalConsumptionFormComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance.form.value.consumerType).toBe('staff');
+  });
+
+  it('renders the consumer-type hint for each branch (teacher debt vs free staff consumption)', () => {
+    setup('admin');
+    const adminFixture = TestBed.createComponent(InternalConsumptionFormComponent);
+    adminFixture.detectChanges();
+    const adminEl: HTMLElement = adminFixture.nativeElement;
+    expect(adminEl.textContent).toContain('Genera deuda en cuenta corriente');
+    expect(adminEl.textContent).not.toContain('Consumo gratuito');
+
+    adminFixture.componentInstance.form.patchValue({ consumerType: 'staff' });
+    adminFixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+    adminFixture.detectChanges();
+    expect(adminEl.textContent).toContain('Consumo gratuito');
+    expect(adminEl.textContent).not.toContain('Genera deuda en cuenta corriente');
   });
 
   it('loads products, teachers and users (employees skip the users call)', () => {

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { ToastComponent } from './toast.component';
@@ -18,7 +17,6 @@ describe('ToastComponent', () => {
     await TestBed.configureTestingModule({
     imports: [NoopAnimationsModule, ToastComponent],
     providers: [{ provide: ToastService, useValue: toastServiceSpy }],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -58,4 +56,22 @@ describe('ToastComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.trackById(0, { id: 5 } as ToastMessage)).toBe(5);
   });
+  it('renders one card per toast and the description only when present', () => {
+    const fixture = TestBed.createComponent(ToastComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+
+    toastsSubject.next([
+      { id: 1, title: 'Guardado', description: 'Cambios aplicados', variant: 'success' },
+      { id: 2, title: 'Falló', variant: 'destructive' },
+    ]);
+    fixture.detectChanges();
+
+    const text = el.textContent ?? '';
+    expect(text).toContain('Guardado');
+    expect(text).toContain('Falló');
+    expect(text).toContain('Cambios aplicados');
+    expect(el.querySelectorAll('[aria-label="Notificaciones"] > div').length).toBe(2);
+  });
+
 });

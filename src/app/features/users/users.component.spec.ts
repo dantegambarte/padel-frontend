@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { of, Subject, throwError } from 'rxjs';
 import { UsersComponent } from './users.component';
 import { UsersService } from '../../core/services/users.service';
@@ -43,7 +43,6 @@ describe('UsersComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -187,4 +186,19 @@ describe('UsersComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Empleado Uno');
   });
+  it('renders one row per user with the user name', () => {
+    const fixture = TestBed.createComponent(UsersComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Empleado Uno');
+    expect(el.textContent).not.toContain('No hay usuarios registrados');
+  });
+
+  it('renders the empty-state row when there are no users', () => {
+    usersServiceSpy.findAll.and.returnValue(of([]));
+    const fixture = TestBed.createComponent(UsersComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No hay usuarios registrados');
+  });
+
 });

@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { Directive, Input, signal } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountComponent } from './account.component';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+
+@Directive({ selector: '[routerLink]' })
+class RouterLinkStubDirective {
+  @Input() routerLink: unknown;
+}
 
 describe('AccountComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
@@ -20,6 +28,9 @@ describe('AccountComponent', () => {
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate'], { events: routerEvents.asObservable() });
 
+    TestBed.overrideComponent(AccountComponent, {
+      set: { imports: [ModalScrollLockDirective, ReactiveFormsModule, FormsModule, NgClass, RouterLinkStubDirective] },
+    });
     TestBed.configureTestingModule({
     imports: [AccountComponent],
     providers: [
@@ -28,7 +39,6 @@ describe('AccountComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: {} },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -117,5 +127,33 @@ describe('AccountComponent', () => {
 
     expect(component.formError()).toBe('Contraseña actual incorrecta');
     expect(component.isSubmitting()).toBe(false);
+  });
+
+  it('renders the forced modal and warning banner only for a forced change', () => {
+    setup({ fullName: 'Admin Test', mustChangePassword: true });
+    const fixture = TestBed.createComponent(AccountComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Cambio de contraseña requerido');
+    expect(el.textContent).toContain('Debés cambiar tu contraseña para continuar');
+    expect(el.textContent).not.toContain('Cancelar');
+  });
+
+  it('renders the cancel button and no forced modal for a normal user', () => {
+    setup({ fullName: 'Admin Test', mustChangePassword: false });
+    const fixture = TestBed.createComponent(AccountComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('Cambio de contraseña requerido');
+    expect(el.textContent).toContain('Cancelar');
+  });
+
+  it('renders the form error message after a failed submit', () => {
+    setup({ fullName: 'Admin', mustChangePassword: false });
+    const fixture = TestBed.createComponent(AccountComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.submitChange();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('actual es obligatoria');
   });
 });

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { SidebarComponent } from './sidebar.component';
@@ -40,9 +39,7 @@ describe('SidebarComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: Router, useValue: routerSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
   });
 
   it('filters nav groups by the current user role', () => {
@@ -54,6 +51,23 @@ describe('SidebarComponent', () => {
     expect(component.filteredNavGroups().length).toBeGreaterThan(0);
     const allItems = component.filteredNavGroups().flatMap((g) => g.items);
     expect(allItems.some((i) => i.id === 'reports')).toBe(true);
+  });
+
+  it('renders a nav button label per item of the filtered nav groups', () => {
+    const fixture = TestBed.createComponent(SidebarComponent);
+    fixture.detectChanges();
+    currentUserSubject.next(adminUser);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const groups = fixture.componentInstance.filteredNavGroups();
+    expect(groups.length).toBeGreaterThan(0);
+    for (const group of groups) {
+      expect(el.textContent).toContain(group.label);
+      for (const item of group.items) {
+        expect(el.textContent).toContain(item.label);
+      }
+    }
   });
 
   it('shows no nav groups when logged out', () => {

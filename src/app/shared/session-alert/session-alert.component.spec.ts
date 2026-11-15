@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Subject } from 'rxjs';
 import { SessionAlertComponent } from './session-alert.component';
 import {
@@ -26,7 +25,6 @@ describe('SessionAlertComponent', () => {
         { provide: SessionAlertService, useValue: sessionAlertServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -77,4 +75,16 @@ describe('SessionAlertComponent', () => {
 
     expect(alertSubject.observed).toBe(false);
   });
+  it('renders the alert dialog only after the service emits an alert', () => {
+    const fixture = TestBed.createComponent(SessionAlertComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[role="alertdialog"]')).toBeNull();
+
+    alertSubject.next('SESSION_OVERRIDDEN' as SessionAlertType);
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role="alertdialog"]')).not.toBeNull();
+  });
+
 });

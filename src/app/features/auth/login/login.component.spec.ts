@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -24,7 +24,6 @@ describe('LoginComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: ThemeService, useValue: themeServiceStub },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -87,5 +86,29 @@ describe('LoginComponent', () => {
     expect(fixture.componentInstance.showPassword()).toBe(false);
     fixture.componentInstance.togglePasswordVisibility();
     expect(fixture.componentInstance.showPassword()).toBe(true);
+  });
+
+  it('renders the error banner only after a failed login', () => {
+    authServiceSpy.login.and.returnValue(throwError(() => ({ status: 401 })));
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('Credenciales inválidas');
+
+    fixture.componentInstance.form.setValue({ username: 'admin', password: 'wrongpass' });
+    fixture.componentInstance.onSubmit();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Credenciales inválidas');
+  });
+
+  it('renders the submit button label for the idle and loading states', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(button.textContent).toContain('Iniciar Sesión');
+
+    fixture.componentInstance.isLoading.set(true);
+    fixture.detectChanges();
+    expect(button.textContent).toContain('Iniciando sesión...');
   });
 });

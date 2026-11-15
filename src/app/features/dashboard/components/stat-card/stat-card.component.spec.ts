@@ -1,12 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { StatCardComponent } from './stat-card.component';
 
 describe('StatCardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     imports: [StatCardComponent],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -28,5 +26,18 @@ describe('StatCardComponent', () => {
     expect(component.title()).toBe('Ingresos');
     expect(component.value()).toBe('$10.000');
     expect(component.trend()?.positive).toBe(true);
+  });
+
+  it('renders the trend line only when a trend is provided', () => {
+    const fixture = TestBed.createComponent(StatCardComponent);
+    fixture.componentRef.setInput('value', '$10.000');
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('$10.000');
+    expect(el.querySelector('p.text-accent, p.text-destructive')).toBeNull();
+
+    fixture.componentRef.setInput('trend', { value: '12%', positive: true });
+    fixture.detectChanges();
+    expect(el.querySelector('p.text-accent')?.textContent?.trim()).toBe('+12%');
   });
 });

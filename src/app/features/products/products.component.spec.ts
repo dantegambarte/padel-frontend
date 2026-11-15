@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProductsComponent } from './products.component';
@@ -79,9 +79,7 @@ describe('ProductsComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-});
+    ],});
   }
 
   it('loads products and categories on init', () => {
@@ -91,6 +89,21 @@ describe('ProductsComponent', () => {
     expect(fixture.componentInstance.products().length).toBe(3);
     expect(fixture.componentInstance.categories()).toEqual([bebidas, alquileres]);
     expect(fixture.componentInstance.isLoading()).toBe(false);
+  });
+
+  it('renders a row per filtered product, and the no-results row when the filter matches nothing', () => {
+    setup();
+    const fixture = TestBed.createComponent(ProductsComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('#product-' + productA.id)).not.toBeNull();
+    expect(el.textContent).toContain('Gatorade');
+    expect(el.textContent).not.toContain('No se encontraron productos');
+
+    fixture.componentInstance.products.set([]);
+    fixture.detectChanges();
+    expect(el.querySelector('#product-' + productA.id)).toBeNull();
+    expect(el.textContent).toContain('No se encontraron productos');
   });
 
   it('toasts an error when products fail to load', () => {

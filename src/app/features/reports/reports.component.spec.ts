@@ -1,5 +1,4 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ReportsComponent } from './reports.component';
 import { ReportsService, TransactionExport } from '../../core/services/reports.service';
@@ -50,7 +49,6 @@ describe('ReportsComponent', () => {
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: BookingsService, useValue: bookingsServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -322,4 +320,17 @@ describe('ReportsComponent', () => {
     expect(fixture.componentInstance.expenseCategoryClass('Insumos')).toContain('blue');
     expect(fixture.componentInstance.expenseCategoryClass('???')).toContain('bg-secondary');
   });
+  it('renders one tab button per tab and one button per preset', () => {
+    setup();
+    const fixture = TestBed.createComponent(ReportsComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const comp = fixture.componentInstance as any;
+    expect(el.querySelectorAll('button[data-tab-index]').length).toBe(comp.tabs.length);
+    const text = el.textContent ?? '';
+    for (const p of comp.presets) {
+      expect(text).toContain(p.label);
+    }
+  });
+
 });

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { InventoryAlertsComponent } from './inventory-alerts.component';
@@ -29,9 +28,7 @@ describe('InventoryAlertsComponent', () => {
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: Router, useValue: routerSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
   });
 
   it('loads alerts on init', () => {
@@ -39,6 +36,20 @@ describe('InventoryAlertsComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.allAlerts().length).toBe(2);
     expect(fixture.componentInstance.isLoading()).toBe(false);
+  });
+
+  it('renders the alert products, and the all-OK state when there are no alerts', () => {
+    const fixture = TestBed.createComponent(InventoryAlertsComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Pelotas');
+    expect(el.textContent).toContain('Gatorade');
+    expect(el.textContent).not.toContain('¡Todo el stock está OK!');
+
+    fixture.componentInstance.allAlerts.set([]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('¡Todo el stock está OK!');
+    expect(el.textContent).not.toContain('Pelotas');
   });
 
   it('splits alerts into outOfStock and lowStock', () => {

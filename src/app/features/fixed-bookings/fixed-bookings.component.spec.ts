@@ -1,5 +1,4 @@
-import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { FixedBookingsComponent } from './fixed-bookings.component';
@@ -75,7 +74,6 @@ describe('FixedBookingsComponent', () => {
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: TeachersService, useValue: teachersSvcSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -89,6 +87,21 @@ describe('FixedBookingsComponent', () => {
     expect(component.teachers()).toEqual([teacher]);
     expect(component.isLoading()).toBe(false);
     expect(component.selectedCourtId).toBe('c1');
+  });
+
+  it('renders a row per booking in the list tab and the empty state when there are none', () => {
+    setup();
+    const fixture = TestBed.createComponent(FixedBookingsComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.activeTab.set('lista');
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('María');
+    expect(el.textContent).not.toContain('No hay turnos fijos registrados');
+
+    fixture.componentInstance.fixedBookings.set([]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('No hay turnos fijos registrados');
   });
 
   it('toasts an error when loading fixed bookings fails', () => {
@@ -281,7 +294,7 @@ describe('FixedBookingsComponent', () => {
     expect(fixture.componentInstance.isSubmitting()).toBe(false);
   });
 
-  it('offers to retry with the next available date on CONFLICT_START_DATE (409)', async () => {
+  it('offers to retry with the next available date on CONFLICT_START_DATE (409)', fakeAsync(() => {
     setup();
     const confirmed = Promise.resolve({ isConfirmed: true } as any);
     spyOn(Swal, 'fire').and.returnValue(confirmed);
@@ -301,13 +314,12 @@ describe('FixedBookingsComponent', () => {
 
     fixture.componentInstance.submitForm();
     expect(Swal.fire).toHaveBeenCalled();
-    await confirmed;
-    await Promise.resolve();
+    flushMicrotasks();
 
     expect(fixedSvcSpy.create).toHaveBeenCalledTimes(2);
     expect(fixedSvcSpy.create.calls.mostRecent().args[0].startDate).toBe('2026-02-08');
     expect(fixture.componentInstance.form.startDate).toBe('2026-02-08');
-  });
+  }));
 
   it('generateNext() reports the number of generated bookings', () => {
     setup();
