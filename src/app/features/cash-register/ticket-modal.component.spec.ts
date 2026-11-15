@@ -75,6 +75,54 @@ describe('TicketModalComponent', () => {
     expect(fixture.componentInstance.sale()).toBeNull();
   });
 
+  it('fetches exactly once per saleId change and ignores its own state signals', () => {
+    salesServiceSpy.findOne.and.returnValue(of(mockSale));
+    const fixture = TestBed.createComponent(TicketModalComponent);
+    const component = fixture.componentInstance;
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
+
+    // State written by the load must not re-run the effect.
+    component.sale.set(null);
+    component.isLoading.set(true);
+    component.loadError.set('x');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
+
+    // Re-setting the same saleId is not a change.
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
+
+    fixture.componentRef.setInput('saleId', 's2');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(salesServiceSpy.findOne.calls.allArgs()).toEqual([['s1'], ['s2']]);
+  });
+
+  it('resets sale and loadError when saleId becomes null after a failed fetch', () => {
+    salesServiceSpy.findOne.and.returnValue(throwError(() => new Error('boom')));
+    const fixture = TestBed.createComponent(TicketModalComponent);
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    expect(fixture.componentInstance.loadError()).toBe('No se pudo cargar el detalle de la venta.');
+    expect(fixture.componentInstance.isLoading()).toBe(false);
+
+    fixture.componentRef.setInput('saleId', null);
+    fixture.detectChanges();
+    TestBed.flushEffects();
+
+    expect(fixture.componentInstance.sale()).toBeNull();
+    expect(fixture.componentInstance.loadError()).toBe('');
+    expect(fixture.componentInstance.isLoading()).toBe(false);
+    expect(salesServiceSpy.findOne).toHaveBeenCalledTimes(1);
+  });
+
   it('close() emits closeModal', () => {
     const fixture = TestBed.createComponent(TicketModalComponent);
     fixture.detectChanges();
