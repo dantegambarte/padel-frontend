@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { PricingShiftsComponent } from './pricing-shifts.component';
@@ -36,9 +35,7 @@ describe('PricingShiftsComponent', () => {
 
     await TestBed.configureTestingModule({
     imports: [ReactiveFormsModule, PricingShiftsComponent],
-    providers: [{ provide: PricingShiftsService, useValue: serviceSpy }],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    providers: [{ provide: PricingShiftsService, useValue: serviceSpy }],}).compileComponents();
   });
 
   it('loads shifts on init', () => {
@@ -46,6 +43,19 @@ describe('PricingShiftsComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.shifts()).toEqual([shift]);
     expect(fixture.componentInstance.isLoading()).toBe(false);
+  });
+
+  it('renders the loaded shifts, and the empty state when there are none', () => {
+    const fixture = TestBed.createComponent(PricingShiftsComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Horario pico');
+    expect(el.textContent).not.toContain('Sin franjas horarias configuradas');
+
+    fixture.componentInstance.shifts.set([]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Sin franjas horarias configuradas');
+    expect(el.textContent).not.toContain('Horario pico');
   });
 
   it('sets serverError when loading fails', () => {

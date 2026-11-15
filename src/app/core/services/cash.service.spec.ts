@@ -115,6 +115,10 @@ describe('CashService', () => {
     httpMock
       .expectOne(`${url}/current`)
       .flush('boom', { status: 500, statusText: 'Server Error' });
+
+    // The failed response is not cached: the next call hits the API again.
+    service.getCurrent().subscribe();
+    httpMock.expectOne(`${url}/current`).flush(apiResponseOpen);
   });
 
   it('getCurrent() cache expires after the 10s TTL', fakeAsync(() => {
@@ -219,11 +223,19 @@ describe('CashService', () => {
   });
 
   it('close() PATCHes /cash/sessions/current, omitting empty notes, and clears the cache', () => {
+    service.getCurrent().subscribe();
+    httpMock.expectOne(`${url}/current`).flush(apiResponseOpen);
+    service.getCurrent().subscribe();
+    httpMock.expectNone(`${url}/current`);
+
     service.close({ efectivoContado: 9000, notas: '' }).subscribe();
     const req = httpMock.expectOne(`${url}/sessions/current`);
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ cashCounted: 9000 });
     req.flush({ id: 'sess1', closedAt: '2026-01-01T20:00:00Z', diferencia: 0 });
+
+    service.getCurrent().subscribe();
+    httpMock.expectOne(`${url}/current`).flush(apiResponseOpen);
   });
 
   it('close() includes notes when non-empty', () => {

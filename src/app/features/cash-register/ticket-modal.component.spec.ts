@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { TicketModalComponent } from './ticket-modal.component';
 import { SalesService, SaleDetail } from '../../core/services/sales.service';
@@ -23,7 +22,6 @@ describe('TicketModalComponent', () => {
     await TestBed.configureTestingModule({
     imports: [TicketModalComponent],
     providers: [{ provide: SalesService, useValue: salesServiceSpy }],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -148,5 +146,44 @@ describe('TicketModalComponent', () => {
       fecha: '--',
       hora: '--',
     });
+  });
+
+  it('renders nothing without a saleId and one row per item once the sale loads', () => {
+    salesServiceSpy.findOne.and.returnValue(
+      of({
+        ...mockSale,
+        customerName: 'Juan',
+        items: [
+          { quantity: 2, unitPrice: '500', product: { name: 'Gatorade' } },
+          { quantity: 1, unitPrice: '500', product: { name: 'Pelotas' } },
+        ],
+      } as any),
+    );
+    const fixture = TestBed.createComponent(TicketModalComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent?.trim()).toBe('');
+
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    fixture.detectChanges();
+
+    const rows = el.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('Gatorade');
+    expect(el.textContent).toContain('Cliente: Juan');
+    expect(el.textContent).toContain('Efectivo');
+    expect(el.textContent).not.toContain('Transferencia');
+  });
+
+  it('renders the load error message when the fetch fails', () => {
+    salesServiceSpy.findOne.and.returnValue(throwError(() => new Error('boom')));
+    const fixture = TestBed.createComponent(TicketModalComponent);
+    fixture.componentRef.setInput('saleId', 's1');
+    fixture.detectChanges();
+    TestBed.flushEffects();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No se pudo cargar el detalle de la venta.');
   });
 });

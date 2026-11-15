@@ -84,8 +84,15 @@ describe('ProductsService', () => {
     httpMock.expectOne(url).flush([mockProduct]);
     service.getLowStock().subscribe();
     httpMock.expectOne(`${url}/low-stock`).flush([]);
+    service.getFeatured().subscribe();
+    httpMock.expectOne(`${url}/featured`).flush([mockProduct]);
+    service.getFeatured().subscribe();
+    httpMock.expectNone(`${url}/featured`);
 
     service.clearCache();
+
+    service.getFeatured().subscribe();
+    httpMock.expectOne(`${url}/featured`).flush([mockProduct]);
 
     service.findAll().subscribe();
     const secondFindAll = httpMock.expectOne(url);
@@ -105,11 +112,16 @@ describe('ProductsService', () => {
       stock: 20,
       isFeatured: false,
     };
+    service.findAll().subscribe();
+    httpMock.expectOne(url).flush([]);
+
     service.create(dto).subscribe();
-    const req = httpMock.expectOne(url);
-    expect(req.request.method).toBe('POST');
+    const req = httpMock.expectOne({ url, method: 'POST' });
     expect(req.request.body).toEqual(dto);
     req.flush(mockProduct);
+
+    service.findAll().subscribe();
+    httpMock.expectOne({ url, method: 'GET' }).flush([mockProduct]);
   });
 
   it('update() PATCHes /products/:id', () => {

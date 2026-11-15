@@ -1,4 +1,6 @@
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
@@ -10,6 +12,14 @@ import { ConfigService } from '../../core/services/config.service';
 import { DraftService } from '../../core/services/draft.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CashRegisterComponent } from './cash-register.component';
+import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
+import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
+
+@Component({ selector: 'app-ticket-modal', template: '' })
+class TicketModalStubComponent {
+  readonly saleId = input<string | null>(null);
+  readonly closeModal = output<void>();
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -84,6 +94,11 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
       'info',
     ]);
 
+    TestBed.overrideComponent(CashRegisterComponent, {
+      set: {
+        imports: [ReactiveFormsModule, DisableScrollDirective, FormsModule, NgClass, TicketModalStubComponent, ModalScrollLockDirective],
+      },
+    });
     await TestBed.configureTestingModule({
     imports: [CashRegisterComponent],
     providers: [
@@ -113,7 +128,6 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
             useValue: { getAll: jasmine.createSpy('getAll').and.returnValue(of([])) },
         },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
 
     fixture = TestBed.createComponent(CashRegisterComponent);
@@ -211,6 +225,22 @@ describe('CashRegisterComponent — apertura de caja / manejo de conflicto DAY_A
 
     expect(isOpeningCapturado).toBe(false);
   }));
+
+  // ─── Rendered template ─────────────────────────────────────────────────────
+
+  it('renders the closed-register opening screen when there is no session', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Caja Cerrada');
+    expect(el.textContent).not.toContain('Consultando estado de caja...');
+  });
+
+  it('renders the loading state while the session status is unknown', () => {
+    component.isSessionOpen.set(null);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Consultando estado de caja...');
+    expect(el.textContent).not.toContain('Caja Cerrada');
+  });
 
   // ─── Initial fund pre-filled from configuration ─────────────────────────────
   describe('initial fund pre-filled from fondo_caja_base', () => {

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { TeachersComponent } from './teachers.component';
 import { TeachersService } from '../../core/services/teachers.service';
@@ -35,7 +34,6 @@ describe('TeachersComponent', () => {
         { provide: TeachersService, useValue: teachersSvcSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -142,4 +140,20 @@ describe('TeachersComponent', () => {
     fixture.componentInstance.form.fullName = 'Cambiado';
     expect(fixture.componentInstance.canDeactivate()).toBe(false);
   });
+  it('renders a row with the teacher name when teachers exist', () => {
+    const fixture = TestBed.createComponent(TeachersComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Juan Perez');
+  });
+
+  it('renders the empty state and no teacher rows when there are no teachers', () => {
+    teachersSvcSpy.findAll.and.returnValue(of([]));
+    const fixture = TestBed.createComponent(TeachersComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('No hay profesores registrados');
+    expect(el.textContent).not.toContain('Juan Perez');
+    expect(el.querySelector('tbody tr')).toBeNull();
+  });
+
 });

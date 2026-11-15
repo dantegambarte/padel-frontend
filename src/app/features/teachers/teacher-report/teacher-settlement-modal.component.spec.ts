@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -66,7 +65,6 @@ describe('TeacherSettlementModalComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: AuthService, useValue: authServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -167,4 +165,13 @@ describe('TeacherSettlementModalComponent', () => {
     const fixture = createWithInputs('clases');
     expect(fixture.componentInstance.isEmployeeRole).toBe(false);
   });
+  it('renders the canteen section with its empty state only in "completa" mode', () => {
+    const completa: HTMLElement = createWithInputs('completa').nativeElement;
+    expect(completa.textContent).toContain('Consumos de Cantina');
+    expect(completa.textContent).toContain('Sin consumos pendientes');
+
+    const clases: HTMLElement = createWithInputs('clases').nativeElement;
+    expect(clases.textContent).not.toContain('Consumos de Cantina');
+  });
+
 });

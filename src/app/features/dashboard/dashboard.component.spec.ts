@@ -1,50 +1,45 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Component, signal } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../core/services/auth.service';
-import { BookingsService } from '../../core/services/bookings.service';
-import { CashService } from '../../core/services/cash.service';
-import { ProductsService } from '../../core/services/products.service';
+
+@Component({ selector: 'app-dashboard-admin', template: '' })
+class DashboardAdminStub {}
+
+@Component({ selector: 'app-dashboard-employee', template: '' })
+class DashboardEmployeeStub {}
 
 describe('DashboardComponent', () => {
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  const isAdminSignal = signal(false);
 
   beforeEach(async () => {
-    authServiceSpy = jasmine.createSpyObj('AuthService', [], {
-      isAdmin: false,
-      isAdminSignal: signal(false),
-    });
-
-    const bookingsServiceSpy = jasmine.createSpyObj('BookingsService', ['findByDate']);
-    bookingsServiceSpy.findByDate.and.returnValue(of([]));
-    const cashServiceSpy = jasmine.createSpyObj('CashService', ['getCurrent']);
-    cashServiceSpy.getCurrent.and.returnValue(of({ efectivoEsperado: 0 } as any));
-    const productsServiceSpy = jasmine.createSpyObj('ProductsService', ['getLowStock']);
-    productsServiceSpy.getLowStock.and.returnValue(of([]));
-
+    isAdminSignal.set(false);
     await TestBed.configureTestingModule({
-    imports: [DashboardComponent],
-    providers: [
-        provideRouter([]),
-        { provide: AuthService, useValue: authServiceSpy },
-        { provide: BookingsService, useValue: bookingsServiceSpy },
-        { provide: CashService, useValue: cashServiceSpy },
-        { provide: ProductsService, useValue: productsServiceSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+      imports: [DashboardComponent],
+      providers: [{ provide: AuthService, useValue: { isAdminSignal } }],
+    })
+      .overrideComponent(DashboardComponent, {
+        set: { imports: [DashboardAdminStub, DashboardEmployeeStub] },
+      })
+      .compileComponents();
   });
 
-  it('creates and renders without throwing', () => {
+  function render(): HTMLElement {
     const fixture = TestBed.createComponent(DashboardComponent);
-    expect(() => fixture.detectChanges()).not.toThrow();
-    expect(fixture.componentInstance).toBeTruthy();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('renders the employee dashboard for non-admin users', () => {
+    const el = render();
+    expect(el.querySelector('app-dashboard-employee')).not.toBeNull();
+    expect(el.querySelector('app-dashboard-admin')).toBeNull();
   });
 
-  it('isAdmin reflects AuthService.isAdmin', () => {
-    const fixture = TestBed.createComponent(DashboardComponent);
-    expect(fixture.componentInstance.isAdmin()).toBe(false);
+  it('renders the admin dashboard for admin users', () => {
+    isAdminSignal.set(true);
+    const el = render();
+    expect(el.querySelector('app-dashboard-admin')).not.toBeNull();
+    expect(el.querySelector('app-dashboard-employee')).toBeNull();
   });
 });

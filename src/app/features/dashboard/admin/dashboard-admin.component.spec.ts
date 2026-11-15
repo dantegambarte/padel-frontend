@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { DashboardAdminComponent } from './dashboard-admin.component';
 import { ReportsService, TodayKpis, DailyRevenue } from '../../../core/services/reports.service';
@@ -30,7 +29,6 @@ describe('DashboardAdminComponent', () => {
         { provide: ReportsService, useValue: reportsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -61,5 +59,27 @@ describe('DashboardAdminComponent', () => {
     expect(fixture.componentInstance.fmt(null)).toBe('0');
     expect(fixture.componentInstance.fmt(undefined)).toBe('0');
     expect(fixture.componentInstance.fmt(1500)).toBe((1500).toLocaleString('es-AR'));
+  });
+
+  it('renders the revenue summary once loaded and the empty-revenue message for zero revenue', () => {
+    const fixture = TestBed.createComponent(DashboardAdminComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Total Recaudado');
+    expect(el.textContent).not.toContain('Sin ingresos registrados hoy');
+
+    fixture.componentInstance.kpis.set({ ...mockKpis, totalRevenue: 0 });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Sin ingresos registrados hoy');
+  });
+
+  it('renders loading skeletons while loading', () => {
+    const fixture = TestBed.createComponent(DashboardAdminComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.isLoading.set(true);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(el.textContent).not.toContain('Total Recaudado');
   });
 });

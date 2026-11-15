@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DashboardEmployeeComponent } from './dashboard-employee.component';
@@ -33,7 +32,6 @@ describe('DashboardEmployeeComponent', () => {
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -98,5 +96,31 @@ describe('DashboardEmployeeComponent', () => {
     ).toBe(false);
 
     expect(component.isPaid({ payment: null, priceAmount: 3000 } as any)).toBe(false);
+  });
+
+  it('renders the empty-state messages when there are no bookings or low-stock products', () => {
+    const fixture = TestBed.createComponent(DashboardEmployeeComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('No hay turnos pendientes para hoy');
+    expect(el.textContent).toContain('Todos los productos tienen stock suficiente');
+  });
+
+  it('renders one row per upcoming booking and low-stock product', () => {
+    const court = { id: 'c1', name: 'Cancha 1', description: '', isActive: true };
+    bookingsServiceSpy.findByDate.and.returnValue(
+      of([
+        { status: 'booked', hour: '15:00', court } as any,
+        { status: 'playing', hour: '09:00', court } as any,
+      ]),
+    );
+    productsServiceSpy.getLowStock.and.returnValue(of([{ name: 'Gatorade', stock: 1 } as any]));
+    const fixture = TestBed.createComponent(DashboardEmployeeComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('No hay turnos pendientes para hoy');
+    expect(el.textContent).not.toContain('Todos los productos tienen stock suficiente');
+    expect(el.textContent).toContain('Cancha 1');
+    expect(el.textContent).toContain('Gatorade');
   });
 });

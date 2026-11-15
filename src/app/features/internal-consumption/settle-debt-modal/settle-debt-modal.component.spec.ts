@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SettleDebtModalComponent } from './settle-debt-modal.component';
@@ -50,9 +49,7 @@ describe('SettleDebtModalComponent', () => {
 
     await TestBed.configureTestingModule({
     imports: [SettleDebtModalComponent],
-    providers: [{ provide: InternalConsumptionService, useValue: serviceSpy }],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    providers: [{ provide: InternalConsumptionService, useValue: serviceSpy }],}).compileComponents();
   });
 
   function createWithInputs() {
@@ -71,6 +68,17 @@ describe('SettleDebtModalComponent', () => {
     });
     expect(fixture.componentInstance.consumptions().length).toBe(1);
     expect(fixture.componentInstance.loading()).toBe(false);
+  });
+
+  it('renders a row per pending consumption, or the empty message when there are none', () => {
+    const fixture = createWithInputs();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Gatorade');
+    expect(el.textContent).not.toContain('No hay consumos pendientes.');
+
+    fixture.componentInstance.consumptions.set([]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('No hay consumos pendientes.');
   });
 
   it('total sums unitCostPrice * quantity across consumptions', () => {

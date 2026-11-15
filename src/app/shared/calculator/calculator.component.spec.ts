@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CalculatorComponent } from './calculator.component';
 import { CalculatorService } from '../../core/services/calculator.service';
@@ -17,7 +16,6 @@ describe('CalculatorComponent', () => {
     await TestBed.configureTestingModule({
     imports: [CalculatorComponent],
     providers: [{ provide: CalculatorService, useValue: calcServiceSpy }],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -156,4 +154,15 @@ describe('CalculatorComponent', () => {
     component.onKey(event);
     expect(calcServiceSpy.close).toHaveBeenCalled();
   });
+  it('renders the dialog only while visible', () => {
+    const fixture = create();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[role="dialog"]')).toBeNull();
+
+    visibleSubject.next(true);
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Calculadora');
+  });
+
 });

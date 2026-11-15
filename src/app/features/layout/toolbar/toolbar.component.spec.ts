@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { ToolbarComponent } from './toolbar.component';
@@ -47,9 +47,7 @@ describe('ToolbarComponent', () => {
         { provide: NotificationService, useValue: notificationServiceSpy },
         { provide: SearchService, useValue: searchServiceSpy },
         { provide: BookingsService, useValue: bookingsServiceSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
   });
 
   it('mirrors notifications from the service', () => {
@@ -59,6 +57,29 @@ describe('ToolbarComponent', () => {
     notificationsSubject.next([notif]);
     expect(fixture.componentInstance.notifications()).toEqual([notif]);
     expect(fixture.componentInstance.notifCount()).toBe(1);
+  });
+
+  it('renders notifications in the open panel, with the clear-all action only when there are some', () => {
+    const fixture = TestBed.createComponent(ToolbarComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.isNotifOpen.set(true);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('Limpiar todas');
+
+    notificationsSubject.next([
+      {
+        id: 'n1',
+        title: 'Turno demorado',
+        message: 'Cancha 1 sin check-in',
+        category: 'TURNOS',
+        actionRoute: ['/app/schedule'],
+      } as AppNotification,
+    ]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Limpiar todas');
+    expect(el.textContent).toContain('Turno demorado');
+    expect(el.textContent).toContain('Cancha 1 sin check-in');
   });
 
   it('does not load pending deposits for a non-admin user', () => {

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { TeacherReportComponent } from './teacher-report.component';
 import { AuthService } from '../../../core/services/auth.service';
@@ -36,7 +35,6 @@ describe('TeacherReportComponent', () => {
         { provide: ToastService, useValue: toastServiceSpy },
         { provide: AuthService, useValue: authServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -140,4 +138,15 @@ describe('TeacherReportComponent', () => {
     component.closeSettlement();
     expect(component.showSettlementModal()).toBe(false);
   });
+  it('renders one teacher option per loaded teacher', () => {
+    teachersSvcSpy.findAll.and.returnValue(of([teacher, { ...teacher, id: 't2', fullName: 'Ana', isActive: false }]));
+    const fixture = TestBed.createComponent(TeacherReportComponent);
+    fixture.detectChanges();
+    const options = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('select option:not([disabled])'),
+    ).map((o) => o.textContent?.trim());
+    expect(options).toContain('Juan');
+    expect(options).toContain('Ana (inactivo)');
+  });
+
 });

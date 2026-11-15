@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { LayoutComponent } from './layout.component';
@@ -57,9 +56,7 @@ describe('LayoutComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
         { provide: RemindersApiService, useValue: remindersApiServiceSpy },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-}).compileComponents();
+    ],}).compileComponents();
   });
 
   it('resolves the initial page title from the router URL', () => {
@@ -106,6 +103,17 @@ describe('LayoutComponent', () => {
     const fixture = TestBed.createComponent(LayoutComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance.unclosedSessionDate()).toBe('2020-01-01');
+  });
+
+  it('renders the unclosed-session dialog only when a previous-day session is open', () => {
+    const fixture = TestBed.createComponent(LayoutComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('#unclosed-title')).toBeNull();
+
+    fixture.componentInstance.unclosedSessionDate.set('2020-01-01');
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alertdialog"] #unclosed-title')).not.toBeNull();
   });
 
   it('toggleSidebar() flips isSidebarOpen', () => {

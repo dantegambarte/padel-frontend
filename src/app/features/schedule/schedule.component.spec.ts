@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgZone } from '@angular/core';
 import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
@@ -173,7 +173,6 @@ describe('ScheduleComponent', () => {
         { provide: DraftService, useValue: draftServiceSpy },
         { provide: HolidayService, useValue: { isHoliday: false } },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 });
   }
 
@@ -665,4 +664,23 @@ describe('ScheduleComponent', () => {
       expect(fixture.componentInstance.selectedDate).toBe('2026-02-01');
     });
   });
+  it('renders a header per court after a successful load', () => {
+    setup();
+    const fixture = TestBed.createComponent(ScheduleComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain(court.name);
+    expect(el.textContent).not.toContain('No se pudo conectar');
+  });
+
+  it('renders the connection error banner and no court grid when the load fails', () => {
+    setup();
+    courtsServiceSpy.findAll.and.returnValue(throwError(() => new Error('boom')));
+    const fixture = TestBed.createComponent(ScheduleComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('No se pudo conectar');
+    expect(el.textContent).not.toContain(court.name);
+  });
+
 });

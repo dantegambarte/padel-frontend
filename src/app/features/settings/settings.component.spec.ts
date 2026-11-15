@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError, Subject } from 'rxjs';
 import { SettingsComponent } from './settings.component';
 import { ConfigService, ConfigEntry } from '../../core/services/config.service';
@@ -37,7 +36,6 @@ describe('SettingsComponent', () => {
         { provide: CourtsService, useValue: courtsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
 }).compileComponents();
   });
 
@@ -132,4 +130,23 @@ describe('SettingsComponent', () => {
     expect(courtsServiceSpy.delete).toHaveBeenCalledWith('c1');
     expect(fixture.componentInstance.courtToDelete()).toBeNull();
   });
+  it('renders the empty-state message, then one row per court once courts arrive', () => {
+    const fixture = TestBed.createComponent(SettingsComponent);
+    fixture.detectChanges();
+    courtsSubject.next([]);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('No hay canchas registradas');
+
+    courtsSubject.next([
+      { id: 'c1', name: 'Cancha Central', isActive: true } as Court,
+      { id: 'c2', name: 'Cancha Norte', isActive: false } as Court,
+    ]);
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('No hay canchas registradas');
+    expect(el.textContent).toContain('Cancha Central');
+    expect(el.textContent).toContain('Cancha Norte');
+  });
+
 });
