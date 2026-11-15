@@ -281,16 +281,16 @@ describe('FixedBookingsComponent', () => {
     expect(fixture.componentInstance.isSubmitting()).toBe(false);
   });
 
-  it('offers to retry with the next available date on CONFLICT_START_DATE (409)', () => {
+  it('offers to retry with the next available date on CONFLICT_START_DATE (409)', async () => {
     setup();
-    spyOn(Swal, 'fire').and.returnValue(
-      Promise.resolve({ isConfirmed: true } as any),
-    );
-    fixedSvcSpy.create.and.returnValue(
+    const confirmed = Promise.resolve({ isConfirmed: true } as any);
+    spyOn(Swal, 'fire').and.returnValue(confirmed);
+    fixedSvcSpy.create.and.returnValues(
       throwError(() => ({
         status: 409,
         error: { message: 'CONFLICT_START_DATE', nextAvailableDate: '2026-02-08' },
       })),
+      of(bookingA),
     );
     const fixture = TestBed.createComponent(FixedBookingsComponent);
     fixture.detectChanges();
@@ -300,8 +300,13 @@ describe('FixedBookingsComponent', () => {
     fixture.componentInstance.form.startDate = '2026-02-01';
 
     fixture.componentInstance.submitForm();
-
     expect(Swal.fire).toHaveBeenCalled();
+    await confirmed;
+    await Promise.resolve();
+
+    expect(fixedSvcSpy.create).toHaveBeenCalledTimes(2);
+    expect(fixedSvcSpy.create.calls.mostRecent().args[0].startDate).toBe('2026-02-08');
+    expect(fixture.componentInstance.form.startDate).toBe('2026-02-08');
   });
 
   it('generateNext() reports the number of generated bookings', () => {

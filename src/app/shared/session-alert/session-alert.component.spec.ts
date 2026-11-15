@@ -71,6 +71,10 @@ describe('SessionAlertComponent', () => {
   it('unsubscribes on destroy', () => {
     const fixture = TestBed.createComponent(SessionAlertComponent);
     fixture.detectChanges();
-    expect(() => fixture.destroy()).not.toThrow();
+    expect(alertSubject.observed).toBe(true);
+
+    fixture.destroy();
+
+    expect(alertSubject.observed).toBe(false);
   });
 });

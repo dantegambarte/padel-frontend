@@ -83,18 +83,34 @@ describe('FixedBookingsService', () => {
     httpMock.expectOne(url).flush([mockFixed]);
   });
 
+  /** Loads the list once so the next findAll() would be served from cache. */
+  function primeCache(): void {
+    service.findAll().subscribe();
+    httpMock.expectOne(url).flush([mockFixed]);
+    service.findAll().subscribe();
+    httpMock.expectNone(url);
+  }
+
   it('update() PATCHes /fixed-bookings/:id and invalidates the cache', () => {
+    primeCache();
     service.update('fb1', { hour: '12:00' }).subscribe();
     const req = httpMock.expectOne(`${url}/fb1`);
     expect(req.request.method).toBe('PATCH');
     req.flush(mockFixed);
+
+    service.findAll().subscribe();
+    httpMock.expectOne(url).flush([mockFixed]);
   });
 
   it('deactivate() issues a DELETE and invalidates the cache', () => {
+    primeCache();
     service.deactivate('fb1').subscribe();
     const req = httpMock.expectOne(`${url}/fb1`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
+
+    service.findAll().subscribe();
+    httpMock.expectOne(url).flush([mockFixed]);
   });
 
   it('deleteFixedBookingCascade() DELETEs /fixed-bookings/:id/cascade', () => {

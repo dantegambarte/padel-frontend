@@ -153,6 +153,17 @@ describe('ReportsService', () => {
     service.getPaymentMethods('2026-01-01', '2026-01-31').subscribe();
     const req = httpMock.expectOne((r) => r.url === `${url}/payment-methods`);
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('dateFrom')).toBe('2026-01-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-01-31');
+    expect(req.request.params.has('date')).toBe(false);
+    req.flush({});
+  });
+
+  it('getPaymentMethods() sends only the single date when one is given', () => {
+    service.getPaymentMethods('2026-01-01', '2026-01-31', '2026-01-15').subscribe();
+    const req = httpMock.expectOne((r) => r.url === `${url}/payment-methods`);
+    expect(req.request.params.keys()).toEqual(['date']);
+    expect(req.request.params.get('date')).toBe('2026-01-15');
     req.flush({});
   });
 
@@ -160,6 +171,17 @@ describe('ReportsService', () => {
     service.getProductsRanking('2026-01-01', '2026-01-31').subscribe();
     const req = httpMock.expectOne((r) => r.url === `${url}/products-ranking`);
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('dateFrom')).toBe('2026-01-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-01-31');
+    expect(req.request.params.has('date')).toBe(false);
+    req.flush([]);
+  });
+
+  it('getProductsRanking() sends only the single date when one is given', () => {
+    service.getProductsRanking('2026-01-01', '2026-01-31', '2026-01-15').subscribe();
+    const req = httpMock.expectOne((r) => r.url === `${url}/products-ranking`);
+    expect(req.request.params.keys()).toEqual(['date']);
+    expect(req.request.params.get('date')).toBe('2026-01-15');
     req.flush([]);
   });
 
@@ -167,6 +189,9 @@ describe('ReportsService', () => {
     service.getTransactionsExport('2026-01-01', '2026-01-31').subscribe();
     const req = httpMock.expectOne((r) => r.url === `${url}/transactions`);
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('dateFrom')).toBe('2026-01-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-01-31');
+    expect(req.request.params.has('date')).toBe(false);
     req.flush([]);
   });
 
