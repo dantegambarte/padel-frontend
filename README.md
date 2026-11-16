@@ -68,6 +68,7 @@ pnpm start
 | `pnpm run build`           | Build de producción en `dist/padel-frontend/browser/` |
 | `pnpm run watch`           | Build en modo watch (desarrollo)              |
 | `pnpm test`                | Tests unitarios con Karma + Jasmine           |
+| `pnpm test:cov`            | Tests con cobertura; falla si baja del umbral de `karma.conf.js` (lo corre el CI) |
 | `pnpm run test:e2e`        | Tests E2E headless con Playwright             |
 | `pnpm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
 | `pnpm run test:e2e:report` | Ver reporte HTML del último run               |

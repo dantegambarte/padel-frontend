@@ -40,7 +40,7 @@ jobs:
             apiUrl: 'http://localhost:3000/api/v1',
           };
           EOF
-      - run: pnpm exec ng test --watch=false --browsers=ChromeHeadless
+      - run: pnpm exec ng test --watch=false --browsers=ChromeHeadless --code-coverage
 
   audit:
     name: Dependency audit
