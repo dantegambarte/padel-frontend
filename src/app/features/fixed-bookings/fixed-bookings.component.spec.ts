@@ -399,4 +399,36 @@ describe('FixedBookingsComponent', () => {
     component.onEscape();
     expect(component.isDialogOpen()).toBe(false);
   });
+
+  describe('default start date at 22:00 ART (already tomorrow in UTC)', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+      // Tuesday 2026-03-10 22:00 ART == Wednesday 2026-03-11 01:00 UTC
+      jasmine.clock().mockDate(new Date('2026-03-11T01:00:00Z'));
+    });
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('proposes the Argentina date when opening the create dialog', () => {
+      setup();
+      const component = TestBed.createComponent(FixedBookingsComponent).componentInstance;
+      component.openCreateDialog();
+      expect(component.form.startDate).toBe('2026-03-10');
+    });
+
+    it('keeps today when the selected weekday is today in Argentina', () => {
+      setup();
+      const component = TestBed.createComponent(FixedBookingsComponent).componentInstance;
+      component.form.dayOfWeek = 2;
+      component.onDayOfWeekChange();
+      expect(component.form.startDate).toBe('2026-03-10');
+    });
+
+    it('moves to the next matching weekday', () => {
+      setup();
+      const component = TestBed.createComponent(FixedBookingsComponent).componentInstance;
+      component.form.dayOfWeek = 1;
+      component.onDayOfWeekChange();
+      expect(component.form.startDate).toBe('2026-03-16');
+    });
+  });
 });

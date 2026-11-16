@@ -1,0 +1,23 @@
+import { addDaysToIsoDate, dayOfWeekOfIsoDate, todayInAppTimeZone } from './date';
+
+describe('date utils', () => {
+  describe('todayInAppTimeZone', () => {
+    it('returns the Argentina date at 22:00 ART, when UTC is already the next day', () => {
+      // 2026-03-10 22:00 ART == 2026-03-11 01:00 UTC
+      expect(todayInAppTimeZone(new Date('2026-03-11T01:00:00Z'))).toBe('2026-03-10');
+    });
+
+    it('returns the same date as UTC during the afternoon', () => {
+      expect(todayInAppTimeZone(new Date('2026-03-10T18:00:00Z'))).toBe('2026-03-10');
+    });
+  });
+
+  it('adds and subtracts days across month and year boundaries', () => {
+    expect(addDaysToIsoDate('2026-12-28', 7)).toBe('2027-01-04');
+    expect(addDaysToIsoDate('2026-03-01', -1)).toBe('2026-02-28');
+  });
+
+  it('returns the weekday of a date', () => {
+    expect(dayOfWeekOfIsoDate('2026-03-10')).toBe(2); // Tuesday
+  });
+});
