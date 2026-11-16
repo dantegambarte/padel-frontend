@@ -145,6 +145,8 @@ export class AuthService {
    * Esta operación es idempotente: llamarla varias veces es seguro.
    */
   logout(): void {
+    this.revokeSessionOnServer();
+
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
@@ -163,6 +165,24 @@ export class AuthService {
     this.notificationService.clearAllNotifications();
 
     this.router.navigate(['/auth/login']);
+  }
+
+  /**
+   * Pide al backend que invalide la sesión (access y refresh token), así un
+   * token copiado deja de servir aunque el navegador ya los haya borrado.
+   * Es best-effort: el logout local no espera la respuesta, y un error (sin red,
+   * o un token que el servidor ya había invalidado) se ignora.
+   * El token se adjunta a mano porque el storage se limpia antes de que el
+   * interceptor procese la request.
+   */
+  private revokeSessionOnServer(): void {
+    const token = this.getAccessToken();
+    if (!token) return;
+    this.http
+      .post<void>(`${this.apiUrl}/logout`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .subscribe({ error: () => undefined });
   }
 
   /** Devuelve el access token almacenado, o `null` si no hay ninguno. */
