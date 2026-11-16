@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # gitleaks-action lists the PR commits through the API.
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Cancel superseded PR runs, never runs on main.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # environment.ts is gitignored; unit tests only need a local API URL.
+      - name: Create test environment
+        run: |
+          mkdir -p src/environments
+          cat > src/environments/environment.ts <<'EOF'
+          export const environment = {
+            production: false,
+            apiUrl: 'http://localhost:3000/api/v1',
+          };
+          EOF
+      - run: pnpm exec ng test --watch=false --browsers=ChromeHeadless
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm audit --prod --audit-level high
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
