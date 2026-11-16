@@ -1,3 +1,4 @@
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ReportsComponent } from './reports.component';
@@ -43,6 +44,7 @@ describe('ReportsComponent', () => {
     TestBed.configureTestingModule({
     imports: [ReportsComponent],
     providers: [
+      provideCharts(withDefaultRegisterables()),
         { provide: ReportsService, useValue: reportsServiceSpy },
         { provide: ProductsService, useValue: productsServiceSpy },
         { provide: CashService, useValue: cashServiceSpy },

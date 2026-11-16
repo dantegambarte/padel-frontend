@@ -11,6 +11,7 @@ import { jwtInterceptor } from './app/core/interceptors/jwt.interceptor';
 import { timeoutInterceptor } from './app/core/interceptors/timeout.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 import { providePrimeNG } from 'primeng/config';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 registerLocaleData(localeEsAR);
 
@@ -19,6 +20,7 @@ bootstrapApplication(AppComponent, {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
     provideHttpClient(withInterceptors([jwtInterceptor, timeoutInterceptor])),
+    provideCharts(withDefaultRegisterables()),
     provideRouter(
       routes,
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
