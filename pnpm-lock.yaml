@@ -88,8 +88,8 @@ importers:
         specifier: ^10.4.27
         version: 10.5.4(postcss@8.5.23)
       jasmine-core:
-        specifier: ~4.5.0
-        version: 4.5.0
+        specifier: ~4.6.1
+        version: 4.6.1
       karma:
         specifier: ~6.4.0
         version: 6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
@@ -104,7 +104,7 @@ importers:
         version: 5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
       karma-jasmine-html-reporter:
         specifier: ~2.0.0
-        version: 2.0.0(jasmine-core@4.5.0)(karma-jasmine@5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)))(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
+        version: 2.0.0(jasmine-core@4.6.1)(karma-jasmine@5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)))(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
       postcss:
         specifier: ^8.5.8
         version: 8.5.23
@@ -3330,8 +3330,8 @@ packages:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
 
-  jasmine-core@4.5.0:
-    resolution: {integrity: sha512-9PMzyvhtocxb3aXJVOPqBDswdgyAeSB81QnLop4npOpbqnheaTEwPc9ZloQeVswugPManznQBjD8kWDTjlnHuw==}
+  jasmine-core@4.6.1:
+    resolution: {integrity: sha512-VYz/BjjmC3klLJlLwA4Kw8ytk0zDSmbbDLNs794VnWmkcCB7I9aAL/D48VNQtmITyPvea2C3jdUMfc3kAoy0PQ==}
 
   jest-worker@27.5.1:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
@@ -8344,7 +8344,7 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
-  jasmine-core@4.5.0: {}
+  jasmine-core@4.6.1: {}
 
   jest-worker@27.5.1:
     dependencies:
@@ -8399,15 +8399,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  karma-jasmine-html-reporter@2.0.0(jasmine-core@4.5.0)(karma-jasmine@5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)))(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)):
+  karma-jasmine-html-reporter@2.0.0(jasmine-core@4.6.1)(karma-jasmine@5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)))(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)):
     dependencies:
-      jasmine-core: 4.5.0
+      jasmine-core: 4.6.1
       karma: 6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       karma-jasmine: 5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
 
   karma-jasmine@5.1.0(karma@6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)):
     dependencies:
-      jasmine-core: 4.5.0
+      jasmine-core: 4.6.1
       karma: 6.4.4(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
 
   karma-source-map-support@1.4.0:
