@@ -4,6 +4,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { CashService } from './cash.service';
+import { HTTP_TIMEOUT_MS, EXPORT_HTTP_TIMEOUT_MS } from '../interceptors/timeout.interceptor';
 import { environment } from '../../../environments/environment';
 
 describe('CashService', () => {
@@ -191,6 +192,16 @@ describe('CashService', () => {
     );
     expect(req.request.method).toBe('GET');
     req.flush({ date: '2026-01-01', totalExpected: 0, totalCounted: null, sessions: [] });
+  });
+
+  it('export calls use the extended export timeout', () => {
+    service.exportSession('sess1').subscribe();
+    service.exportDaily('2026-01-01').subscribe();
+    const reqs = httpMock.match((r) => r.url.startsWith(`${url}/export/`));
+    expect(reqs.length).toBe(2);
+    reqs.forEach((r) =>
+      expect(r.request.context.get(HTTP_TIMEOUT_MS)).toBe(EXPORT_HTTP_TIMEOUT_MS),
+    );
   });
 
   it('exportSession() requests a blob response type', () => {

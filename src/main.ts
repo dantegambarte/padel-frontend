@@ -8,6 +8,7 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { jwtInterceptor } from './app/core/interceptors/jwt.interceptor';
+import { timeoutInterceptor } from './app/core/interceptors/timeout.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 import { providePrimeNG } from 'primeng/config';
 
@@ -17,7 +18,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
-    provideHttpClient(withInterceptors([jwtInterceptor])),
+    provideHttpClient(withInterceptors([jwtInterceptor, timeoutInterceptor])),
     provideRouter(
       routes,
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),

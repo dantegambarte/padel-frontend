@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, of, throwError, shareReplay } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
+import { EXPORT_HTTP_TIMEOUT_MS, HTTP_TIMEOUT_MS } from '../interceptors/timeout.interceptor';
 
 /** Detalle de un ítem de producto dentro de un turno o venta. */
 export interface ItemDetail {
@@ -360,6 +361,7 @@ export class CashService {
   exportSession(sessionId: string): Observable<Blob> {
     return this.http.get(`${this.url}/export/session/${sessionId}`, {
       responseType: 'blob',
+      context: new HttpContext().set(HTTP_TIMEOUT_MS, EXPORT_HTTP_TIMEOUT_MS),
     });
   }
 
@@ -371,6 +373,7 @@ export class CashService {
     return this.http.get(`${this.url}/export/daily`, {
       params: { date },
       responseType: 'blob',
+      context: new HttpContext().set(HTTP_TIMEOUT_MS, EXPORT_HTTP_TIMEOUT_MS),
     });
   }
 
