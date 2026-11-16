@@ -33,6 +33,7 @@ jobs:
       # environment.ts is gitignored; unit tests only need a local API URL.
       - name: Create test environment
         run: |
+          mkdir -p src/environments
           cat > src/environments/environment.ts <<'EOF'
           export const environment = {
             production: false,
