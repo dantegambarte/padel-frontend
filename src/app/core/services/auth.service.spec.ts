@@ -239,6 +239,7 @@ describe('AuthService', () => {
       httpMock
         .expectOne(`${url}/refresh`)
         .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
+      httpMock.expectOne(`${url}/logout`).flush(null, { status: 204, statusText: 'No Content' });
     });
   });
 
@@ -251,6 +252,9 @@ describe('AuthService', () => {
       service = TestBed.inject(AuthService);
 
       service.logout();
+      // 'token' is not a valid JWT: the constructor already discarded it, so
+      // there is nothing to revoke on the server.
+      httpMock.expectNone(`${url}/logout`);
 
       expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
       expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
@@ -258,6 +262,37 @@ describe('AuthService', () => {
       expect(localStorage.getItem(NOTIFICATIONS_KEY)).toBeNull();
       expect(service.currentUser).toBeNull();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+    });
+
+    it('revokes the session on the server with the stored access token', () => {
+      localStorage.setItem(TOKEN_KEY, 'token');
+      service = TestBed.inject(AuthService);
+
+      service.logout();
+
+      const req = httpMock.expectOne(`${url}/logout`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('logs out locally even when the server call fails', () => {
+      localStorage.setItem(TOKEN_KEY, 'token');
+      service = TestBed.inject(AuthService);
+
+      service.logout();
+      httpMock
+        .expectOne(`${url}/logout`)
+        .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+    });
+
+    it('does not call the server when there is no access token', () => {
+      service = TestBed.inject(AuthService);
+      service.logout();
+      httpMock.expectNone(`${url}/logout`);
     });
 
     it('clears the cache of every dependent service (avoids stale data across users)', () => {
