@@ -48,8 +48,8 @@ importers:
         specifier: ^8.0.2
         version: 8.0.2
       primeng:
-        specifier: ^21.1.9
-        version: 21.1.9(54f3a33951e98f87dfcd3cede22a94b2)
+        specifier: ^21.1.10
+        version: 21.1.10(54f3a33951e98f87dfcd3cede22a94b2)
       rxjs:
         specifier: ~7.8.0
         version: 7.8.2
@@ -4059,8 +4059,8 @@ packages:
   primeicons@8.0.2:
     resolution: {integrity: sha512-o3UQey3nXMEQRAudVYZZWswz6mmnWpPnksYb7wIu4rEEVfdS3pLnxnmSJx5gKBRMer1MxnhJZG5QRDxVVJFNkA==}
 
-  primeng@21.1.9:
-    resolution: {integrity: sha512-Z76PtF08X0PNSTCNMobao8Qm71vC56mtZSdUtX/gsn4+q4x0NbUUtkeK1pc33a+kxVm2zkmOwzUIEGmb9VdoIA==}
+  primeng@21.1.10:
+    resolution: {integrity: sha512-1dNoVrrmdif95iuPwcSyzS0MwBy4yrbB/44s4gp+UeoZU11G9+SNFd6P/3tiiun7bAh2vbe4Uf0juy7DMtnRbA==}
     peerDependencies:
       '@angular/cdk': ^21.0.0
       '@angular/common': ^21.0.0
@@ -9165,7 +9165,7 @@ snapshots:
 
   primeicons@8.0.2: {}
 
-  primeng@21.1.9(54f3a33951e98f87dfcd3cede22a94b2):
+  primeng@21.1.10(54f3a33951e98f87dfcd3cede22a94b2):
     dependencies:
       '@angular/cdk': 21.2.14(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.26(@angular/animations@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3)))(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3)))(rxjs@7.8.2)
       '@angular/common': 21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2)
