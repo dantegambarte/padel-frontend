@@ -29,7 +29,7 @@ import { BookingResponse } from '../../core/models/booking.model';
 import Swal from 'sweetalert2';
 import { NgClass, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { NgChartsModule } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts';
 import { TicketModalComponent } from '../cash-register/ticket-modal.component';
 
 interface Preset {
@@ -44,7 +44,7 @@ interface Preset {
     NgClass,
     ReactiveFormsModule,
     FormsModule,
-    NgChartsModule,
+    BaseChartDirective,
     TicketModalComponent,
     DatePipe
 ],

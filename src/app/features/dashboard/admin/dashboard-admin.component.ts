@@ -10,13 +10,13 @@ import {
 } from '../../../core/services/reports.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { DecimalPipe } from '@angular/common';
-import { NgChartsModule } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts';
 
 @Component({
     selector: 'app-dashboard-admin',
     templateUrl: './dashboard-admin.component.html',
     imports: [
-    NgChartsModule,
+    BaseChartDirective,
     DecimalPipe
 ],
     changeDetection: ChangeDetectionStrategy.OnPush,

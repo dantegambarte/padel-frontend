@@ -12,6 +12,16 @@ updates:
       # tailwindcss-animate support); upgrade deliberately, not via bot.
       - dependency-name: tailwindcss
         update-types: [version-update:semver-major]
+      # Angular majors are a coordinated migration (ng update for every
+      # @angular/* package at once), never a single-package bump.
+      - dependency-name: "@angular/*"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@angular-devkit/*"
+        update-types: [version-update:semver-major]
+      # jasmine-core 5+ needs karma-jasmine support; karma-jasmine 5.x breaks
+      # with jasmine-core 7 ("Cannot assign to read only property 'describe'").
+      - dependency-name: jasmine-core
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /

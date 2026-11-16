@@ -1,3 +1,4 @@
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { DashboardAdminComponent } from './dashboard-admin.component';
@@ -26,6 +27,7 @@ describe('DashboardAdminComponent', () => {
     await TestBed.configureTestingModule({
     imports: [DashboardAdminComponent],
     providers: [
+      provideCharts(withDefaultRegisterables()),
         { provide: ReportsService, useValue: reportsServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
     ],
