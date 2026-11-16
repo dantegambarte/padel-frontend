@@ -7,6 +7,11 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Tailwind v4 is a CSS-first migration (new PostCSS plugin, no
+      # tailwindcss-animate support); upgrade deliberately, not via bot.
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
