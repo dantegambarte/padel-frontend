@@ -17,6 +17,7 @@ import { NgClass, SlicePipe, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { DisableScrollDirective } from '../../shared/directives/disable-scroll.directive';
+import { addDaysToIsoDate, dayOfWeekOfIsoDate, todayInAppTimeZone } from '../../core/utils/date';
 
 /** Dato de una celda de la grilla semanal. */
 type SlotData = {
@@ -48,7 +49,7 @@ const EMPTY_FORM = (): FormState => ({
   hour: '09:00',
   durationMinutes: 60,
   courtId: '',
-  startDate: new Date().toISOString().slice(0, 10),
+  startDate: todayInAppTimeZone(),
   notes: '',
   teacherId: '',
   isTeacherClass: false,
@@ -298,8 +299,7 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
    * Se dispara cuando el usuario cambia el día de la semana en el formulario.
    * Calcula el próximo día que coincide con la selección y actualiza `form.startDate`.
    * Si hoy ya es ese día, deja la fecha en hoy mismo.
-   * Usa componentes locales (getFullYear/getMonth/getDate) para evitar el
-   * desfase de UTC-3 que produce `toISOString()` pasada la medianoche.
+   * Usa la fecha de hoy en la zona horaria del club, no la de UTC.
    */
   onDayOfWeekChange(): void {
     const isoToJs: Record<number, number> = {
@@ -314,17 +314,9 @@ export class FixedBookingsComponent implements OnInit, OnDestroy {
     const target = isoToJs[Number(this.form.dayOfWeek)];
     if (target === undefined) return;
 
-    const today = new Date();
-    let daysToAdd = target - today.getDay();
-    if (daysToAdd < 0) daysToAdd += 7;
-
-    const next = new Date(today);
-    next.setDate(today.getDate() + daysToAdd);
-
-    const y = next.getFullYear();
-    const m = String(next.getMonth() + 1).padStart(2, '0');
-    const d = String(next.getDate()).padStart(2, '0');
-    this.form.startDate = `${y}-${m}-${d}`;
+    const today = todayInAppTimeZone();
+    const daysToAdd = (target - dayOfWeekOfIsoDate(today) + 7) % 7;
+    this.form.startDate = addDaysToIsoDate(today, daysToAdd);
   }
 
   /** Abre el diálogo de creación de turno fijo con el formulario vacío. */

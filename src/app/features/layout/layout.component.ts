@@ -11,6 +11,7 @@ import { NgClass } from '@angular/common';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
+import { todayInAppTimeZone } from '../../core/utils/date';
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Inicio',
@@ -181,7 +182,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkUnclosedSession(): void {
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = todayInAppTimeZone();
     this.sub.add(
       this.cashService.getCurrent().subscribe({
         next: (data) => {

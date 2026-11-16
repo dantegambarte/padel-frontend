@@ -31,6 +31,7 @@ import { DisableScrollDirective } from '../../shared/directives/disable-scroll.d
 import { TicketModalComponent } from './ticket-modal.component';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 import { escapeHtml as esc } from '../../core/utils/escape-html';
+import { todayInAppTimeZone } from '../../core/utils/date';
 
 /**
  * Vista agrupada de movimientos del turno:
@@ -1496,7 +1497,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         .replace(/[^a-zA-Z0-9_]/g, '');
 
       const fecha =
-        session.sessionDate ?? new Date().toLocaleDateString('en-CA');
+        session.sessionDate ?? todayInAppTimeZone();
       const fileName = `Cierre_Caja_Z_${fecha}_${safeName}.xlsx`;
 
       XLSX.writeFile(wb, fileName);
