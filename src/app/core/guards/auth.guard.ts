@@ -16,8 +16,9 @@ import { SessionAlertService } from '../services/session-alert.service';
  *    el caso de expiración detectada en una request HTTP saliente.
  * 3. Redirige a /app/account si mustChangePassword es true.
  *
- * Nota: el caso de arranque con token expirado queda resuelto en AuthService
- * (loadUserFromStorage limpia el storage → currentUser$ emite null → punto 1 activo).
+ * Note: on startup `AuthService.restoreSession()` (app initializer) runs before
+ * the first navigation; if the refresh cookie no longer works it clears the
+ * session, currentUser$ emits null and point 1 applies.
  *
  * `CanActivateFn` y `CanActivateChildFn` comparten firma `(route, state)`, así que
  * este mismo guard se registra tanto en `canActivate` como en `canActivateChild`

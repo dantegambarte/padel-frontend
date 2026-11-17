@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 import { ensureOpenCashSession } from './helpers/cash-session';
 
 /** Parses an es-AR amount as rendered by the app ("$1.234,5", "+$5.000", "$-300"). */

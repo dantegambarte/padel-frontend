@@ -8,7 +8,7 @@
  *   npx playwright test --project Mobile
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 async function openBookingModal(page: Page) {
   const slot = page.getByRole('button', { name: /Disponible 11:00/ }).first();

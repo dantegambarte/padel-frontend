@@ -1,6 +1,6 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
-const API = 'http://localhost:3000/api/v1';
+const API = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
 
 async function goToPOS(page: Page) {
   await page.goto('/app/pos');

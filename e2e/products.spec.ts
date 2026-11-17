@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 async function goToProducts(page: Page) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
