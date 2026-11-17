@@ -13,7 +13,9 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
   workers: 1,
-  reporter: 'html',
+  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'html',
+  // Stop early on CI instead of burning the job timeout when the stack is broken.
+  maxFailures: process.env['CI'] ? 15 : 0,
   globalSetup: './e2e/global-setup.ts',
   webServer: [
     ...(externalBackend
