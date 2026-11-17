@@ -12,6 +12,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
+  // Must stay 1: all specs share one rotating refresh cookie (see e2e/fixtures.ts).
   workers: 1,
   reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'html',
   // Stop early on CI instead of burning the job timeout when the stack is broken.

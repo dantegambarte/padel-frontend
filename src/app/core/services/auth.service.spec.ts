@@ -50,9 +50,18 @@ describe('AuthService', () => {
     return jasmine.createSpyObj('svc', methods) as jasmine.SpyObj<T>;
   }
 
+  /** Web Lock stub that grants the lock at once, so requests start synchronously. */
+  let lockRequestSpy: jasmine.Spy;
+
   beforeEach(() => {
     localStorage.clear();
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    lockRequestSpy = jasmine
+      .createSpy('locks.request')
+      .and.callFake((_name: string, callback: () => unknown) => Promise.resolve(callback()));
+    spyOnProperty(navigator, 'locks', 'get').and.returnValue({
+      request: lockRequestSpy,
+    } as unknown as LockManager);
 
     const cashSpy = makeServiceSpy<CashService>(['clearCurrentCache']);
     const configSpy = makeServiceSpy<ConfigService>(['clearCache']);
@@ -277,6 +286,8 @@ describe('AuthService', () => {
           expect(service.isLoggedIn).toBe(false);
           expect(service.getAccessToken()).toBeNull();
           expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+          // The refresh settles asynchronously, so logout runs after the flush.
+          httpMock.expectOne(`${url}/logout`).flush(null, { status: 204, statusText: 'No Content' });
           done();
         },
       });
@@ -284,7 +295,18 @@ describe('AuthService', () => {
       httpMock
         .expectOne(`${url}/refresh`)
         .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
-      httpMock.expectOne(`${url}/logout`).flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('serializes the request across tabs with a Web Lock', (done) => {
+      service = TestBed.inject(AuthService);
+      const token = validJwt();
+
+      service.refresh().subscribe(() => {
+        expect(lockRequestSpy).toHaveBeenCalledOnceWith('padelsys-auth-refresh', jasmine.any(Function));
+        done();
+      });
+
+      httpMock.expectOne(`${url}/refresh`).flush({ accessToken: token });
     });
   });
 

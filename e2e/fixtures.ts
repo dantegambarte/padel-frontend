@@ -10,6 +10,9 @@ export * from '@playwright/test';
  * cookie counts as token reuse and revokes the whole session, so the shared
  * storage state must always hold the latest cookie: after each test that ran
  * with it, write the context's current state back to the file.
+ *
+ * This only holds with one worker (playwright.config.ts sets `workers: 1`):
+ * parallel workers would load and present the same cookie, and race on the file.
  */
 export const test = base.extend<{ persistRotatedSession: void }>({
   persistRotatedSession: [

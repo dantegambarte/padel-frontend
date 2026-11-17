@@ -6,6 +6,8 @@ import {
   BehaviorSubject,
   Observable,
   catchError,
+  firstValueFrom,
+  from,
   map,
   of,
   tap,
@@ -36,6 +38,8 @@ const USER_KEY = 'padelsys_user';
  * Removed on startup so an upgraded browser does not keep readable tokens around.
  */
 const LEGACY_TOKEN_KEYS = ['padelsys_access_token', 'padelsys_refresh_token'];
+/** Web Lock that serializes refresh calls across tabs (see `requestRefresh`). */
+const REFRESH_LOCK = 'padelsys-auth-refresh';
 /** Clave de notificaciones persistidas. Debe limpiarse al cerrar sesión. */
 const NOTIFICATIONS_KEY = 'caldera_notifications';
 
@@ -174,12 +178,29 @@ export class AuthService {
     );
   }
 
+  /**
+   * The backend rotates the refresh cookie on every call and treats a rotated
+   * cookie presented again as token reuse, revoking the whole session. Tabs that
+   * load at the same time would all send the same cookie, so refreshes are
+   * serialized across tabs with a Web Lock: the next tab sends its request only
+   * after the previous one finished, and the shared cookie jar already holds the
+   * rotated cookie by then. Browsers without the Web Locks API refresh unlocked.
+   */
   private requestRefresh(): Observable<RefreshResponse> {
-    return this.http
-      .post<RefreshResponse>(`${this.apiUrl}/refresh`, null, {
-        withCredentials: true,
-      })
-      .pipe(tap((response) => this.accessToken.set(response.accessToken)));
+    const request = () =>
+      firstValueFrom(
+        this.http.post<RefreshResponse>(`${this.apiUrl}/refresh`, null, {
+          withCredentials: true,
+        }),
+      );
+    const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+    // lib.dom types the result as a nested promise; `then` flattens it.
+    const response: Promise<RefreshResponse> = locks
+      ? locks.request(REFRESH_LOCK, request).then((result) => result)
+      : request();
+    return from(response).pipe(
+      tap((result) => this.accessToken.set(result.accessToken)),
+    );
   }
 
   /**
