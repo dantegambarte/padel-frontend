@@ -9,10 +9,10 @@ import { NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
-type FormState = {
+interface FormState {
   fullName: string;
   phoneNumber: string;
-};
+}
 
 const EMPTY_FORM = (): FormState => ({
   fullName: '',

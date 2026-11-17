@@ -69,7 +69,8 @@ pnpm start
 | `pnpm run watch`           | Build en modo watch (desarrollo)              |
 | `pnpm test`                | Tests unitarios con Karma + Jasmine           |
 | `pnpm test:cov`            | Tests con cobertura; falla si baja del umbral de `karma.conf.js` (lo corre el CI) |
-| `pnpm run test:e2e`        | Tests E2E headless con Playwright             |
+| `pnpm lint`                | ESLint (angular-eslint); falla con errores (lo corre el CI) |
+| `pnpm run test:e2e`        | Tests E2E headless con Playwright (el CI los corre contra el backend) |
 | `pnpm run test:e2e:ui`     | Tests E2E en modo UI interactivo              |
 | `pnpm run test:e2e:report` | Ver reporte HTML del último run               |
 

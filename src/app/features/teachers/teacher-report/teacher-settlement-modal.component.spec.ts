@@ -140,7 +140,7 @@ describe('TeacherSettlementModalComponent', () => {
       throwError(() => ({ error: { errorCode: 'CAJA_CERRADA' } })),
     );
     const fixture = createWithInputs('completa');
-    const cancelSpy = spyOn(fixture.componentInstance.cancelled, 'emit');
+    spyOn(fixture.componentInstance.cancelled, 'emit');
 
     fixture.componentInstance.onSettle();
 

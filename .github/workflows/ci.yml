@@ -42,6 +42,123 @@ jobs:
           EOF
       - run: pnpm exec ng test --watch=false --browsers=ChromeHeadless --code-coverage
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: padel_user
+          POSTGRES_PASSWORD: padel_ci_password
+          POSTGRES_DB: padelsys_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U padel_user -d padelsys_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Dummy values for CI only; they never reach any real environment.
+      NODE_ENV: test
+      E2E_RELAX_THROTTLE: '1'
+      PORT: '3000'
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_USERNAME: padel_user
+      DB_PASSWORD: padel_ci_password
+      DB_DATABASE: padelsys_test
+      JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789 # gitleaks:allow
+      JWT_REFRESH_SECRET: ci-dummy-refresh-secret-0123456789abcdef01234 # gitleaks:allow
+      JWT_EXPIRES_IN: 8h
+      JWT_REFRESH_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:4200
+      ALLOWED_ORIGINS: http://localhost:4200
+      # This job starts the backend itself; playwright.config.ts only serves the frontend.
+      E2E_EXTERNAL_BACKEND: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: dantegambarte/padel-backend
+          ref: main
+          path: backend
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            backend/pnpm-lock.yaml
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+      # The e2e suites log in as the seeded admin user (admin / admin123).
+      - name: Migrate and seed database
+        working-directory: backend
+        run: |
+          pnpm migration:run
+          pnpm seed
+      - name: Start backend
+        working-directory: backend
+        run: |
+          pnpm build
+          nohup node dist/main.js > ../backend.log 2>&1 &
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/v1/health > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat backend.log
+          exit 1
+      # environment.ts is gitignored; point the app at the local backend.
+      - name: Create e2e environment
+        run: |
+          mkdir -p src/environments
+          cat > src/environments/environment.ts <<'EOF'
+          export const environment = {
+            production: false,
+            apiUrl: 'http://localhost:3000/api/v1',
+          };
+          EOF
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      # playwright.config.ts serves the frontend (pnpm start) as its webServer.
+      - run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            backend.log
+          retention-days: 7
+
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest

@@ -16,7 +16,6 @@ import { Subject, Subscription, forkJoin, timer, of } from 'rxjs';
 import {
   finalize,
   filter,
-  take,
   catchError,
   debounceTime,
 } from 'rxjs/operators';
@@ -1653,7 +1652,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
     this.isConfirmingBooking.set(true);
     this.bookingsService.confirm(booking.id).subscribe({
-      next: (updated) => {
+      next: () => {
         this.isConfirmingBooking.set(false);
         this.selectedBooking.set({ ...booking, isConfirmed: true });
         this.addToBookingMap({ ...booking, isConfirmed: true });
