@@ -4,7 +4,7 @@ async function goToProducts(page: Page) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const productsResponse = page.waitForResponse(
       (res) =>
-        res.url().includes('/api/v1/products') &&
+        new URL(res.url()).pathname === '/api/v1/products' &&
         res.request().method() === 'GET' &&
         res.status() === 200,
       { timeout: 15000 },
