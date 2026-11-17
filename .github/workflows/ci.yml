@@ -146,7 +146,7 @@ jobs:
           };
           EOF
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium webkit
       # playwright.config.ts serves the frontend (pnpm start) as its webServer.
       - run: pnpm test:e2e
       - name: Upload Playwright report
