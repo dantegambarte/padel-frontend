@@ -8,7 +8,9 @@
       repo; it can move to a response header later (needed for frame-ancestors,
       which a meta tag ignores).
       connect-src lists the API origins of src/environments/*: localhost:3000 in
-      development, and the production backend. A localhost origin in production
+      development and any HTTPS origin for the production API, whose host is kept
+      out of this public repo; tighten it in the nginx header once that exists.
+      A localhost origin in production
       is harmless: it only reaches a server running on the user's own machine.
       style-src keeps 'unsafe-inline' for Angular/PrimeNG component styles;
       scripts never get it (angular.json disables inlineCritical, which would
@@ -16,7 +18,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:3000 https://backend.lacalderapadel.site; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:3000 https:; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <title>La Caldera</title>
     <base href="/" />
