@@ -1,9 +1,11 @@
 import { test, expect, Page, APIRequestContext } from '@playwright/test';
+import { existsSync, readFileSync } from 'fs';
 import { ensureOpenCashSession } from './helpers/cash-session';
 
 const API_URL = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
 const ADMIN_USER = process.env['E2E_ADMIN_USER'] ?? 'admin';
 const ADMIN_PASS = process.env['E2E_ADMIN_PASS'] ?? 'admin123';
+const AUTH_STATE_PATH = 'e2e/auth-state.json';
 
 async function goToPOS(page: Page) {
   await page.goto('/app/pos');
@@ -20,13 +22,31 @@ function firstAvailableProduct(page: Page) {
   return page.locator('button:not([disabled])').filter({ hasText: /\$\d/ }).first();
 }
 
+/**
+ * Reuses the admin session the global setup stored. A new admin login would
+ * bump sessionVersion and log out every other spec sharing auth-state.json
+ * (SESSION_OVERRIDDEN), so this only logs in when no stored token exists.
+ */
 async function adminHeaders(request: APIRequestContext) {
+  const stored = storedAccessToken();
+  if (stored) return { Authorization: `Bearer ${stored}` };
+
   const login = await request.post(`${API_URL}/auth/login`, {
     data: { username: ADMIN_USER, password: ADMIN_PASS },
   });
   expect(login.ok(), await login.text()).toBeTruthy();
   const { accessToken } = await login.json();
   return { Authorization: `Bearer ${accessToken}` };
+}
+
+function storedAccessToken(): string | undefined {
+  if (!existsSync(AUTH_STATE_PATH)) return undefined;
+  const state = JSON.parse(readFileSync(AUTH_STATE_PATH, 'utf8')) as {
+    origins?: { localStorage?: { name: string; value: string }[] }[];
+  };
+  return state.origins
+    ?.flatMap((origin) => origin.localStorage ?? [])
+    .find((entry) => entry.name === 'padelsys_access_token')?.value;
 }
 
 // One in-stock product per worker so the catalog is never empty; deactivated

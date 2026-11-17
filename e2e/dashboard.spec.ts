@@ -74,7 +74,7 @@ test.describe('Dashboard', () => {
 
   test('muestra nombre del usuario en la sidebar', async ({ page }) => {
     await expect(
-      page.getByRole('complementary').getByText('Raul Barcelo').first(),
+      page.getByRole('complementary').getByText('Administrador').first(),
     ).toBeVisible();
   });
 });

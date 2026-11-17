@@ -13,7 +13,9 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
   workers: 1,
-  reporter: 'html',
+  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'html',
+  // Stop early on CI instead of burning the job timeout when the stack is broken.
+  maxFailures: process.env['CI'] ? 15 : 0,
   globalSetup: './e2e/global-setup.ts',
   webServer: [
     ...(externalBackend
@@ -27,10 +29,10 @@ export default defineConfig({
       command: `set NODE_ENV=test&& set E2E_RELAX_THROTTLE=1&& pnpm -C ${backendProject} run migration:run && pnpm -C ${backendProject} run seed && pnpm -C ${backendProject} run start`,
       url: `${backendUrl}/api/docs`,
       // Nunca reutilizar un backend ya levantado, ni siquiera en local.
-      // La suite depende de que el backend corra con NODE_ENV=test: solo así
-      // el login no incrementa sessionVersion (si lo incrementa, cada spec que
-      // hace su propio login invalida la sesión compartida del storageState y
-      // el resto falla en cascada con SESSION_OVERRIDDEN). Y de
+      // Every admin login bumps sessionVersion and invalidates the shared
+      // storageState session (SESSION_OVERRIDDEN), so specs reuse the stored
+      // admin token and auth.spec runs last in the "Auth" project. The suite
+      // also depends on
       // E2E_RELAX_THROTTLE=1, que sube los límites de rate limiting (login de
       // 5 a 1000 por minuto); el backend lo ignora en producción. Un backend arrancado a mano con `pnpm run
       // start:dev` no cumple ninguna de las dos condiciones, y al reutilizarlo
@@ -85,7 +87,7 @@ export default defineConfig({
         viewport: { width: 1920, height: 1080 },
         storageState: 'e2e/auth-state.json',
       },
-      testIgnore: ['**/schedule.mobile.spec.ts', '**/generate-*.spec.ts'],
+      testIgnore: ['**/schedule.mobile.spec.ts', '**/auth.spec.ts', '**/generate-*.spec.ts'],
     },
     {
       name: 'Notebook',
@@ -115,6 +117,17 @@ export default defineConfig({
         '**/generate-*.spec.ts',
         '**/schedule.spec.ts',
       ],
+    },
+    // auth.spec logs in as admin, which bumps sessionVersion and invalidates
+    // the shared auth-state.json session. It runs after every other project.
+    {
+      name: 'Auth',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
+      },
+      testMatch: '**/auth.spec.ts',
+      dependencies: ['Desktop Full HD', 'Notebook', 'Mobile'],
     },
   ],
 });

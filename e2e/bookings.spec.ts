@@ -76,10 +76,9 @@ test.describe('Agenda / Reservas — Flujos CRUD', () => {
       const saveBtn = dialog.getByRole('button', {
         name: /Guardar|Reservar|Crear/i,
       });
-      if (await saveBtn.isVisible()) {
-        await saveBtn.click();
-        await expect(dialog).toBeVisible({ timeout: 2000 });
-      }
+      // The form blocks saving while the client name is empty.
+      await expect(saveBtn).toBeDisabled();
+      await expect(dialog).toBeVisible();
     }
   });
 
