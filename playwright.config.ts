@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 const frontendUrl = process.env['E2E_FRONTEND_URL'] ?? 'http://localhost:4200';
 const backendUrl = process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000';
 const backendProject = '../../back/padel-backend';
+// CI starts the backend itself (different checkout path and POSIX shell), so it
+// sets E2E_EXTERNAL_BACKEND=1 to skip the local Windows-only backend webServer.
+const externalBackend = process.env['E2E_EXTERNAL_BACKEND'] === '1';
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,6 +16,9 @@ export default defineConfig({
   reporter: 'html',
   globalSetup: './e2e/global-setup.ts',
   webServer: [
+    ...(externalBackend
+      ? []
+      : [
     {
       // start (no start:dev) a propósito: start:dev es `nest start --watch` y
       // nest-cli.json tiene deleteOutDir, así que cualquier cambio en src/
@@ -34,6 +40,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
     },
+        ]),
     {
       command: 'pnpm start',
       url: frontendUrl,

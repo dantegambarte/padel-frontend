@@ -1,8 +1,7 @@
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgZone } from '@angular/core';
-import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of, throwError, Subject } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ScheduleComponent } from './schedule.component';
 import { AuthService } from '../../core/services/auth.service';

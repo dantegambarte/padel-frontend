@@ -85,7 +85,7 @@ async function screenshotWithHighlight(
   locator: import('@playwright/test').Locator,
   page: import('@playwright/test').Page,
   screenshotPath: string,
-  isFullPage: boolean = false,
+  isFullPage = false,
 ) {
   if (await locator.isVisible().catch(() => false)) {
     await locator.scrollIntoViewIfNeeded();

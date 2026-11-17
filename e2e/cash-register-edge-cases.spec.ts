@@ -222,15 +222,17 @@ test.describe('Caja y Jornada Comercial — Edge Cases', () => {
       ]);
       // 4. POST /sessions → 201
       await page.route('**/api/v1/cash/sessions', (route) => {
-        route.request().method() === 'POST'
-          ? route.fulfill(json({ id: 'sess-001', date: '2026-04-09', status: 'OPEN' }, 201))
-          : route.continue();
+        if (route.request().method() === 'POST') {
+          return route.fulfill(json({ id: 'sess-001', date: '2026-04-09', status: 'OPEN' }, 201));
+        }
+        return route.continue();
       });
       // 5. PATCH /sessions/current → 200
       await page.route('**/api/v1/cash/sessions/current', (route) => {
-        route.request().method() === 'PATCH'
-          ? route.fulfill(json({ id: 'sess-001', closedAt: '2026-04-09T18:00:00.000Z', diferencia: 500 }))
-          : route.continue();
+        if (route.request().method() === 'PATCH') {
+          return route.fulfill(json({ id: 'sess-001', closedAt: '2026-04-09T18:00:00.000Z', diferencia: 500 }));
+        }
+        return route.continue();
       });
 
       // ── Paso 1: estado inicial

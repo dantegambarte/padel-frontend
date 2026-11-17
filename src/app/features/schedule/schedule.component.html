@@ -723,7 +723,7 @@
                                                     <span class="font-semibold">{{ selectedSlot()?.hour }}hs</span> a
                                                     <span class="font-semibold">{{ endHour }}hs</span> —
                                                     @if (activeShift) {
-                                                      @if (!(holidayService.isHoliday$ | async)) {
+                                                      @if ((holidayService.isHoliday$ | async) !== true) {
                                                         <span
                                                           class="text-primary font-medium"
                                                           >{{ activeShift.name }}</span

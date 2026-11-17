@@ -20,15 +20,15 @@ import { DisableScrollDirective } from '../../shared/directives/disable-scroll.d
 import { addDaysToIsoDate, dayOfWeekOfIsoDate, todayInAppTimeZone } from '../../core/utils/date';
 
 /** Dato de una celda de la grilla semanal. */
-type SlotData = {
+interface SlotData {
   booking: FixedBooking;
   /** true = aquí empieza el turno (se renderiza); false = cubierta por span */
   isStart: boolean;
   /** Cantidad de filas de 30 min que debe abarcar la celda. */
   rowSpan: number;
-};
+}
 
-type FormState = {
+interface FormState {
   clientName: string;
   phoneNumber: string;
   dayOfWeek: number;
@@ -40,7 +40,7 @@ type FormState = {
   teacherId: string;
   isTeacherClass: boolean;
   recurringDepositAmount: number | null;
-};
+}
 
 const EMPTY_FORM = (): FormState => ({
   clientName: '',

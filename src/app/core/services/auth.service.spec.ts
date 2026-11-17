@@ -44,7 +44,7 @@ describe('AuthService', () => {
   let routerSpy: jasmine.SpyObj<Router>;
   const url = `${environment.apiUrl}/auth`;
 
-  const clearCacheSpies: { [k: string]: jasmine.Spy } = {};
+  const clearCacheSpies: Record<string, jasmine.Spy> = {};
 
   function makeServiceSpy<T extends object>(methods: string[]): jasmine.SpyObj<T> {
     return jasmine.createSpyObj('svc', methods) as jasmine.SpyObj<T>;

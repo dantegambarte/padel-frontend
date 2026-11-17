@@ -9,6 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalScrollLockDirective } from '../../shared/modal-scroll-lock.directive';
 
+// eslint-disable-next-line @angular-eslint/directive-selector -- stubs the router directive selector
 @Directive({ selector: '[routerLink]' })
 class RouterLinkStubDirective {
   @Input() routerLink: unknown;

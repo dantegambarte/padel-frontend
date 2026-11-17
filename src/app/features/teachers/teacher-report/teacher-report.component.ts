@@ -6,7 +6,6 @@ import { ToastService } from '../../../core/services/toast.service';
 import {
   Teacher,
   TeacherReport,
-  TeacherReportBooking,
 } from '../../../core/models/teacher.model';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 

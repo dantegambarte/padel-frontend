@@ -2,10 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
-  let matchMediaSpy: jasmine.Spy;
 
   function mockMatchMedia(prefersDark: boolean): void {
-    matchMediaSpy = spyOn(window, 'matchMedia').and.returnValue({
+    spyOn(window, 'matchMedia').and.returnValue({
       matches: prefersDark,
     } as MediaQueryList);
   }
