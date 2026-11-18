@@ -102,6 +102,8 @@ export const environment = {
 
 > **Monitoreo de errores (opcional):** agregar `errorReportingUrl: "https://..."` para enviar errores no capturados y respuestas HTTP 5xx (como JSON, sin tokens, emails ni query strings) a ese endpoint. Vacío o ausente = desactivado. Debe ser `https:` o del mismo origen para respetar la CSP. Ver `src/app/core/monitoring/`.
 
+> **Sentry (opcional):** agregar `sentryDsn: "<DSN>"` y `release: "<git SHA>"` en `environment.prod.ts`. Si hay DSN, Sentry reemplaza al endpoint HTTP (se usa uno solo, nunca ambos). El SDK se carga de forma diferida, sin datos personales (`dataCollection` desactivado, equivalente a `sendDefaultPii: false` en SDK v11), sin breadcrumbs y con el mismo scrubber en `beforeSend`. La ingesta usa `https:`, ya permitido por `connect-src` de la CSP. Ver [Source maps y releases (Sentry)](#source-maps-y-releases-sentry).
+
 ---
 
 ## Estructura del proyecto
@@ -520,6 +522,21 @@ pnpm run build
 > **actualizá tu comando de deploy**: copiar `dist/padel-frontend/*` ahora sube la
 > carpeta `browser` en vez de su contenido, y nginx termina sirviendo un directorio
 > sin `index.html`.
+
+### Source maps y releases (Sentry)
+
+El build de producción genera source maps **ocultos** (`sourceMap.hidden`): los `.map` se escriben pero los bundles no los referencian. Antes de publicar:
+
+```bash
+pnpm run build
+# Opcional: solo sube si existen las tres variables; siempre borra los .map
+SENTRY_AUTH_TOKEN=... SENTRY_ORG=... SENTRY_PROJECT=... pnpm run sentry:sourcemaps
+```
+
+- La release es el SHA de git (`git rev-parse HEAD`, o `SENTRY_RELEASE`); debe coincidir con `release` en `environment.prod.ts`.
+- El script inyecta debug IDs, sube los mapas con `@sentry/cli` y luego elimina todos los `.map` de `dist/padel-frontend/browser/`. Sin las variables, solo los elimina.
+- Nunca commitear el token, el DSN ni la org: van como variables de entorno o secretos de CI.
+- En CI, ejecutarlo tras el build con `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` y `SENTRY_PROJECT` como secretos.
 
 Configurar el servidor web para redirigir todas las rutas al `index.html` (SPA routing).
 

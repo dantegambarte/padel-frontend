@@ -8,3 +8,4 @@ allowBuilds:
   lmdb: true # caché de build de Angular
   msgpackr-extract: true # serialización de esa caché
   '@parcel/watcher': true # watcher de `ng serve`
+  '@sentry/cli': false # binary comes from its platform optional dependency
