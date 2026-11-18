@@ -12,7 +12,7 @@
  * toca la base de datos real aunque falte un mock específico.
  */
 
-import { test, expect, Page, Route } from '@playwright/test';
+import { test, expect, Page, Route } from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Payloads mock (forma exacta de CashApiResponse que espera el servicio)

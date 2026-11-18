@@ -1,10 +1,25 @@
-import { computed, Injectable } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  firstValueFrom,
+  from,
+  map,
+  of,
+  tap,
+  throwError,
+} from 'rxjs';
 
-import { AuthResponse, LoginCredentials, User } from '../models/user.model';
+import {
+  AuthResponse,
+  LoginCredentials,
+  RefreshResponse,
+  User,
+} from '../models/user.model';
 import { environment } from '../../../environments/environment';
 import { CashService } from './cash.service';
 import { ConfigService } from './config.service';
@@ -16,22 +31,34 @@ import { ReportsService } from './reports.service';
 import { TeachersService } from './teachers.service';
 import { UsersService } from './users.service';
 
-const TOKEN_KEY = 'padelsys_access_token';
-const REFRESH_KEY = 'padelsys_refresh_token';
 const USER_KEY = 'padelsys_user';
+/**
+ * Keys where older builds stored the tokens. Tokens no longer touch storage:
+ * the access token lives in memory and the refresh token in an HttpOnly cookie.
+ * Removed on startup so an upgraded browser does not keep readable tokens around.
+ */
+const LEGACY_TOKEN_KEYS = ['padelsys_access_token', 'padelsys_refresh_token'];
+/** Web Lock that serializes refresh calls across tabs (see `requestRefresh`). */
+const REFRESH_LOCK = 'padelsys-auth-refresh';
 /** Clave de notificaciones persistidas. Debe limpiarse al cerrar sesión. */
 const NOTIFICATIONS_KEY = 'caldera_notifications';
 
 /**
  * Servicio responsable de la gestión del estado de autenticación.
  *
- * Persiste los tokens y el usuario actual en `localStorage` para que la sesión
- * sobreviva una recarga completa de la página. Expone un stream reactivo (`currentUser$`)
+ * Token storage (issue #68): the access token is kept only in memory and the
+ * refresh token travels in an HttpOnly cookie that JavaScript never sees. Only the
+ * non-sensitive user profile is kept in `localStorage`, and on startup
+ * `restoreSession()` exchanges the cookie for a fresh access token, so a reload
+ * keeps the session. Expone un stream reactivo (`currentUser$`)
  * al que los componentes y guards pueden suscribirse para reaccionar a eventos de login/logout.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`;
+
+  /** In-memory access token. Never persisted. */
+  private readonly accessToken = signal<string | null>(null);
 
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.loadUserFromStorage(),
@@ -112,26 +139,68 @@ export class AuthService {
    */
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, credentials)
+      .post<AuthResponse>(`${this.apiUrl}/login`, credentials, {
+        withCredentials: true,
+      })
       .pipe(tap((response) => this.persistSession(response)));
   }
 
   /**
-   * Solicita un nuevo access token usando el refresh token almacenado.
+   * Restores the session after a page load: if a user profile is stored, trades
+   * the HttpOnly refresh cookie for a new access token. Runs once from the app
+   * initializer, before the first navigation, so guards see the final state.
+   * A failure (no cookie, expired or revoked session, no network) clears the
+   * local session without navigating: the guard then redirects to the login.
+   * Never errors, so it cannot block the app bootstrap.
+   */
+  restoreSession(): Observable<void> {
+    if (!this.currentUserSubject.value) return of(undefined);
+    return this.requestRefresh().pipe(
+      map(() => undefined),
+      catchError(() => {
+        this.clearLocalSession();
+        return of(undefined);
+      }),
+    );
+  }
+
+  /**
+   * Requests a new access token; the browser sends the HttpOnly refresh cookie.
    * Es llamado automáticamente por `jwtInterceptor` ante respuestas 401.
    * Dispara el logout cuando el refresh token expiró.
    */
-  refresh(): Observable<AuthResponse> {
-    const token = this.getRefreshToken();
-    return this.http
-      .post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken: token })
-      .pipe(
-        tap((response) => this.persistSession(response)),
-        catchError((error) => {
-          this.logout();
-          return throwError(() => error);
+  refresh(): Observable<RefreshResponse> {
+    return this.requestRefresh().pipe(
+      catchError((error) => {
+        this.logout();
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * The backend rotates the refresh cookie on every call and treats a rotated
+   * cookie presented again as token reuse, revoking the whole session. Tabs that
+   * load at the same time would all send the same cookie, so refreshes are
+   * serialized across tabs with a Web Lock: the next tab sends its request only
+   * after the previous one finished, and the shared cookie jar already holds the
+   * rotated cookie by then. Browsers without the Web Locks API refresh unlocked.
+   */
+  private requestRefresh(): Observable<RefreshResponse> {
+    const request = () =>
+      firstValueFrom(
+        this.http.post<RefreshResponse>(`${this.apiUrl}/refresh`, null, {
+          withCredentials: true,
         }),
       );
+    const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+    // lib.dom types the result as a nested promise; `then` flattens it.
+    const response: Promise<RefreshResponse> = locks
+      ? locks.request(REFRESH_LOCK, request).then((result) => result)
+      : request();
+    return from(response).pipe(
+      tap((result) => this.accessToken.set(result.accessToken)),
+    );
   }
 
   /**
@@ -147,12 +216,7 @@ export class AuthService {
   logout(): void {
     this.revokeSessionOnServer();
 
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(NOTIFICATIONS_KEY);
-
-    this.currentUserSubject.next(null);
+    this.clearLocalSession();
 
     this.cashService.clearCurrentCache();
     this.configService.clearCache();
@@ -172,8 +236,9 @@ export class AuthService {
    * token copiado deja de servir aunque el navegador ya los haya borrado.
    * Es best-effort: el logout local no espera la respuesta, y un error (sin red,
    * o un token que el servidor ya había invalidado) se ignora.
-   * El token se adjunta a mano porque el storage se limpia antes de que el
-   * interceptor procese la request.
+   * El token se adjunta a mano porque la sesión local se limpia antes de que el
+   * interceptor procese la request. `withCredentials` lets the response clear
+   * the HttpOnly refresh cookie.
    */
   private revokeSessionOnServer(): void {
     const token = this.getAccessToken();
@@ -181,18 +246,14 @@ export class AuthService {
     this.http
       .post<void>(`${this.apiUrl}/logout`, null, {
         headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       })
       .subscribe({ error: () => undefined });
   }
 
-  /** Devuelve el access token almacenado, o `null` si no hay ninguno. */
+  /** Returns the in-memory access token, or `null` when there is none. */
   getAccessToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  /** Devuelve el refresh token almacenado, o `null` si no hay ninguno. */
-  getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_KEY);
+    return this.accessToken();
   }
 
   /**
@@ -225,38 +286,33 @@ export class AuthService {
   }
 
   /**
-   * Persiste los tokens de autenticación y los datos del usuario en `localStorage`
-   * y actualiza el subject reactivo del usuario.
+   * Keeps the access token in memory and the (non-sensitive) user profile in
+   * `localStorage`, and updates the reactive user subject.
    */
   private persistSession(response: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY, response.accessToken);
-    localStorage.setItem(REFRESH_KEY, response.refreshToken);
+    this.accessToken.set(response.accessToken);
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     this.currentUserSubject.next(response.user);
   }
 
+  /** Drops the local session state. Idempotent; does not navigate. */
+  private clearLocalSession(): void {
+    this.accessToken.set(null);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(NOTIFICATIONS_KEY);
+    this.currentUserSubject.next(null);
+  }
+
   /**
-   * Intenta leer el objeto usuario desde `localStorage`.
-   * Devuelve `null` cuando:
-   * - el valor almacenado está ausente o tiene formato inválido.
-   * - el access token JWT ya expiró al momento de iniciar la app.
-   *   En ese caso también limpia todas las claves de sesión para evitar
-   *   que el guard vea un usuario válido con un token muerto.
+   * Reads the stored user profile and removes the legacy token keys.
+   * Returns `null` when the value is missing or malformed. The access token is
+   * not available yet: `restoreSession()` obtains it before the first navigation.
    */
   private loadUserFromStorage(): User | null {
     try {
+      for (const key of LEGACY_TOKEN_KEYS) localStorage.removeItem(key);
       const raw = localStorage.getItem(USER_KEY);
-      if (!raw) return null;
-
-      if (this.isTokenExpired()) {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_KEY);
-        localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(NOTIFICATIONS_KEY);
-        return null;
-      }
-
-      return JSON.parse(raw) as User;
+      return raw ? (JSON.parse(raw) as User) : null;
     } catch {
       return null;
     }

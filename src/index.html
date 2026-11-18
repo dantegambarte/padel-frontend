@@ -2,6 +2,24 @@
 <html lang="es-AR">
   <head>
     <meta charset="utf-8" />
+    <!--
+      Content-Security-Policy (issue #68). Second barrier if an XSS gets in: no
+      inline or third-party scripts. Kept here because nginx lives in the backend
+      repo; it can move to a response header later (needed for frame-ancestors,
+      which a meta tag ignores).
+      connect-src lists the API origins of src/environments/*: localhost:3000 in
+      development and any HTTPS origin for the production API, whose host is kept
+      out of this public repo; tighten it in the nginx header once that exists.
+      A localhost origin in production
+      is harmless: it only reaches a server running on the user's own machine.
+      style-src keeps 'unsafe-inline' for Angular/PrimeNG component styles;
+      scripts never get it (angular.json disables inlineCritical, which would
+      add an inline onload handler).
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:3000 https:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <title>La Caldera</title>
     <base href="/" />
     <meta
@@ -15,19 +33,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
     />
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem("padelsys-theme");
-          var prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-          if (saved === "dark" || (!saved && prefersDark)) {
-            document.documentElement.classList.add("dark");
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <script src="assets/theme-init.js"></script>
     <link rel="manifest" href="manifest.webmanifest" />
   </head>
 

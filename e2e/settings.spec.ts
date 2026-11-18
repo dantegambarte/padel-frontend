@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 async function goToSettings(page: Page) {
   await page.goto('/app/settings');

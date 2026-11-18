@@ -219,6 +219,24 @@ src/
 
 Todos los módulos dentro de `/app` son **lazy-loaded** y protegidos por `authGuard`. El `jwtInterceptor` adjunta automáticamente el token Bearer a cada petición HTTP e intercepta errores 401 para refrescar el token o forzar logout.
 
+**Tokens y CSP:** el access token vive sólo en memoria (`AuthService`) y el refresh
+token en la cookie HttpOnly `refresh_token` que setea el backend; ningún token se
+guarda en `localStorage` (sólo el perfil del usuario, `padelsys_user`). Al arrancar,
+`provideAppInitializer` llama una vez a `POST /auth/refresh` (con
+`withCredentials: true`) para restaurar la sesión tras un recargo. Requiere el
+backend con la cookie de refresh.
+
+`src/index.html` define una Content-Security-Policy en un `<meta>` sin
+`'unsafe-inline'` para scripts: no agregues scripts inline (el tema inicial se
+aplica desde `src/assets/theme-init.js`) y, si cambiás el `apiUrl`, agregá su
+origen a `connect-src`. `angular.json` desactiva `inlineCritical` porque genera un
+handler `onload` inline.
+
+**E2E:** `e2e/auth-state.json` guarda la cookie de refresh, que rota en cada carga
+de página. Los specs importan `test` desde `e2e/fixtures.ts`, que reescribe el
+archivo al final de cada test para no presentar una cookie ya rotada (el backend
+lo trata como reuso y revoca la sesión).
+
 ---
 
 ## Roles de usuario

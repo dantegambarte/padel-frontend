@@ -28,7 +28,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { test } from '@playwright/test';
+import { test } from './fixtures';
 import * as fs from 'fs';
 import * as path from 'path';
 

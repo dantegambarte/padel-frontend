@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 async function waitForScheduleGrid(page: Page) {
   const grid = page.locator('.overflow-x-auto').first();

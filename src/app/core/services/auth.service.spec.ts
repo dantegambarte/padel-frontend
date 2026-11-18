@@ -17,8 +17,8 @@ import { UsersService } from './users.service';
 import { AuthResponse, User } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
-const TOKEN_KEY = 'padelsys_access_token';
-const REFRESH_KEY = 'padelsys_refresh_token';
+const LEGACY_ACCESS_KEY = 'padelsys_access_token';
+const LEGACY_REFRESH_KEY = 'padelsys_refresh_token';
 const USER_KEY = 'padelsys_user';
 const NOTIFICATIONS_KEY = 'caldera_notifications';
 
@@ -50,9 +50,18 @@ describe('AuthService', () => {
     return jasmine.createSpyObj('svc', methods) as jasmine.SpyObj<T>;
   }
 
+  /** Web Lock stub that grants the lock at once, so requests start synchronously. */
+  let lockRequestSpy: jasmine.Spy;
+
   beforeEach(() => {
     localStorage.clear();
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    lockRequestSpy = jasmine
+      .createSpy('locks.request')
+      .and.callFake((_name: string, callback: () => unknown) => Promise.resolve(callback()));
+    spyOnProperty(navigator, 'locks', 'get').and.returnValue({
+      request: lockRequestSpy,
+    } as unknown as LockManager);
 
     const cashSpy = makeServiceSpy<CashService>(['clearCurrentCache']);
     const configSpy = makeServiceSpy<ConfigService>(['clearCache']);
@@ -99,6 +108,14 @@ describe('AuthService', () => {
     localStorage.clear();
   });
 
+  const validJwt = () => makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 });
+
+  /** Logs in through the public API so the in-memory access token is set. */
+  function loginWith(accessToken: string, user: User = mockUser): void {
+    service.login({ username: user.username, password: 'secret' }).subscribe();
+    httpMock.expectOne(`${url}/login`).flush({ accessToken, user } as AuthResponse);
+  }
+
   describe('construction / loadUserFromStorage', () => {
     it('starts logged out when nothing is persisted', () => {
       service = TestBed.inject(AuthService);
@@ -106,37 +123,80 @@ describe('AuthService', () => {
       expect(service.currentUser).toBeNull();
     });
 
-    it('restores the user from storage when the token is still valid', () => {
-      const token = makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 });
-      localStorage.setItem(TOKEN_KEY, token);
+    it('restores the stored user profile but no access token until restoreSession()', () => {
       localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
 
       service = TestBed.inject(AuthService);
-      expect(service.isLoggedIn).toBe(true);
       expect(service.currentUser).toEqual(mockUser);
+      expect(service.getAccessToken()).toBeNull();
     });
 
-    it('clears the session and stays logged out when the stored token already expired', () => {
-      const token = makeJwt({ exp: Math.floor(Date.now() / 1000) - 3600 });
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
-      localStorage.setItem(REFRESH_KEY, 'refresh');
-      localStorage.setItem(NOTIFICATIONS_KEY, '[]');
+    it('removes the legacy token keys left by older builds', () => {
+      localStorage.setItem(LEGACY_ACCESS_KEY, 'old-access');
+      localStorage.setItem(LEGACY_REFRESH_KEY, 'old-refresh');
 
       service = TestBed.inject(AuthService);
-      expect(service.isLoggedIn).toBe(false);
-      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
-      expect(localStorage.getItem(USER_KEY)).toBeNull();
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
-      expect(localStorage.getItem(NOTIFICATIONS_KEY)).toBeNull();
+      expect(localStorage.getItem(LEGACY_ACCESS_KEY)).toBeNull();
+      expect(localStorage.getItem(LEGACY_REFRESH_KEY)).toBeNull();
+      expect(service.getAccessToken()).toBeNull();
     });
 
     it('stays logged out and does not throw when the stored user JSON is malformed', () => {
-      localStorage.setItem(TOKEN_KEY, makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }));
       localStorage.setItem(USER_KEY, '{not valid json');
 
       service = TestBed.inject(AuthService);
       expect(service.currentUser).toBeNull();
+    });
+  });
+
+  describe('restoreSession()', () => {
+    it('does not call the server when no user is stored', (done) => {
+      service = TestBed.inject(AuthService);
+      service.restoreSession().subscribe(() => {
+        httpMock.expectNone(`${url}/refresh`);
+        expect(service.isLoggedIn).toBe(false);
+        done();
+      });
+    });
+
+    it('trades the refresh cookie for an in-memory access token', (done) => {
+      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
+      service = TestBed.inject(AuthService);
+      const token = validJwt();
+
+      service.restoreSession().subscribe(() => {
+        expect(service.getAccessToken()).toBe(token);
+        expect(service.currentUser).toEqual(mockUser);
+        done();
+      });
+
+      const req = httpMock.expectOne(`${url}/refresh`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.body).toBeNull();
+      req.flush({ accessToken: token });
+    });
+
+    it('clears the local session without navigating or erroring when the cookie is rejected', (done) => {
+      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
+      localStorage.setItem(NOTIFICATIONS_KEY, '[]');
+      service = TestBed.inject(AuthService);
+
+      service.restoreSession().subscribe({
+        next: () => {
+          expect(service.isLoggedIn).toBe(false);
+          expect(service.getAccessToken()).toBeNull();
+          expect(localStorage.getItem(USER_KEY)).toBeNull();
+          expect(localStorage.getItem(NOTIFICATIONS_KEY)).toBeNull();
+          expect(routerSpy.navigate).not.toHaveBeenCalled();
+          done();
+        },
+        error: () => fail('restoreSession must not error'),
+      });
+
+      httpMock
+        .expectOne(`${url}/refresh`)
+        .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
     });
   });
 
@@ -147,26 +207,20 @@ describe('AuthService', () => {
     });
 
     it('treats a token with a future exp as valid', () => {
-      localStorage.setItem(
-        TOKEN_KEY,
-        makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-      );
       service = TestBed.inject(AuthService);
+      loginWith(validJwt());
       expect(service.isTokenExpired()).toBe(false);
     });
 
     it('treats a token with a past exp as expired', () => {
-      localStorage.setItem(
-        TOKEN_KEY,
-        makeJwt({ exp: Math.floor(Date.now() / 1000) - 3600 }),
-      );
       service = TestBed.inject(AuthService);
+      loginWith(makeJwt({ exp: Math.floor(Date.now() / 1000) - 3600 }));
       expect(service.isTokenExpired()).toBe(true);
     });
 
     it('treats a malformed token as expired instead of throwing', () => {
-      localStorage.setItem(TOKEN_KEY, 'not-a-jwt');
       service = TestBed.inject(AuthService);
+      loginWith('not-a-jwt');
       expect(service.isTokenExpired()).toBe(true);
     });
   });
@@ -174,18 +228,15 @@ describe('AuthService', () => {
   describe('login()', () => {
     const credentials = { username: 'admin', password: 'secret' };
 
-    it('POSTs the credentials and persists the session on success', (done) => {
+    it('POSTs the credentials with credentials mode and keeps the token only in memory', (done) => {
       service = TestBed.inject(AuthService);
-      const response: AuthResponse = {
-        accessToken: makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-        refreshToken: 'refresh-token',
-        user: mockUser,
-      };
+      const response: AuthResponse = { accessToken: validJwt(), user: mockUser };
 
       service.login(credentials).subscribe((res) => {
         expect(res).toEqual(response);
-        expect(localStorage.getItem(TOKEN_KEY)).toBe(response.accessToken);
-        expect(localStorage.getItem(REFRESH_KEY)).toBe('refresh-token');
+        expect(service.getAccessToken()).toBe(response.accessToken);
+        expect(localStorage.getItem(LEGACY_ACCESS_KEY)).toBeNull();
+        expect(localStorage.getItem(LEGACY_REFRESH_KEY)).toBeNull();
         expect(JSON.parse(localStorage.getItem(USER_KEY)!)).toEqual(mockUser);
         expect(service.currentUser).toEqual(mockUser);
         expect(service.isLoggedIn).toBe(true);
@@ -194,44 +245,49 @@ describe('AuthService', () => {
 
       const req = httpMock.expectOne(`${url}/login`);
       expect(req.request.method).toBe('POST');
+      expect(req.request.withCredentials).toBe(true);
       expect(req.request.body).toEqual(credentials);
       req.flush(response);
+    });
+
+    it('never writes any token to localStorage', () => {
+      service = TestBed.inject(AuthService);
+      loginWith(validJwt());
+      const stored = Object.keys(localStorage).map((k) => localStorage.getItem(k));
+      expect(stored.some((v) => v?.includes('.dummysignature'))).toBe(false);
     });
   });
 
   describe('refresh()', () => {
-    it('POSTs the stored refresh token and persists the new session', (done) => {
-      localStorage.setItem(REFRESH_KEY, 'old-refresh');
+    it('POSTs with credentials and no body, and keeps the new access token in memory', (done) => {
       service = TestBed.inject(AuthService);
-      const response: AuthResponse = {
-        accessToken: makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-        refreshToken: 'new-refresh',
-        user: mockUser,
-      };
+      const token = validJwt();
 
       service.refresh().subscribe((res) => {
-        expect(res).toEqual(response);
-        expect(localStorage.getItem(REFRESH_KEY)).toBe('new-refresh');
+        expect(res).toEqual({ accessToken: token });
+        expect(service.getAccessToken()).toBe(token);
         done();
       });
 
       const req = httpMock.expectOne(`${url}/refresh`);
-      expect(req.request.body).toEqual({ refreshToken: 'old-refresh' });
-      req.flush(response);
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.body).toBeNull();
+      req.flush({ accessToken: token });
     });
 
     it('logs out and rethrows when the refresh request fails', (done) => {
-      localStorage.setItem(REFRESH_KEY, 'old-refresh');
-      localStorage.setItem(TOKEN_KEY, makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }));
-      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
       service = TestBed.inject(AuthService);
+      const token = validJwt();
+      loginWith(token);
 
       service.refresh().subscribe({
         error: (err) => {
           expect(err.status).toBe(401);
           expect(service.isLoggedIn).toBe(false);
-          expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+          expect(service.getAccessToken()).toBeNull();
           expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+          // The refresh settles asynchronously, so logout runs after the flush.
+          httpMock.expectOne(`${url}/logout`).flush(null, { status: 204, statusText: 'No Content' });
           done();
         },
       });
@@ -239,53 +295,63 @@ describe('AuthService', () => {
       httpMock
         .expectOne(`${url}/refresh`)
         .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
-      httpMock.expectOne(`${url}/logout`).flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('serializes the request across tabs with a Web Lock', (done) => {
+      service = TestBed.inject(AuthService);
+      const token = validJwt();
+
+      service.refresh().subscribe(() => {
+        expect(lockRequestSpy).toHaveBeenCalledOnceWith('padelsys-auth-refresh', jasmine.any(Function));
+        done();
+      });
+
+      httpMock.expectOne(`${url}/refresh`).flush({ accessToken: token });
     });
   });
 
   describe('logout()', () => {
-    it('clears all session storage keys, resets currentUser and redirects to login', () => {
-      localStorage.setItem(TOKEN_KEY, 'token');
-      localStorage.setItem(REFRESH_KEY, 'refresh');
+    it('clears the session state, resets currentUser and redirects to login', () => {
       localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
       localStorage.setItem(NOTIFICATIONS_KEY, '[]');
       service = TestBed.inject(AuthService);
 
       service.logout();
-      // 'token' is not a valid JWT: the constructor already discarded it, so
-      // there is nothing to revoke on the server.
+      // No access token in memory yet: nothing to revoke on the server.
       httpMock.expectNone(`${url}/logout`);
 
-      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+      expect(service.getAccessToken()).toBeNull();
       expect(localStorage.getItem(USER_KEY)).toBeNull();
       expect(localStorage.getItem(NOTIFICATIONS_KEY)).toBeNull();
       expect(service.currentUser).toBeNull();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
 
-    it('revokes the session on the server with the stored access token', () => {
-      localStorage.setItem(TOKEN_KEY, 'token');
+    it('revokes the session on the server with the in-memory token and credentials', () => {
       service = TestBed.inject(AuthService);
+      loginWith('token');
 
       service.logout();
 
       const req = httpMock.expectOne(`${url}/logout`);
       expect(req.request.method).toBe('POST');
       expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+      // Needed so the response can clear the HttpOnly refresh cookie.
+      expect(req.request.withCredentials).toBe(true);
       req.flush(null, { status: 204, statusText: 'No Content' });
+      expect(service.getAccessToken()).toBeNull();
     });
 
     it('logs out locally even when the server call fails', () => {
-      localStorage.setItem(TOKEN_KEY, 'token');
       service = TestBed.inject(AuthService);
+      loginWith('token');
 
       service.logout();
       httpMock
         .expectOne(`${url}/logout`)
         .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
 
-      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(service.getAccessToken()).toBeNull();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
 
@@ -310,19 +376,16 @@ describe('AuthService', () => {
     });
   });
 
-  describe('getAccessToken() / getRefreshToken()', () => {
-    it('return null when nothing is stored', () => {
+  describe('getAccessToken()', () => {
+    it('returns null when there is no session', () => {
       service = TestBed.inject(AuthService);
       expect(service.getAccessToken()).toBeNull();
-      expect(service.getRefreshToken()).toBeNull();
     });
 
-    it('return the stored values', () => {
-      localStorage.setItem(TOKEN_KEY, 'access-1');
-      localStorage.setItem(REFRESH_KEY, 'refresh-1');
+    it('ignores a token left in localStorage by an older build', () => {
+      localStorage.setItem(LEGACY_ACCESS_KEY, 'access-1');
       service = TestBed.inject(AuthService);
-      expect(service.getAccessToken()).toBe('access-1');
-      expect(service.getRefreshToken()).toBe('refresh-1');
+      expect(service.getAccessToken()).toBeNull();
     });
   });
 
@@ -336,7 +399,6 @@ describe('AuthService', () => {
       service = TestBed.inject(AuthService);
       const response: AuthResponse = {
         accessToken: makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-        refreshToken: 'refresh',
         user: mockUser,
       };
       service.login({ username: 'admin', password: 'secret' }).subscribe(() => {
@@ -351,7 +413,6 @@ describe('AuthService', () => {
       const employee: User = { ...mockUser, role: 'employee' };
       const response: AuthResponse = {
         accessToken: makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-        refreshToken: 'refresh',
         user: employee,
       };
       service.login({ username: 'emp', password: 'secret' }).subscribe(() => {
@@ -365,7 +426,6 @@ describe('AuthService', () => {
   describe('changeOwnPassword()', () => {
     it('PATCHes /auth/me/password and clears mustChangePassword on the stored user', (done) => {
       const loggedInUser: User = { ...mockUser, mustChangePassword: true };
-      localStorage.setItem(TOKEN_KEY, makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 }));
       localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser));
       const fresh = TestBed.inject(AuthService);
 

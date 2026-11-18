@@ -1,8 +1,9 @@
 import { expect, Page } from '@playwright/test';
 
+import { pageAccessToken } from './session-token';
+
 const BACKEND_URL = process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000';
 const API_URL = `${BACKEND_URL}/api/v1`;
-const TOKEN_KEY = 'padelsys_access_token';
 /** Upper bound of stale business days closed before giving up. */
 const MAX_STALE_DAYS = 20;
 
@@ -23,9 +24,7 @@ function assertSafeBackend(): void {
 }
 
 async function authHeaders(page: Page): Promise<Record<string, string>> {
-  const token = await page.evaluate((key) => localStorage.getItem(key), TOKEN_KEY);
-  if (!token) throw new Error('No session token in localStorage');
-  return { Authorization: `Bearer ${token}` };
+  return { Authorization: `Bearer ${await pageAccessToken(page)}` };
 }
 
 /** Current cash session as returned by GET cash/current. */

@@ -1,13 +1,13 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
+import { pageAccessToken } from './helpers/session-token';
 
-const API_URL = 'http://localhost:3000/api/v1';
-const TOKEN_KEY = 'padelsys_access_token';
-
-/** Lee el JWT de la sesión actual desde localStorage para llamar a la API directamente. */
+const API_URL = `${process.env['E2E_BACKEND_URL'] ?? 'http://localhost:3000'}/api/v1`;
+/**
+ * Access token of the page's session, to call the API directly. The app keeps
+ * it in memory only, so it is obtained from the HttpOnly refresh cookie.
+ */
 async function getAuthToken(page: Page): Promise<string> {
-  const token = await page.evaluate((key) => localStorage.getItem(key), TOKEN_KEY);
-  if (!token) throw new Error('No hay token de sesión en localStorage — ¿la página está logueada?');
-  return token;
+  return pageAccessToken(page);
 }
 
 /**
@@ -206,7 +206,7 @@ test.describe('Liquidación de Profesores — RBAC', () => {
 
     // El empleado puede crear/completar turnos (bookings.controller.ts:166:
     // "Acceso: Admin y Empleado"), así que puede generar su propio turno
-    // descartable con el mismo token que ya tiene en localStorage.
+    // descartable con su propia sesión (cookie de refresh).
     const { teacherName } = await createDisposableCompletedBooking(page);
 
     await goToTeacherReport(page);
@@ -229,8 +229,7 @@ test.describe('Liquidación de Profesores — Rol Admin', () => {
   let currentTeacherName: string;
 
   test.beforeEach(async ({ page }) => {
-    // Navegar primero: localStorage no es accesible en about:blank
-    // (SecurityError), hace falta estar en el origin de la app.
+    // Navegar primero: la app tiene que estar cargada con la sesión restaurada.
     await goToTeacherReport(page);
     ({ teacherName: currentTeacherName } = await createDisposableCompletedBooking(page));
   });

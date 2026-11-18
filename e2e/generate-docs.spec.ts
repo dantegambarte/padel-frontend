@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { test, Page } from '@playwright/test';
+import { test, Page } from './fixtures';
 import * as fs from 'fs';
 import * as path from 'path';
 

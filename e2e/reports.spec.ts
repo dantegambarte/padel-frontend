@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 

@@ -29,11 +29,18 @@ export interface UpdateUserDto {
   isActive?: boolean;
 }
 
-/** Respuesta devuelta por los endpoints de autenticación (login / refresh). */
+/**
+ * Login response. The refresh token is not in the body: the backend sets it
+ * as an HttpOnly cookie.
+ */
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: User;
+}
+
+/** Refresh response: only a new access token (the cookie is rotated server-side). */
+export interface RefreshResponse {
+  accessToken: string;
 }
 
 /** Credenciales enviadas durante el login. */

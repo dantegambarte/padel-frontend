@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 /**
  * En mobile el sidebar está colapsado (`-translate-x-full`) — hay que abrirlo
