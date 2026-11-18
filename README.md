@@ -100,6 +100,8 @@ export const environment = {
 
 > El `apiUrl` de desarrollo puede apuntar a un DevTunnel de VS Code si se trabaja con el backend remoto.
 
+> **Monitoreo de errores (opcional):** agregar `errorReportingUrl: "https://..."` para enviar errores no capturados y respuestas HTTP 5xx (como JSON, sin tokens, emails ni query strings) a ese endpoint. Vacío o ausente = desactivado. Debe ser `https:` o del mismo origen para respetar la CSP. Ver `src/app/core/monitoring/`.
+
 ---
 
 ## Estructura del proyecto

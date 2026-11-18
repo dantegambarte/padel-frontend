@@ -19,14 +19,17 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { providePrimeNG } from 'primeng/config';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { AuthService } from './app/core/services/auth.service';
+import { errorReportingInterceptor } from './app/core/monitoring/error-reporting.interceptor';
+import { provideErrorMonitoring } from './app/core/monitoring/provide-error-monitoring';
 
 registerLocaleData(localeEsAR);
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideErrorMonitoring(),
     provideAnimations(),
-    provideHttpClient(withInterceptors([jwtInterceptor, timeoutInterceptor])),
+    provideHttpClient(withInterceptors([jwtInterceptor, timeoutInterceptor, errorReportingInterceptor])),
     provideCharts(withDefaultRegisterables()),
     provideRouter(
       routes,
