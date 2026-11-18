@@ -112,3 +112,21 @@ describe('LoginComponent', () => {
     expect(button.textContent).toContain('Iniciando sesión...');
   });
 });
+
+describe('LoginComponent footer', () => {
+  it('links to the privacy notice and third-party licenses', async () => {
+    await TestBed.configureTestingModule({
+      imports: [LoginComponent],
+      providers: [
+        { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['login']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        { provide: ThemeService, useValue: { isDark: signal<boolean>(false) } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('footer a[href="/privacy"]')).not.toBeNull();
+    expect(el.querySelector('footer a[href="/3rdpartylicenses.txt"]')).not.toBeNull();
+  });
+});

@@ -20,6 +20,15 @@ export const routes: Routes = [
   },
 
   {
+    path: 'privacy',
+    title: 'Aviso de privacidad',
+    loadComponent: () =>
+      import('./features/privacy/privacy.component').then(
+        (m) => m.PrivacyComponent,
+      ),
+  },
+
+  {
     path: 'app',
     loadChildren: () =>
       import('./features/layout/layout.routes').then((m) => m.layoutRoutes),
