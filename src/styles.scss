@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import 'primeicons/primeicons.css';
+// Self-hosted Material Symbols (issue #70): no request to Google's CDN.
+@import 'material-symbols/rounded.css';
 
 html {
   font-size: 112%;
